@@ -1,0 +1,186 @@
+"""Configuração global da Kiza.
+
+O que varia por servidor (canais, cargos, valores) vive no banco e é editado
+via /setup e /ajustes. Aqui ficam só variáveis de ambiente e constantes de código.
+"""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+try:  # python-dotenv é opcional em produção (o Railway injeta as variáveis)
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:  # pragma: no cover
+    pass
+
+
+def _flag(nome: str, padrao: bool) -> bool:
+    bruto = os.getenv(nome)
+    if bruto is None:
+        return padrao
+    return bruto.strip().lower() in {"1", "true", "sim", "yes", "on"}
+
+
+def _inteiro(nome: str, padrao: int) -> int:
+    try:
+        return int(os.getenv(nome, str(padrao)))
+    except ValueError:
+        return padrao
+
+
+VERSAO = "1.0.0"
+
+# --------------------------------------------------------------------------- ambiente
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
+DATABASE_PATH = os.getenv("DATABASE_PATH", "kiza.db")
+BACKUP_DIR = os.getenv("BACKUP_DIR", str(Path(DATABASE_PATH).resolve().parent / "backups"))
+BACKUP_RETENCAO = _inteiro("BACKUP_RETENCAO", 7)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+# Se definido, os comandos são sincronizados só nesse servidor (aparecem na hora; útil em testes).
+DEV_GUILD_ID = _inteiro("DEV_GUILD_ID", 0) or None
+
+# --------------------------------------------------------------------------- cogs por flag
+COGS_PADRAO = [
+    "configuracao",
+    "entrada",
+    "cargos",
+    "tickets",
+    "logs",
+    "moderacao",
+    "automod",
+    "canais",
+    "xp",
+    "economia",
+    "casamento",
+    "mines",
+    "geral",
+    "manutencao",
+]
+_desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
+COGS = [c for c in COGS_PADRAO if c not in _desativados]
+# Ponte com o Minecraft: reservada. Nada é carregado além de um aviso (veja cogs_minecraft/README.md).
+ENABLE_MINECRAFT = _flag("ENABLE_MINECRAFT", False)
+
+# --------------------------------------------------------------------------- identidade visual
+COR_PRINCIPAL = 0xF28C38  # laranja-raposa
+COR_OK = 0x7BC96F
+COR_ERRO = 0xE5534B
+COR_AVISO = 0xF5C542
+COR_INFO = 0x6CB4EE
+
+# Moeda: troque só aqui.
+MOEDA_NOME = "Caudas"
+MOEDA_SINGULAR = "Cauda"
+MOEDA_EMOJI = "🦊"
+
+# --------------------------------------------------------------------------- níveis de permissão
+NIVEL_MEMBRO = 0
+NIVEL_HELPER = 1
+NIVEL_STAFF = 2
+NIVEL_ADMIN = 3
+NOMES_NIVEL = {0: "Membro", 1: "Helper", 2: "Staff", 3: "Admin"}
+
+# --------------------------------------------------------------------------- funções configuráveis
+CANAIS_CONFIG = {
+    "boas_vindas": "Boas-vindas",
+    "adeus": "Adeus",
+    "regras": "Regras",
+    "verificacao": "Verificação (botão 'Li e aceito')",
+    "painel_cargos": "Painel de cargos",
+    "tickets": "Painel de tickets",
+    "logs_mod": "Logs de moderação (e transcrições)",
+    "logs_gerais": "Logs gerais",
+    "sugestoes": "Sugestões",
+    "aviso_status": "Aviso fixo (ex.: \"em construção\", status de um addon futuro)",
+}
+CARGOS_BASE = {
+    "visitante": "Visitante (cargo de quem acabou de entrar)",
+    "membro": "Membro (após aceitar as regras)",
+    "kitsune": "Kitsune (VIP cosmético)",
+}
+GRUPOS_CARGOS = {
+    "cores": {"titulo": "🎨 Cores", "placeholder": "🎨 Escolha a cor do seu nome"},
+    "genero": {"titulo": "🦊 Como você se identifica", "placeholder": "🦊 Como você se identifica?"},
+    "dm": {"titulo": "📨 Mensagens diretas", "placeholder": "📨 Como está sua DM?"},
+    "idade": {"titulo": "🎂 Faixa etária (só identificação)", "placeholder": "🎂 Sua faixa etária (opcional)"},
+}
+CATEGORIAS_TICKET = [
+    # (chave, rótulo, emoji, descrição)
+    ("duvida", "Dúvida", "❓", "Perguntas sobre o servidor"),
+    ("denuncia", "Denúncia", "🚨", "Denunciar alguém ou algo"),
+    ("parceria", "Parceria", "🤝", "Propostas de parceria"),
+    ("outro", "Outro", "💬", "Qualquer outro assunto"),
+]
+NIVEIS_XP_OPCOES = list(range(1, 21))  # 1..20: um cargo por nível (combina com um ladder tipo "LV 01".."LV 20")
+
+# --------------------------------------------------------------------------- visibilidade de categoria/canal
+# Cada tier vira permission overwrites de verdade (view_channel/send_messages) quando o admin clica em
+# "Aplicar permissões" no /setup. A ordem aqui é a ordem mostrada no menu.
+TIERS_VISIBILIDADE = {
+    "publico": "🌐 Público (até quem não verificou; só Staff/Admin postam)",
+    "membro": "🙂 Membro ou acima",
+    "helper": "🛡️ Helper ou acima",
+    "staff": "🔨 Staff ou acima",
+    "admin": "👑 Só Admin",
+}
+
+# --------------------------------------------------------------------------- ajustes numéricos por servidor
+# chave: (padrão, mínimo, máximo, descrição). Editáveis com /ajustes.
+AJUSTES = {
+    "xp_min": (15, 1, 500, "XP mínimo por mensagem"),
+    "xp_max": (25, 1, 500, "XP máximo por mensagem"),
+    "xp_cooldown": (60, 5, 3600, "Segundos entre mensagens que rendem XP"),
+    "xp_aviso_nivel": (1, 0, 1, "1 = avisa no chat quando alguém sobe de nível"),
+    "kitsune_xp_pct": (25, 0, 500, "Bônus de XP do cargo Kitsune (%)"),
+    "kitsune_daily_pct": (10, 0, 500, "Bônus no daily do cargo Kitsune (%)"),
+    "daily_base": (100, 1, 100000, "Valor base do /daily"),
+    "daily_passo": (10, 0, 10000, "Acréscimo por dia de sequência no /daily"),
+    "daily_streak_max": (7, 1, 60, "Dias de sequência que aumentam o /daily"),
+    "pagar_max": (5000, 1, 1000000, "Valor máximo por /pagar"),
+    "mines_min_aposta": (10, 1, 100000, "Aposta mínima no Mines"),
+    "mines_max_aposta": (500, 1, 100000, "Aposta máxima no Mines"),
+    "casamento_custo": (2000, 0, 1000000, "Custo do pedido de união"),
+    "casamento_expira_h": (24, 1, 168, "Horas até um pedido de união expirar"),
+    "aviso_limite": (3, 1, 20, "Avisos ativos para o timeout automático"),
+    "aviso_timeout_min": (30, 1, 40320, "Minutos do timeout automático por avisos"),
+    "automod_antispam": (1, 0, 1, "1 = antispam ligado"),
+    "automod_convites": (1, 0, 1, "1 = bloqueia convites de outros servidores"),
+    "automod_links": (0, 0, 1, "1 = bloqueia links"),
+    "automod_mencoes": (1, 0, 1, "1 = bloqueia menções em massa"),
+    "automod_spam_msgs": (6, 3, 30, "Mensagens na janela que contam como spam"),
+    "automod_spam_janela": (8, 3, 60, "Janela do antispam (segundos)"),
+    "automod_mencoes_max": (5, 2, 50, "Máximo de menções por mensagem"),
+    "automod_strikes": (3, 1, 10, "Infrações do automod (em 2 min) até o timeout"),
+    "automod_timeout_min": (5, 1, 1440, "Minutos do timeout curto do automod"),
+    "ticket_sla_min": (60, 0, 10080, "Minutos até lembrar a staff de um ticket sem dono (0 = desliga)"),
+    "ticket_ping_staff": (1, 0, 1, "1 = menciona a staff ao abrir ticket"),
+}
+
+# --------------------------------------------------------------------------- permissões do bot
+# (atributo em discord.Permissions, nome amigável)
+PERMISSOES_NECESSARIAS = [
+    ("view_channel", "Ver Canais"),
+    ("send_messages", "Enviar Mensagens"),
+    ("send_messages_in_threads", "Enviar em Threads"),
+    ("create_public_threads", "Criar Threads Públicas"),
+    ("manage_threads", "Gerenciar Threads"),
+    ("embed_links", "Incorporar Links"),
+    ("attach_files", "Anexar Arquivos"),
+    ("add_reactions", "Adicionar Reações"),
+    ("read_message_history", "Ler Histórico de Mensagens"),
+    ("use_external_emojis", "Usar Emojis Externos"),
+    ("manage_roles", "Gerenciar Cargos"),
+    ("manage_channels", "Gerenciar Canais"),
+    ("manage_messages", "Gerenciar Mensagens"),
+    ("moderate_members", "Moderar Membros"),
+    ("kick_members", "Expulsar Membros"),
+    ("ban_members", "Banir Membros"),
+    ("view_audit_log", "Ver Registro de Auditoria"),
+]
+
+# --------------------------------------------------------------------------- XP
+XP_BASE_NIVEL = (5, 50, 100)  # xp para subir do nível n: 5n² + 50n + 100
+MINES_CASAS = 16
+MINES_MARGEM_CASA = 0.03

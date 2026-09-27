@@ -1,0 +1,30 @@
+# segredos
+.env
+.env.*
+!.env.example
+
+# banco e backups
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+backups/
+data/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ferramentas de agente
+.claude/scheduled_tasks.lock
