@@ -78,6 +78,10 @@ def slug(texto: str, maximo: int = 20) -> str:
     return (base or "usuario")[:maximo].strip("-") or "usuario"
 
 
+def sem_acento(texto: str) -> str:
+    return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode().strip().lower()
+
+
 def formatar_numero(valor: int) -> str:
     return f"{valor:,}".replace(",", ".")
 
@@ -197,6 +201,7 @@ async def publicar_ou_editar(
     embeds: list[discord.Embed],
     view: Optional[discord.ui.View] = None,
     content: Optional[str] = None,
+    arquivos: Optional[list[discord.File]] = None,
 ) -> discord.Message:
     """Publica um painel; se já existir uma publicação anterior desse painel, edita em vez de duplicar."""
     msg_id = await bot.banco.get_config_int(guild.id, f"msg_{chave_msg}")
@@ -206,10 +211,12 @@ async def publicar_ou_editar(
     if msg_id:
         try:
             msg = await canal.fetch_message(msg_id)
-            await msg.edit(content=content, embeds=embeds, **extra)
+            await msg.edit(content=content, embeds=embeds, attachments=arquivos or [], **extra)
             return msg
         except (discord.NotFound, discord.Forbidden):
             pass
+    if arquivos:
+        extra["files"] = arquivos
     msg = await canal.send(content=content, embeds=embeds, allowed_mentions=discord.AllowedMentions.none(), **extra)
     await bot.banco.set_config(guild.id, f"msg_{chave_msg}", str(msg.id))
     return msg

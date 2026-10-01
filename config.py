@@ -106,6 +106,16 @@ GRUPOS_CARGOS = {
     "dm": {"titulo": "📨 Mensagens diretas", "placeholder": "📨 Como está sua DM?"},
     "idade": {"titulo": "🎂 Faixa etária (só identificação)", "placeholder": "🎂 Sua faixa etária (opcional)"},
 }
+# Banner de cada grupo: arquivo em assets/banners/<grupo>.png (ou .gif). Sem arquivo, o painel sai sem imagem.
+PASTA_BANNERS = Path(__file__).resolve().parent / "assets" / "banners"
+# Emoji de cada cargo do painel, pelo NOME do cargo (sem acento/maiúscula importar). Sem entrada, sai sem emoji.
+EMOJIS_CARGOS = {
+    "sun": "☀️", "moon": "🌙", "nebulosa": "🔮", "manteiga": "🧈",
+    "morango": "🍓", "oceano": "🌊", "selva": "🌿", "melancia": "🍉",
+    "garoto": "💙", "garota": "💗", "nao-binario": "💛",
+    "dm liberada": "📬", "dm fechada": "📪",
+    "+18": "🔞", "-18": "🌱",
+}
 CATEGORIAS_TICKET = [
     # (chave, rótulo, emoji, descrição)
     ("duvida", "Dúvida", "❓", "Perguntas sobre o servidor"),

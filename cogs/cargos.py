@@ -9,7 +9,7 @@ from discord.ext import commands
 
 import config
 import textos
-from utils.helpers import embed, pode_gerenciar_cargo, publicar_ou_editar, responder
+from utils.helpers import embed, pode_gerenciar_cargo, publicar_ou_editar, responder, sem_acento
 from utils.permissoes import eh_membro
 from utils.views import BaseView
 
@@ -40,13 +40,23 @@ class SelectGrupo(discord.ui.Select):
 
 
 class PainelCargosView(BaseView):
-    def __init__(self, opcoes_por_grupo: Optional[dict[str, list[discord.SelectOption]]] = None) -> None:
+    """Um menu por mensagem: cada grupo tem seu próprio embed com banner."""
+
+    def __init__(self, grupo: str, opcoes: Optional[list[discord.SelectOption]] = None) -> None:
         super().__init__(timeout=None)
-        for grupo in config.GRUPOS_CARGOS:
-            if opcoes_por_grupo is None:
-                self.add_item(SelectGrupo(grupo))  # registro no setup_hook (só custom_id importa)
-            elif opcoes_por_grupo.get(grupo):
-                self.add_item(SelectGrupo(grupo, opcoes_por_grupo[grupo]))
+        self.add_item(SelectGrupo(grupo, opcoes))  # sem opções = registro no setup_hook (só custom_id importa)
+
+
+def emoji_do_cargo(nome: str) -> Optional[str]:
+    return config.EMOJIS_CARGOS.get(sem_acento(nome))
+
+
+def banner_do_grupo(grupo: str) -> Optional[discord.File]:
+    for ext in ("png", "gif", "jpg", "webp"):
+        caminho = config.PASTA_BANNERS / f"{grupo}.{ext}"
+        if caminho.is_file():
+            return discord.File(caminho, filename=f"{grupo}.{ext}")
+    return None
 
 
 class Cargos(commands.Cog):
@@ -54,7 +64,7 @@ class Cargos(commands.Cog):
         self.bot = bot
 
     def views_persistentes(self) -> list[discord.ui.View]:
-        return [PainelCargosView()]
+        return [PainelCargosView(grupo) for grupo in config.GRUPOS_CARGOS]
 
     async def aplicar_escolha(self, interaction: discord.Interaction, grupo: str, valor: str) -> None:
         await interaction.response.defer(ephemeral=True)
@@ -96,31 +106,45 @@ class Cargos(commands.Cog):
             return False, textos.SETUP_SEM_CANAL
 
         grupos = await self.bot.banco.grupos_cargos(guild.id)
-        opcoes_por_grupo: dict[str, list[discord.SelectOption]] = {}
-        linhas = []
-        for grupo, ids in grupos.items():
-            if grupo not in config.GRUPOS_CARGOS:
-                continue
-            cargos = [r for r in (guild.get_role(i) for i in ids) if r is not None]
+        publicados = 0
+        for grupo, info in config.GRUPOS_CARGOS.items():  # ordem do config = ordem no canal
+            cargos = [r for r in (guild.get_role(i) for i in grupos.get(grupo, [])) if r is not None]
             cargos.sort(key=lambda r: -r.position)
             cargos = cargos[:24]
             if not cargos:
                 continue
-            opcoes = [discord.SelectOption(label=r.name[:100], value=str(r.id)) for r in cargos]
+            opcoes, linhas = [], []
+            for r in cargos:
+                emoji = emoji_do_cargo(r.name)
+                opcoes.append(discord.SelectOption(label=r.name[:100], value=str(r.id), emoji=emoji))
+                linhas.append(f"{emoji or '•'} {r.mention}")
             opcoes.append(discord.SelectOption(label=textos.CARGOS_NENHUM, value="0", emoji="🚫"))
-            opcoes_por_grupo[grupo] = opcoes
-            linhas.append(f"**{config.GRUPOS_CARGOS[grupo]['titulo']}**")
-        if not opcoes_por_grupo:
+
+            e = embed(info["titulo"], "\n".join(linhas))
+            if grupo == "idade":
+                e.set_footer(text=textos.CARGOS_RODAPE)
+            banner = banner_do_grupo(grupo)
+            if banner is not None:
+                e.set_image(url=f"attachment://{banner.filename}")
+            try:
+                await publicar_ou_editar(
+                    self.bot, guild, canal, f"painel_cargos_{grupo}", embeds=[e],
+                    view=PainelCargosView(grupo, opcoes), arquivos=[banner] if banner else None,
+                )
+            except discord.HTTPException:
+                return False, textos.SETUP_ERRO_PUBLICAR
+            publicados += 1
+        if not publicados:
             return False, textos.SETUP_SEM_CARGOS
 
-        e = embed(textos.CARGOS_TITULO, textos.CARGOS_DESC + "\n\n" + "\n".join(linhas))
-        e.set_footer(text=textos.CARGOS_RODAPE)
-        try:
-            await publicar_ou_editar(
-                self.bot, guild, canal, "painel_cargos", embeds=[e], view=PainelCargosView(opcoes_por_grupo)
-            )
-        except discord.HTTPException:
-            return False, textos.SETUP_ERRO_PUBLICAR
+        # Painel antigo (todos os grupos numa mensagem só) sai do canal.
+        antigo = await self.bot.banco.get_config_int(guild.id, "msg_painel_cargos")
+        if antigo:
+            try:
+                await (await canal.fetch_message(antigo)).delete()
+            except discord.HTTPException:
+                pass
+            await self.bot.banco.set_config(guild.id, "msg_painel_cargos", "")
         return True, canal.mention
 
 
