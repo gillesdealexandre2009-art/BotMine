@@ -139,3 +139,37 @@ CREATE TABLE visibilidade_canal (
 );
 """,
 ))
+
+MIGRACOES.append((
+    3,
+    """
+-- Recompensas que só podem sair uma vez por chave (drop pego, pergunta do dia respondida, aniversário do ano).
+-- A PRIMARY KEY garante isso mesmo com cliques simultâneos.
+CREATE TABLE recompensas_unicas (
+    guild_id  INTEGER NOT NULL,
+    chave     TEXT    NOT NULL,
+    user_id   INTEGER NOT NULL,
+    valor     INTEGER NOT NULL,
+    criado_em INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, chave)
+);
+
+-- Mensagens que já viraram pérola (para não repostar e para editar a contagem).
+CREATE TABLE perolas (
+    guild_id     INTEGER NOT NULL,
+    msg_id       INTEGER NOT NULL,
+    perola_msg_id INTEGER NOT NULL,
+    criado_em    INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, msg_id)
+);
+
+CREATE TABLE aniversarios (
+    guild_id INTEGER NOT NULL,
+    user_id  INTEGER NOT NULL,
+    dia      INTEGER NOT NULL,
+    mes      INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+CREATE INDEX ix_aniversarios_data ON aniversarios (guild_id, mes, dia);
+""",
+))

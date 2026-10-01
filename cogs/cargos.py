@@ -9,7 +9,7 @@ from discord.ext import commands
 
 import config
 import textos
-from utils.helpers import embed, pode_gerenciar_cargo, publicar_ou_editar, responder, sem_acento
+from utils.helpers import com_banner, embed, pode_gerenciar_cargo, publicar_ou_editar, responder, sem_acento
 from utils.permissoes import eh_membro
 from utils.views import BaseView
 
@@ -50,13 +50,6 @@ class PainelCargosView(BaseView):
 def emoji_do_cargo(nome: str) -> Optional[str]:
     return config.EMOJIS_CARGOS.get(sem_acento(nome))
 
-
-def banner_do_grupo(grupo: str) -> Optional[discord.File]:
-    for ext in ("png", "gif", "jpg", "webp"):
-        caminho = config.PASTA_BANNERS / f"{grupo}.{ext}"
-        if caminho.is_file():
-            return discord.File(caminho, filename=f"{grupo}.{ext}")
-    return None
 
 
 class Cargos(commands.Cog):
@@ -123,13 +116,11 @@ class Cargos(commands.Cog):
             e = embed(info["titulo"], "\n".join(linhas))
             if grupo == "idade":
                 e.set_footer(text=textos.CARGOS_RODAPE)
-            banner = banner_do_grupo(grupo)
-            if banner is not None:
-                e.set_image(url=f"attachment://{banner.filename}")
+            embeds, arquivos = com_banner(grupo, [e])
             try:
                 await publicar_ou_editar(
-                    self.bot, guild, canal, f"painel_cargos_{grupo}", embeds=[e],
-                    view=PainelCargosView(grupo, opcoes), arquivos=[banner] if banner else None,
+                    self.bot, guild, canal, f"painel_cargos_{grupo}", embeds=embeds,
+                    view=PainelCargosView(grupo, opcoes), arquivos=arquivos,
                 )
             except discord.HTTPException:
                 return False, textos.SETUP_ERRO_PUBLICAR

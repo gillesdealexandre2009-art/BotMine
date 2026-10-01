@@ -216,7 +216,89 @@ async def publicar_ou_editar(
         except (discord.NotFound, discord.Forbidden):
             pass
     if arquivos:
+        for arquivo in arquivos:
+            arquivo.reset()  # a edição que falhou pode ter consumido o arquivo
         extra["files"] = arquivos
     msg = await canal.send(content=content, embeds=embeds, allowed_mentions=discord.AllowedMentions.none(), **extra)
     await bot.banco.set_config(guild.id, f"msg_{chave_msg}", str(msg.id))
     return msg
+
+
+async def publicar_ou_editar_forum(
+    bot: "Kiza",
+    guild: discord.Guild,
+    forum: discord.ForumChannel,
+    chave_msg: str,
+    titulo: str,
+    *,
+    embeds: list[discord.Embed],
+    arquivos: Optional[list[discord.File]] = None,
+) -> discord.Thread:
+    """Como publicar_ou_editar, mas num fórum: cria (ou edita) um post fixado. Guarda o ID do post."""
+    post_id = await bot.banco.get_config_int(guild.id, f"msg_{chave_msg}")
+    if post_id:
+        try:
+            post = guild.get_thread(post_id) or await guild.fetch_channel(post_id)
+            if isinstance(post, discord.Thread):
+                inicial = await post.fetch_message(post.id)  # a mensagem inicial tem o mesmo ID do post
+                await inicial.edit(embeds=embeds, attachments=arquivos or [])
+                if post.name != titulo:
+                    await post.edit(name=titulo)
+                return post
+        except (discord.NotFound, discord.Forbidden):
+            pass
+    for arquivo in arquivos or []:
+        arquivo.reset()
+    criado = await forum.create_thread(
+        name=titulo, embeds=embeds, files=arquivos or [], allowed_mentions=discord.AllowedMentions.none()
+    )
+    try:
+        await criado.thread.edit(pinned=True)
+    except discord.HTTPException:
+        log.info("Não consegui fixar o post %s (falta Gerenciar Threads?)", criado.thread.id)
+    await bot.banco.set_config(guild.id, f"msg_{chave_msg}", str(criado.thread.id))
+    return criado.thread
+
+
+# ---------------------------------------------------------------- banners e canais por função
+def arquivo_banner(nome: str) -> Optional[discord.File]:
+    """assets/banners/<nome>.(png|gif|jpg|webp), se existir."""
+    for ext in ("png", "gif", "jpg", "webp"):
+        caminho = config.PASTA_BANNERS / f"{nome}.{ext}"
+        if caminho.is_file():
+            return discord.File(caminho, filename=f"{nome}.{ext}")
+    return None
+
+
+def com_banner(nome: str, embeds: list[discord.Embed]) -> tuple[list[discord.Embed], list[discord.File]]:
+    """Põe o banner num embed próprio ANTES dos outros (o Discord desenha a imagem no pé do embed)."""
+    arquivo = arquivo_banner(nome)
+    if arquivo is None:
+        return embeds, []
+    topo = discord.Embed(color=embeds[0].color if embeds else config.COR_PRINCIPAL)
+    topo.set_image(url=f"attachment://{arquivo.filename}")
+    return [topo, *embeds], [arquivo]
+
+
+_PALAVRAS = re.compile(r"[a-z0-9]+")
+
+
+async def canal_da_funcao(bot: "Kiza", guild: discord.Guild, chave: str, tipos: tuple[type, ...] = (discord.TextChannel,)):
+    """Canal configurado no /setup; se não houver, procura pelo nome (config.CANAIS_POR_NOME)."""
+    canal_id = await bot.banco.get_config_int(guild.id, f"canal_{chave}")
+    canal = guild.get_channel(canal_id) if canal_id else None
+    if isinstance(canal, tipos):
+        return canal
+    palavra = config.CANAIS_POR_NOME.get(chave)
+    if not palavra:
+        return None
+    candidatos = [c for c in guild.channels if isinstance(c, tipos)]
+    exatos, parciais = [], []
+    for c in candidatos:
+        palavras = _PALAVRAS.findall(sem_acento(c.name))
+        if palavras == [palavra]:
+            exatos.append(c)
+        elif palavra in palavras:
+            parciais.append(c)
+    achados = exatos or parciais
+    return min(achados, key=lambda c: c.position) if achados else None

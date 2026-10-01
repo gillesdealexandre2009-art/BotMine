@@ -72,7 +72,7 @@ class XP(commands.Cog):
             if await banco.ajuste(guild.id, "xp_aviso_nivel") == 1:
                 try:
                     await mensagem.channel.send(
-                        textos.XP_NIVEL_UP.format(mencao=membro.mention, nivel=nivel_depois),
+                        random.choice(textos.XP_NIVEL_UP_FRASES).format(mencao=membro.mention, nivel=nivel_depois),
                         allowed_mentions=discord.AllowedMentions(users=[membro]),
                     )
                 except discord.HTTPException:

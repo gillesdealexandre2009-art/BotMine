@@ -32,7 +32,7 @@ def test_migracoes_idempotentes(tmp_path):
         await b.fechar()
         return [linha["versao"] for linha in linhas]
 
-    assert rodar(cenario) == [1, 2]
+    assert rodar(cenario) == [1, 2, 3]
 
 
 def test_backup_consistente(tmp_path):
@@ -361,3 +361,56 @@ def test_visibilidade_persiste(tmp_path):
 
     antes, depois = rodar(cenario)
     assert antes == {111: "publico", 222: "staff"} and depois == {222: "staff"}
+
+
+# ------------------------------------------------------------------ vida da toca
+def test_recompensa_unica_mesmo_com_cliques_simultaneos(tmp_path):
+    async def cenario():
+        b = await novo_banco(tmp_path)
+        resultados = await asyncio.gather(*(b.recompensar_uma_vez(G, "drop:1", u, 50, "drop") for u in (A, B, C)))
+        saldos = [await b.saldo(G, u) for u in (A, B, C)]
+        repetido = await b.recompensar_uma_vez(G, "drop:1", A, 50, "drop")
+        await b.recompensar_uma_vez(G, "drop:2", B, 30, "drop")
+        await b.recompensar_uma_vez(G, "qotd:9:100", A, 10, "qotd")
+        n_drops = await b.contar_recompensas(G, "drop:")
+        await b.fechar()
+        return resultados, saldos, repetido, n_drops
+
+    resultados, saldos, repetido, n_drops = rodar(cenario)
+    assert sum(r is not None for r in resultados) == 1  # só um leva
+    assert sorted(saldos) == [0, 0, 50]
+    assert repetido is None
+    assert n_drops == 2
+
+
+def test_perola_registrada_uma_vez(tmp_path):
+    async def cenario():
+        b = await novo_banco(tmp_path)
+        primeira = await b.registrar_perola(G, 10, 900)
+        segunda = await b.registrar_perola(G, 10, 901)
+        guardada = await b.obter_perola(G, 10)
+        nada = await b.obter_perola(G, 11)
+        await b.fechar()
+        return primeira, segunda, guardada, nada
+
+    assert rodar(cenario) == (True, False, 900, None)
+
+
+def test_aniversarios(tmp_path):
+    async def cenario():
+        b = await novo_banco(tmp_path)
+        await b.definir_aniversario(G, A, 5, 3)
+        await b.definir_aniversario(G, B, 5, 3)
+        await b.definir_aniversario(G, C, 1, 1)
+        await b.definir_aniversario(G, A, 6, 3)  # muda a data
+        no_dia = await b.aniversariantes(G, 5, 3)
+        todos = await b.todos_aniversarios(G)
+        await b.definir_aniversario(G, C, None, None)
+        sem = await b.obter_aniversario(G, C)
+        await b.fechar()
+        return no_dia, todos, sem
+
+    no_dia, todos, sem = rodar(cenario)
+    assert no_dia == [B]
+    assert todos == [(C, 1, 1), (B, 5, 3), (A, 6, 3)]
+    assert sem is None

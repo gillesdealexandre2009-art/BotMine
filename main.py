@@ -104,6 +104,12 @@ class Kiza(commands.Bot):
         except discord.HTTPException:
             log.exception("Não consegui sincronizar os comandos")
 
+    async def on_command_error(self, ctx: commands.Context, erro: commands.CommandError) -> None:
+        # Só há comandos de barra; "@Kiza oi" cairia aqui como comando de prefixo inexistente.
+        if isinstance(erro, commands.CommandNotFound):
+            return
+        log.error("Erro em comando de prefixo", exc_info=erro)
+
     async def on_ready(self) -> None:
         log.info("Kiza online como %s em %d servidor(es)", self.user, len(self.guilds))
 

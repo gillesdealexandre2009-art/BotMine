@@ -36,6 +36,12 @@ PUBLICADORES = {
     "cargos": ("Cargos", "publicar_painel", "Painel de cargos"),
     "tickets": ("Tickets", "publicar_painel", "Painel de tickets"),
     "aviso_status": ("Entrada", "publicar_aviso_status", "Aviso fixo"),
+    "infos": ("Vitrine", "publicar_infos", "Infos"),
+    "kitsune": ("Vitrine", "publicar_kitsune", "Seja um Kitsune"),
+    "lore": ("Vitrine", "publicar_lore", "Lore"),
+    "changelog": ("Vitrine", "publicar_changelog", "Changelog"),
+    "comandos": ("Vitrine", "publicar_comandos", "Comandos"),
+    "duvidas": ("Vitrine", "publicar_duvidas", "Dúvidas (FAQ)"),
 }
 
 
@@ -93,7 +99,7 @@ class SelecaoCanal(discord.ui.ChannelSelect):
     def __init__(self) -> None:
         super().__init__(
             placeholder="Escolha o canal…",
-            channel_types=[discord.ChannelType.text, discord.ChannelType.news],
+            channel_types=[discord.ChannelType.text, discord.ChannelType.news, discord.ChannelType.forum],
             min_values=1,
             max_values=1,
             row=1,
@@ -442,7 +448,17 @@ class SecaoPublicar(SecaoBase):
         ]
         for chave, rotulo, emoji in botoes:
             self.add_item(BotaoPublicar([chave], rotulo, emoji, discord.ButtonStyle.primary, row=0))
-        self.add_item(BotaoPublicar(list(PUBLICADORES), "Publicar tudo", "🚀", discord.ButtonStyle.success, row=1))
+        vitrine = [
+            ("infos", "Infos", "📖"),
+            ("kitsune", "Kitsune", "🦊"),
+            ("lore", "Lore", "🌙"),
+            ("changelog", "Changelog", "🎞️"),
+            ("comandos", "Comandos", "🤖"),
+            ("duvidas", "Dúvidas", "❓"),
+        ]
+        for i, (chave, rotulo, emoji) in enumerate(vitrine):
+            self.add_item(BotaoPublicar([chave], rotulo, emoji, discord.ButtonStyle.secondary, row=1 + i // 5))
+        self.add_item(BotaoPublicar(list(PUBLICADORES), "Publicar tudo", "🚀", discord.ButtonStyle.success, row=3))
         self.add_item(BotaoVoltar())
 
     async def construir_embed(self) -> discord.Embed:

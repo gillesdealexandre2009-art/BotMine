@@ -483,6 +483,31 @@ class Banco:
             )
             return {"valor": valor, "streak": streak, "saldo": saldo}  # type: ignore[dict-item]
 
+    async def recompensar_uma_vez(
+        self, guild_id: int, chave: str, user_id: int, valor: int, tipo: str
+    ) -> Optional[int]:
+        """Credita `valor` só se ninguém levou essa `chave` ainda. Retorna o saldo novo, ou None se já foi levada."""
+        if valor < 0:
+            raise ValueError("recompensar_uma_vez exige valor >= 0")
+        async with self._tx() as conn:
+            cur = await conn.execute(
+                "INSERT OR IGNORE INTO recompensas_unicas (guild_id, chave, user_id, valor, criado_em) VALUES (?, ?, ?, ?, ?)",
+                (guild_id, chave, user_id, valor, agora()),
+            )
+            inseriu = cur.rowcount == 1
+            await cur.close()
+            if not inseriu:
+                return None
+            return await self._mov(conn, guild_id, user_id, valor, tipo, chave)
+
+    async def contar_recompensas(self, guild_id: int, prefixo: str) -> int:
+        """Quantas recompensas únicas começam com `prefixo` (ex.: 'drop:2026-10-01:')."""
+        linha = await self._um(
+            "SELECT COUNT(*) AS n FROM recompensas_unicas WHERE guild_id = ? AND chave LIKE ? ESCAPE '\\'",
+            (guild_id, prefixo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"),
+        )
+        return linha["n"]
+
     async def extrato(self, guild_id: int, user_id: int, limite: int = 10):
         return await self._todos(
             "SELECT tipo, valor, saldo_apos, criado_em FROM transacoes WHERE guild_id = ? AND user_id = ? "
@@ -783,3 +808,44 @@ class Banco:
 
     async def marcar_sla_avisado(self, ticket_id: int) -> None:
         await self._exec("UPDATE tickets SET sla_avisado = 1 WHERE id = ?", (ticket_id,))
+
+    # ------------------------------------------------------------------ pérolas (mural de destaques)
+    async def obter_perola(self, guild_id: int, msg_id: int) -> Optional[int]:
+        linha = await self._um("SELECT perola_msg_id FROM perolas WHERE guild_id = ? AND msg_id = ?", (guild_id, msg_id))
+        return linha["perola_msg_id"] if linha else None
+
+    async def registrar_perola(self, guild_id: int, msg_id: int, perola_msg_id: int) -> bool:
+        """Registra a pérola. False se outra chamada já registrou (corrida entre reações)."""
+        n = await self._exec(
+            "INSERT OR IGNORE INTO perolas (guild_id, msg_id, perola_msg_id, criado_em) VALUES (?, ?, ?, ?)",
+            (guild_id, msg_id, perola_msg_id, agora()),
+        )
+        return n == 1
+
+    # ------------------------------------------------------------------ aniversários
+    async def definir_aniversario(self, guild_id: int, user_id: int, dia: Optional[int], mes: Optional[int]) -> None:
+        if dia is None or mes is None:
+            await self._exec("DELETE FROM aniversarios WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
+            return
+        await self._exec(
+            "INSERT INTO aniversarios (guild_id, user_id, dia, mes) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT (guild_id, user_id) DO UPDATE SET dia = excluded.dia, mes = excluded.mes",
+            (guild_id, user_id, dia, mes),
+        )
+
+    async def obter_aniversario(self, guild_id: int, user_id: int) -> Optional[tuple[int, int]]:
+        linha = await self._um("SELECT dia, mes FROM aniversarios WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
+        return (linha["dia"], linha["mes"]) if linha else None
+
+    async def aniversariantes(self, guild_id: int, dia: int, mes: int) -> list[int]:
+        linhas = await self._todos(
+            "SELECT user_id FROM aniversarios WHERE guild_id = ? AND dia = ? AND mes = ?", (guild_id, dia, mes)
+        )
+        return [linha["user_id"] for linha in linhas]
+
+    async def todos_aniversarios(self, guild_id: int) -> list[tuple[int, int, int]]:
+        """(user_id, dia, mes) em ordem de calendário. Quem chama decide a partir de que data mostrar."""
+        linhas = await self._todos(
+            "SELECT user_id, dia, mes FROM aniversarios WHERE guild_id = ? ORDER BY mes, dia", (guild_id,)
+        )
+        return [(linha["user_id"], linha["dia"], linha["mes"]) for linha in linhas]

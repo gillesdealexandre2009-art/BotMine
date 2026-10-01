@@ -14,7 +14,7 @@ from discord.ext import commands, tasks
 import config
 import textos
 from database import agora
-from utils.helpers import TZ, embed, enviar_log, publicar_ou_editar, responder, slug
+from utils.helpers import TZ, com_banner, embed, enviar_log, publicar_ou_editar, responder, slug
 from utils.permissoes import eh_membro, nivel_do_membro
 from utils.views import BaseView, DonoView
 
@@ -109,8 +109,11 @@ class Tickets(commands.Cog):
             return False, textos.SETUP_SEM_CANAL
         lista = "\n".join(f"{emoji} **{rotulo}** — {desc}" for _, rotulo, emoji, desc in config.CATEGORIAS_TICKET)
         e = embed(textos.TICKET_PAINEL_TITULO, textos.TICKET_PAINEL_DESC.format(lista=lista))
+        embeds, arquivos = com_banner("tickets", [e])
         try:
-            await publicar_ou_editar(self.bot, guild, canal, "painel_tickets", embeds=[e], view=PainelTicketsView())
+            await publicar_ou_editar(
+                self.bot, guild, canal, "painel_tickets", embeds=embeds, view=PainelTicketsView(), arquivos=arquivos
+            )
         except discord.HTTPException:
             return False, textos.SETUP_ERRO_PUBLICAR
         return True, canal.mention

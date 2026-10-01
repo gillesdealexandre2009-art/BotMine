@@ -269,7 +269,11 @@ AJUDA_CAMPOS = {
         "🌟 Perfil e XP",
         "`/perfil` `/rank` `/ranking` — veja seu progresso\n`/daily` `/saldo` `/pagar` — suas {moeda}",
     ),
-    "diversao": ("🎮 Diversão", "`/mines jogar` — joguinho por diversão\n`/casamento pedir` — forme uma dupla de toca"),
+    "diversao": (
+        "🎮 Diversão",
+        "`/mines jogar` — joguinho por diversão\n`/casamento pedir` — forme uma dupla de toca\n"
+        "`/aniversario definir` — ganhe parabéns e presente no seu dia",
+    ),
     "suporte": ("🎫 Suporte", "Precisa de ajuda? Abra um ticket no canal de tickets."),
     "helper": ("🛡️ Helper", "`/warn` `/avisos` `/caso` — avisos e histórico"),
     "staff": (
@@ -326,3 +330,261 @@ SETUP_APLICAR_OK = "✅ {alvo}: aplicado ({tier})."
 SETUP_APLICAR_ERRO_CARGO = "⚠️ {alvo}: não consegui mexer em {cargos} (suba o meu cargo acima deles)."
 SETUP_APLICAR_ERRO_PERM = "❌ {alvo}: falha de permissão do Discord ao aplicar."
 SETUP_APLICAR_SUMICO = "❌ o canal/categoria configurado não existe mais."
+
+# ============================================================================ vitrine (canais fixos)
+# Tom da Kiza: fofa, mas com atitude. Provoca de leve, nunca humilha ninguém.
+# Campos {regras} {cargos} {chat} {tickets} {duvidas} viram menções de canal; {moeda} vira o nome da moeda.
+INFOS_POST = "📖 Sobre o Vulpus"
+INFOS_TITULO = "🦊 Bem-vindo(a) à toca do Vulpus!"
+INFOS_DESC = (
+    "Uma comunidade de **Minecraft Bedrock** feita para quem gosta de criar, explorar e fazer amigos.\n\n"
+    "Aqui **não existe pay-to-win**. Ninguém compra vantagem: o que conta é a sua criatividade "
+    "(e o quanto você aguenta me ouvir falar 😼)."
+)
+INFOS_CAMPOS = [
+    (
+        "🌲 O que tem por aqui",
+        "Chat, mídias, eventos, pergunta do dia, drops de {moeda} e um servidor de Minecraft sendo preparado com carinho.",
+    ),
+    (
+        "🚫 Sem pay-to-win",
+        "Apoiar o servidor dá só coisas **decorativas** e prioridade em anúncios e eventos. Poder dentro do jogo, nunca.",
+    ),
+    ("🗺️ Por onde começar", "1. Leia as {regras}\n2. Escolha seus cargos em {cargos}\n3. Dê um oi no {chat}. Eu não mordo. Muito."),
+    ("🎫 Precisa de ajuda?", "Abra um tíquete em {tickets} ou pergunte em {duvidas}."),
+]
+INFOS_RODAPE = "Kiza Misuchi • guardiã da toca"
+
+KITSUNE_TITULO = "🦊 Seja um Kitsune"
+KITSUNE_DESC = (
+    "Os **Kitsunes** são as raposas que ajudam a manter a toca de pé. Sem eles, eu estaria "
+    "dormindo num servidor desligado. 😿\n\n"
+    "**Como virar Kitsune:** dê **boost** no servidor (o plano mensal, cerca de R$ 10).\n"
+    "O cargo fica com você enquanto o boost estiver ativo."
+)
+KITSUNE_CAMPOS = [
+    ("✨ Vantagens decorativas", "Cargo e cor exclusivos de Kitsune e destaque na lista de membros."),
+    ("📢 Prioridade", "Fica sabendo primeiro dos anúncios e tem prioridade nas vagas de eventos."),
+    (
+        "⚖️ E pay-to-win?",
+        "**Nunca.** Kitsune não ganha mais XP, mais {moeda} nem vantagem no jogo. É carinho, não poder.",
+    ),
+]
+KITSUNE_RODAPE = "Obrigada, de verdade, a cada Kitsune. 🧡"
+
+LORE_TITULO = "📖 A lenda de Kiza Misuchi"
+LORE_CAPITULOS = [
+    (
+        "🌙 I. A raposa de uma cauda só",
+        "Dizem que toda kitsune ganha uma cauda nova a cada grande história que vive. "
+        "Kiza Misuchi nasceu com uma só, e odiava isso. As outras raposas tinham nove, brilhantes, "
+        "e ela tinha... uma. Branquinha. Meio despenteada.",
+    ),
+    (
+        "🌲 II. A floresta de blocos",
+        "Cansada de esperar histórias caírem do céu, Kiza andou até achar uma floresta estranha, "
+        "feita de blocos. Lá, as pessoas construíam casas, castelos e coisas que nem tinham nome. "
+        "E cada coisa criada contava uma história.",
+    ),
+    (
+        "🏡 III. A toca",
+        "Kiza cavou uma toca no meio da floresta e a chamou de **Vulpus**. Não para guardar tesouros, "
+        "mas para guardar **gente**. Quem chegasse e criasse algo junto deixava um pouquinho de história por lá.",
+    ),
+    (
+        "🦊 IV. As Caudas",
+        "Cada história contada na toca vira uma **Cauda**. É por isso que você ganha Caudas conversando, "
+        "jogando e aparecendo. Kiza diz que não liga, mas conta todas, uma por uma, toda noite.",
+    ),
+    (
+        "💎 V. As pérolas",
+        "Os momentos mais bonitos da toca viram **pérolas** e ficam guardados para sempre. "
+        "Se a Kiza um dia ganhar suas nove caudas, vai ser por causa de quem está lendo isto. "
+        "Ela nunca vai admitir em voz alta, claro.",
+    ),
+]
+LORE_RODAPE = "Capítulos novos aparecem conforme a toca cresce."
+
+COMANDOS_TITULO = "🤖 O que a Kiza sabe fazer"
+COMANDOS_DESC = "Todos os comandos começam com `/`. Use aqui mesmo, que é o lugar deles. 😼"
+COMANDOS_CAMPOS = [
+    ("🌟 Progresso", "`/perfil` `/rank` `/ranking`: seu nível e o dos outros"),
+    ("🦊 {moeda}", "`/daily`: resgate diário (a sequência aumenta o valor)\n`/saldo` `/pagar`: sua carteira"),
+    (
+        "🎂 Aniversário",
+        "`/aniversario definir`: eu te dou parabéns (e um presente) no seu dia\n`/aniversario lista`: próximos aniversários",
+    ),
+    ("🎮 Diversão", "`/mines jogar`: ache as casas seguras sem explodir\n`/casamento pedir`: forme uma dupla de toca"),
+    ("ℹ️ Outros", "`/ajuda`: este resumo, onde você estiver\n`/status`: vê se eu estou acordada"),
+]
+COMANDOS_RODAPE = "Me marque no chat se quiser conversar. Prometo responder. Talvez."
+
+DUVIDAS_POST = "❓ Perguntas frequentes"
+DUVIDAS_TITULO = "❓ Perguntas frequentes"
+DUVIDAS_DESC = "Antes de abrir um post novo, dá uma olhadinha aqui. Eu já respondi isso umas mil vezes. 🙄💛"
+DUVIDAS_CAMPOS = [
+    (
+        "Quando o servidor de Minecraft abre?",
+        "Ele está sendo preparado. Quando tiver data, sai no canal de aviso, e os Kitsunes ficam sabendo primeiro.",
+    ),
+    ("É Java ou Bedrock?", "**Bedrock** (celular, console e Windows)."),
+    ("Como ganho {moeda}?", "`/daily` todo dia, respondendo a pergunta do dia, pegando drops no chat e no seu aniversário."),
+    ("Para que servem as {moeda}?", "Jogos, união de toca e, no futuro, coisas decorativas. Nada de vantagem no jogo."),
+    ("Como subo de nível?", "Conversando! Cada mensagem rende XP, com um intervalo entre elas. Flood não adianta, espertinho."),
+    ("Como mudo a cor do meu nome?", "No canal de cargos, no menu **Cores**."),
+    ("Fui punido injustamente, e agora?", "Abra um tíquete e explique com calma. A staff revisa."),
+    ("Como viro Kitsune?", "Dando boost no servidor. Está tudo no canal **seja-um-kitsune**."),
+]
+
+# (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
+CHANGELOG = [
+    (
+        "1.1.0",
+        "A toca acordou!",
+        [
+            "🎨 Painel de cargos novo, com banner e emojis em cada grupo",
+            "❓ **Pergunta do dia** no chat, com {moeda} para quem responder",
+            "💎 **Pérolas**: mensagens com muitas ⭐ vão para o mural",
+            "🎁 **Drops** de {moeda} aparecem no chat. Seja rápido!",
+            "🎂 `/aniversario`: parabéns e presente no seu dia",
+            "🦊 **Sábado da Raposa**: drops em dobro aos sábados",
+            "💬 Agora eu converso: respondo menção, bom dia, boa noite...",
+            "⚖️ Kitsune não dá mais bônus de XP nem de daily. Aqui é sem pay-to-win",
+        ],
+    ),
+]
+CHANGELOG_TITULO = "🎞️ Versão {versao}: {titulo}"  # {versao} {titulo}
+
+# ============================================================================ vida (engajamento)
+QOTD_TITULO = "❓ Pergunta do dia"
+QOTD_DESC = (
+    "**{pergunta}**\n\nResponda no tópico abaixo e ganhe **{premio}**. Só vale a primeira resposta de cada um, tá? 😼"
+)  # {pergunta} {premio}
+QOTD_TOPICO = "Respostas de {data}"  # {data}
+PERGUNTAS_DO_DIA = [
+    "Se você pudesse morar em qualquer bioma do Minecraft, qual seria?",
+    "Qual foi a construção mais bonita que você já fez?",
+    "Creeper ou Enderman: qual é o mais irritante?",
+    "Se você fosse um mob, qual seria?",
+    "Qual comida do Minecraft você comeria na vida real?",
+    "Qual o melhor encantamento de todos os tempos?",
+    "Você é do time que constrói ou do time que explora?",
+    "Qual música você mais escuta ultimamente?",
+    "Se a toca tivesse uma estátua, de quem ou do quê seria?",
+    "Qual o seu pet favorito no Minecraft?",
+    "Qual jogo você jogaria para sempre, se só pudesse escolher um?",
+    "Qual foi a coisa mais engraçada que já aconteceu com você num jogo?",
+    "Se você pudesse adicionar um bloco novo ao Minecraft, qual seria?",
+    "Café da manhã ideal: salgado ou doce?",
+    "Qual o seu filme ou anime de conforto?",
+    "Você prefere o dia ou a noite?",
+    "Qual seria o nome da sua cidade no servidor?",
+    "Nether ou End: onde você construiria sua casa?",
+    "Qual foi a última coisa que te fez rir muito?",
+    "Se você ganhasse 1 milhão de Caudas, o que faria?",
+    "Qual habilidade inútil você tem orgulho de ter?",
+    "Sobrevivência ou criativo?",
+    "Qual o seu emoji favorito? (sem mentir)",
+    "Que evento você queria ver na toca?",
+    "Qual o lugar mais bonito que você já visitou (de verdade ou num jogo)?",
+    "Gato, cachorro ou raposa? (pense bem antes de responder 😼)",
+    "Qual a pior morte que você já teve no Minecraft?",
+    "Qual o seu YouTuber ou streamer favorito?",
+    "Se você tivesse uma loja no servidor, o que venderia?",
+    "Qual o seu hobby fora dos jogos?",
+    "Que superpoder você escolheria?",
+    "Qual a sua estação do ano favorita?",
+    "Picareta de netherite vale mesmo a pena?",
+    "Qual seria o seu título de NPC no servidor?",
+    "Você dá nome para seus pets e ferramentas no jogo?",
+    "Qual a sua cor favorita? Ela está no painel de cores?",
+    "Prefere jogar sozinho(a) ou em grupo?",
+    "O que você mais gosta na toca até agora?",
+    "Qual mob merecia ser mais forte?",
+    "Se a Kiza ganhasse uma segunda cauda, de que cor seria?",
+    "Qual é a sua construção dos sonhos?",
+    "Qual música te lembra de alguém?",
+    "Qual o seu doce favorito?",
+    "Qual o seu maior medo no Minecraft? (fala a verdade: caverna escura)",
+    "O que você nunca fez no Minecraft e quer fazer?",
+]
+
+PEROLAS_EMOJI = "⭐"
+PEROLA_CABECALHO = "{emoji} **{n}** • {canal}"  # {emoji} {n} {canal}
+PEROLA_LINK = "Ver mensagem original"
+
+DROP_TITULO = "🎁 Caudas perdidas apareceram!"
+DROP_TITULO_SABADO = "🦊 Sábado da Raposa: drop em dobro!"
+DROP_DESC = "Tem **{valor}** jogadas no chão. Quem pegar primeiro leva. Rápido, antes que eu pegue! 😼"  # {valor}
+DROP_BOTAO = "Pegar!"
+DROP_PEGO = "🎉 {mencao} pegou **{valor}**! O resto... fica pra próxima. 😼"  # {mencao} {valor}
+DROP_JA_PEGO = "🙄 Tarde demais, alguém foi mais rápido."
+DROP_SO_MEMBROS = "🦊 Aceite as regras primeiro, aí você pode pegar drops!"
+DROP_EXPIROU = "💨 Ninguém pegou... então eu peguei. Valeu! 🦊"
+
+SABADO_ANUNCIO = (
+    "🦊 **Sábado da Raposa!** Hoje os drops de {moeda} vêm em **dobro** e aparecem mais vezes. "
+    "Fica de olho no chat. 😼"
+)  # {moeda}
+
+NIVER_DEFINIDO = "🎂 Anotado: **{dia:02d}/{mes:02d}**. No seu dia eu apareço. Vê se não some! 😼"  # {dia} {mes}
+NIVER_REMOVIDO = "✅ Tirei seu aniversário da lista. Não vou mais lembrar. (Vou, mas finjo que não.)"
+NIVER_DATA_INVALIDA = "🙄 Essa data não existe. Tenta de novo com um dia e um mês de verdade."
+NIVER_SEU = "🎂 Seu aniversário está marcado para **{dia:02d}/{mes:02d}**."  # {dia} {mes}
+NIVER_SEM = "🦊 Você ainda não marcou seu aniversário. Use `/aniversario definir`."
+NIVER_LISTA_TITULO = "🎂 Próximos aniversários"
+NIVER_LISTA_VAZIA = "🦊 Ninguém marcou aniversário ainda. Seja o primeiro!"
+NIVER_PARABENS = (
+    "🎂 **Hoje é dia de festa na toca!**\n{mencoes}\n\nParabéns! Ganhou **{premio}** de presente. "
+    "E não, não vou cantar. ...tá bom, só um pouquinho. 🎶🦊"
+)  # {mencoes} {premio}
+
+CONVERSA_MENCAO = [
+    "Me chamou? 👀",
+    "Oi! Tava aqui contando minhas Caudas. Que foi? 🦊",
+    "Presente! 🙋‍♀️ Fala.",
+    "Hm? Só não me pede pra fazer lição de casa. 😼",
+    "Oi oi! Se for pedir Caudas, a resposta é não. 😤",
+    "Tô ocupada sendo fofa, mas pode falar. 💅",
+    "Que foi, raposinha?",
+    "Você me marcou só pra ver se eu respondia, né? 🙄 Respondi.",
+    "Kiza na área! 🦊✨",
+    "Se for fofoca, conta tudo. 👀",
+]
+CONVERSA_BOM_DIA = [
+    "Bom dia! ☀️ Já tomou água hoje?",
+    "Bom diaaa! 🦊 Hoje vai ser um bom dia, eu decidi.",
+    "Bom dia! Acordou cedo ou ainda nem dormiu? 👀",
+    "Bom dia, raposinha! ☀️",
+]
+CONVERSA_BOA_TARDE = [
+    "Boa tarde! 🌤️ Bora fazer algo legal hoje?",
+    "Boa tarde! Hora perfeita pra uma soneca... não que eu tire sonecas. 😴",
+    "Boa tardeee! 🦊",
+]
+CONVERSA_BOA_NOITE = [
+    "Boa noite! 🌙 Dorme bem e sonha com Caudas.",
+    "Boa noite! Vai dormir mesmo ou vai ficar no celular? 👀",
+    "Boa noite, raposinha! 🌙✨",
+    "Boa noite! Eu fico aqui de guarda. Como sempre. 😌",
+]
+CONVERSA_OBRIGADO = [
+    "De nada! 💛",
+    "Imagina! Sou incrível, eu sei. 😌",
+    "Por nada! Me paga em Caudas. Brincadeira. ...ou não. 😼",
+]
+PROVOCACOES = [
+    "Cadê todo mundo? 😒 A toca tá tão quieta que dá pra ouvir um creeper respirando.",
+    "Oi? Alô? Tem alguém aí ou eu tô falando sozinha de novo? 🦊",
+    "Chat parado... perfeito pra alguém começar um assunto. Alguém. Qualquer um. 👀",
+    "Se ninguém falar nada em 5 minutos, eu começo a cantar. Vocês foram avisados. 🎶",
+    "Pergunta rápida pra acordar o chat: o que vocês estão fazendo agora?",
+    "Tô entediada. Alguém conta uma coisa legal que aconteceu hoje? 🦊",
+]
+XP_NIVEL_UP_FRASES = [
+    "🌟 {mencao} subiu para o **nível {nivel}**! Tá ficando famoso(a), hein? 😼",
+    "🌟 **Nível {nivel}**, {mencao}! Eu sabia que você conseguia. (Mentira, tava em dúvida.)",
+    "🌟 {mencao} chegou no **nível {nivel}**! Continua assim que eu fico orgulhosa. 🦊",
+    "🌟 Olha só quem subiu para o **nível {nivel}**: {mencao}! 🎉",
+    "🌟 {mencao} agora é **nível {nivel}**. Tá falando demais ou eu que tô contando errado? 👀",
+]  # {mencao} {nivel}

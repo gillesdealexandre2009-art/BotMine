@@ -9,7 +9,7 @@ from discord.ext import commands
 
 import config
 import textos
-from utils.helpers import embed, enviar_log, pode_gerenciar_cargo, publicar_ou_editar, responder
+from utils.helpers import com_banner, embed, enviar_log, pode_gerenciar_cargo, publicar_ou_editar, responder
 from utils.views import BaseView
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -102,9 +102,13 @@ class Entrada(commands.Cog):
         )
         e.set_thumbnail(url=membro.display_avatar.url)
         e.set_footer(text=textos.BOAS_VINDAS_RODAPE.format(n=guild.member_count or "?"))
+        embeds, arquivos = com_banner("boas_vindas", [e])
         try:
             await canal.send(
-                content=membro.mention, embed=e, allowed_mentions=discord.AllowedMentions(users=[membro])
+                content=membro.mention,
+                embeds=embeds,
+                files=arquivos,
+                allowed_mentions=discord.AllowedMentions(users=[membro]),
             )
         except discord.HTTPException:
             log.warning("Falha ao enviar boas-vindas em %s", guild.id, exc_info=True)
@@ -132,8 +136,9 @@ class Entrada(commands.Cog):
         for titulo, texto in textos.REGRAS:
             e.add_field(name=titulo, value=texto, inline=False)
         e.set_footer(text=textos.REGRAS_RODAPE)
+        embeds, arquivos = com_banner("regras", [e])
         try:
-            await publicar_ou_editar(self.bot, guild, canal, "regras", embeds=[e])
+            await publicar_ou_editar(self.bot, guild, canal, "regras", embeds=embeds, arquivos=arquivos)
         except discord.HTTPException:
             return False, textos.SETUP_ERRO_PUBLICAR
         return True, canal.mention
@@ -143,8 +148,11 @@ class Entrada(commands.Cog):
         if canal is None:
             return False, textos.SETUP_SEM_CANAL
         e = embed(textos.VERIFICACAO_TITULO, textos.VERIFICACAO_DESC)
+        embeds, arquivos = com_banner("verificacao", [e])
         try:
-            await publicar_ou_editar(self.bot, guild, canal, "verificacao", embeds=[e], view=VerificacaoView())
+            await publicar_ou_editar(
+                self.bot, guild, canal, "verificacao", embeds=embeds, view=VerificacaoView(), arquivos=arquivos
+            )
         except discord.HTTPException:
             return False, textos.SETUP_ERRO_PUBLICAR
         return True, canal.mention

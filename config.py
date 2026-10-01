@@ -30,7 +30,7 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.0.0"
+VERSAO = "1.1.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -57,6 +57,8 @@ COGS_PADRAO = [
     "mines",
     "geral",
     "manutencao",
+    "vitrine",
+    "vida",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -94,6 +96,26 @@ CANAIS_CONFIG = {
     "logs_gerais": "Logs gerais",
     "sugestoes": "Sugestões",
     "aviso_status": "Aviso fixo (ex.: \"em construção\", status de um addon futuro)",
+    "infos": "Infos (fórum ou texto: apresentação do servidor)",
+    "kitsune": "Seja um Kitsune (vantagens do VIP)",
+    "lore": "Lore (história da Kiza e da toca)",
+    "changelog": "Changelog (novidades da Kiza)",
+    "comandos": "Comandos (guia dos comandos)",
+    "duvidas": "Dúvidas (fórum ou texto: perguntas frequentes)",
+    "chat": "Chat principal (pergunta do dia, drops, conversa)",
+    "perolas": "Pérolas (mural das mensagens mais curtidas)",
+}
+# Se um desses canais não estiver no /setup, a Kiza procura um canal cujo nome contenha a palavra
+# (sem acento e sem maiúscula). Configurar no /setup sempre vence.
+CANAIS_POR_NOME = {
+    "infos": "infos",
+    "kitsune": "kitsune",
+    "lore": "lore",
+    "changelog": "changelog",
+    "comandos": "comandos",
+    "duvidas": "duvidas",
+    "chat": "chat",
+    "perolas": "perolas",
 }
 CARGOS_BASE = {
     "visitante": "Visitante (cargo de quem acabou de entrar)",
@@ -143,8 +165,8 @@ AJUSTES = {
     "xp_max": (25, 1, 500, "XP máximo por mensagem"),
     "xp_cooldown": (60, 5, 3600, "Segundos entre mensagens que rendem XP"),
     "xp_aviso_nivel": (1, 0, 1, "1 = avisa no chat quando alguém sobe de nível"),
-    "kitsune_xp_pct": (25, 0, 500, "Bônus de XP do cargo Kitsune (%)"),
-    "kitsune_daily_pct": (10, 0, 500, "Bônus no daily do cargo Kitsune (%)"),
+    "kitsune_xp_pct": (0, 0, 500, "Bônus de XP do cargo Kitsune (%)"),
+    "kitsune_daily_pct": (0, 0, 500, "Bônus no daily do cargo Kitsune (%)"),
     "daily_base": (100, 1, 100000, "Valor base do /daily"),
     "daily_passo": (10, 0, 10000, "Acréscimo por dia de sequência no /daily"),
     "daily_streak_max": (7, 1, 60, "Dias de sequência que aumentam o /daily"),
@@ -166,6 +188,17 @@ AJUSTES = {
     "automod_timeout_min": (5, 1, 1440, "Minutos do timeout curto do automod"),
     "ticket_sla_min": (60, 0, 10080, "Minutos até lembrar a staff de um ticket sem dono (0 = desliga)"),
     "ticket_ping_staff": (1, 0, 1, "1 = menciona a staff ao abrir ticket"),
+    "qotd_hora": (19, -1, 23, "Hora da pergunta do dia (-1 = desliga)"),
+    "qotd_premio": (50, 0, 100000, "Caudas para quem responder a pergunta do dia"),
+    "perolas_min": (3, 1, 50, "Reações ⭐ para uma mensagem virar pérola"),
+    "drop_max_dia": (3, 0, 20, "Drops de Caudas por dia no chat (0 = desliga)"),
+    "drop_min": (30, 1, 100000, "Valor mínimo de um drop"),
+    "drop_max": (80, 1, 100000, "Valor máximo de um drop"),
+    "conversa": (1, 0, 1, "1 = Kiza responde menções e cumprimentos"),
+    "provocar_h": (4, 0, 48, "Horas mínimas entre provocações de chat parado (0 = desliga)"),
+    "chat_parado_min": (120, 15, 1440, "Minutos sem mensagem para o chat contar como parado"),
+    "niver_premio": (200, 0, 100000, "Caudas de presente de aniversário"),
+    "sabado_mult": (2, 1, 5, "Multiplicador de drops no Sábado da Raposa (1 = desliga o evento)"),
 }
 
 # --------------------------------------------------------------------------- permissões do bot
