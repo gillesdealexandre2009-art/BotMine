@@ -12,7 +12,16 @@ from discord.ext import commands
 
 import config
 import textos
-from utils.helpers import barra_progresso, embed, formatar_moeda, formatar_numero, nivel_por_xp, pode_gerenciar_cargo
+from utils.helpers import (
+    barra_progresso,
+    embed,
+    formatar_moeda,
+    formatar_numero,
+    nivel_por_xp,
+    pode_gerenciar_cargo,
+    proximo_rank,
+    rank_do_nivel,
+)
 from utils.permissoes import checar_membro, eh_kitsune, eh_membro
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -20,6 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 log = logging.getLogger("kiza.xp")
 MEDALHAS = ["🥇", "🥈", "🥉"]
+BONUS_BUMP_SEG = 2 * 3600  # o bônus de quem bumpa dura o cooldown do DISBOARD
 
 
 class XP(commands.Cog):
@@ -62,21 +72,56 @@ class XP(commands.Cog):
         xp_min = await banco.ajuste(guild.id, "xp_min")
         xp_max = await banco.ajuste(guild.id, "xp_max")
         ganho = random.randint(min(xp_min, xp_max), max(xp_min, xp_max))
-        if await eh_kitsune(self.bot, membro):
-            ganho = ganho * (100 + await banco.ajuste(guild.id, "kitsune_xp_pct")) // 100
+        ganho = ganho * (100 + await self.bonus_xp_pct(membro)) // 100
 
         antes, depois = await banco.adicionar_xp(guild.id, membro.id, ganho)
         nivel_antes, nivel_depois = nivel_por_xp(antes)[0], nivel_por_xp(depois)[0]
         if nivel_depois > nivel_antes:
             await self.aplicar_cargo_nivel(membro, nivel_depois)
+            premio = await self.premiar_niveis(membro, nivel_antes, nivel_depois)
             if await banco.ajuste(guild.id, "xp_aviso_nivel") == 1:
+                texto = random.choice(textos.XP_NIVEL_UP_FRASES).format(mencao=membro.mention, nivel=nivel_depois)
+                texto += self.extras_do_nivel(nivel_antes, nivel_depois, premio)
                 try:
-                    await mensagem.channel.send(
-                        random.choice(textos.XP_NIVEL_UP_FRASES).format(mencao=membro.mention, nivel=nivel_depois),
-                        allowed_mentions=discord.AllowedMentions(users=[membro]),
-                    )
+                    await mensagem.channel.send(texto, allowed_mentions=discord.AllowedMentions(users=[membro]))
                 except discord.HTTPException:
                     pass
+
+    async def bonus_xp_pct(self, membro: discord.Member) -> int:
+        """Maior bônus que a pessoa tem agora (eles não somam): Kitsune ou quem deu o último bump (por 2h)."""
+        banco, guild = self.bot.banco, membro.guild
+        bonus = 0
+        if await eh_kitsune(self.bot, membro):
+            bonus = max(bonus, await banco.ajuste(guild.id, "kitsune_xp_pct"))
+        if await banco.get_config(guild.id, "bump_quem") == str(membro.id):
+            quando = await banco.get_config_int(guild.id, "bump_ts") or 0
+            if time.time() - quando < BONUS_BUMP_SEG:
+                bonus = max(bonus, await banco.ajuste(guild.id, "bump_xp_pct"))
+        return bonus
+
+    async def premiar_niveis(self, membro: discord.Member, nivel_antes: int, nivel_depois: int) -> int:
+        """Caudas por cada nível novo (nível × nivel_premio). A chave única impede pagar o mesmo nível duas vezes."""
+        banco, guild = self.bot.banco, membro.guild
+        por_nivel = await banco.ajuste(guild.id, "nivel_premio")
+        total = 0
+        for nivel in range(nivel_antes + 1, nivel_depois + 1):
+            valor = nivel * por_nivel
+            if valor > 0 and await banco.recompensar_uma_vez(guild.id, f"nivel:{nivel}:{membro.id}", membro.id, valor, "nivel"):
+                total += valor
+        return total
+
+    @staticmethod
+    def extras_do_nivel(nivel_antes: int, nivel_depois: int, premio: int) -> str:
+        linhas = []
+        if premio:
+            linhas.append(textos.XP_NIVEL_PREMIO.format(premio=formatar_moeda(premio)))
+        if rank_do_nivel(nivel_depois) != rank_do_nivel(nivel_antes):
+            emoji, nome = rank_do_nivel(nivel_depois)
+            linhas.append(textos.XP_NOVO_RANK.format(emoji=emoji, rank=nome))
+        cores = [nome for nome, minimo in config.CORES_NIVEL.items() if nivel_antes < minimo <= nivel_depois]
+        if cores:
+            linhas.append(textos.XP_COR_DESBLOQUEADA.format(cores=", ".join(c.title() for c in cores)))
+        return "".join(f"\n{linha}" for linha in linhas)
 
     async def aplicar_cargo_nivel(self, membro: discord.Member, nivel: int) -> None:
         """Dá o cargo do maior degrau de XP já alcançado e tira os degraus anteriores."""
@@ -110,6 +155,8 @@ class XP(commands.Cog):
         pos = await self.bot.banco.posicao(interaction.guild_id, alvo.id, "xp")
         e = embed(textos.RANK_TITULO.format(nome=alvo.display_name))
         e.set_thumbnail(url=alvo.display_avatar.url)
+        emoji, rank = rank_do_nivel(nivel)
+        e.description = f"{emoji} **{rank}**"
         e.add_field(name="Nível", value=str(nivel))
         e.add_field(name="XP total", value=formatar_numero(perfil["xp"]))
         e.add_field(name="Posição", value=f"#{pos}" if pos and perfil["xp"] > 0 else "—")
@@ -118,6 +165,13 @@ class XP(commands.Cog):
             value=f"{barra_progresso(dentro, necessario)}  {formatar_numero(dentro)}/{formatar_numero(necessario)}",
             inline=False,
         )
+        seguinte = proximo_rank(nivel)
+        if seguinte:
+            e.add_field(name="Próximo rank", value=f"{seguinte[1]} {seguinte[2]} no nível {seguinte[0]}", inline=False)
+        if alvo.id == interaction.user.id and isinstance(alvo, discord.Member):
+            bonus = await self.bonus_xp_pct(alvo)
+            if bonus:
+                e.set_footer(text=textos.RANK_BONUS.format(mult=f"{(100 + bonus) / 100:g}".replace(".", ",")))
         await interaction.response.send_message(embed=e)
 
     @app_commands.command(name="ranking", description="Os 10 primeiros do servidor.")

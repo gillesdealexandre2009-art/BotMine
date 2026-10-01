@@ -116,6 +116,21 @@ def nivel_por_xp(xp: int) -> tuple[int, int, int]:
     return nivel, restante, xp_para_subir(nivel)
 
 
+def rank_do_nivel(nivel: int) -> tuple[str, str]:
+    """(emoji, nome) do rank de um nível."""
+    _, emoji, nome = max((r for r in config.RANKS if r[0] <= nivel), key=lambda r: r[0])
+    return emoji, nome
+
+
+def proximo_rank(nivel: int) -> Optional[tuple[int, str, str]]:
+    """(nível, emoji, nome) do próximo rank, ou None se já está no último."""
+    return next((r for r in sorted(config.RANKS) if r[0] > nivel), None)
+
+
+def nivel_da_cor(nome_cargo: str) -> int:
+    return config.CORES_NIVEL.get(sem_acento(nome_cargo), 0)
+
+
 # ---------------------------------------------------------------- erros / respostas
 def registrar_erro(erro: BaseException) -> str:
     codigo = uuid.uuid4().hex[:8]

@@ -10,7 +10,7 @@ from discord.ext import commands
 
 import config
 import textos
-from utils.helpers import embed, formatar_moeda, formatar_numero, hoje_e_ontem, nivel_por_xp, responder
+from utils.helpers import embed, formatar_moeda, formatar_numero, hoje_e_ontem, nivel_por_xp, rank_do_nivel, responder
 from utils.permissoes import checar_membro, eh_kitsune, eh_membro, exigir_nivel
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -84,6 +84,8 @@ class Economia(commands.Cog):
         e = embed(textos.PERFIL_TITULO.format(nome=alvo.display_name))
         e.set_thumbnail(url=alvo.display_avatar.url)
         e.add_field(name=f"{config.MOEDA_EMOJI} {config.MOEDA_NOME}", value=formatar_numero(perfil["saldo"]))
+        emoji, rank = rank_do_nivel(nivel)
+        e.description = f"{emoji} **{rank}**"
         e.add_field(name="🌟 Nível", value=f"{nivel} ({formatar_numero(perfil['xp'])} XP)")
         e.add_field(name="🔥 Sequência do daily", value=f"{perfil['daily_streak']} dia(s)")
         if perfil["casado_com"]:

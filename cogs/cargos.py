@@ -9,7 +9,17 @@ from discord.ext import commands
 
 import config
 import textos
-from utils.helpers import com_banner, embed, pode_gerenciar_cargo, publicar_ou_editar, responder, sem_acento
+from utils.helpers import (
+    com_banner,
+    embed,
+    formatar_moeda,
+    nivel_da_cor,
+    nivel_por_xp,
+    pode_gerenciar_cargo,
+    publicar_ou_editar,
+    responder,
+    sem_acento,
+)
 from utils.permissoes import eh_membro
 from utils.views import BaseView
 
@@ -47,9 +57,28 @@ class PainelCargosView(BaseView):
         self.add_item(SelectGrupo(grupo, opcoes))  # sem opções = registro no setup_hook (só custom_id importa)
 
 
+class BotaoAvisosBump(discord.ui.Button):
+    def __init__(self) -> None:
+        super().__init__(
+            custom_id="kiza:cargos:bump", label=textos.BUMP_PAINEL_BOTAO, emoji="🔔", style=discord.ButtonStyle.primary
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        cog = interaction.client.get_cog("Bump")
+        if cog is None:
+            await responder(interaction, textos.FUNCAO_DESLIGADA)
+            return
+        await cog.alternar_avisos(interaction)  # type: ignore[attr-defined]
+
+
+class PainelBumpView(BaseView):
+    def __init__(self) -> None:
+        super().__init__(timeout=None)
+        self.add_item(BotaoAvisosBump())
+
+
 def emoji_do_cargo(nome: str) -> Optional[str]:
     return config.EMOJIS_CARGOS.get(sem_acento(nome))
-
 
 
 class Cargos(commands.Cog):
@@ -57,7 +86,7 @@ class Cargos(commands.Cog):
         self.bot = bot
 
     def views_persistentes(self) -> list[discord.ui.View]:
-        return [PainelCargosView(grupo) for grupo in config.GRUPOS_CARGOS]
+        return [*(PainelCargosView(grupo) for grupo in config.GRUPOS_CARGOS), PainelBumpView()]
 
     async def aplicar_escolha(self, interaction: discord.Interaction, grupo: str, valor: str) -> None:
         await interaction.response.defer(ephemeral=True)
@@ -77,6 +106,12 @@ class Cargos(commands.Cog):
         if novo is not None and not pode_gerenciar_cargo(guild, novo):
             await responder(interaction, textos.CARGOS_ERRO_PERM.format(cargo=novo.name))
             return
+        if novo is not None and grupo == "cores":
+            minimo = nivel_da_cor(novo.name)
+            nivel = nivel_por_xp((await self.bot.banco.obter_perfil(guild.id, membro.id))["xp"])[0]
+            if nivel < minimo:
+                await responder(interaction, textos.CARGOS_COR_BLOQUEADA.format(cargo=novo.name, nivel=minimo, atual=nivel))
+                return
 
         remover = [r for r in membro.roles if r.id in ids_grupo and r.id != escolha]
         try:
@@ -109,8 +144,10 @@ class Cargos(commands.Cog):
             opcoes, linhas = [], []
             for r in cargos:
                 emoji = emoji_do_cargo(r.name)
-                opcoes.append(discord.SelectOption(label=r.name[:100], value=str(r.id), emoji=emoji))
-                linhas.append(f"{emoji or '•'} {r.mention}")
+                minimo = nivel_da_cor(r.name) if grupo == "cores" else 0
+                trava = textos.CARGOS_TRAVA.format(nivel=minimo) if minimo else None
+                opcoes.append(discord.SelectOption(label=r.name[:100], value=str(r.id), emoji=emoji, description=trava))
+                linhas.append(f"{emoji or '•'} {r.mention}" + (f" · {trava}" if trava else ""))
             opcoes.append(discord.SelectOption(label=textos.CARGOS_NENHUM, value="0", emoji="🚫"))
 
             e = embed(info["titulo"], "\n".join(linhas))
@@ -127,6 +164,7 @@ class Cargos(commands.Cog):
             publicados += 1
         if not publicados:
             return False, textos.SETUP_SEM_CARGOS
+        await self._publicar_bump(guild, canal)
 
         # Painel antigo (todos os grupos numa mensagem só) sai do canal.
         antigo = await self.bot.banco.get_config_int(guild.id, "msg_painel_cargos")
@@ -137,6 +175,26 @@ class Cargos(commands.Cog):
                 pass
             await self.bot.banco.set_config(guild.id, "msg_painel_cargos", "")
         return True, canal.mention
+
+    async def _publicar_bump(self, guild: discord.Guild, canal: discord.TextChannel) -> None:
+        """Última mensagem do canal de cargos: convite para receber os avisos de bump (só se o cargo existir)."""
+        if await self.bot.banco.get_config_int(guild.id, "cargo_bump") is None:
+            return
+        banco = self.bot.banco
+        e = embed(
+            textos.BUMP_PAINEL_TITULO,
+            textos.BUMP_PAINEL_DESC.format(
+                premio=formatar_moeda(await banco.ajuste(guild.id, "bump_premio")),
+                mult=f"{(100 + await banco.ajuste(guild.id, 'bump_xp_pct')) / 100:g}".replace(".", ","),
+            ),
+        )
+        embeds, arquivos = com_banner("bump", [e])
+        try:
+            await publicar_ou_editar(
+                self.bot, guild, canal, "painel_cargos_bump", embeds=embeds, view=PainelBumpView(), arquivos=arquivos
+            )
+        except discord.HTTPException:
+            log.warning("Falha ao publicar o convite de bump em %s", guild.id, exc_info=True)
 
 
 async def setup(bot: "Kiza") -> None:

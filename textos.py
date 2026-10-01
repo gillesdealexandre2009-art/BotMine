@@ -348,7 +348,8 @@ INFOS_CAMPOS = [
     ),
     (
         "🚫 Sem pay-to-win",
-        "Apoiar o servidor dá só coisas **decorativas** e prioridade em anúncios e eventos. Poder dentro do jogo, nunca.",
+        "Apoiar o servidor dá XP mais rápido, prioridade em anúncios e eventos e coisas decorativas. "
+        "Poder dentro do jogo, nunca.",
     ),
     ("🗺️ Por onde começar", "1. Leia as {regras}\n2. Escolha seus cargos em {cargos}\n3. Dê um oi no {chat}. Eu não mordo. Muito."),
     ("🎫 Precisa de ajuda?", "Abra um tíquete em {tickets} ou pergunte em {duvidas}."),
@@ -363,11 +364,13 @@ KITSUNE_DESC = (
     "O cargo fica com você enquanto o boost estiver ativo."
 )
 KITSUNE_CAMPOS = [
+    ("⚡ XP em dobro", "Kitsune ganha **2x XP** em toda mensagem. Sobe de rank e desbloqueia cores mais rápido."),
     ("✨ Vantagens decorativas", "Cargo e cor exclusivos de Kitsune e destaque na lista de membros."),
     ("📢 Prioridade", "Fica sabendo primeiro dos anúncios e tem prioridade nas vagas de eventos."),
     (
         "⚖️ E pay-to-win?",
-        "**Nunca.** Kitsune não ganha mais XP, mais {moeda} nem vantagem no jogo. É carinho, não poder.",
+        "**Nunca no jogo.** O XP em dobro só acelera o que todo mundo conquista conversando: "
+        "nada fica exclusivo de quem paga, e nada vale dentro do Minecraft.",
     ),
 ]
 KITSUNE_RODAPE = "Obrigada, de verdade, a cada Kitsune. 🧡"
@@ -437,6 +440,21 @@ DUVIDAS_CAMPOS = [
     ("Como ganho {moeda}?", "`/daily` todo dia, respondendo a pergunta do dia, pegando drops no chat e no seu aniversário."),
     ("Para que servem as {moeda}?", "Jogos, união de toca e, no futuro, coisas decorativas. Nada de vantagem no jogo."),
     ("Como subo de nível?", "Conversando! Cada mensagem rende XP, com um intervalo entre elas. Flood não adianta, espertinho."),
+    (
+        "Como funciona o ranking?",
+        "Seu nível define seu **rank**:\n🌱 Filhote (0) → 🦊 Raposinha (5) → 🍂 Raposa Andarilha (10) → "
+        "🌙 Raposa Lunar (15) → ✨ Raposa de Nove Caudas (20)\nVeja o seu com `/rank` e o top 10 com `/ranking`.",
+    ),
+    (
+        "O que ganho subindo de nível?",
+        "A cada nível: **nível × 25 {moeda}** (nível 10 = 250). Alguns níveis liberam cores:\n"
+        "🍉 Melancia (5) · 🔮 Nebulosa (10) · 🌙 Moon (15) · ☀️ Sun (20). As outras cores são livres desde o começo.",
+    ),
+    (
+        "Tem como ganhar XP mais rápido?",
+        "Sim! Quem dá **/bump** ganha **1,5x XP por 2h**, e Kitsunes ganham **2x XP** sempre. "
+        "Os bônus não somam: vale o maior.",
+    ),
     ("Como mudo a cor do meu nome?", "No canal de cargos, no menu **Cores**."),
     ("Fui punido injustamente, e agora?", "Abra um tíquete e explique com calma. A staff revisa."),
     ("Como viro Kitsune?", "Dando boost no servidor. Está tudo no canal **seja-um-kitsune**."),
@@ -446,6 +464,19 @@ DUVIDAS_CAMPOS = [
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
+    (
+        "1.2.0",
+        "Ranks, cores e bump",
+        [
+            "🏆 **Ranks**: 🌱 Filhote, 🦊 Raposinha, 🍂 Raposa Andarilha, 🌙 Raposa Lunar e ✨ Raposa de Nove Caudas",
+            "🎁 Subir de nível agora dá {moeda} (nível × 25)",
+            "🎨 Cores novas se desbloqueiam com nível: Melancia (5), Nebulosa (10), Moon (15) e Sun (20)",
+            "🚀 Lembrete de **/bump**: quem bumpa ganha {moeda} e **1,5x XP por 2h**",
+            "🔔 `/bump-avisos` ou o botão no canal de cargos: eu te marco quando o bump voltar",
+            "⚡ Kitsunes ganham **2x XP**",
+            "🎂 O aniversário agora só pode ser marcado uma vez (errou? tíquete com prova)",
+        ],
+    ),
     (
         "1.1.0",
         "A toca acordou!",
@@ -457,7 +488,6 @@ CHANGELOG = [
             "🎂 `/aniversario`: parabéns e presente no seu dia",
             "🦊 **Sábado da Raposa**: drops em dobro aos sábados",
             "💬 Agora eu converso: respondo menção, bom dia, boa noite...",
-            "⚖️ Kitsune não dá mais bônus de XP nem de daily. Aqui é sem pay-to-win",
         ],
     ),
 ]
@@ -618,6 +648,23 @@ PROVOCACOES = [
     "Pergunta rápida pra acordar o chat: o que vocês estão fazendo agora?",
     "Tô entediada. Alguém conta uma coisa legal que aconteceu hoje? 🦊",
 ]
+XP_NIVEL_PREMIO = "🎁 Ganhou **{premio}**!"  # {premio}
+XP_NOVO_RANK = "🏆 Novo rank: {emoji} **{rank}**!"  # {emoji} {rank}
+XP_COR_DESBLOQUEADA = "🎨 Cor desbloqueada: **{cores}**! Pegue no canal de cargos."  # {cores}
+RANK_BONUS = "⚡ Bônus de XP ativo: {mult}x"  # {mult}
+CARGOS_TRAVA = "🔒 nível {nivel}"  # {nivel}
+CARGOS_CORES_RODAPE = "🔒 Algumas cores se desbloqueiam subindo de nível. Veja o seu com /rank."
+CARGOS_COR_BLOQUEADA = (
+    "🔒 **{cargo}** é para quem está no **nível {nivel}** ou acima. Você está no {atual}. Bora conversar! 😼"
+)  # {cargo} {nivel} {atual}
+BUMP_PAINEL_TITULO = "🚀 Quer ajudar a divulgar a toca?"
+BUMP_PAINEL_DESC = (
+    "A cada 2h dá para usar o **/bump** do DISBOARD, que sobe o Vulpus na lista pública de servidores.\n\n"
+    "Quem bumpa ganha **{premio}** e **{mult}x XP por 2h**. 🦊\n"
+    "Clique no botão e eu te marco quando o bump estiver liberado. Clicou de novo, eu paro."
+)  # {premio} {mult}
+BUMP_PAINEL_BOTAO = "Quero ser avisado(a)"
+
 XP_NIVEL_UP_FRASES = [
     "🌟 {mencao} subiu para o **nível {nivel}**! Tá ficando famoso(a), hein? 😼",
     "🌟 **Nível {nivel}**, {mencao}! Eu sabia que você conseguia. (Mentira, tava em dúvida.)",

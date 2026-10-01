@@ -168,7 +168,7 @@ AJUSTES = {
     "xp_max": (25, 1, 500, "XP máximo por mensagem"),
     "xp_cooldown": (60, 5, 3600, "Segundos entre mensagens que rendem XP"),
     "xp_aviso_nivel": (1, 0, 1, "1 = avisa no chat quando alguém sobe de nível"),
-    "kitsune_xp_pct": (0, 0, 500, "Bônus de XP do cargo Kitsune (%)"),
+    "kitsune_xp_pct": (100, 0, 500, "Bônus de XP do cargo Kitsune (%) — 100 = 2x"),
     "kitsune_daily_pct": (0, 0, 500, "Bônus no daily do cargo Kitsune (%)"),
     "daily_base": (100, 1, 100000, "Valor base do /daily"),
     "daily_passo": (10, 0, 10000, "Acréscimo por dia de sequência no /daily"),
@@ -204,6 +204,8 @@ AJUSTES = {
     "sabado_mult": (2, 1, 5, "Multiplicador de drops no Sábado da Raposa (1 = desliga o evento)"),
     "bump_lembrete": (1, 0, 1, "1 = avisa quando dá para dar /bump de novo"),
     "bump_premio": (30, 0, 100000, "Caudas para quem der /bump no DISBOARD"),
+    "bump_xp_pct": (50, 0, 500, "Bônus de XP (%) de quem deu o último bump, por 2h — 50 = 1,5x"),
+    "nivel_premio": (25, 0, 10000, "Caudas ao subir de nível (nível × este valor)"),
 }
 
 # --------------------------------------------------------------------------- permissões do bot
@@ -227,6 +229,21 @@ PERMISSOES_NECESSARIAS = [
     ("ban_members", "Banir Membros"),
     ("view_audit_log", "Ver Registro de Auditoria"),
 ]
+
+# --------------------------------------------------------------------------- ranks e desbloqueios
+# (nível mínimo, emoji, nome). A lenda: cada história vivida na toca vira uma cauda.
+RANKS = [
+    (0, "🌱", "Filhote"),
+    (5, "🦊", "Raposinha"),
+    (10, "🍂", "Raposa Andarilha"),
+    (15, "🌙", "Raposa Lunar"),
+    (20, "✨", "Raposa de Nove Caudas"),
+]
+# Nível mínimo para usar cada cor do painel (pelo NOME do cargo, sem acento/maiúscula). Fora daqui = livre.
+CORES_NIVEL = {
+    "oceano": 0, "selva": 0, "morango": 0, "manteiga": 0,
+    "melancia": 5, "nebulosa": 10, "moon": 15, "sun": 20,
+}
 
 # --------------------------------------------------------------------------- XP
 XP_BASE_NIVEL = (5, 50, 100)  # xp para subir do nível n: 5n² + 50n + 100

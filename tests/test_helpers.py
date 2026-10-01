@@ -52,3 +52,31 @@ def test_mines_retorno_esperado_respeita_margem():
             esperado = probabilidade_seguras(minas, k) * multiplicador(minas, k)
             assert math.isclose(esperado, 1 - config.MINES_MARGEM_CASA, rel_tol=1e-9)
     assert multiplicador(3, 0) == 1.0
+
+
+# ------------------------------------------------------------------ ranks e desbloqueios
+def test_ranks_por_faixa_de_nivel():
+    from utils.helpers import proximo_rank, rank_do_nivel
+
+    assert rank_do_nivel(0)[1] == "Filhote"
+    assert rank_do_nivel(4)[1] == "Filhote"
+    assert rank_do_nivel(5)[1] == "Raposinha"
+    assert rank_do_nivel(99)[1] == "Raposa de Nove Caudas"
+    assert proximo_rank(12)[0] == 15
+    assert proximo_rank(20) is None
+
+
+def test_cores_travadas_por_nivel():
+    from utils.helpers import nivel_da_cor
+
+    assert nivel_da_cor("Oceano") == 0
+    assert nivel_da_cor("NEBULOSA") == 10
+    assert nivel_da_cor("Cor que não existe") == 0
+
+
+def test_mensagem_de_nivel_mostra_premio_rank_e_cor():
+    from cogs.xp import XP
+
+    texto = XP.extras_do_nivel(9, 10, 250)
+    assert "250" in texto and "Raposa Andarilha" in texto and "Nebulosa" in texto
+    assert XP.extras_do_nivel(6, 7, 0) == ""  # nível comum, sem prêmio: nada extra

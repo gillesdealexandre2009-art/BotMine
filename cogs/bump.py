@@ -20,6 +20,7 @@ from discord.ext import commands, tasks
 
 import config
 import textos
+from utils.permissoes import eh_membro
 from utils.helpers import arquivo_banner, canal_da_funcao, embed, formatar_moeda, pode_gerenciar_cargo, responder
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -187,8 +188,15 @@ class Bump(commands.Cog):
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 5.0)
     async def bump_avisos(self, interaction: discord.Interaction) -> None:
+        await self.alternar_avisos(interaction)
+
+    async def alternar_avisos(self, interaction: discord.Interaction) -> None:
+        """Usado pelo /bump-avisos e pelo botão do canal de cargos."""
         guild, membro = interaction.guild, interaction.user
         if guild is None or not isinstance(membro, discord.Member):
+            return
+        if not await eh_membro(self.bot, membro):
+            await responder(interaction, textos.CARGOS_SO_MEMBROS)
             return
         cargo = await self._cargo(guild)
         if cargo is None:
