@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import random
 import re
 import unicodedata
 import uuid
@@ -261,13 +262,23 @@ async def publicar_ou_editar_forum(
 
 
 # ---------------------------------------------------------------- banners e canais por função
+_EXTENSOES_BANNER = {".png", ".gif", ".jpg", ".jpeg", ".webp"}
+
+
 def arquivo_banner(nome: str) -> Optional[discord.File]:
-    """assets/banners/<nome>.(png|gif|jpg|webp), se existir."""
-    for ext in ("png", "gif", "jpg", "webp"):
-        caminho = config.PASTA_BANNERS / f"{nome}.{ext}"
-        if caminho.is_file():
-            return discord.File(caminho, filename=f"{nome}.{ext}")
-    return None
+    """assets/banners/<nome>.<ext>, se existir. Com variantes <nome>_1, <nome>_2..., sorteia uma."""
+    pasta = config.PASTA_BANNERS
+    if not pasta.is_dir():
+        return None
+    opcoes = [
+        c
+        for c in pasta.iterdir()
+        if c.suffix.lower() in _EXTENSOES_BANNER and (c.stem == nome or re.fullmatch(rf"{re.escape(nome)}_\d+", c.stem))
+    ]
+    if not opcoes:
+        return None
+    escolhido = random.choice(opcoes)
+    return discord.File(escolhido, filename=f"{nome}{escolhido.suffix.lower()}")
 
 
 def com_banner(nome: str, embeds: list[discord.Embed]) -> tuple[list[discord.Embed], list[discord.File]]:

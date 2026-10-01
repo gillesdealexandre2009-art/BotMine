@@ -128,7 +128,7 @@ GRUPOS_CARGOS = {
     "dm": {"titulo": "📨 Mensagens diretas", "placeholder": "📨 Como está sua DM?"},
     "idade": {"titulo": "🎂 Faixa etária (só identificação)", "placeholder": "🎂 Sua faixa etária (opcional)"},
 }
-# Banner de cada grupo: arquivo em assets/banners/<grupo>.png (ou .gif). Sem arquivo, o painel sai sem imagem.
+# Banners: assets/banners/<nome>.(webp|png|gif|jpg). Variantes <nome>_1, <nome>_2... são sorteadas. Sem arquivo, sai sem imagem.
 PASTA_BANNERS = Path(__file__).resolve().parent / "assets" / "banners"
 # Emoji de cada cargo do painel, pelo NOME do cargo (sem acento/maiúscula importar). Sem entrada, sai sem emoji.
 EMOJIS_CARGOS = {
