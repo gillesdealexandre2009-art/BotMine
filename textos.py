@@ -412,9 +412,15 @@ COMANDOS_CAMPOS = [
     ("🦊 {moeda}", "`/daily`: resgate diário (a sequência aumenta o valor)\n`/saldo` `/pagar`: sua carteira"),
     (
         "🎂 Aniversário",
-        "`/aniversario definir`: eu te dou parabéns (e um presente) no seu dia\n`/aniversario lista`: próximos aniversários",
+        "`/aniversario definir`: eu te dou parabéns (e um presente) no seu dia. Só dá para marcar uma vez!\n"
+        "`/aniversario lista`: próximos aniversários",
     ),
     ("🎮 Diversão", "`/mines jogar`: ache as casas seguras sem explodir\n`/casamento pedir`: forme uma dupla de toca"),
+    (
+        "🚀 Bump",
+        "`/bump` (o do DISBOARD): divulga a toca e te dá {moeda}\n`/bump-status`: quando dá para o próximo\n"
+        "`/bump-avisos`: liga ou desliga a menção quando o bump voltar",
+    ),
     ("ℹ️ Outros", "`/ajuda`: este resumo, onde você estiver\n`/status`: vê se eu estou acordada"),
 ]
 COMANDOS_RODAPE = "Me marque no chat se quiser conversar. Prometo responder. Talvez."
@@ -434,6 +440,8 @@ DUVIDAS_CAMPOS = [
     ("Como mudo a cor do meu nome?", "No canal de cargos, no menu **Cores**."),
     ("Fui punido injustamente, e agora?", "Abra um tíquete e explique com calma. A staff revisa."),
     ("Como viro Kitsune?", "Dando boost no servidor. Está tudo no canal **seja-um-kitsune**."),
+    ("Marquei meu aniversário errado!", "Abra um tíquete com uma prova da data (um documento com o resto tampado serve). Um admin corrige."),
+    ("O que é o bump?", "É o `/bump` do DISBOARD: ele sobe a toca na lista pública de servidores. Dá para fazer a cada 2h, e quem faz ganha {moeda}."),
 ]
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
@@ -527,8 +535,16 @@ SABADO_ANUNCIO = (
     "Fica de olho no chat. 😼"
 )  # {moeda}
 
-NIVER_DEFINIDO = "🎂 Anotado: **{dia:02d}/{mes:02d}**. No seu dia eu apareço. Vê se não some! 😼"  # {dia} {mes}
-NIVER_REMOVIDO = "✅ Tirei seu aniversário da lista. Não vou mais lembrar. (Vou, mas finjo que não.)"
+NIVER_DEFINIDO = (
+    "🎂 Anotado: **{dia:02d}/{mes:02d}**. No seu dia eu apareço. Vê se não some! 😼\n"
+    "⚠️ Só dá para marcar **uma vez**. Errou? Abra um tíquete com uma prova da data."
+)  # {dia} {mes}
+NIVER_JA_DEFINIDO = (
+    "🙄 Seu aniversário já está marcado (**{dia:02d}/{mes:02d}**) e não muda assim, não. "
+    "Se estiver errado, abra um tíquete com uma prova da data e um admin corrige."
+)  # {dia} {mes}
+NIVER_ADMIN_OK = "✅ Aniversário de {alvo} agora é **{dia:02d}/{mes:02d}**."  # {alvo} {dia} {mes}
+NIVER_ADMIN_REMOVIDO = "✅ Tirei o aniversário de {alvo}. A pessoa pode marcar de novo uma vez."  # {alvo}
 NIVER_DATA_INVALIDA = "🙄 Essa data não existe. Tenta de novo com um dia e um mês de verdade."
 NIVER_SEU = "🎂 Seu aniversário está marcado para **{dia:02d}/{mes:02d}**."  # {dia} {mes}
 NIVER_SEM = "🦊 Você ainda não marcou seu aniversário. Use `/aniversario definir`."
@@ -538,6 +554,27 @@ NIVER_PARABENS = (
     "🎂 **Hoje é dia de festa na toca!**\n{mencoes}\n\nParabéns! Ganhou **{premio}** de presente. "
     "E não, não vou cantar. ...tá bom, só um pouquinho. 🎶🦊"
 )  # {mencoes} {premio}
+
+BUMP_OBRIGADO = [
+    "🚀 Valeu pelo bump, {mencao}! Ganhou **{premio}**. Próximo bump <t:{quando}:R>. 😼",
+    "🚀 {mencao} deu bump! Assim a toca cresce. **+{premio}** pra você. Volto a chamar <t:{quando}:R>.",
+    "🚀 Bump feito por {mencao}! Não esperava menos. **+{premio}**. Próximo <t:{quando}:R>. 🦊",
+]  # {mencao} {premio} {quando}
+BUMP_OBRIGADO_SEM_PREMIO = "🚀 Valeu pelo bump, {mencao}! Próximo bump <t:{quando}:R>. 🦊"  # {mencao} {quando}
+BUMP_LEMBRETE = [
+    "⏰ Já dá para dar **/bump** de novo! Quem chegar primeiro leva as Caudas. 😼",
+    "⏰ Hora do **/bump**! A toca não se divulga sozinha, né? 🦊",
+    "⏰ O **/bump** voltou! Bora, antes que eu fique entediada. 🙄",
+]
+BUMP_STATUS_TITULO = "🚀 Bump do DISBOARD"
+BUMP_STATUS_PRONTO = "✅ **Dá para dar bump agora!** Use `/bump` (o do DISBOARD)."
+BUMP_STATUS_ESPERA = "⏳ Próximo bump <t:{quando}:R> (<t:{quando}:t>)."  # {quando}
+BUMP_STATUS_NUNCA = "🦊 Ainda não vi nenhum bump por aqui. Use `/bump` (o do DISBOARD) e eu começo a contar."
+BUMP_STATUS_ULTIMO = "Último bump: {quem} <t:{quando}:R>"  # {quem} {quando}
+BUMP_RANKING = "🏆 Quem mais deu bump"
+BUMP_AVISOS_LIGADO = "🔔 Pronto! Vou te marcar quando der para dar bump de novo."
+BUMP_AVISOS_DESLIGADO = "🔕 Beleza, não te marco mais nos avisos de bump."
+BUMP_AVISOS_SEM_CARGO = "🦊 O cargo de avisos de bump ainda não foi configurado. Um admin faz isso em `/setup` → Cargos base."
 
 CONVERSA_MENCAO = [
     "Me chamou? 👀",

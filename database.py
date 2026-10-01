@@ -500,13 +500,27 @@ class Banco:
                 return None
             return await self._mov(conn, guild_id, user_id, valor, tipo, chave)
 
+    @staticmethod
+    def _like_prefixo(prefixo: str) -> str:
+        """Padrão LIKE para 'começa com prefixo', escapando % e _ (usado com ESCAPE '\\')."""
+        return prefixo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
     async def contar_recompensas(self, guild_id: int, prefixo: str) -> int:
         """Quantas recompensas únicas começam com `prefixo` (ex.: 'drop:2026-10-01:')."""
         linha = await self._um(
             "SELECT COUNT(*) AS n FROM recompensas_unicas WHERE guild_id = ? AND chave LIKE ? ESCAPE '\\'",
-            (guild_id, prefixo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"),
+            (guild_id, self._like_prefixo(prefixo)),
         )
         return linha["n"]
+
+    async def top_recompensas(self, guild_id: int, prefixo: str, limite: int = 10) -> list[tuple[int, int]]:
+        """(user_id, quantas) de quem mais levou recompensas com esse prefixo (ex.: 'bump:')."""
+        linhas = await self._todos(
+            "SELECT user_id, COUNT(*) AS n FROM recompensas_unicas WHERE guild_id = ? AND chave LIKE ? ESCAPE '\\' "
+            "GROUP BY user_id ORDER BY n DESC, MIN(criado_em) LIMIT ?",
+            (guild_id, self._like_prefixo(prefixo), limite),
+        )
+        return [(linha["user_id"], linha["n"]) for linha in linhas]
 
     async def extrato(self, guild_id: int, user_id: int, limite: int = 10):
         return await self._todos(
@@ -832,6 +846,14 @@ class Banco:
             "ON CONFLICT (guild_id, user_id) DO UPDATE SET dia = excluded.dia, mes = excluded.mes",
             (guild_id, user_id, dia, mes),
         )
+
+    async def marcar_aniversario(self, guild_id: int, user_id: int, dia: int, mes: int) -> bool:
+        """Marca só se a pessoa ainda não tem data. False se já tinha (mudar é com um admin)."""
+        n = await self._exec(
+            "INSERT OR IGNORE INTO aniversarios (guild_id, user_id, dia, mes) VALUES (?, ?, ?, ?)",
+            (guild_id, user_id, dia, mes),
+        )
+        return n == 1
 
     async def obter_aniversario(self, guild_id: int, user_id: int) -> Optional[tuple[int, int]]:
         linha = await self._um("SELECT dia, mes FROM aniversarios WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))

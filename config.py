@@ -59,6 +59,7 @@ COGS_PADRAO = [
     "manutencao",
     "vitrine",
     "vida",
+    "bump",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -104,6 +105,7 @@ CANAIS_CONFIG = {
     "duvidas": "Dúvidas (fórum ou texto: perguntas frequentes)",
     "chat": "Chat principal (pergunta do dia, drops, conversa)",
     "perolas": "Pérolas (mural das mensagens mais curtidas)",
+    "bump": "Bump (onde lembrar do /bump do DISBOARD; sem isso, uso o canal do último bump)",
 }
 # Se um desses canais não estiver no /setup, a Kiza procura um canal cujo nome contenha a palavra
 # (sem acento e sem maiúscula). Configurar no /setup sempre vence.
@@ -121,6 +123,7 @@ CARGOS_BASE = {
     "visitante": "Visitante (cargo de quem acabou de entrar)",
     "membro": "Membro (após aceitar as regras)",
     "kitsune": "Kitsune (VIP cosmético)",
+    "bump": "Avisos de bump (mencionado quando dá para dar /bump de novo)",
 }
 GRUPOS_CARGOS = {
     "cores": {"titulo": "🎨 Cores", "placeholder": "🎨 Escolha a cor do seu nome"},
@@ -199,6 +202,8 @@ AJUSTES = {
     "chat_parado_min": (120, 15, 1440, "Minutos sem mensagem para o chat contar como parado"),
     "niver_premio": (200, 0, 100000, "Caudas de presente de aniversário"),
     "sabado_mult": (2, 1, 5, "Multiplicador de drops no Sábado da Raposa (1 = desliga o evento)"),
+    "bump_lembrete": (1, 0, 1, "1 = avisa quando dá para dar /bump de novo"),
+    "bump_premio": (30, 0, 100000, "Caudas para quem der /bump no DISBOARD"),
 }
 
 # --------------------------------------------------------------------------- permissões do bot

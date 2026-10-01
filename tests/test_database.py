@@ -414,3 +414,30 @@ def test_aniversarios(tmp_path):
     assert no_dia == [B]
     assert todos == [(C, 1, 1), (B, 5, 3), (A, 6, 3)]
     assert sem is None
+
+
+def test_aniversario_so_uma_vez(tmp_path):
+    async def cenario():
+        b = await novo_banco(tmp_path)
+        primeira = await b.marcar_aniversario(G, A, 10, 4)
+        segunda = await b.marcar_aniversario(G, A, 11, 4)  # tentar trocar para "amanhã"
+        data = await b.obter_aniversario(G, A)
+        await b.definir_aniversario(G, A, 12, 4)  # correção de admin
+        corrigida = await b.obter_aniversario(G, A)
+        await b.fechar()
+        return primeira, segunda, data, corrigida
+
+    assert rodar(cenario) == (True, False, (10, 4), (12, 4))
+
+
+def test_ranking_de_bump(tmp_path):
+    async def cenario():
+        b = await novo_banco(tmp_path)
+        for i, u in enumerate((A, B, A, C, A, B)):
+            await b.recompensar_uma_vez(G, f"bump:{i}", u, 0, "bump")
+        await b.recompensar_uma_vez(G, "drop:x", C, 10, "drop")  # não é bump
+        top = await b.top_recompensas(G, "bump:", 2)
+        await b.fechar()
+        return top
+
+    assert rodar(cenario) == [(A, 3), (B, 2)]

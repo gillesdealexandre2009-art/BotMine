@@ -20,7 +20,7 @@ from discord.ext import commands, tasks
 import config
 import textos
 from utils.helpers import TZ, canal_da_funcao, embed, formatar_moeda, responder, sem_acento, truncar
-from utils.permissoes import eh_membro
+from utils.permissoes import eh_membro, exigir_nivel
 from utils.views import BaseView
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -95,6 +95,9 @@ class DropView(BaseView):
 
 class Vida(commands.Cog):
     aniversario = app_commands.Group(name="aniversario", description="Seu aniversário na toca", guild_only=True)
+    aniversario_admin = app_commands.Group(
+        name="aniversario-admin", description="Corrigir aniversários (só admins, com prova)", guild_only=True
+    )
 
     def __init__(self, bot: "Kiza") -> None:
         self.bot = bot
@@ -275,7 +278,15 @@ class Vida(commands.Cog):
             allowed_mentions=discord.AllowedMentions(users=membros),
         )
 
-    @aniversario.command(name="definir", description="Marca o dia do seu aniversário.")
+    @staticmethod
+    def _data_valida(dia: int, mes: int) -> bool:
+        try:
+            date(2024, mes, dia)  # 2024 é bissexto: aceita 29/02
+        except ValueError:
+            return False
+        return True
+
+    @aniversario.command(name="definir", description="Marca o dia do seu aniversário (só uma vez!).")
     @app_commands.describe(dia="Dia (1 a 31)", mes="Mês (1 a 12)")
     async def aniversario_definir(
         self,
@@ -283,18 +294,42 @@ class Vida(commands.Cog):
         dia: app_commands.Range[int, 1, 31],
         mes: app_commands.Range[int, 1, 12],
     ) -> None:
-        try:
-            date(2024, mes, dia)  # 2024 é bissexto: aceita 29/02
-        except ValueError:
+        if not self._data_valida(dia, mes):
             await responder(interaction, textos.NIVER_DATA_INVALIDA)
             return
-        await self.bot.banco.definir_aniversario(interaction.guild_id, interaction.user.id, dia, mes)  # type: ignore[arg-type]
+        banco = self.bot.banco
+        # Uma vez só: sem isso, dava para trocar a data todo dia e ganhar o presente de novo.
+        if not await banco.marcar_aniversario(interaction.guild_id, interaction.user.id, dia, mes):  # type: ignore[arg-type]
+            atual = await banco.obter_aniversario(interaction.guild_id, interaction.user.id)  # type: ignore[arg-type]
+            d, m = atual or (dia, mes)
+            await responder(interaction, textos.NIVER_JA_DEFINIDO.format(dia=d, mes=m))
+            return
         await responder(interaction, textos.NIVER_DEFINIDO.format(dia=dia, mes=mes))
 
-    @aniversario.command(name="remover", description="Tira seu aniversário da lista.")
-    async def aniversario_remover(self, interaction: discord.Interaction) -> None:
-        await self.bot.banco.definir_aniversario(interaction.guild_id, interaction.user.id, None, None)  # type: ignore[arg-type]
-        await responder(interaction, textos.NIVER_REMOVIDO)
+    @aniversario_admin.command(name="definir", description="Corrige o aniversário de alguém (peça uma prova antes).")
+    @app_commands.describe(membro="De quem", dia="Dia (1 a 31)", mes="Mês (1 a 12)")
+    @exigir_nivel(3)
+    async def aniversario_admin_definir(
+        self,
+        interaction: discord.Interaction,
+        membro: discord.Member,
+        dia: app_commands.Range[int, 1, 31],
+        mes: app_commands.Range[int, 1, 12],
+    ) -> None:
+        if not self._data_valida(dia, mes):
+            await responder(interaction, textos.NIVER_DATA_INVALIDA)
+            return
+        await self.bot.banco.definir_aniversario(interaction.guild_id, membro.id, dia, mes)  # type: ignore[arg-type]
+        log.info("Aniversário de %s alterado para %02d/%02d por %s", membro.id, dia, mes, interaction.user.id)
+        await responder(interaction, textos.NIVER_ADMIN_OK.format(alvo=membro.mention, dia=dia, mes=mes))
+
+    @aniversario_admin.command(name="remover", description="Apaga o aniversário de alguém (a pessoa pode marcar de novo).")
+    @app_commands.describe(membro="De quem")
+    @exigir_nivel(3)
+    async def aniversario_admin_remover(self, interaction: discord.Interaction, membro: discord.Member) -> None:
+        await self.bot.banco.definir_aniversario(interaction.guild_id, membro.id, None, None)  # type: ignore[arg-type]
+        log.info("Aniversário de %s removido por %s", membro.id, interaction.user.id)
+        await responder(interaction, textos.NIVER_ADMIN_REMOVIDO.format(alvo=membro.mention))
 
     @aniversario.command(name="ver", description="Mostra o aniversário que você marcou.")
     async def aniversario_ver(self, interaction: discord.Interaction) -> None:
