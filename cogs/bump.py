@@ -5,6 +5,7 @@ Bots não conseguem usar o /bump de outro bot, então quem bumpa é sempre uma p
    em qualquer idioma; o autor do comando vem no metadado da interação);
 2. agradece, paga {moeda} e guarda a hora do próximo bump (cooldown de 2h do DISBOARD);
 3. quando o cooldown acaba, chama o cargo de avisos de bump no canal.
+O /bump da Kiza (mesmo nome, outro bot) mostra o status e um atalho clicável para o /bump do DISBOARD.
 O horário fica no banco, então um reinício no meio do caminho não perde o lembrete.
 """
 from __future__ import annotations
@@ -31,7 +32,23 @@ log = logging.getLogger("kiza.bump")
 DISBOARD_ID = 302050872383242240
 COOLDOWN_BUMP = 2 * 3600
 MARCA_SUCESSO = "bot-command-image-bump"
-BANNER_BUMP = "bump"
+BANNER_BUMP = "bump"  # reserva, quando não há banner específico
+BANNER_CHAMADA = "bump_chamada"  # bump_chamada, bump_chamada_1... (sorteados)
+BANNER_OK = "bump_ok"  # bump_ok, bump_ok_1... (sorteados)
+
+
+def atalho_bump() -> str:
+    return f"</bump:{config.DISBOARD_BUMP_CMD_ID}>"
+
+
+def embed_com_banner(e: discord.Embed, *nomes: str) -> list[discord.File]:
+    """Põe o primeiro banner que existir embaixo do texto do embed."""
+    for nome in nomes:
+        banner = arquivo_banner(nome)
+        if banner is not None:
+            e.set_image(url=f"attachment://{banner.filename}")
+            return [banner]
+    return []
 
 
 def eh_bump_ok(mensagem: discord.Message) -> bool:
@@ -94,16 +111,24 @@ class Bump(commands.Cog):
         premio = await self.bot.banco.ajuste(guild.id, "bump_premio")
         # valor 0 também registra: é o que conta no ranking de bumps
         await self.bot.banco.recompensar_uma_vez(guild.id, f"bump:{mensagem.id}", autor.id, premio, "bump")
+        mult = await self._mult(guild.id)
         if premio > 0:
             texto = random.choice(textos.BUMP_OBRIGADO).format(
-                mencao=autor.mention, premio=formatar_moeda(premio), quando=quando
+                mencao=autor.mention, premio=formatar_moeda(premio), mult=mult
             )
         else:
-            texto = textos.BUMP_OBRIGADO_SEM_PREMIO.format(mencao=autor.mention, quando=quando)
+            texto = random.choice(textos.BUMP_OBRIGADO_SEM_PREMIO).format(mencao=autor.mention, mult=mult)
+        texto += "\n\n" + textos.BUMP_OBRIGADO_PROXIMO.format(quando=quando)
+        e = embed(random.choice(textos.BUMP_OBRIGADO_TITULOS), texto, config.COR_OK)
+        arquivos = embed_com_banner(e, BANNER_OK, BANNER_BUMP)
         try:
-            await mensagem.channel.send(texto, allowed_mentions=discord.AllowedMentions.none())
+            await mensagem.channel.send(embed=e, files=arquivos, allowed_mentions=discord.AllowedMentions.none())
         except discord.HTTPException:
             log.warning("Falha ao agradecer bump em %s", guild.id, exc_info=True)
+
+    async def _mult(self, guild_id: int) -> str:
+        pct = await self.bot.banco.ajuste(guild_id, "bump_xp_pct")
+        return f"{(100 + pct) / 100:g}".replace(".", ",")
 
     # ------------------------------------------------------------------ lembrete
     @tasks.loop(minutes=1)
@@ -130,15 +155,17 @@ class Bump(commands.Cog):
         if canal is None:
             return
         cargo = await self._cargo(guild)
-        e = embed(None, random.choice(textos.BUMP_LEMBRETE), config.COR_AVISO)
-        banner = arquivo_banner(BANNER_BUMP)
-        if banner is not None:
-            e.set_image(url=f"attachment://{banner.filename}")  # imagem embaixo do texto
+        e = embed(
+            random.choice(textos.BUMP_LEMBRETE_TITULOS),
+            random.choice(textos.BUMP_LEMBRETE).format(cmd=atalho_bump()),
+            config.COR_AVISO,
+        )
+        arquivos = embed_com_banner(e, BANNER_CHAMADA, BANNER_BUMP)  # imagem embaixo do texto
         try:
             await canal.send(
                 content=cargo.mention if cargo else None,  # menção dentro de embed não notifica
                 embed=e,
-                files=[banner] if banner else [],
+                files=arquivos,
                 allowed_mentions=discord.AllowedMentions(roles=[cargo] if cargo else False),
             )
         except discord.HTTPException:
@@ -157,23 +184,27 @@ class Bump(commands.Cog):
         return guild.get_role(cargo_id) if cargo_id else None
 
     # ------------------------------------------------------------------ comandos
-    @app_commands.command(name="bump-status", description="Quando dá para dar /bump de novo e quem mais bumpou.")
+    @app_commands.command(name="bump", description="Kiza: quando dá para bumpar, o prêmio e quem mais bumpou.")
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 10.0)
-    async def bump_status(self, interaction: discord.Interaction) -> None:
+    async def bump(self, interaction: discord.Interaction) -> None:
         guild = interaction.guild
         assert guild is not None
         proximo = await self._cfg(guild.id, "proximo")
+        pronto = not proximo or time.time() >= int(proximo)
         if not proximo:
-            linhas = [textos.BUMP_STATUS_NUNCA]
-        elif time.time() >= int(proximo):
-            linhas = [textos.BUMP_STATUS_PRONTO]
+            linhas = [textos.BUMP_STATUS_NUNCA.format(cmd=atalho_bump())]
+        elif pronto:
+            linhas = [textos.BUMP_STATUS_PRONTO.format(cmd=atalho_bump())]
         else:
             linhas = [textos.BUMP_STATUS_ESPERA.format(quando=int(proximo))]
+        premio = await self.bot.banco.ajuste(guild.id, "bump_premio")
+        linhas.append(textos.BUMP_STATUS_PREMIO.format(premio=formatar_moeda(premio), mult=await self._mult(guild.id)))
         quem, ts = await self._cfg(guild.id, "quem"), await self._cfg(guild.id, "ts")
         if quem and ts:
             linhas.append(textos.BUMP_STATUS_ULTIMO.format(quem=f"<@{quem}>", quando=ts))
-        e = embed(textos.BUMP_STATUS_TITULO, "\n".join(linhas))
+        linhas.append(textos.BUMP_STATUS_AVISOS)
+        e = embed(textos.BUMP_STATUS_TITULO, "\n".join(linhas), config.COR_OK if pronto else config.COR_PRINCIPAL)
         top = await self.bot.banco.top_recompensas(guild.id, "bump:", 5)
         if top:
             medalhas = ["🥇", "🥈", "🥉", "4.", "5."]
@@ -182,7 +213,8 @@ class Bump(commands.Cog):
                 value="\n".join(f"{medalhas[i]} <@{uid}> — **{n}**" for i, (uid, n) in enumerate(top)),
                 inline=False,
             )
-        await responder(interaction, embed=e, ephemeral=False)
+        arquivos = embed_com_banner(e, BANNER_CHAMADA, BANNER_BUMP) if pronto else []
+        await responder(interaction, embed=e, files=arquivos, ephemeral=False)
 
     @app_commands.command(name="bump-avisos", description="Liga ou desliga a menção quando der para dar bump.")
     @app_commands.guild_only()

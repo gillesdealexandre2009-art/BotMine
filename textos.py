@@ -421,7 +421,7 @@ COMANDOS_CAMPOS = [
     ("🎮 Diversão", "`/mines jogar`: ache as casas seguras sem explodir\n`/casamento pedir`: forme uma dupla de toca"),
     (
         "🚀 Bump",
-        "`/bump` (o do DISBOARD): divulga a toca e te dá {moeda}\n`/bump-status`: quando dá para o próximo\n"
+        "`/bump` (o do DISBOARD): divulga a toca e te dá {moeda}\n`/bump` (o da Kiza): quando dá para o próximo e o ranking\n"
         "`/bump-avisos`: liga ou desliga a menção quando o bump voltar",
     ),
     ("ℹ️ Outros", "`/ajuda`: este resumo, onde você estiver\n`/status`: vê se eu estou acordada"),
@@ -464,6 +464,14 @@ DUVIDAS_CAMPOS = [
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
+    (
+        "1.3.0",
+        "Bump turbinado",
+        [
+            "🚀 `/bump` da Kiza: mostra quando dá para bumpar, o prêmio e o ranking, com atalho direto pro DISBOARD",
+            "🖼️ Chamada e agradecimento de bump com banner e várias falas novas",
+        ],
+    ),
     (
         "1.2.0",
         "Ranks, cores e bump",
@@ -585,21 +593,49 @@ NIVER_PARABENS = (
     "E não, não vou cantar. ...tá bom, só um pouquinho. 🎶🦊"
 )  # {mencoes} {premio}
 
-BUMP_OBRIGADO = [
-    "🚀 Valeu pelo bump, {mencao}! Ganhou **{premio}**. Próximo bump <t:{quando}:R>. 😼",
-    "🚀 {mencao} deu bump! Assim a toca cresce. **+{premio}** pra você. Volto a chamar <t:{quando}:R>.",
-    "🚀 Bump feito por {mencao}! Não esperava menos. **+{premio}**. Próximo <t:{quando}:R>. 🦊",
-]  # {mencao} {premio} {quando}
-BUMP_OBRIGADO_SEM_PREMIO = "🚀 Valeu pelo bump, {mencao}! Próximo bump <t:{quando}:R>. 🦊"  # {mencao} {quando}
-BUMP_LEMBRETE = [
-    "⏰ Já dá para dar **/bump** de novo! Quem chegar primeiro leva as Caudas. 😼",
-    "⏰ Hora do **/bump**! A toca não se divulga sozinha, né? 🦊",
-    "⏰ O **/bump** voltou! Bora, antes que eu fique entediada. 🙄",
+BUMP_OBRIGADO_TITULOS = [
+    "🚀 Bump feito!",
+    "🚀 A toca subiu!",
+    "🚀 Lá vamos nós pro topo!",
+    "🚀 Bumpou, bumpou!",
+    "🚀 Missão cumprida!",
 ]
-BUMP_STATUS_TITULO = "🚀 Bump do DISBOARD"
-BUMP_STATUS_PRONTO = "✅ **Dá para dar bump agora!** Use `/bump` (o do DISBOARD)."
+BUMP_OBRIGADO = [
+    "Valeu pelo bump, {mencao}! Ganhou **{premio}** e **{mult}x XP** por 2h. 😼",
+    "{mencao} deu bump! Assim a toca cresce. **+{premio}** e **{mult}x XP** pra você. 🦊",
+    "Bump feito por {mencao}! Não esperava menos. **+{premio}** e XP turbinado por 2h. ✨",
+    "Olha só, {mencao} lembrou da gente! **+{premio}** na conta e **{mult}x XP**. Tô orgulhosa. 🧡",
+    "{mencao} chegou primeiro! **+{premio}** e **{mult}x XP**. Os outros que lutem. 😤",
+    "Ufa, {mencao} salvou o dia! O Vulpus subiu na lista. **+{premio}** e **{mult}x XP** por 2h. 🍂",
+    "Bumpzinho de respeito, {mencao}! Toma **{premio}** e vai farmar XP com **{mult}x**. 🦊💨",
+]  # {mencao} {premio} {mult}
+BUMP_OBRIGADO_SEM_PREMIO = [
+    "Valeu pelo bump, {mencao}! **{mult}x XP** por 2h. 🦊",
+    "{mencao} deu bump! A toca agradece, e o seu XP também (**{mult}x** por 2h). 😼",
+]  # {mencao} {mult}
+BUMP_OBRIGADO_PROXIMO = "⏳ Volto a chamar <t:{quando}:R>."  # {quando}
+BUMP_LEMBRETE_TITULOS = [
+    "⏰ Hora do bump!",
+    "⏰ O bump voltou!",
+    "⏰ Bump liberado!",
+    "⏰ Alguém aí?",
+    "⏰ Chamando todas as raposas!",
+]
+BUMP_LEMBRETE = [
+    "Já dá para dar {cmd} de novo! Quem chegar primeiro leva as Caudas. 😼",
+    "A toca não se divulga sozinha, né? Clica em {cmd} e me deixa feliz. 🦊",
+    "O {cmd} voltou! Bora, antes que eu fique entediada. 🙄",
+    "Psiu... {cmd} liberado. Prêmio em Caudas e XP turbinado pra quem for rápido. ✨",
+    "Duas horas sem bump é muito tempo pra uma raposa. Usa o {cmd}, vai! 🥺",
+    "Se ninguém der {cmd} em 5 minutos, eu começo a cantar. Vocês foram avisados. 🎶",
+    "Novas raposas estão procurando uma toca. Ajuda elas a achar a gente com {cmd}! 🧡",
+]  # {cmd}
+BUMP_STATUS_TITULO = "🚀 Bump do Vulpus"
+BUMP_STATUS_PRONTO = "✅ **Dá para dar bump agora!** Clique aqui: {cmd}"  # {cmd}
 BUMP_STATUS_ESPERA = "⏳ Próximo bump <t:{quando}:R> (<t:{quando}:t>)."  # {quando}
-BUMP_STATUS_NUNCA = "🦊 Ainda não vi nenhum bump por aqui. Use `/bump` (o do DISBOARD) e eu começo a contar."
+BUMP_STATUS_NUNCA = "🦊 Ainda não vi nenhum bump por aqui. Use {cmd} e eu começo a contar."  # {cmd}
+BUMP_STATUS_PREMIO = "🎁 Quem bumpa ganha **{premio}** e **{mult}x XP por 2h**."  # {premio} {mult}
+BUMP_STATUS_AVISOS = "🔔 Quer ser marcado(a) quando voltar? `/bump-avisos`"
 BUMP_STATUS_ULTIMO = "Último bump: {quem} <t:{quando}:R>"  # {quem} {quando}
 BUMP_RANKING = "🏆 Quem mais deu bump"
 BUMP_AVISOS_LIGADO = "🔔 Pronto! Vou te marcar quando der para dar bump de novo."

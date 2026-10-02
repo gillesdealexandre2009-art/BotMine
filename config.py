@@ -30,7 +30,7 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.1.0"
+VERSAO = "1.3.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -72,6 +72,9 @@ COR_OK = 0x7BC96F
 COR_ERRO = 0xE5534B
 COR_AVISO = 0xF5C542
 COR_INFO = 0x6CB4EE
+
+# ID do comando /bump do DISBOARD: vira um atalho clicável (</bump:ID>) nas mensagens da Kiza.
+DISBOARD_BUMP_CMD_ID = 947088344167366698
 
 # Moeda: troque só aqui.
 MOEDA_NOME = "Caudas"
