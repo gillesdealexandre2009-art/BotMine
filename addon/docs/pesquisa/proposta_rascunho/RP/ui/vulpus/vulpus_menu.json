@@ -1,0 +1,314 @@
+{
+  "namespace": "vulpus_menu",
+
+  // Raiz entregue pela factory (long_form). Tamanho = 100% de main_screen_content (0x0 no centro da tela);
+  // os layouts tem tamanho fixo em px e ficam centralizados (mesmo truque do long_form vanilla 225x200).
+  "root": {
+    "type": "panel",
+    "controls": [
+      { "main_menu@vulpus_menu.main_menu": {} },
+      { "list_menu@vulpus_menu.list_menu": {} }
+    ]
+  },
+
+  // ===================== MENU PRINCIPAL  (flag §v§u§l§p§0§r) =====================
+  "main_menu": {
+    "type": "panel",
+    "size": [ 300, 196 ],
+    "layer": 2,
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§u§l§p§0§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      { "bg@common.dialog_background_hollow_3": { "layer": 1 } },
+      { "title@vulpus_menu.title_label": {} },
+      { "close@common.close_button": { "layer": 10 } },
+      {
+        "body": {
+          "type": "stack_panel",
+          "orientation": "horizontal",
+          "size": [ "100% - 16px", 162 ],
+          "offset": [ 0, 10 ],
+          "layer": 2,
+          "collection_name": "form_buttons",
+          "controls": [
+            { "left@vulpus_menu.column_left": {} },
+            { "center@vulpus_menu.center_panel": {} },
+            { "right@vulpus_menu.column_right": {} }
+          ]
+        }
+      }
+    ]
+  },
+
+  "column_left": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ 88, "100%" ],
+    "collection_name": "form_buttons",
+    "controls": [
+      { "s0@vulpus_menu.slot": { "collection_index": 0 } },
+      { "g0@vulpus_menu.gap": {} },
+      { "s1@vulpus_menu.slot": { "collection_index": 1 } },
+      { "g1@vulpus_menu.gap": {} },
+      { "s2@vulpus_menu.slot": { "collection_index": 2 } },
+      { "g2@vulpus_menu.gap": {} },
+      { "s3@vulpus_menu.slot": { "collection_index": 3 } }
+    ]
+  },
+
+  "column_right": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ 88, "100%" ],
+    "collection_name": "form_buttons",
+    "controls": [
+      { "s4@vulpus_menu.slot": { "collection_index": 4 } },
+      { "g4@vulpus_menu.gap": {} },
+      { "s5@vulpus_menu.slot": { "collection_index": 5 } },
+      { "g5@vulpus_menu.gap": {} },
+      { "s6@vulpus_menu.slot": { "collection_index": 6 } },
+      { "g6@vulpus_menu.gap": {} },
+      { "s7@vulpus_menu.slot": { "collection_index": 7 } }
+    ]
+  },
+
+  "gap": { "type": "panel", "size": [ "100%", 6 ] },
+
+  // Slot fixo: o container NUNCA some (stack_panel colapsa filho invisivel e desalinha a coluna);
+  // quem some e o "content" quando o texto do botao e ''.
+  "slot": {
+    "type": "panel",
+    "size": [ "100%", 36 ],
+    "controls": [
+      {
+        "content": {
+          "type": "panel",
+          "size": [ "100%", "100%" ],
+          "bindings": [
+            { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+            {
+              "binding_type": "view",
+              "source_property_name": "(not (#form_button_text = ''))",
+              "target_property_name": "#visible"
+            }
+          ],
+          "controls": [
+            { "button@vulpus_menu.slot_button": {} },
+            { "icon@vulpus_menu.slot_icon": {} },
+            { "label@vulpus_menu.slot_label": {} }
+          ]
+        }
+      }
+    ]
+  },
+
+  // Botao cru: o PROPRIO controle precisa do binding collection_details (senao o clique volta "canceled").
+  "slot_button": {
+    "type": "button",
+    "size": [ "100%", "100%" ],
+    "layer": 1,
+    "focus_enabled": true,
+    "sound_name": "random.click",
+    "default_control": "default",
+    "hover_control": "hover",
+    "pressed_control": "pressed",
+    "bindings": [
+      { "binding_type": "collection_details", "binding_collection_name": "form_buttons" }
+    ],
+    "button_mappings": [
+      { "from_button_id": "button.menu_select", "to_button_id": "button.form_button_click", "mapping_type": "pressed" },
+      { "from_button_id": "button.menu_ok", "to_button_id": "button.form_button_click", "mapping_type": "focused" }
+    ],
+    "controls": [
+      { "default@vulpus_menu.face": { "$face_texture": "$vulpus_btn_texture" } },
+      { "hover@vulpus_menu.face": { "$face_texture": "$vulpus_btn_hover_texture" } },
+      { "pressed@vulpus_menu.face": { "$face_texture": "$vulpus_btn_pressed_texture" } }
+    ]
+  },
+
+  "face": {
+    "type": "image",
+    "size": [ "100%", "100%" ],
+    "$face_texture|default": "textures/ui/button_borderless_dark",
+    "texture": "$face_texture"
+  },
+
+  "slot_icon": {
+    "type": "image",
+    "size": [ 18, 18 ],
+    "offset": [ 6, 0 ],
+    "anchor_from": "left_middle",
+    "anchor_to": "left_middle",
+    "layer": 3,
+    "bindings": [
+      { "binding_name": "#form_button_texture", "binding_name_override": "#texture", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      { "binding_name": "#form_button_texture_file_system", "binding_name_override": "#texture_file_system", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#texture = '') or (#texture = 'loading')))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "slot_label": {
+    "type": "label",
+    "text": "#form_button_text",
+    "size": [ "100% - 30px", "default" ],
+    "max_size": [ "100% - 30px", 30 ],
+    "offset": [ 8, 0 ],
+    "text_alignment": "center",
+    "color": [ 1, 1, 1 ],
+    "shadow": true,
+    "layer": 3,
+    "bindings": [
+      { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" }
+    ]
+  },
+
+  "center_panel": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ "fill", "100%" ],
+    "controls": [
+      { "logo@vulpus_menu.logo": {} },
+      { "gap@vulpus_menu.gap": {} },
+      { "text@vulpus_menu.body_text": {} }
+    ]
+  },
+
+  // Placeholder da logo (trocar $vulpus_logo_texture em _global_variables.json quando houver textura).
+  "logo": {
+    "type": "panel",
+    "size": [ "100%", 72 ],
+    "controls": [
+      { "img": { "type": "image", "texture": "$vulpus_logo_texture", "size": [ 100, 62 ], "layer": 3 } }
+    ]
+  },
+
+  "body_text": {
+    "type": "label",
+    "text": "#form_text",
+    "size": [ "100%", "default" ],
+    "max_size": [ "100%", 80 ],
+    "text_alignment": "center",
+    "color": [ 1, 1, 1 ],
+    "shadow": true,
+    "layer": 3,
+    "bindings": [ { "binding_name": "#form_text" } ]
+  },
+
+  // Titulo sem a flag (a flag ja e invisivel por ser so codigos de formatacao, mas removemos por garantia).
+  "title_label": {
+    "type": "label",
+    "anchor_from": "top_middle",
+    "anchor_to": "top_middle",
+    "offset": [ 0, 8 ],
+    "size": [ "100% - 40px", 10 ],
+    "text_alignment": "center",
+    "color": "$title_text_color",
+    "layer": 4,
+    "text": "#text",
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "((#title_text - '§v§u§l§p§0§r') - '§v§u§l§p§1§r')",
+        "target_property_name": "#text"
+      }
+    ]
+  },
+
+  // ===================== LISTA (submenus): qualquer flag Vulpus que NAO seja a do menu principal =====================
+  "list_menu": {
+    "type": "panel",
+    "size": [ 250, 210 ],
+    "layer": 2,
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "((not ((#title_text - '§v§u§l§p') = #title_text)) and ((#title_text - '§v§u§l§p§0§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      { "bg@common.dialog_background_hollow_3": { "layer": 1 } },
+      { "title@vulpus_menu.title_label": {} },
+      { "close@common.close_button": { "layer": 10 } },
+      {
+        "scroll@common.scrolling_panel": {
+          "anchor_from": "top_middle",
+          "anchor_to": "top_middle",
+          "offset": [ 0, 23 ],
+          "size": [ "100% - 16px", "100% - 31px" ],
+          "layer": 2,
+          "$show_background": false,
+          "$scrolling_content": "vulpus_menu.list_content",
+          "$scroll_size": [ 5, "100% - 4px" ],
+          "$scrolling_pane_size": [ "100% - 4px", "100% - 2px" ],
+          "$scrolling_pane_offset": [ 2, 0 ],
+          "$scroll_bar_right_padding_size": [ 0, 0 ]
+        }
+      }
+    ]
+  },
+
+  "list_content": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ "100% - 4px", "100%c" ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "controls": [
+      { "text@vulpus_menu.body_text": {} },
+      { "gap@vulpus_menu.gap": {} },
+      {
+        "buttons": {
+          "type": "stack_panel",
+          "orientation": "vertical",
+          "size": [ "100%", "100%c" ],
+          "factory": {
+            "name": "buttons",
+            "control_ids": {
+              "button": "@vulpus_menu.list_item",
+              "label": "@server_form.dynamic_label",
+              "header": "@server_form.dynamic_header",
+              "divider": "@settings_common.option_group_section_divider"
+            }
+          },
+          "collection_name": "form_buttons",
+          "bindings": [
+            { "binding_name": "#form_button_contents", "binding_name_override": "#collection_length" }
+          ]
+        }
+      }
+    ]
+  },
+
+  "list_item": {
+    "type": "panel",
+    "size": [ "100%", 34 ],
+    "controls": [
+      {
+        "inner": {
+          "type": "panel",
+          "size": [ "100%", 30 ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "controls": [
+            { "button@vulpus_menu.slot_button": {} },
+            { "icon@vulpus_menu.slot_icon": {} },
+            { "label@vulpus_menu.slot_label": {} }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -28,3 +28,7 @@ Thumbs.db
 
 # ferramentas de agente
 .claude/scheduled_tasks.lock
+
+# addon do Minecraft
+addon/node_modules/
+addon/dist/

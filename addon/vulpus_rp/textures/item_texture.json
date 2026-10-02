@@ -1,0 +1,9 @@
+{
+  "resource_pack_name": "vulpus",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "vulpus_menu": {
+      "textures": "textures/vulpus/itens/menu"
+    }
+  }
+}

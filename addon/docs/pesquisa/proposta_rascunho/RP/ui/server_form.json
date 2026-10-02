@@ -1,0 +1,47 @@
+{
+  "namespace": "server_form",
+
+  // (1) Esconde o long_form vanilla SOMENTE quando o titulo tem o prefixo Vulpus.
+  //     long_form NAO declara "bindings" proprio (herda de common_dialogs.main_panel_no_buttons,
+  //     que tambem nao tem) -> criar o array e seguro. NUNCA inserir em "controls" aqui.
+  "long_form": {
+    "modifications": [
+      {
+        "array_name": "bindings",
+        "operation": "insert_back",
+        "value": [
+          { "binding_name": "#title_text" },
+          {
+            "binding_type": "view",
+            "source_property_name": "((#title_text - '§v§u§l§p') = #title_text)",
+            "target_property_name": "#visible"
+          }
+        ]
+      }
+    ]
+  },
+
+  // (2) Segunda factory com o MESMO "name" da vanilla -> recebe os dados do form.
+  //     main_screen_content DECLARA "controls" proprio -> insert_back e seguro.
+  "main_screen_content": {
+    "modifications": [
+      {
+        "array_name": "controls",
+        "operation": "insert_back",
+        "value": [
+          {
+            "vulpus_form_factory": {
+              "type": "panel",
+              "factory": {
+                "name": "server_form_factory",
+                "control_ids": {
+                  "long_form": "@vulpus_menu.root"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

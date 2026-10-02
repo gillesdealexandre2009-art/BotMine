@@ -1,0 +1,544 @@
+{
+  "namespace": "vulpus_menu",
+
+  "root": {
+    "type": "panel",
+    "$vp_painel|default": "textures/vulpus/ui/painel",
+    "$vp_cabecalho|default": "textures/vulpus/ui/cabecalho",
+    "$vp_botao|default": "textures/vulpus/ui/botao",
+    "$vp_botao_hover|default": "textures/vulpus/ui/botao_hover",
+    "$vp_botao_press|default": "textures/vulpus/ui/botao_press",
+    "$vp_fechar|default": "textures/vulpus/ui/fechar",
+    "$vp_fechar_hover|default": "textures/vulpus/ui/fechar_hover",
+    "$vp_fechar_press|default": "textures/vulpus/ui/fechar_press",
+    "$vp_divisor|default": "textures/vulpus/ui/divisor",
+    "$vp_logo|default": "textures/vulpus/ui/logo",
+    "$vp_creme|default": [ 1.0, 0.957, 0.902 ],
+    "$vp_laranja|default": [ 0.949, 0.549, 0.22 ],
+    "controls": [
+      { "hub@vulpus_menu.hub": {} },
+      { "lista@vulpus_menu.lista": {} }
+    ]
+  },
+
+  "hub": {
+    "type": "panel",
+    "size": [ 330, 210 ],
+    "layer": 2,
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§u§l§p§0§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      { "quadro@vulpus_menu.quadro": {} },
+      { "staff@vulpus_menu.area_staff": {} },
+      { "corpo@vulpus_menu.corpo_hub": {} }
+    ]
+  },
+
+  "corpo_hub": {
+    "type": "panel",
+    "size": [ "100% - 16px", "100% - 32px" ],
+    "anchor_from": "top_middle",
+    "anchor_to": "top_middle",
+    "offset": [ 0, 28 ],
+    "controls": [
+      {
+        "colunas": {
+          "type": "stack_panel",
+          "orientation": "horizontal",
+          "size": [ "100%", 151 ],
+          "collection_name": "form_buttons",
+          "controls": [
+            { "esquerda@vulpus_menu.coluna_esquerda": {} },
+            { "margem_esquerda": { "type": "panel", "size": [ 6, "100%" ] } },
+            { "centro@vulpus_menu.centro_hub": {} },
+            { "margem_direita": { "type": "panel", "size": [ 6, "100%" ] } },
+            { "direita@vulpus_menu.coluna_direita": {} }
+          ]
+        }
+      }
+    ]
+  },
+
+  "coluna_esquerda": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ 92, "100%" ],
+    "collection_name": "form_buttons",
+    "controls": [
+      { "slot_0@vulpus_menu.slot_hub": { "collection_index": 0, "$foco_id": "vulpus_slot_0", "$foco_direita": "vulpus_slot_4", "$foco_prioridade": 2 } },
+      { "espaco_0@vulpus_menu.espaco_slot": {} },
+      { "slot_1@vulpus_menu.slot_hub": { "collection_index": 1, "$foco_id": "vulpus_slot_1", "$foco_direita": "vulpus_slot_5" } },
+      { "espaco_1@vulpus_menu.espaco_slot": {} },
+      { "slot_2@vulpus_menu.slot_hub": { "collection_index": 2, "$foco_id": "vulpus_slot_2", "$foco_direita": "vulpus_slot_6" } },
+      { "espaco_2@vulpus_menu.espaco_slot": {} },
+      { "slot_3@vulpus_menu.slot_hub": { "collection_index": 3, "$foco_id": "vulpus_slot_3", "$foco_direita": "vulpus_slot_7" } }
+    ]
+  },
+
+  "coluna_direita": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ 92, "100%" ],
+    "collection_name": "form_buttons",
+    "controls": [
+      { "slot_4@vulpus_menu.slot_hub": { "collection_index": 4, "$foco_id": "vulpus_slot_4", "$foco_esquerda": "vulpus_slot_0" } },
+      { "espaco_4@vulpus_menu.espaco_slot": {} },
+      { "slot_5@vulpus_menu.slot_hub": { "collection_index": 5, "$foco_id": "vulpus_slot_5", "$foco_esquerda": "vulpus_slot_1" } },
+      { "espaco_5@vulpus_menu.espaco_slot": {} },
+      { "slot_6@vulpus_menu.slot_hub": { "collection_index": 6, "$foco_id": "vulpus_slot_6", "$foco_esquerda": "vulpus_slot_2" } },
+      { "espaco_6@vulpus_menu.espaco_slot": {} },
+      { "slot_7@vulpus_menu.slot_hub": { "collection_index": 7, "$foco_id": "vulpus_slot_7", "$foco_esquerda": "vulpus_slot_3" } }
+    ]
+  },
+
+  "espaco_slot": { "type": "panel", "size": [ "100%", 5 ] },
+
+  "centro_hub": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ "fill", "100%" ],
+    "controls": [
+      { "espaco_topo": { "type": "panel", "size": [ "100%", "fill" ] } },
+      {
+        "logo": {
+          "type": "panel",
+          "size": [ "100%", 60 ],
+          "controls": [
+            { "imagem": { "type": "image", "texture": "$vp_logo", "size": [ 60, 60 ], "layer": 4 } }
+          ]
+        }
+      },
+      { "espaco_logo": { "type": "panel", "size": [ "100%", 4 ] } },
+      { "texto@vulpus_menu.texto_hub": {} },
+      { "espaco_base": { "type": "panel", "size": [ "100%", "fill" ] } }
+    ]
+  },
+
+  "texto_hub": {
+    "type": "label",
+    "text": "#form_text",
+    "size": [ "100%", "default" ],
+    "max_size": [ "100%", 72 ],
+    "text_alignment": "center",
+    "color": "$vp_creme",
+    "shadow": true,
+    "layer": 4,
+    "bindings": [ { "binding_name": "#form_text" } ]
+  },
+
+  "slot_hub": {
+    "type": "panel",
+    "size": [ "100%", 34 ],
+    "$foco_prioridade|default": 1,
+    "controls": [
+      {
+        "conteudo@vulpus_menu.conteudo_slot": {
+          "controls": [
+            { "botao@vulpus_menu.botao": {} },
+            { "linha@vulpus_menu.linha_botao": {} }
+          ]
+        }
+      }
+    ]
+  },
+
+  "area_staff": {
+    "type": "stack_panel",
+    "orientation": "horizontal",
+    "size": [ 20, 20 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "offset": [ 6, 4 ],
+    "collection_name": "form_buttons",
+    "controls": [
+      { "slot_8@vulpus_menu.slot_staff": { "collection_index": 8 } }
+    ]
+  },
+
+  "slot_staff": {
+    "type": "panel",
+    "size": [ 20, 20 ],
+    "controls": [
+      {
+        "conteudo@vulpus_menu.conteudo_slot": {
+          "controls": [
+            { "botao@vulpus_menu.botao": {} },
+            { "icone@vulpus_menu.icone": { "$tam_icone": [ 16, 16 ], "layer": 4 } }
+          ]
+        }
+      }
+    ]
+  },
+
+  "lista": {
+    "type": "panel",
+    "size": [ 270, 220 ],
+    "layer": 2,
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "((not ((#title_text - '§v§u§l§p') = #title_text)) and ((#title_text - '§v§u§l§p§0§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      { "quadro@vulpus_menu.quadro": {} },
+      {
+        "rolagem@common.scrolling_panel": {
+          "size": [ "100% - 12px", "100% - 36px" ],
+          "offset": [ 0, 30 ],
+          "anchor_from": "top_middle",
+          "anchor_to": "top_middle",
+          "layer": 3,
+          "$show_background": false,
+          "$scrolling_content": "vulpus_menu.conteudo_lista",
+          "$scroll_size": [ 5, "100% - 4px" ],
+          "$scrolling_pane_size": [ "100% - 4px", "100% - 2px" ],
+          "$scrolling_pane_offset": [ 2, 0 ],
+          "$scroll_bar_right_padding_size": [ 0, 0 ]
+        }
+      }
+    ]
+  },
+
+  "conteudo_lista": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ "100% - 4px", "100%c" ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "controls": [
+      { "texto@vulpus_menu.texto_lista": {} },
+      { "botoes@vulpus_menu.botoes_lista": {} }
+    ]
+  },
+
+  "texto_lista": {
+    "type": "panel",
+    "size": [ "100%", "100%c + 6px" ],
+    "bindings": [
+      { "binding_name": "#form_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not (#form_text = ''))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "rotulo": {
+          "type": "label",
+          "text": "#form_text",
+          "size": [ "100% - 4px", "default" ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [ 2, 2 ],
+          "text_alignment": "left",
+          "color": "$vp_creme",
+          "shadow": true,
+          "bindings": [ { "binding_name": "#form_text" } ]
+        }
+      }
+    ]
+  },
+
+  "botoes_lista": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ "100%", "100%c" ],
+    "factory": {
+      "name": "buttons",
+      "control_ids": {
+        "button": "@vulpus_menu.item_lista",
+        "label": "@vulpus_menu.rotulo_lista",
+        "header": "@vulpus_menu.cabecalho_lista",
+        "divider": "@vulpus_menu.divisor_lista"
+      }
+    },
+    "collection_name": "form_buttons",
+    "bindings": [
+      { "binding_name": "#form_button_contents", "binding_name_override": "#collection_length" }
+    ]
+  },
+
+  "item_lista": {
+    "type": "panel",
+    "size": [ "100%", 32 ],
+    "controls": [
+      {
+        "conteudo": {
+          "type": "panel",
+          "size": [ "100%", 30 ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "controls": [
+            { "botao@vulpus_menu.botao": { "$foco_prioridade": 1 } },
+            {
+              "linha@vulpus_menu.linha_botao": {
+                "$tam_icone": [ 20, 20 ],
+                "$tam_area_icone": [ 26, "100%" ],
+                "$max_rotulo": [ "100% - 4px", 20 ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+
+  "rotulo_lista": {
+    "type": "panel",
+    "size": [ "100%", "100%c + 4px" ],
+    "controls": [
+      {
+        "texto": {
+          "type": "label",
+          "text": "#form_button_text",
+          "size": [ "100% - 4px", "default" ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [ 2, 2 ],
+          "text_alignment": "left",
+          "color": "$vp_creme",
+          "shadow": true,
+          "bindings": [
+            { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" }
+          ]
+        }
+      }
+    ]
+  },
+
+  "cabecalho_lista": {
+    "type": "panel",
+    "size": [ "100%", "100%c + 8px" ],
+    "controls": [
+      {
+        "texto": {
+          "type": "label",
+          "text": "#form_button_text",
+          "size": [ "100% - 4px", "default" ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [ 2, 5 ],
+          "text_alignment": "left",
+          "font_type": "MinecraftTen",
+          "backup_font_type": "UIFont",
+          "color": "$vp_laranja",
+          "shadow": true,
+          "bindings": [
+            { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" }
+          ]
+        }
+      }
+    ]
+  },
+
+  "divisor_lista": {
+    "type": "panel",
+    "size": [ "100%", 9 ],
+    "controls": [
+      { "linha": { "type": "image", "texture": "$vp_divisor", "size": [ "100% - 8px", 2 ] } }
+    ]
+  },
+
+  "quadro": {
+    "type": "panel",
+    "size": [ "100%", "100%" ],
+    "controls": [
+      { "fundo": { "type": "image", "texture": "$vp_painel", "size": [ "100%", "100%" ], "layer": 1 } },
+      {
+        "faixa": {
+          "type": "image",
+          "texture": "$vp_cabecalho",
+          "size": [ "100% - 4px", 24 ],
+          "anchor_from": "top_middle",
+          "anchor_to": "top_middle",
+          "offset": [ 0, 2 ],
+          "layer": 2
+        }
+      },
+      { "titulo@vulpus_menu.titulo": {} },
+      { "fechar@vulpus_menu.fechar": {} }
+    ]
+  },
+
+  "titulo": {
+    "type": "label",
+    "text": "#text",
+    "size": [ "100% - 64px", 10 ],
+    "max_size": [ "100% - 64px", 10 ],
+    "anchor_from": "top_middle",
+    "anchor_to": "top_middle",
+    "offset": [ 0, 9 ],
+    "text_alignment": "center",
+    "font_type": "MinecraftTen",
+    "backup_font_type": "UIFont",
+    "color": "$vp_creme",
+    "shadow": true,
+    "layer": 6,
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(((#title_text - '§v§u§l§p§0§r') - '§v§u§l§p§1§r') - '§v§u§l§p')",
+        "target_property_name": "#text"
+      }
+    ]
+  },
+
+  "fechar": {
+    "type": "button",
+    "size": [ 16, 16 ],
+    "anchor_from": "top_right",
+    "anchor_to": "top_right",
+    "offset": [ -6, 6 ],
+    "layer": 6,
+    "focus_enabled": true,
+    "sound_name": "random.click",
+    "default_control": "default",
+    "hover_control": "hover",
+    "pressed_control": "pressed",
+    "locked_control": "",
+    "button_mappings": [
+      { "from_button_id": "button.menu_select", "to_button_id": "button.menu_exit", "mapping_type": "pressed" },
+      { "from_button_id": "button.menu_ok", "to_button_id": "button.menu_exit", "mapping_type": "focused" }
+    ],
+    "controls": [
+      { "default": { "type": "image", "texture": "$vp_fechar", "size": [ "100%", "100%" ] } },
+      { "hover": { "type": "image", "texture": "$vp_fechar_hover", "size": [ "100%", "100%" ] } },
+      { "pressed": { "type": "image", "texture": "$vp_fechar_press", "size": [ "100%", "100%" ] } }
+    ]
+  },
+
+  "conteudo_slot": {
+    "type": "panel",
+    "size": [ "100%", "100%" ],
+    "bindings": [
+      { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not (#form_button_text = ''))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "botao": {
+    "type": "button",
+    "size": [ "100%", "100%" ],
+    "layer": 3,
+    "$foco_id|default": "",
+    "$foco_esquerda|default": "",
+    "$foco_direita|default": "",
+    "$foco_prioridade|default": 0,
+    "focus_enabled": true,
+    "focus_magnet_enabled": true,
+    "focus_identifier": "$foco_id",
+    "focus_change_left": "$foco_esquerda",
+    "focus_change_right": "$foco_direita",
+    "default_focus_precedence": "$foco_prioridade",
+    "sound_name": "random.click",
+    "default_control": "default",
+    "hover_control": "hover",
+    "pressed_control": "pressed",
+    "locked_control": "",
+    "bindings": [
+      { "binding_type": "collection_details", "binding_collection_name": "form_buttons" }
+    ],
+    "button_mappings": [
+      { "from_button_id": "button.menu_select", "to_button_id": "button.form_button_click", "mapping_type": "pressed" },
+      { "from_button_id": "button.menu_ok", "to_button_id": "button.form_button_click", "mapping_type": "focused" }
+    ],
+    "controls": [
+      { "default": { "type": "image", "texture": "$vp_botao", "size": [ "100%", "100%" ] } },
+      { "hover": { "type": "image", "texture": "$vp_botao_hover", "size": [ "100%", "100%" ] } },
+      { "pressed": { "type": "image", "texture": "$vp_botao_press", "size": [ "100%", "100%" ] } }
+    ]
+  },
+
+  "linha_botao": {
+    "type": "stack_panel",
+    "orientation": "horizontal",
+    "size": [ "100%", "100%" ],
+    "layer": 4,
+    "controls": [
+      { "margem": { "type": "panel", "size": [ 4, "100%" ] } },
+      { "area_icone@vulpus_menu.area_icone": {} },
+      {
+        "area_texto": {
+          "type": "panel",
+          "size": [ "fill", "100%" ],
+          "controls": [ { "rotulo@vulpus_menu.rotulo_botao": {} } ]
+        }
+      }
+    ]
+  },
+
+  "area_icone": {
+    "type": "panel",
+    "$tam_area_icone|default": [ 24, "100%" ],
+    "size": "$tam_area_icone",
+    "bindings": [
+      { "binding_name": "#form_button_texture", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not (#form_button_texture = ''))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [ { "icone@vulpus_menu.icone": {} } ]
+  },
+
+  "icone": {
+    "type": "image",
+    "$tam_icone|default": [ 18, 18 ],
+    "size": "$tam_icone",
+    "bindings": [
+      {
+        "binding_name": "#form_button_texture",
+        "binding_name_override": "#texture",
+        "binding_type": "collection",
+        "binding_collection_name": "form_buttons"
+      },
+      {
+        "binding_name": "#form_button_texture_file_system",
+        "binding_name_override": "#texture_file_system",
+        "binding_type": "collection",
+        "binding_collection_name": "form_buttons"
+      },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#texture = '') or (#texture = 'loading')))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "rotulo_botao": {
+    "type": "label",
+    "text": "#form_button_text",
+    "$max_rotulo|default": [ "100% - 4px", 30 ],
+    "size": [ "100% - 4px", "default" ],
+    "max_size": "$max_rotulo",
+    "anchor_from": "left_middle",
+    "anchor_to": "left_middle",
+    "text_alignment": "left",
+    "color": "$vp_creme",
+    "shadow": true,
+    "bindings": [
+      { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" }
+    ]
+  }
+}

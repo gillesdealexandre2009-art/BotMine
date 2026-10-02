@@ -1,0 +1,7 @@
+{
+  // placeholder da logo: render vanilla de raposa (500x310) ate existir textura propria
+  "$vulpus_logo_texture": "textures/ui/csb_faq_fox",
+  "$vulpus_btn_texture": "textures/ui/button_borderless_dark",
+  "$vulpus_btn_hover_texture": "textures/ui/button_borderless_darkhover",
+  "$vulpus_btn_pressed_texture": "textures/ui/button_borderless_darkpressed"
+}
