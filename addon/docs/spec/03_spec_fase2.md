@@ -117,7 +117,7 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
 
 ### 4.1 Formato
 - **Folhas** (confirmado no `font.brarchive` 1.26.52): a vanilla usa `glyph_00..D7`, `E0`, `E1` e `F9..FF`, então E2..F8 estão livres. Usamos:
-  - **E2**: ícones, folha de 256×256 px com células de 16 px;
+  - **E2**: ícones, folha de 512×512 px com células de 32 px (arte de até 16×16 no meio da célula);
   - **E3**: título, folha de 512×512 px com células de 32 px.
 - **Código** = `0xE200 + linha*16 + coluna` (ex.: linha 1, coluna 0 = `\uE210`).
 - **Posição na célula:**
@@ -125,7 +125,7 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
   - o resto da célula fica transparente;
   - a largura que o jogo usa vai até a última coluna com pixel não transparente.
   - Nas fatias do título, ponha um pixel de alfa ~8 % na coluna 0 e na última coluna da fatia (truque da wiki), para a largura ficar exata.
-- **Tamanho na tela:** a célula aparece na altura da linha de texto (~8–9 px de GUI). Um ícone de 16 px fica com ~0,5 px de GUI por pixel de arte.
+- **Tamanho na tela** (corrigido depois do teste no jogo): o Bedrock desenha a célula de glyph com 16 px de GUI, o dobro da célula de 8 px da letra, qualquer que seja a resolução da folha. Na folha de 256 (células de 16) os ícones saíram com ~2× a altura da letra. Com células de 32 e a arte de 16 px centrada na vertical (como os ícones da vanilla em `glyph_E0`: arte de 14 a 16 px nas linhas 8..24 da célula de 32), cada pixel de arte vale 0,5 px de GUI e o ícone fica da altura da letra (8 px de GUI; a maiúscula tem 7).
 - **Cor:** códigos § tingem o glyph (multiplicativo, a testar). Para manter as cores originais, sempre use `glyph(c)`, que devolve `"§f" + c + "§r"`. Depois dele, ponha de novo a cor do texto.
 - **Onde funcionam:** chat, nameTag, scoreboard/title/actionbar, labels de JSON UI com `font_type` padrão, nome e lore de item.
 - **Onde NÃO usar:**
@@ -151,8 +151,8 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
 | `\uE208` | `KITSUNE` | chama de raposa (kitsunebi) rosa (#F47FFF/#B84FD0) com miolo branco | booster (só cosmético) |
 | `\uE210` | `CAUDAS` | moeda dourada com uma cauda de raposa creme gravada | moeda |
 | `\uE211` | `NIVEL` | losango verde (orbe de XP, #7CFC4A/#3FA81E) com seta creme para cima | nível |
-| `\uE212` | `BARRA_CHEIA` | segmento de 6×10 px (linhas 3..12), laranja com a linha de cima laranja-claro e contorno brasa | barra de nível |
-| `\uE213` | `BARRA_VAZIA` | segmento de 6×10 px, fundo #3A2A22 com contorno #8A5A36 | barra de nível |
+| `\uE212` | `BARRA_CHEIA` | segmento de 6×14 px (linhas 9..22 da célula de 32 = 3×7 px de GUI, a altura da maiúscula), laranja com a linha de cima laranja-claro e contorno brasa; os segmentos encostam e formam a barra | barra de nível |
+| `\uE213` | `BARRA_VAZIA` | segmento de 6×14 px, fundo #3A2A22 com contorno #8A5A36 | barra de nível |
 | `\uE214` | `ONLINE` | duas silhuetas de cabeça e ombros, creme e creme-sombra | online |
 | `\uE215` | `LOCAL` | pino de mapa laranja com furo creme | coordenadas |
 | `\uE216` | `TEMPO` | ampulheta creme com areia laranja | tempo / expira |
@@ -163,7 +163,7 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
 | `\uE224` | `BUSCA` | lupa (aro creme, cabo brasa) | busca |
 | `\uE225` | `HISTORICO` | pergaminho creme com linhas brasa | histórico |
 | `\uE226` | `ENCANTADO` | brilho roxo (#B26BFF) de 3 pontos | item encantado |
-| `\uE300`..`\uE304` | `TITULO` (os 5 juntos) | "VULPUS" de `titulo.png` (130×28), cortado em 5 fatias de 26 px, cada uma numa célula de 32 px da folha E3 (y = 2..29) | só no chat (seção 4.4) |
+| `\uE300`..`\uE304` | `TITULO` (os 5 juntos) | "VULPUS" reduzido da mesma arte do `titulo.png` para 95×20, cortado em 5 fatias de 19 px, cada uma numa célula de 32 px da folha E3 (y = 6..25): 10 px de GUI, ~1,4× a maiúscula | só no chat (seção 4.4) |
 
 As células E2 que não estão na tabela ficam transparentes. Uma folha só pode ganhar código novo numa célula livre; código existente nunca muda.
 
@@ -311,14 +311,15 @@ export function barra(fracao, segmentos = 10) {}
 
 | # | Linha (montada em `textos/hud.js`) | Exemplo |
 |---|---|---|
-| 1 | `glyph(rank.glyph) + " " + rank.cor + rank.nome` | (lua) Raposa Lunar |
+| 0 | só com cargo (`cargoDe`/`CARGOS` de `identidade.js`, a regra do nameTag): `glyph(cargo.glyph) + " " + cargo.cor + cargo.nome` [+ `" " + glyph(G.KITSUNE)`] | (coroa) Admin (chama) |
+| 1 | `glyph(rank.glyph) + " " + rank.cor + rank.nome` [+ Kitsune, quando não há a linha 0] | (lua) Raposa Lunar |
 | 2 | `§7Nível §f{nivel} §8• §7{pct}%` (pct = floor(fracao*100)) | Nível 17 • 42% |
 | 3 | `barra(fracao, 10)` | ■■■■□□□□□□ |
 | 4 | `glyph(G.CAUDAS) + " §6{caudas}"` + ` §a+N` ou ` §c-N` por 3 s depois de mudar | (moeda) 1.250 +5 |
 | 5 | `glyph(G.ONLINE) + " §f{n} §7online"` | (pessoas) 7 online |
 | 6 | `glyph(G.LOCAL) + " §f{x} {y} {z} §7{dir}"` (inteiros, `direcao()` de util) | (pino) 120 64 -30 NE |
 
-- No máximo 6 linhas e 28 caracteres visíveis por linha (sem contar códigos §).
+- No máximo 7 linhas (6 sem cargo) e 28 caracteres visíveis por linha (sem contar códigos §). O label tem `max_size` 160 de altura: 7 linhas de 10 px cabem.
 - O texto inteiro tem menos de 400 caracteres e usa números com `formatarNumero`.
 - O título VULPUS é a imagem do JSON e não vai no texto.
 - **Desligar:** `setTitle(FLAG_SIDEBAR)` só com a flag, o que faz a caixa sumir. Nunca `setTitle('')`.
@@ -357,8 +358,8 @@ export function tituloLivre(player) {}
 ### 7.4 `sistemas/hud.js` (reescrito)
 - Export único: `export const FLAG_SIDEBAR = "§v§s§b§r";`.
 - `pausarHud` deixa de existir. A [integracao] tira o import de `boas_vindas.js`.
-- Imports: `ajustes.hudLigada`, `caudas.saldo`, `niveis.infoNivel`, `tela.tituloLivre`, `glyphs`, `jogadores.online`, `util`.
-- `textos/hud.js` exporta `LINHAS(info) → string[]`, com `info = { rank, nivel, fracao, caudas, mudanca, online, x, y, z, direcao }`.
+- Imports: `ajustes.hudLigada`, `caudas.saldo`, `niveis.infoNivel`, `identidade.CARGOS/cargoDe/ehKitsune`, `tela.tituloLivre`, `glyphs`, `jogadores.online`, `util`.
+- `textos/hud.js` exporta `LINHAS(info) → string[]`, com `info = { rank, cargo, kitsune, nivel, fracao, caudas, mudanca, online, x, y, z, direcao }` (`cargo` = `CARGOS[cargoDe(player)]` ou `null`; `kitsune` = `ehKitsune(player)`).
 
 ## 8. Níveis, ranks, cargos e identidade [ranks]
 
@@ -1013,7 +1014,7 @@ Saídas:
 
 | Rotina | Intervalo | Custo |
 |---|---|---|
-| Sidebar | 10 ticks | monta 6 linhas por jogador; `setTitle` no máximo 1×/s quando muda, mais 1× a cada 10 s |
+| Sidebar | 10 ticks | monta 6 ou 7 linhas por jogador; `setTitle` no máximo 1×/s quando muda, mais 1× a cada 10 s |
 | Presença, Caudas e XP | 1200 ticks (o de `caudas.js`) | XP vai junto, sem loop novo |
 | Identidade (nameTag + canal) | 600 ticks + eventos | escreve só o que mudou |
 | Expiração do leilão | 1200 ticks | varre o Map em memória; grava só os que vencem |

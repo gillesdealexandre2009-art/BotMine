@@ -22,6 +22,8 @@ Tudo implementado, integrado, revisado e conferido fora do jogo (BDS e API simul
 | Commit e push | | **pendente** (depois do teste) |
 
 **Desvios e achados**
+- **Glyphs grandes demais (primeiro teste do dono):** na folha E2 de 256 (células de 16) os ícones e a barra da sidebar saíam com ~2× a altura da letra, porque o jogo desenha a célula de glyph com 16 px de GUI. Agora E2 é 512×512 (células de 32) com a mesma arte de 16 px no meio da célula, como a vanilla faz em `glyph_E0`: ícone = altura da letra. A barra virou 6×14 (altura da maiúscula) e o título do chat (E3) caiu de 28 para 20 px de altura (~1,4× a letra). `docs/previas/glyphs.png` simula o antes e o agora com a fonte default8 do jogo.
+- **Cargo na sidebar:** com cargo (Admin, Staff ou Helper, mesma regra do nameTag) a sidebar ganha uma 1ª linha com o glyph e o nome do cargo; o rank vem logo abaixo (7 linhas). O selo Kitsune vai no fim da 1ª linha.
 - `pausarHud` saiu de vez (`hud.js`, `tpa.js` e `boas_vindas.js`): a sidebar usa o title, então não havia mais o que pausar.
 - `identidade.js` lançava "Failed to resolve identity for '#versao'" no BDS ao criar o canal (o `getScore` de quem ainda não tem score lança). Corrigido com o `gravarScore` tolerante; o `canal.js` do chat tem a mesma proteção (`lerScore`).
 - `/hud` curto já existe no jogo: o log avisa "Custom Command alias [hud] already in use" (aviso inofensivo) e só `/vulpus:hud` funciona. README e Regras usam a forma longa.

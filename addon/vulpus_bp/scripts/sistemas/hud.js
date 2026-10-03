@@ -8,6 +8,7 @@ import { direcao, registrarErro } from "../core/util.js";
 import * as textos from "../textos/hud.js";
 import { hudLigada } from "./ajustes.js";
 import { saldo } from "./caudas.js";
+import { CARGOS, cargoDe, ehKitsune } from "./identidade.js";
 import { infoNivel } from "./niveis.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -56,7 +57,7 @@ function mudancaRecente(player, caudas) {
 }
 
 /**
- * Texto completo do title (flag + 6 linhas).
+ * Texto completo do title (flag + 6 linhas, ou 7 com o cargo). Cargo e Kitsune vêm da mesma regra do nameTag.
  * @param {Player} player
  * @param {number} caudas
  * @param {number} mudanca
@@ -65,8 +66,11 @@ function mudancaRecente(player, caudas) {
 function montar(player, caudas, mudanca, quantosOnline) {
   const { nivel, fracao, rank } = infoNivel(player);
   const { x, y, z } = player.location;
+  const cargo = cargoDe(player);
   const linhas = textos.LINHAS({
     rank,
+    cargo: cargo ? CARGOS[cargo] : null,
+    kitsune: ehKitsune(player),
     nivel,
     fracao,
     caudas,

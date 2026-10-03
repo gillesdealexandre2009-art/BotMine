@@ -20,7 +20,7 @@ O que é conferido antes de empacotar:
     item_texture.json e todo caminho "textures/vulpus/..." citado no RP ou nos scripts existe;
   * idiomas: languages.json lista arquivos que existem e toda chave usada pelos itens está
     em todos os .lang;
-  * glyphs: font/glyph_E2.png tem 256x256 e font/glyph_E3.png tem 512x512;
+  * glyphs: font/glyph_E2.png e font/glyph_E3.png têm 512x512 (células de 32 px);
   * o verificar_ui.py (se existir) não acusa erro. Se o jogo não estiver instalado, só avisa.
 
 Saída em dist/:
@@ -55,7 +55,7 @@ CONFIG_JS = BP / "scripts" / "config.js"
 ALIAS_BETA = "@minecraft/server-beta"
 PREFIXO_ALIAS = "npm:@minecraft/server@"
 # Folhas de glyph do RP e o lado exigido em px (spec 03, §4.1).
-FOLHAS_GLYPH = {"glyph_E2.png": 256, "glyph_E3.png": 512}
+FOLHAS_GLYPH = {"glyph_E2.png": 512, "glyph_E3.png": 512}
 PNG_ASSINATURA = b"\x89PNG\r\n\x1a\n"
 
 BOM = b"\xef\xbb\xbf"
