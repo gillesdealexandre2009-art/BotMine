@@ -113,7 +113,9 @@ class Entrada(commands.Cog):
         embeds, arquivos = com_banner("boas_vindas", [e])
         try:
             await canal.send(
-                content=f"{membro.mention} {porteiro.mention}" if porteiro else membro.mention,
+                content=textos.BOAS_VINDAS_PORTEIRO.format(mencao=membro.mention, porteiro=porteiro.mention)
+                if porteiro
+                else membro.mention,
                 embeds=embeds,
                 files=arquivos,
                 allowed_mentions=discord.AllowedMentions(users=[membro], roles=[porteiro] if porteiro else False),

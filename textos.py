@@ -737,6 +737,7 @@ XP_NIVEL_UP_FRASES = [
 
 # ============================================================================ fidelidade, porteiro e pedido de rank (1.4.0)
 SETUP_PORTEIRO_BOTAO = "Criar cargo Porteiro"
+BOAS_VINDAS_PORTEIRO = "{mencao} • Alô, {porteiro}? 🚪"  # {mencao} {porteiro}
 SETUP_PORTEIRO_CRIADO = (
     "✅ Criei o cargo {cargo} e ele já é marcado nas boas-vindas. Dê ele para quem vai receber a galera "
     "(Helpers, Staff...). Os membros não pegam sozinhos."
