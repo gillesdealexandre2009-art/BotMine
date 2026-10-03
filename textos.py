@@ -267,22 +267,28 @@ AJUDA_INTRO = "Oi! Eu sou a **Kiza**, a raposinha guardiã do VULPUS. Aqui vai o
 AJUDA_CAMPOS = {
     "membro": (
         "🌟 Perfil e XP",
-        "`/perfil` `/rank` `/ranking` — veja seu progresso\n`/daily` `/saldo` `/pagar` — suas {moeda}",
+        "`/perfil` `/rank` `/ranking` — veja seu progresso\n`/daily` `/saldo` `/pagar` — suas {moeda}\n"
+        "`/fidelidade` — seu caminho até Helper (bumps, boas-vindas, denúncias e publicações)",
     ),
     "diversao": (
         "🎮 Diversão",
         "`/mines jogar` — joguinho por diversão\n`/casamento pedir` — forme uma dupla de toca\n"
         "`/aniversario definir` — ganhe parabéns e presente no seu dia",
     ),
-    "suporte": ("🎫 Suporte", "Precisa de ajuda? Abra um ticket no canal de tickets."),
+    "suporte": (
+        "🎫 Suporte",
+        "Precisa de ajuda? Abra um ticket no canal de tickets.\nQuer virar Helper? Tíquete **🎖️ Solicitar rank**.",
+    ),
     "helper": ("🛡️ Helper", "`/warn` `/avisos` `/caso` — avisos e histórico"),
     "staff": (
         "🔨 Staff",
-        "`/timeout` `/remover-timeout` `/kick` `/limpar` `/remover-aviso` — moderação\nAtender tickets e ver logs",
+        "`/timeout` `/remover-timeout` `/kick` `/limpar` `/remover-aviso` — moderação\nAtender tickets e ver logs\n"
+        "`/fidelidade-ranking` — quem está mais perto de Helper • aprovar denúncias e pedidos de rank nos tíquetes",
     ),
     "admin": (
         "👑 Admin",
-        "`/setup` `/configuracao` `/ajustes` — configuração\n`/ban` `/unban` `/raid` `/canal-regra` `/economia-admin` `/backup`",
+        "`/setup` `/configuracao` `/ajustes` — configuração\n`/ban` `/unban` `/raid` `/canal-regra` `/economia-admin` `/backup`\n"
+        "`/fidelidade-ajustar` — corrigir ou importar números da fidelidade",
     ),
 }  # {moeda} em "membro"
 STATUS_TITULO = "🦊 Status da Kiza"
@@ -424,6 +430,11 @@ COMANDOS_CAMPOS = [
         "`/bump` (o do DISBOARD): divulga a toca e te dá {moeda}\n`/bump` (o da Kiza): quando dá para o próximo e o ranking\n"
         "`/bump-avisos`: liga ou desliga a menção quando o bump voltar",
     ),
+    (
+        "🏅 Fidelidade",
+        "`/fidelidade`: seus bumps, boas-vindas, denúncias aprovadas e publicações, e o que falta para virar Helper\n"
+        "Bateu tudo? Abra um tíquete em **🎖️ Solicitar rank** em {tickets}",
+    ),
     ("ℹ️ Outros", "`/ajuda`: este resumo, onde você estiver\n`/status`: vê se eu estou acordada"),
 ]
 COMANDOS_RODAPE = "Me marque no chat se quiser conversar. Prometo responder. Talvez."
@@ -460,10 +471,25 @@ DUVIDAS_CAMPOS = [
     ("Como viro Kitsune?", "Dando boost no servidor. Está tudo no canal **seja-um-kitsune**."),
     ("Marquei meu aniversário errado!", "Abra um tíquete com uma prova da data (um documento com o resto tampado serve). Um admin corrige."),
     ("O que é o bump?", "É o `/bump` do DISBOARD: ele sobe a toca na lista pública de servidores. Dá para fazer a cada 2h, e quem faz ganha {moeda}."),
+    (
+        "Como viro Helper?",
+        "Mostrando que você cuida da toca: bumps, boas-vindas a quem chega, denúncias aprovadas e publicações. "
+        "Veja o seu progresso com `/fidelidade` e, quando bater tudo, abra um tíquete em **🎖️ Solicitar rank**.",
+    ),
 ]
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
+    (
+        "1.4.0",
+        "Caminho até Helper",
+        [
+            "🏅 `/fidelidade`: eu conto seus **bumps**, **boas-vindas**, **denúncias aprovadas** e **publicações** (e pede 1 mês de toca)",
+            "🎖️ Tíquete novo **Solicitar rank**: mostra seu quadro e a staff pode te promover a Helper ali mesmo",
+            "🚪 Cargo **Porteiro**: a equipe é chamada nas boas-vindas para receber quem chega",
+            "🔔 Quem entra ganha uma marcação rapidinha no canal de verificação, para não ficar perdido(a)",
+        ],
+    ),
     (
         "1.3.0",
         "Bump turbinado",
@@ -708,3 +734,97 @@ XP_NIVEL_UP_FRASES = [
     "🌟 Olha só quem subiu para o **nível {nivel}**: {mencao}! 🎉",
     "🌟 {mencao} agora é **nível {nivel}**. Tá falando demais ou eu que tô contando errado? 👀",
 ]  # {mencao} {nivel}
+
+# ============================================================================ fidelidade, porteiro e pedido de rank (1.4.0)
+SETUP_PORTEIRO_BOTAO = "Criar cargo Porteiro"
+SETUP_PORTEIRO_CRIADO = (
+    "✅ Criei o cargo {cargo} e ele já é marcado nas boas-vindas. Dê ele para quem vai receber a galera "
+    "(Helpers, Staff...). Os membros não pegam sozinhos."
+)  # {cargo}
+SETUP_PORTEIRO_REUSADO = "✅ Achei o cargo {cargo} e passei a usar ele como Porteiro nas boas-vindas."  # {cargo}
+SETUP_PORTEIRO_NAO_MENCIONAVEL = (
+    "⚠️ Mas ele não é mencionável e eu não consegui mudar isso. Ative **Permitir que todos @mencionem este cargo** "
+    "nele, senão a marcação nas boas-vindas não avisa ninguém."
+)
+SETUP_PORTEIRO_EXISTE = "🦊 O Porteiro já está configurado: {cargo}."  # {cargo}
+SETUP_PORTEIRO_ERRO = "🦊 Não consegui criar o cargo. Confira se eu tenho **Gerenciar Cargos**."
+SETUP_HELPER_SEM_NIVEL = (
+    "⚠️ {cargo} não está em **Níveis de permissão** como Helper: quem for promovido ganha o cargo, "
+    "mas não os comandos de Helper (`/warn`, `/avisos`...)."
+)  # {cargo}
+SETUP_HELPER_PERIGOSO = "⚠️ {cargo} tem {permissoes}: eu não dou esse cargo pelo botão de promover."  # {cargo} {permissoes}
+SETUP_PUBLICACOES_RODAPE = (
+    "Conta post com imagem, vídeo ou link (ou post novo em fórum): até 2 por dia por pessoa, com 10 min entre eles. "
+    "Apagou em menos de 24 h, desconta. Vazio = nenhum canal."
+)
+
+FIDELIDADE_TITULO = "🏅 Fidelidade de {nome}"  # {nome}
+FIDELIDADE_DESC = "O caminho até **Helper**: mostrar que você cuida da toca. Eu conto tudo sozinha. 😼"
+FIDELIDADE_LINHA = "{marca} {emoji} **{rotulo}** | **{atual}**/{meta}  {barra}"  # {marca} {emoji} {rotulo} {atual} {meta} {barra}
+FIDELIDADE_PRONTO = "✅ Tudo certo! Já dá para pedir **Helper**: abra um tíquete em **🎖️ Solicitar rank**."
+FIDELIDADE_FALTA = "Falta: {itens}. Bora, que a toca precisa de você! 🦊"  # {itens}
+FIDELIDADE_FALTA_NIVEL = "nível {nivel}"  # {nivel}
+FIDELIDADE_FALTA_DIAS = "mais {dias} dia(s) na toca"  # {dias}
+FIDELIDADE_JA_EQUIPE = "🛡️ Já faz parte da equipe (Helper ou acima). Obrigada por cuidar da toca! 🧡"
+FIDELIDADE_SITUACAO = "Situação"
+FIDELIDADE_COMO_TITULO = "Como conta"
+FIDELIDADE_COMO = (
+    "🚀 dar `/bump` no DISBOARD\n"
+    "👋 dar boas-vindas a quem chegou, no canal de boas-vindas (marcando a pessoa ou dizendo \"bem-vindo(a)\"); "
+    "conta nova no Discord e quem está voltando não contam\n"
+    "🚨 denúncia por tíquete aprovada pela staff\n"
+    "📸 post com imagem, vídeo ou link nos canais de publicação (até 2 por dia)\n"
+    "⭐ nível de XP, conversando"
+)
+FIDELIDADE_RODAPE = "Algum número errado? A staff corrige com /fidelidade-ajustar."
+FIDELIDADE_RANKING_TITULO = "🏅 Quem está mais perto de Helper"
+FIDELIDADE_RANKING_VAZIO = "🦊 Ninguém pontuou na fidelidade ainda."
+FIDELIDADE_RANKING_RODAPE = "% = quanto do caminho até Helper já foi feito • ✅ pode pedir • quem já é da equipe fica de fora"
+FIDELIDADE_AJUSTE_OK = "✅ {tipo} de {alvo}: **{antes}** → **{depois}**."  # {tipo} {alvo} {antes} {depois}
+FIDELIDADE_AJUSTE_BOT = "🦊 Bots não têm fidelidade (nem coração, segundo alguns)."
+FIDELIDADE_LOG_AJUSTE = "🏅 Fidelidade ajustada"
+FIDELIDADE_DETALHE_TITULO = "🔎 De onde vieram os números de {nome}"  # {nome}
+FIDELIDADE_DETALHE_DESC = (
+    "Só você (staff) vê isto. Desconfie de muitas boas-vindas para contas novas, que saíram ou que nunca verificaram."
+)
+FIDELIDADE_DETALHE_VERIFICOU = "✅ verificou"
+FIDELIDADE_DETALHE_NAO_VERIFICOU = "⏳ não verificou"
+FIDELIDADE_DETALHE_SAIU = "🚪 saiu"
+
+DENUNCIA_AVALIAR_TITULO = "🛡️ Avaliação da denúncia (só staff)"
+DENUNCIA_AVALIAR_DESC = (
+    "Depois de olhar as provas, a staff aprova ou rejeita. Aprovar soma **+1 denúncia aprovada** "
+    "na fidelidade de {autor} (vale uma vez por tíquete)."
+)  # {autor}
+DENUNCIA_APROVAR = "Aprovar denúncia"
+DENUNCIA_REJEITAR = "Rejeitar"
+DENUNCIA_APROVADA = "✅ Denúncia **aprovada** por {staff}. Valeu por ajudar a cuidar da toca, {autor}! 🦊"  # {staff} {autor}
+DENUNCIA_REJEITADA = "❌ Denúncia **rejeitada** por {staff}."  # {staff}
+DENUNCIA_JA_AVALIADA = "🦊 Essa denúncia já foi avaliada."
+DENUNCIA_SO_STAFF = "🦊 Só a staff (Staff ou acima) avalia denúncias."
+DENUNCIA_PROPRIA = "🦊 Ninguém avalia a própria denúncia. Chama outra pessoa da staff!"
+DENUNCIA_LOG = "🚨 Denúncia {resultado}"  # {resultado}
+
+RANK_TICKET_TITULO = "🎖️ Pedido de rank: Helper"
+RANK_TICKET_DESC = (
+    "{autor}, mande aqui as suas provas (prints, links, o que tiver). Abaixo está o seu quadro de fidelidade, "
+    "contado por mim. Mesmo que falte algo, a staff pode avaliar. 🦊"
+)  # {autor}
+RANK_PROMOVER = "Promover a Helper"
+RANK_RECUSAR = "Recusar"
+RANK_SO_STAFF = "🦊 Só a staff (Staff ou acima) decide pedidos de rank."
+RANK_SEM_CARGO = "🦊 O cargo Helper ainda não foi configurado. Um admin faz isso em `/setup` → Cargos base."
+RANK_ERRO_HIERARQUIA = "🦊 Não dá para dar {cargo}: ele precisa ficar abaixo do meu cargo e do seu."  # {cargo}
+RANK_AUTOR_SAIU = "🦊 Quem abriu o pedido não está mais no servidor."
+RANK_PROPRIO = "🦊 Ninguém decide o próprio pedido de rank."
+RANK_JA_TEM = "🦊 {autor} já tem {cargo}."  # {autor} {cargo}
+RANK_JA_DECIDIDO = "🦊 Alguém da staff já decidiu esse pedido."
+RANK_SEM_PERMISSAO = "🦊 Eu preciso da permissão **Gerenciar Cargos** para dar o Helper."
+RANK_CARGO_PERIGOSO = (
+    "🦊 Não vou dar {cargo} por botão: ele tem {permissoes}. Tire essas permissões do cargo ou dê à mão."
+)  # {cargo} {permissoes}
+RANK_PROMOVIDO = "🎖️ {autor} agora é **Helper**! Promovido(a) por {staff}. Bem-vindo(a) à equipe! 🦊🧡"  # {autor} {staff}
+RANK_RECUSADO = (
+    "🦊 Pedido recusado por {staff} por enquanto. Continue ajudando a toca e tente de novo mais tarde, {autor}!"
+)  # {staff} {autor}
+RANK_LOG = "🎖️ Pedido de rank {resultado}"  # {resultado}

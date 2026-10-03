@@ -484,9 +484,11 @@ class Banco:
             return {"valor": valor, "streak": streak, "saldo": saldo}  # type: ignore[dict-item]
 
     async def recompensar_uma_vez(
-        self, guild_id: int, chave: str, user_id: int, valor: int, tipo: str
+        self, guild_id: int, chave: str, user_id: int, valor: int, tipo: str, fidelidade: Optional[str] = None
     ) -> Optional[int]:
-        """Credita `valor` só se ninguém levou essa `chave` ainda. Retorna o saldo novo, ou None se já foi levada."""
+        """Credita `valor` só se ninguém levou essa `chave` ainda. Retorna o saldo novo, ou None se já foi levada.
+
+        Com `fidelidade`, soma 1 nesse contador da fidelidade na mesma transação (ex.: o bump pago)."""
         if valor < 0:
             raise ValueError("recompensar_uma_vez exige valor >= 0")
         async with self._tx() as conn:
@@ -498,6 +500,8 @@ class Banco:
             await cur.close()
             if not inseriu:
                 return None
+            if fidelidade is not None:
+                await self._somar_fidelidade(conn, guild_id, user_id, fidelidade, 1)
             return await self._mov(conn, guild_id, user_id, valor, tipo, chave)
 
     @staticmethod
@@ -823,6 +827,41 @@ class Banco:
     async def marcar_sla_avisado(self, ticket_id: int) -> None:
         await self._exec("UPDATE tickets SET sla_avisado = 1 WHERE id = ?", (ticket_id,))
 
+    @staticmethod
+    async def _decidir(conn: aiosqlite.Connection, canal_id: int, categoria: str, resultado: str, staff_id: int) -> bool:
+        """Grava a decisão da staff no ticket só se ninguém decidiu antes (dois cliques não valem duas vezes)."""
+        cur = await conn.execute(
+            "UPDATE tickets SET avaliacao = ?, avaliado_por = ? WHERE canal_id = ? AND categoria = ? AND avaliacao IS NULL",
+            (resultado, staff_id, canal_id, categoria),
+        )
+        mudou = cur.rowcount == 1
+        await cur.close()
+        return mudou
+
+    async def avaliar_denuncia(self, canal_id: int, aprovada: bool, staff_id: int) -> Optional[int]:
+        """Aprova ou rejeita a denúncia do ticket (só a primeira avaliação vale).
+
+        Aprovar soma 1 em 'denuncias' na fidelidade do autor. Retorna o autor, ou None se já tinha sido avaliada.
+        """
+        async with self._tx() as conn:
+            if not await self._decidir(conn, canal_id, "denuncia", "aprovada" if aprovada else "rejeitada", staff_id):
+                return None
+            ticket = await self._fetchone(conn, "SELECT guild_id, autor_id FROM tickets WHERE canal_id = ?", (canal_id,))
+            if aprovada:
+                await self._somar_fidelidade(conn, ticket["guild_id"], ticket["autor_id"], "denuncias", 1)
+            return ticket["autor_id"]
+
+    async def decidir_rank(self, canal_id: int, promovido: bool, staff_id: int) -> bool:
+        """Grava 'promovido' ou 'recusado' no pedido de rank. False se alguém da staff já decidiu."""
+        async with self._tx() as conn:
+            return await self._decidir(conn, canal_id, "rank", "promovido" if promovido else "recusado", staff_id)
+
+    async def desfazer_decisao_rank(self, canal_id: int) -> None:
+        """Libera o pedido de novo (a promoção foi gravada, mas o Discord recusou dar o cargo)."""
+        await self._exec(
+            "UPDATE tickets SET avaliacao = NULL, avaliado_por = NULL WHERE canal_id = ? AND categoria = 'rank'", (canal_id,)
+        )
+
     # ------------------------------------------------------------------ pérolas (mural de destaques)
     async def obter_perola(self, guild_id: int, msg_id: int) -> Optional[int]:
         linha = await self._um("SELECT perola_msg_id FROM perolas WHERE guild_id = ? AND msg_id = ?", (guild_id, msg_id))
@@ -871,3 +910,221 @@ class Banco:
             "SELECT user_id, dia, mes FROM aniversarios WHERE guild_id = ? ORDER BY mes, dia", (guild_id,)
         )
         return [(linha["user_id"], linha["dia"], linha["mes"]) for linha in linhas]
+
+    # ------------------------------------------------------------------ fidelidade (caminho até Helper)
+    @staticmethod
+    def _checar_tipo(tipo: str) -> None:
+        if tipo not in config.FIDELIDADE_TIPOS:
+            raise ValueError(f"tipo de fidelidade inválido: {tipo}")
+
+    async def _somar_fidelidade(self, conn: aiosqlite.Connection, guild_id: int, user_id: int, tipo: str, delta: int) -> int:
+        """Soma `delta` (pode ser negativo) sem nunca passar de zero. Retorna o valor novo."""
+        self._checar_tipo(tipo)
+        await conn.execute(
+            "INSERT INTO fidelidade (guild_id, user_id, tipo, quantidade) VALUES (?, ?, ?, MAX(0, ?)) "
+            "ON CONFLICT(guild_id, user_id, tipo) DO UPDATE SET quantidade = MAX(0, quantidade + ?)",
+            (guild_id, user_id, tipo, delta, delta),
+        )
+        linha = await self._fetchone(
+            conn,
+            "SELECT quantidade FROM fidelidade WHERE guild_id = ? AND user_id = ? AND tipo = ?",
+            (guild_id, user_id, tipo),
+        )
+        return linha["quantidade"]
+
+    async def somar_fidelidade(self, guild_id: int, user_id: int, tipo: str, delta: int) -> int:
+        async with self._tx() as conn:
+            return await self._somar_fidelidade(conn, guild_id, user_id, tipo, delta)
+
+    async def definir_fidelidade(self, guild_id: int, user_id: int, tipo: str, valor: int) -> int:
+        self._checar_tipo(tipo)
+        valor = max(0, valor)
+        await self._exec(
+            "INSERT INTO fidelidade (guild_id, user_id, tipo, quantidade) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(guild_id, user_id, tipo) DO UPDATE SET quantidade = excluded.quantidade",
+            (guild_id, user_id, tipo, valor),
+        )
+        return valor
+
+    async def fidelidade(self, guild_id: int, user_id: int) -> dict[str, int]:
+        """Contadores da pessoa (todos os tipos, 0 quando não há registro)."""
+        linhas = await self._todos(
+            "SELECT tipo, quantidade FROM fidelidade WHERE guild_id = ? AND user_id = ?", (guild_id, user_id)
+        )
+        valores = {tipo: 0 for tipo in config.FIDELIDADE_TIPOS}
+        valores.update({linha["tipo"]: linha["quantidade"] for linha in linhas if linha["tipo"] in valores})
+        return valores
+
+    async def todas_fidelidades(self, guild_id: int) -> dict[int, dict[str, int]]:
+        """user_id -> contadores, só de quem tem algum contador acima de zero."""
+        linhas = await self._todos(
+            "SELECT user_id, tipo, quantidade FROM fidelidade WHERE guild_id = ? AND quantidade > 0", (guild_id,)
+        )
+        saida: dict[int, dict[str, int]] = {}
+        for linha in linhas:
+            if linha["tipo"] in config.FIDELIDADE_TIPOS:
+                valores = saida.setdefault(linha["user_id"], {tipo: 0 for tipo in config.FIDELIDADE_TIPOS})
+                valores[linha["tipo"]] = linha["quantidade"]
+        return saida
+
+    async def xp_de(self, guild_id: int, user_ids: Iterable[int]) -> dict[int, int]:
+        """XP de várias pessoas de uma vez (quem não tem perfil fica de fora)."""
+        ids = list(dict.fromkeys(user_ids))
+        if not ids:
+            return {}
+        marcas = ",".join("?" * len(ids))
+        linhas = await self._todos(
+            f"SELECT user_id, xp FROM perfis WHERE guild_id = ? AND user_id IN ({marcas})", (guild_id, *ids)
+        )
+        return {linha["user_id"]: linha["xp"] for linha in linhas}
+
+    # ---- boas-vindas
+    async def registrar_entrada(self, guild_id: int, user_id: int, ts: Optional[int] = None) -> bool:
+        """Guarda a entrada (para contar boas-vindas) e limpa as entradas velhas do servidor.
+
+        Quem está voltando (já tinha XP aqui ou já foi saudado numa entrada anterior) não rende boas-vindas: False."""
+        ts = agora() if ts is None else ts
+        async with self._tx() as conn:
+            await conn.execute(
+                "DELETE FROM entradas_recentes WHERE guild_id = ? AND entrou_em < ?",
+                (guild_id, ts - config.BOAS_VINDAS_JANELA),
+            )
+            voltando = await self._fetchone(
+                conn,
+                "SELECT 1 FROM perfis WHERE guild_id = ? AND user_id = ? AND xp > 0 "
+                "UNION ALL SELECT 1 FROM boas_vindas_dadas WHERE guild_id = ? AND novato_id = ? LIMIT 1",
+                (guild_id, user_id, guild_id, user_id),
+            )
+            if voltando is not None:
+                return False
+            await conn.execute(
+                "INSERT INTO entradas_recentes (guild_id, user_id, entrou_em) VALUES (?, ?, ?) "
+                "ON CONFLICT(guild_id, user_id) DO UPDATE SET entrou_em = excluded.entrou_em",
+                (guild_id, user_id, ts),
+            )
+        return True
+
+    async def novatos_recentes(self, guild_id: int, desde: int) -> list[int]:
+        """Quem entrou a partir de `desde` e ainda não saiu."""
+        linhas = await self._todos(
+            "SELECT user_id FROM entradas_recentes WHERE guild_id = ? AND entrou_em >= ? ORDER BY entrou_em",
+            (guild_id, desde),
+        )
+        return [linha["user_id"] for linha in linhas]
+
+    async def registrar_boas_vindas(self, guild_id: int, membro_id: int, novato_ids: Iterable[int]) -> int:
+        """Conta uma boa-vinda por novato ainda não saudado por esse membro. Retorna quantas contaram."""
+        contadas = 0
+        async with self._tx() as conn:
+            for novato_id in dict.fromkeys(novato_ids):
+                if novato_id == membro_id:
+                    continue
+                entrada = await self._fetchone(
+                    conn,
+                    "SELECT entrou_em FROM entradas_recentes WHERE guild_id = ? AND user_id = ?",
+                    (guild_id, novato_id),
+                )
+                if entrada is None:
+                    continue
+                cur = await conn.execute(
+                    "INSERT OR IGNORE INTO boas_vindas_dadas (guild_id, membro_id, novato_id, entrada_em, criado_em) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (guild_id, membro_id, novato_id, entrada["entrou_em"], agora()),
+                )
+                contadas += cur.rowcount
+                await cur.close()
+            if contadas:
+                await self._somar_fidelidade(conn, guild_id, membro_id, "boas_vindas", contadas)
+        return contadas
+
+    async def registrar_saida(self, guild_id: int, user_id: int, ts: Optional[int] = None) -> list[int]:
+        """Tira a pessoa das entradas recentes. Se ela ficou menos que BOAS_VINDAS_SAIDA_MIN, as boas-vindas
+        que recebeu deixam de contar. Retorna quem perdeu uma boa-vinda."""
+        ts = agora() if ts is None else ts
+        async with self._tx() as conn:
+            entrada = await self._fetchone(
+                conn, "SELECT entrou_em FROM entradas_recentes WHERE guild_id = ? AND user_id = ?", (guild_id, user_id)
+            )
+            if entrada is None:
+                return []
+            await conn.execute("DELETE FROM entradas_recentes WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
+            if ts - entrada["entrou_em"] >= config.BOAS_VINDAS_SAIDA_MIN:
+                return []
+            linhas = await self._fetchall(
+                conn,
+                "SELECT membro_id FROM boas_vindas_dadas WHERE guild_id = ? AND novato_id = ? AND entrada_em = ?",
+                (guild_id, user_id, entrada["entrou_em"]),
+            )
+            await conn.execute(
+                "DELETE FROM boas_vindas_dadas WHERE guild_id = ? AND novato_id = ? AND entrada_em = ?",
+                (guild_id, user_id, entrada["entrou_em"]),
+            )
+            membros = [linha["membro_id"] for linha in linhas]
+            for membro_id in membros:
+                await self._somar_fidelidade(conn, guild_id, membro_id, "boas_vindas", -1)
+            return membros
+
+    async def ultimas_boas_vindas(self, guild_id: int, membro_id: int, limite: int = 8) -> list[tuple[int, int]]:
+        """(novato, quando) das últimas boas-vindas que contaram para o membro (para a staff conferir)."""
+        linhas = await self._todos(
+            "SELECT novato_id, criado_em FROM boas_vindas_dadas WHERE guild_id = ? AND membro_id = ? "
+            "ORDER BY criado_em DESC LIMIT ?",
+            (guild_id, membro_id, limite),
+        )
+        return [(linha["novato_id"], linha["criado_em"]) for linha in linhas]
+
+    # ---- publicações (o histórico fica guardado para a staff conferir)
+    async def registrar_publicacao(
+        self, guild_id: int, user_id: int, canal_id: int, msg_id: int, ts: Optional[int] = None
+    ) -> bool:
+        """Conta a publicação: no máximo uma a cada PUBLICACAO_INTERVALO e PUBLICACAO_MAX_DIA em 24 h. True se contou."""
+        ts = agora() if ts is None else ts
+        async with self._tx() as conn:
+            recentes = await self._fetchone(
+                conn,
+                "SELECT COUNT(*) AS n, MAX(criado_em) AS ultima FROM publicacoes "
+                "WHERE guild_id = ? AND user_id = ? AND criado_em > ?",
+                (guild_id, user_id, ts - 86400),
+            )
+            if recentes["n"] >= config.PUBLICACAO_MAX_DIA:
+                return False
+            if recentes["ultima"] is not None and ts - recentes["ultima"] < config.PUBLICACAO_INTERVALO:
+                return False
+            cur = await conn.execute(
+                "INSERT OR IGNORE INTO publicacoes (guild_id, msg_id, canal_id, user_id, criado_em) VALUES (?, ?, ?, ?, ?)",
+                (guild_id, msg_id, canal_id, user_id, ts),
+            )
+            inseriu = cur.rowcount == 1
+            await cur.close()
+            if inseriu:
+                await self._somar_fidelidade(conn, guild_id, user_id, "publicacoes", 1)
+            return inseriu
+
+    async def desfazer_publicacoes(self, guild_id: int, msg_ids: Iterable[int], ts: Optional[int] = None) -> list[int]:
+        """Publicações apagadas antes de PUBLICACAO_DESCONTA deixam de contar (uma transação só, mesmo em massa).
+
+        Retorna os autores descontados."""
+        ids = list(dict.fromkeys(msg_ids))
+        if not ids:
+            return []
+        ts = agora() if ts is None else ts
+        marcas = ",".join("?" * len(ids))
+        async with self._tx() as conn:
+            linhas = await self._fetchall(
+                conn,
+                f"SELECT msg_id, user_id FROM publicacoes WHERE guild_id = ? AND criado_em > ? AND msg_id IN ({marcas})",
+                (guild_id, ts - config.PUBLICACAO_DESCONTA, *ids),
+            )
+            for linha in linhas:
+                await conn.execute("DELETE FROM publicacoes WHERE guild_id = ? AND msg_id = ?", (guild_id, linha["msg_id"]))
+                await self._somar_fidelidade(conn, guild_id, linha["user_id"], "publicacoes", -1)
+            return [linha["user_id"] for linha in linhas]
+
+    async def ultimas_publicacoes(self, guild_id: int, user_id: int, limite: int = 8) -> list[tuple[int, int, int]]:
+        """(canal, mensagem, quando) das últimas publicações que contaram (para a staff conferir)."""
+        linhas = await self._todos(
+            "SELECT canal_id, msg_id, criado_em FROM publicacoes WHERE guild_id = ? AND user_id = ? "
+            "ORDER BY criado_em DESC LIMIT ?",
+            (guild_id, user_id, limite),
+        )
+        return [(linha["canal_id"], linha["msg_id"], linha["criado_em"]) for linha in linhas]

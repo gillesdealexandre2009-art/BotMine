@@ -5,8 +5,8 @@ import asyncio
 import io
 import logging
 from collections import defaultdict
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Optional
+from datetime import datetime
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands, tasks
@@ -210,6 +210,9 @@ class Tickets(commands.Cog):
             )
         except discord.HTTPException:
             log.warning("Falha ao postar a mensagem inicial do ticket", exc_info=True)
+        fidelidade = self.bot.get_cog("Fidelidade")  # denúncia e pedido de rank ganham botões próprios
+        if fidelidade is not None:
+            await fidelidade.ticket_aberto(canal, membro, categoria)  # type: ignore[attr-defined]
         await responder(interaction, textos.TICKET_CRIADO.format(canal=canal.mention))
 
     # ------------------------------------------------------------------ assumir

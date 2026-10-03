@@ -1,4 +1,4 @@
-"""Boas-vindas, adeus, autorole (Visitante), regras e verificação (Visitante -> Membro)."""
+"""Boas-vindas (marcando o Porteiro), adeus, autorole (Visitante), marcação na verificação, regras e verificação."""
 from __future__ import annotations
 
 import logging
@@ -90,10 +90,18 @@ class Entrada(commands.Cog):
             else:
                 log.warning("Não consigo gerenciar o cargo Visitante em %s (hierarquia)", guild.id)
 
-        # boas-vindas
+        # boas-vindas primeiro: com muita gente entrando, a marcação da verificação não atrasa o aviso ao Porteiro
+        await self._boas_vindas(membro)
+        await self._ping_verificacao(membro)
+
+    async def _boas_vindas(self, membro: discord.Member) -> None:
+        """Marca o novato e o Porteiro, para a equipe receber quem chegou."""
+        guild, banco = membro.guild, self.bot.banco
         canal = await self._canal(guild, "boas_vindas")
         if canal is None:
             return
+        id_porteiro = await banco.get_config_int(guild.id, "cargo_porteiro")
+        porteiro = guild.get_role(id_porteiro) if id_porteiro else None
         id_regras = await banco.get_config_int(guild.id, "canal_regras")
         canal_regras = f"<#{id_regras}>" if id_regras else textos.BOAS_VINDAS_CANAL_REGRAS_PADRAO
         e = embed(
@@ -105,13 +113,29 @@ class Entrada(commands.Cog):
         embeds, arquivos = com_banner("boas_vindas", [e])
         try:
             await canal.send(
-                content=membro.mention,
+                content=f"{membro.mention} {porteiro.mention}" if porteiro else membro.mention,
                 embeds=embeds,
                 files=arquivos,
-                allowed_mentions=discord.AllowedMentions(users=[membro]),
+                allowed_mentions=discord.AllowedMentions(users=[membro], roles=[porteiro] if porteiro else False),
             )
         except discord.HTTPException:
             log.warning("Falha ao enviar boas-vindas em %s", guild.id, exc_info=True)
+
+    async def _ping_verificacao(self, membro: discord.Member) -> None:
+        """Marca o novato no canal de verificação e apaga logo depois: a notificação fica e mostra o caminho."""
+        if await self.bot.banco.ajuste(membro.guild.id, "ping_verificacao") != 1:
+            return
+        canal = await self._canal(membro.guild, "verificacao")
+        if canal is None:
+            return
+        try:
+            await canal.send(
+                membro.mention,
+                delete_after=config.PING_VERIFICACAO_SEG,
+                allowed_mentions=discord.AllowedMentions(users=[membro]),
+            )
+        except discord.HTTPException:
+            log.warning("Falha ao marcar %s no canal de verificação", membro.id, exc_info=True)
 
     @commands.Cog.listener()
     async def on_member_remove(self, membro: discord.Member) -> None:

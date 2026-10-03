@@ -109,8 +109,11 @@ class Bump(commands.Cog):
         await self._set(guild.id, "quem", str(autor.id))
         await self._set(guild.id, "ts", str(int(mensagem.created_at.timestamp())))
         premio = await self.bot.banco.ajuste(guild.id, "bump_premio")
-        # valor 0 também registra: é o que conta no ranking de bumps
-        await self.bot.banco.recompensar_uma_vez(guild.id, f"bump:{mensagem.id}", autor.id, premio, "bump")
+        # valor 0 também registra: é o que conta no ranking de bumps. A chave única impede contar duas vezes,
+        # e o +1 na fidelidade vai na mesma transação do pagamento.
+        await self.bot.banco.recompensar_uma_vez(
+            guild.id, f"bump:{mensagem.id}", autor.id, premio, "bump", fidelidade="bumps"
+        )
         mult = await self._mult(guild.id)
         if premio > 0:
             texto = random.choice(textos.BUMP_OBRIGADO).format(

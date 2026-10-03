@@ -4,7 +4,7 @@ Bot de comunidade (Python 3.11+, discord.py 2.x, SQLite). **Sem IA de chat e sem
 a personalidade da Kiza vive só nos textos fixos (`textos.py`). Independente do SONHE (token, banco e config próprios).
 
 **Módulos:** entrada (boas-vindas, adeus, autorole, regras, verificação) · painel de cargos · tickets · moderação e casos ·
-automod e modo raid · logs · regras por canal e sugestões · XP e níveis · economia · união de toca · Mines · `/ajuda` `/status` · backup.
+automod e modo raid · logs · regras por canal e sugestões · XP e níveis · economia · união de toca · Mines · fidelidade e pedido de rank (caminho até Helper) · `/ajuda` `/status` · backup.
 
 ## 1. Discord Developer Portal (uma vez)
 1. Crie o aplicativo → **Bot** → *Reset Token* (guarde o token, ele vira `DISCORD_TOKEN`).
@@ -30,7 +30,7 @@ pytest -q                                              # testes do banco e das f
 
 ## 4. Primeiros passos no servidor
 1. **Suba o cargo da Kiza** na lista de cargos, acima de Visitante, Membro, cores e demais cargos que ela precisa dar/tirar.
-2. Rode **`/setup`** (só admin/dono) e configure, nesta ordem: 🛡️ *Níveis de permissão* (mapeie Helper, Helper | Header, Staff, Staff | Header, Admin…) → 🎭 *Cargos base* (Visitante, Membro, Kitsune) → 📺 *Canais* → 🎨 *Painel de cargos* → ⭐ *Cargos de XP* (opcional).
+2. Rode **`/setup`** (só admin/dono) e configure, nesta ordem: 🛡️ *Níveis de permissão* (mapeie Helper, Helper | Header, Staff, Staff | Header, Admin…) → 🎭 *Cargos base* (Visitante, Membro, Kitsune, Helper; botão **Criar cargo Porteiro**) → 📺 *Canais* → 🎨 *Painel de cargos* → ⭐ *Cargos de XP* (opcional) → 📸 *Publicações* (canais que contam na fidelidade).
 3. Em **📤 Publicar painéis**, publique regras, verificação, painel de cargos, tickets e o aviso fixo. Republicar **edita** a mensagem anterior (não duplica).
 4. Em **🔒 Visibilidade**, escolha um nível (Público/Membro/Helper/Staff/Admin) e a categoria ou canal, depois clique em **Aplicar permissões** — a Kiza ajusta `Ver Canal`/`Enviar Mensagens` de verdade, sem apagar overwrites de outras pessoas/bots que já existam nesse canal.
 5. Rode **`/configuracao`**: mostra o que falta, permissões que faltam à Kiza e cargos acima do dela. Ajuste números com **`/ajustes`**.
@@ -45,10 +45,10 @@ Se os canais e cargos já existem, preencher o `/setup` cargo a cargo é tedioso
 | Nível | Comandos |
 |---|---|
 | Todos | `/ajuda` `/status` |
-| Membro | `/perfil` `/rank` `/ranking` `/daily` `/saldo` `/pagar` `/mines jogar` `/casamento …` + painel de cargos e tickets |
+| Membro | `/perfil` `/rank` `/ranking` `/fidelidade` `/daily` `/saldo` `/pagar` `/mines jogar` `/casamento …` + painel de cargos e tickets |
 | 1 Helper | `/warn` `/avisos` `/caso` |
-| 2 Staff | `/timeout` `/remover-timeout` `/kick` `/limpar` `/remover-aviso`, atender tickets, ver logs |
-| 3 Admin | `/ban` `/unban` `/setup` `/configuracao` `/ajustes` `/raid` `/canal-regra` `/economia-admin` `/backup` |
+| 2 Staff | `/timeout` `/remover-timeout` `/kick` `/limpar` `/remover-aviso` `/fidelidade-ranking`, atender tickets, aprovar denúncias e pedidos de rank, ver logs |
+| 3 Admin | `/ban` `/unban` `/setup` `/configuracao` `/ajustes` `/raid` `/canal-regra` `/economia-admin` `/backup` `/fidelidade-ajustar` |
 
 ## 6. Padrões que eu decidi (ajuste quando quiser)
 Tudo numérico abaixo muda em **`/ajustes`**; textos em **`textos.py`**; moeda e cores em **`config.py`**.
@@ -60,7 +60,8 @@ Tudo numérico abaixo muda em **`/ajustes`**; textos em **`textos.py`**; moeda e
 - (PADRÃO) XP, economia, Mines, união, painel de cargos e tickets só para **Membros** verificados; com o cargo Membro não configurado, essas funções ficam desligadas com mensagem clara.
 
 **Entrada e cargos**
-- (PADRÃO) Boas-vindas pingam o novo membro; verificação por botão troca Visitante → Membro. Sem escolha de idade/gênero na entrada.
+- (PADRÃO) Boas-vindas pingam o novo membro e o cargo **Porteiro** (se configurado); verificação por botão troca Visitante → Membro. Sem escolha de idade/gênero na entrada.
+- (PADRÃO) Quem entra é marcado no canal de verificação e a marcação some em 3 s (a notificação fica e leva a pessoa até lá). Desliga com `ping_verificacao = 0` em `/ajustes`. Não roda em modo raid nem para bots.
 - (PADRÃO) Painel de cargos com 4 grupos (cores, gênero, DM, faixa etária), um cargo ativo por grupo, até 24 cargos por grupo. `+18/-18` são só identificação.
 - (PADRÃO) Regras do servidor: 8 regras-modelo em `textos.py` (edite à vontade).
 
@@ -78,7 +79,8 @@ Tudo numérico abaixo muda em **`/ajustes`**; textos em **`textos.py`**; moeda e
 - (PADRÃO) Modo raid ligado = novos membros são **expulsos** (com DM explicando) e registrados no log.
 
 **Tickets e logs**
-- (PADRÃO) Categorias: Dúvida, Denúncia, Parceria, Outro; 1 aberto por pessoa por categoria; a staff é mencionada ao abrir; lembrete se ninguém assumir em 60 min.
+- (PADRÃO) Categorias: Dúvida, Denúncia, Parceria, Outro, Solicitar rank; 1 aberto por pessoa por categoria; a staff é mencionada ao abrir; lembrete se ninguém assumir em 60 min.
+- (PADRÃO) Denúncia tem botões **Aprovar denúncia** / **Rejeitar** (só Staff+, nunca na própria denúncia; só a primeira avaliação vale). Aprovar soma 1 na fidelidade de quem denunciou.
 - (PADRÃO) Transcrição vai para o canal de **logs de moderação**. Sem canal de logs, a Kiza **avisa antes de fechar**; se não conseguir salvar a transcrição, **não apaga** o ticket.
 - (PADRÃO) Logs gerais: entradas/saídas, mensagens editadas/apagadas (só as que a Kiza viu), cargos e apelidos.
 
@@ -91,10 +93,29 @@ Tudo numérico abaixo muda em **`/ajustes`**; textos em **`textos.py`**; moeda e
 - (PADRÃO) `allowed_mentions` global: `@everyone` e cargos **desligados**; só menções a usuários.
 - (PADRÃO) Backup diário com retenção de 7; não cria outro se já existe um com menos de 20 h.
 
-## 7. Minecraft (depois)
+## 7. Fidelidade, Porteiro e pedido de rank (v1.4.0)
+**Porteiro.** Em `/setup` → 🎭 *Cargos base*, o botão **Criar cargo Porteiro** cria `🚪 Porteiro` (laranja, mencionável) ou reaproveita um cargo que já tenha "porteiro" no nome. As boas-vindas passam a marcar o novato **e** o Porteiro. Os membros **não** pegam o Porteiro sozinhos: a staff dá à mão para quem vai receber a galera (Helpers, Staff…).
+
+**Fidelidade (`/fidelidade [membro]`).** A Kiza conta sozinha, por pessoa, o que vale para virar Helper:
+| Requisito | Como conta | Meta padrão (`/ajustes`) |
+|---|---|---|
+| 🚀 Bumps | cada `/bump` do DISBOARD que a Kiza agradece (os bumps antigos foram importados) | `helper_bumps` = 10 |
+| 👋 Boas-vindas | mensagem no canal de boas-vindas até 15 min depois de alguém entrar, marcando/respondendo o novato ou dizendo "bem-vindo(a)"/"boas-vindas"; 1 por par (você, novato); se o novato sair em menos de 1 min, desconta; quem entrou há menos de 15 min não conta. Anti-farm: novato com conta do Discord de menos de 7 dias ou que está **voltando** (já tinha XP ou já foi saudado antes) não conta; "bem-vindos" sem marcar ninguém vale só para os 3 últimos que chegaram | `helper_boas_vindas` = 15 |
+| 🚨 Denúncias aprovadas | botão **Aprovar denúncia** no tíquete | `helper_denuncias` = 2 |
+| 📸 Publicações | mensagem com imagem, vídeo ou link (ou post novo em fórum) nos canais de 📸 *Publicações* do `/setup`; no máximo 2 a cada 24 h, com 10 min entre elas; apagou em menos de 24 h, desconta | `helper_publicacoes` = 5 |
+| ⭐ Nível de XP | o nível do `/rank` | `helper_nivel` = 5 |
+| 📅 Dias no servidor | desde que a pessoa entrou (sair e voltar zera) | `helper_dias` = 30 |
+
+Qualquer pessoa vê o quadro de qualquer outra (é motivador). Quando alguém da Staff+ usa `/fidelidade`, recebe também (só para si) **de onde vieram os números**: os últimos novatos saudados (idade da conta, se verificou ou saiu) e os links das últimas publicações. Staff: `/fidelidade-ranking` (top 10 por % do caminho; quem já é da equipe fica de fora). Admin: `/fidelidade-ajustar membro tipo quantidade motivo [modo]` (Somar, padrão, ou Definir) para corrigir ou importar números; o motivo é obrigatório e tudo vai para o log de moderação.
+
+**Pedido de rank.** Tíquete **🎖️ Solicitar rank**: a Kiza posta o quadro de fidelidade de quem abriu (✅/❌ e o que falta) e os botões **Promover a Helper** / **Recusar** (só Staff+, nunca no próprio pedido; vale só a primeira decisão). Dá para abrir mesmo sem bater tudo. Promover dá o cargo Helper de `/setup` → *Cargos base* (precisa estar abaixo do cargo da Kiza e de quem clicou, e não pode ter Administrador, Gerenciar Servidor ou Gerenciar Cargos) e registra no log com os requisitos daquele momento. Mapeie o mesmo cargo como **Helper** em *Níveis de permissão*, senão a pessoa ganha o cargo mas não os comandos de Helper; o `/configuracao` avisa.
+
+**Passo a passo da staff:** `/setup` → *Cargos base* → **Criar cargo Porteiro** e escolher o cargo **Helper** → *Publicações* → marcar os canais → *Publicar painéis* → **Tickets** (para aparecer o botão novo) → dar o Porteiro para quem recebe a galera → conferir `/configuracao`.
+
+## 8. Minecraft (depois)
 Nada foi implementado (`ENABLE_MINECRAFT=false`). Veja `cogs_minecraft/README.md` para onde plugar.
 
-## 8. Problemas comuns
+## 9. Problemas comuns
 - **Comandos não aparecem:** confira o convite (`applications.commands`); globais podem demorar; use `DEV_GUILD_ID` para testar.
 - **"Falha ao carregar o cog":** veja o log; o resto do bot continua de pé.
 - **Kiza não dá cargos:** `/configuracao` mostra quais estão acima do cargo dela.

@@ -34,9 +34,10 @@ kiza/
 │   ├── casamento.py         # união de toca (com reembolso e expiração)
 │   ├── mines.py             # mini-game por diversão
 │   ├── geral.py             # /ajuda, /status
+│   ├── fidelidade.py        # /fidelidade, pedido de rank, contagem de boas-vindas/publicações
 │   └── manutencao.py        # backup diário
 ├── cogs_minecraft/          # reservado (ENABLE_MINECRAFT=false)
-└── tests/                   # test_database.py, test_helpers.py, conftest.py (pytest)
+└── tests/                   # test_database.py, test_helpers.py, test_bump.py, test_fidelidade.py, conftest.py
 ```
 
 ## Checklist
@@ -73,3 +74,14 @@ kiza/
 - [x] cogs_minecraft/
 - [x] README.md
 - [x] Verificações (py_compile, checagem estática, testes do banco)
+
+### Bloco 5 — Fidelidade e Porteiro (v1.4.0)
+- [x] Marcação fantasma no canal de verificação ao entrar (`ping_verificacao` em /ajustes)
+- [x] Cargo Porteiro: botão no /setup (Cargos base) e menção nas boas-vindas
+- [x] Migração 4: contadores de fidelidade (com bumps antigos importados), entradas recentes, boas-vindas dadas, publicações, avaliação de denúncia
+- [x] Contagem automática: bumps, boas-vindas, denúncias aprovadas, publicações (+ nível de XP)
+- [x] /fidelidade, /fidelidade-ranking (staff), /fidelidade-ajustar (admin); metas `helper_*` em /ajustes
+- [x] Tíquete "Solicitar rank" com quadro e botões Promover/Recusar; tíquete de denúncia com Aprovar/Rejeitar
+- [x] /setup → Publicações (canais que contam); /configuracao mostra Porteiro, Helper e publicações
+- [x] Textos, /ajuda, vitrine de comandos, FAQ, changelog 1.4.0, README; testes em tests/test_fidelidade.py
+- [x] Revisão: anti-farm de boas-vindas (conta < 7 dias, quem volta, "bem-vindos" genérico só para os 3 últimos), publicações até 2/dia e desconto em 24 h com histórico, detalhe para a staff no /fidelidade, motivo obrigatório no /fidelidade-ajustar, decisão do pedido de rank gravada (sem clique duplo), Porteiro mencionável e sem cargo duplicado, mensagens apagadas só vão ao banco se forem de canal de publicação, avisos do cargo Helper no /configuracao

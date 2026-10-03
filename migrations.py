@@ -173,3 +173,56 @@ CREATE TABLE aniversarios (
 CREATE INDEX ix_aniversarios_data ON aniversarios (guild_id, mes, dia);
 """,
 ))
+
+MIGRACOES.append((
+    4,
+    """
+-- Fidelidade: contadores por pessoa que contam para virar Helper (bumps, boas-vindas, denúncias, publicações).
+CREATE TABLE fidelidade (
+    guild_id   INTEGER NOT NULL,
+    user_id    INTEGER NOT NULL,
+    tipo       TEXT    NOT NULL,
+    quantidade INTEGER NOT NULL DEFAULT 0 CHECK (quantidade >= 0),
+    PRIMARY KEY (guild_id, user_id, tipo)
+);
+-- Os bumps antigos já estavam guardados como recompensas únicas 'bump:<mensagem>': entram como histórico.
+INSERT INTO fidelidade (guild_id, user_id, tipo, quantidade)
+    SELECT guild_id, user_id, 'bumps', COUNT(*) FROM recompensas_unicas
+    WHERE chave LIKE 'bump:%' GROUP BY guild_id, user_id;
+
+-- Quem entrou há pouco (para contar boas-vindas). Linhas velhas são limpas a cada entrada nova.
+CREATE TABLE entradas_recentes (
+    guild_id  INTEGER NOT NULL,
+    user_id   INTEGER NOT NULL,
+    entrou_em INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+
+-- Uma boa-vinda por par (quem saudou, novato). entrada_em liga à entrada para desfazer se o novato sair logo.
+CREATE TABLE boas_vindas_dadas (
+    guild_id   INTEGER NOT NULL,
+    membro_id  INTEGER NOT NULL,
+    novato_id  INTEGER NOT NULL,
+    entrada_em INTEGER NOT NULL,
+    criado_em  INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, membro_id, novato_id)
+);
+CREATE INDEX ix_boas_vindas_novato ON boas_vindas_dadas (guild_id, novato_id);
+
+-- Publicações contadas (limites por tempo, desconto se apagar logo e histórico para a staff conferir).
+CREATE TABLE publicacoes (
+    guild_id  INTEGER NOT NULL,
+    msg_id    INTEGER NOT NULL,
+    canal_id  INTEGER NOT NULL,
+    user_id   INTEGER NOT NULL,
+    criado_em INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, msg_id)
+);
+CREATE INDEX ix_publicacoes_user ON publicacoes (guild_id, user_id, criado_em);
+
+-- Decisão da staff no tíquete: denúncia ('aprovada' | 'rejeitada') ou pedido de rank ('promovido' | 'recusado').
+-- Só a primeira vale.
+ALTER TABLE tickets ADD COLUMN avaliacao TEXT;
+ALTER TABLE tickets ADD COLUMN avaliado_por INTEGER;
+""",
+))

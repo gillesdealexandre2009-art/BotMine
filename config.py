@@ -30,7 +30,7 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.3.0"
+VERSAO = "1.4.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -60,6 +60,7 @@ COGS_PADRAO = [
     "vitrine",
     "vida",
     "bump",
+    "fidelidade",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -127,6 +128,8 @@ CARGOS_BASE = {
     "membro": "Membro (após aceitar as regras)",
     "kitsune": "Kitsune (VIP cosmético)",
     "bump": "Avisos de bump (mencionado quando dá para dar /bump de novo)",
+    "porteiro": "Porteiro (marcado nas boas-vindas para a equipe receber quem chega)",
+    "helper": "Helper (dado pela staff no tíquete Solicitar rank)",
 }
 GRUPOS_CARGOS = {
     "cores": {"titulo": "🎨 Cores", "placeholder": "🎨 Escolha a cor do seu nome"},
@@ -150,6 +153,7 @@ CATEGORIAS_TICKET = [
     ("denuncia", "Denúncia", "🚨", "Denunciar alguém ou algo"),
     ("parceria", "Parceria", "🤝", "Propostas de parceria"),
     ("outro", "Outro", "💬", "Qualquer outro assunto"),
+    ("rank", "Solicitar rank", "🎖️", "Pedir para subir a Helper (com provas)"),
 ]
 NIVEIS_XP_OPCOES = list(range(1, 21))  # 1..20: um cargo por nível (combina com um ladder tipo "LV 01".."LV 20")
 
@@ -209,7 +213,34 @@ AJUSTES = {
     "bump_premio": (30, 0, 100000, "Caudas para quem der /bump no DISBOARD"),
     "bump_xp_pct": (50, 0, 500, "Bônus de XP (%) de quem deu o último bump, por 2h — 50 = 1,5x"),
     "nivel_premio": (25, 0, 10000, "Caudas ao subir de nível (nível × este valor)"),
+    "ping_verificacao": (1, 0, 1, "1 = marca quem entra no canal de verificação e apaga em seguida"),
+    "helper_bumps": (10, 0, 10000, "Bumps para poder pedir Helper"),
+    "helper_boas_vindas": (15, 0, 10000, "Boas-vindas dadas para poder pedir Helper"),
+    "helper_denuncias": (2, 0, 10000, "Denúncias aprovadas para poder pedir Helper"),
+    "helper_publicacoes": (5, 0, 10000, "Publicações para poder pedir Helper"),
+    "helper_nivel": (5, 0, 500, "Nível mínimo de XP para poder pedir Helper"),
+    "helper_dias": (30, 0, 3650, "Dias mínimos no servidor para poder pedir Helper"),
 }
+
+# --------------------------------------------------------------------------- fidelidade (caminho até Helper)
+# tipo: (emoji, rótulo, ajuste com a meta). A ordem aqui é a ordem do quadro do /fidelidade.
+FIDELIDADE_TIPOS = {
+    "bumps": ("🚀", "Bumps", "helper_bumps"),
+    "boas_vindas": ("👋", "Boas-vindas", "helper_boas_vindas"),
+    "denuncias": ("🚨", "Denúncias aprovadas", "helper_denuncias"),
+    "publicacoes": ("📸", "Publicações", "helper_publicacoes"),
+}
+FIDELIDADE_NIVEL = ("⭐", "Nível de XP", "helper_nivel")  # requisito que vem do XP, não de um contador
+FIDELIDADE_DIAS = ("📅", "Dias no servidor", "helper_dias")  # requisito que vem da data de entrada
+BOAS_VINDAS_JANELA = 15 * 60  # segundos depois de uma entrada em que uma boa-vinda conta
+BOAS_VINDAS_SAIDA_MIN = 60  # quem sai antes disso não rende boas-vindas (anti-farm com contas que entram e saem)
+BOAS_VINDAS_CONTA_MIN_DIAS = 7  # conta do Discord mais nova que isso não rende boas-vindas (anti-conta fake)
+BOAS_VINDAS_GENERICA_MAX = 3  # "bem-vindos" sem marcar ninguém vale só para os 3 que chegaram por último
+PUBLICACAO_INTERVALO = 10 * 60  # no máximo uma publicação contada a cada 10 min por pessoa
+PUBLICACAO_MAX_DIA = 2  # e no máximo 2 a cada 24 h
+PUBLICACAO_DESCONTA = 24 * 3600  # publicação apagada antes disso deixa de contar
+PING_VERIFICACAO_SEG = 3  # tempo até apagar a marcação no canal de verificação
+PORTEIRO_NOME = "🚪 Porteiro"
 
 # --------------------------------------------------------------------------- permissões do bot
 # (atributo em discord.Permissions, nome amigável)

@@ -1,6 +1,7 @@
 """/setup (assistente), /configuracao (diagnóstico) e /ajustes (valores numéricos)."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
@@ -10,7 +11,15 @@ from discord.ext import commands
 
 import config
 import textos
-from utils.helpers import embed, faltas_no_canal, pode_gerenciar_cargo, responder, truncar
+from utils.helpers import (
+    embed,
+    faltas_no_canal,
+    permissoes_perigosas,
+    pode_gerenciar_cargo,
+    responder,
+    sem_acento,
+    truncar,
+)
 from utils.permissoes import exigir_nivel
 from utils.views import DonoView
 
@@ -21,12 +30,13 @@ log = logging.getLogger("kiza.configuracao")
 
 SECOES = {
     "canais": ("📺 Canais", "Onde cada função da Kiza funciona"),
-    "cargos_base": ("🎭 Cargos base", "Visitante, Membro e Kitsune"),
+    "cargos_base": ("🎭 Cargos base", "Visitante, Membro, Kitsune, Porteiro e Helper"),
     "niveis": ("🛡️ Níveis de permissão", "Mapeie cargos a Membro/Helper/Staff/Admin"),
     "painel": ("🎨 Painel de cargos", "Cores, gênero, DM e faixa etária"),
     "xp": ("⭐ Cargos de nível de XP", "Cargos dados ao atingir certos níveis"),
     "publicar": ("📤 Publicar painéis", "Regras, verificação, cargos e tickets"),
     "visibilidade": ("🔒 Visibilidade", "Quem enxerga cada categoria/canal"),
+    "publicacoes": ("📸 Publicações (fidelidade)", "Canais onde posts contam para virar Helper"),
 }
 
 # o que publicar: chave -> (nome do cog, método, rótulo)
@@ -169,19 +179,66 @@ class SelecaoCargosMulti(discord.ui.RoleSelect):
         await v.salvar(interaction, ids)  # type: ignore[attr-defined]
 
 
+class BotaoCriarPorteiro(discord.ui.Button):
+    """Cria o cargo Porteiro (mencionável) se ainda não existir, e já o usa nas boas-vindas."""
+
+    def __init__(self) -> None:
+        super().__init__(label=textos.SETUP_PORTEIRO_BOTAO, emoji="🚪", style=discord.ButtonStyle.success, row=2)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        v: SecaoCargosBase = self.view  # type: ignore[assignment]
+        banco, guild = v.cog.bot.banco, v.guild
+        # trava por servidor: dois cliques rápidos não criam dois cargos
+        async with v.cog.trava_porteiro.setdefault(guild.id, asyncio.Lock()):
+            atual_id = await banco.get_config_int(guild.id, "cargo_porteiro")
+            atual = guild.get_role(atual_id) if atual_id else None
+            if atual is not None:
+                await responder(interaction, textos.SETUP_PORTEIRO_EXISTE.format(cargo=atual.mention))
+                return
+            cargo = next((r for r in guild.roles if "porteiro" in sem_acento(r.name)), None)
+            texto = textos.SETUP_PORTEIRO_REUSADO
+            if cargo is None:
+                try:
+                    cargo = await guild.create_role(
+                        name=config.PORTEIRO_NOME,
+                        colour=discord.Colour(config.COR_PRINCIPAL),
+                        mentionable=True,
+                        reason=f"Kiza: /setup por {interaction.user}",
+                    )
+                except discord.HTTPException:
+                    await responder(interaction, textos.SETUP_PORTEIRO_ERRO)
+                    return
+                texto = textos.SETUP_PORTEIRO_CRIADO
+            elif not cargo.mentionable:
+                # cargo reaproveitado precisa ser mencionável, senão a marcação nas boas-vindas não avisa ninguém
+                mencionavel = pode_gerenciar_cargo(guild, cargo)
+                if mencionavel:
+                    try:
+                        await cargo.edit(mentionable=True, reason=f"Kiza: /setup por {interaction.user}")
+                    except discord.HTTPException:
+                        mencionavel = False
+                if not mencionavel:
+                    texto += "\n" + textos.SETUP_PORTEIRO_NAO_MENCIONAVEL
+            await banco.set_config(guild.id, "cargo_porteiro", str(cargo.id))
+        await v.atualizar(interaction)
+        await interaction.followup.send(texto.format(cargo=cargo.mention), ephemeral=True)
+
+
 class SecaoCargosBase(SecaoBase):
     def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
         super().__init__(cog, dono_id, guild)
         self.add_item(SelecaoChave(list(config.CARGOS_BASE.items()), "1) Qual cargo?"))
         self.add_item(SelecaoCargosMulti(maximo=1))
         self.add_item(BotaoLimpar())
+        self.add_item(BotaoCriarPorteiro())
         self.add_item(BotaoVoltar())
 
     async def salvar(self, interaction: discord.Interaction, ids: list[int]) -> None:
         await self.cog.bot.banco.set_config(self.guild.id, f"cargo_{self.chave}", str(ids[0]) if ids else None)
         await self.atualizar(interaction)
         role = self.guild.get_role(ids[0]) if ids else None
-        if role is not None and self.chave in ("visitante", "membro") and not pode_gerenciar_cargo(self.guild, role):
+        dados_pela_kiza = ("visitante", "membro", "helper")
+        if role is not None and self.chave in dados_pela_kiza and not pode_gerenciar_cargo(self.guild, role):
             await interaction.followup.send(textos.SETUP_AVISO_CARGO.format(cargos=role.mention), ephemeral=True)
 
     async def limpar(self) -> None:
@@ -196,7 +253,10 @@ class SecaoCargosBase(SecaoBase):
             alvo = f"<@&{valor}>" if valor else "*não configurado*"
             linhas.append(f"{marca}{'✅' if valor else '❌'} **{rotulo}** — {alvo}")
         e = embed("🎭 Cargos base", "\n".join(linhas))
-        e.set_footer(text="Kitsune é só reconhecido pelo bot: a staff dá o cargo manualmente.")
+        e.set_footer(
+            text="Kitsune e Porteiro são dados pela staff à mão (o Porteiro é marcado nas boas-vindas). "
+            "Helper a staff dá pelo tíquete Solicitar rank."
+        )
         return e
 
 
@@ -436,6 +496,47 @@ class SecaoVisibilidade(SecaoBase):
         return e
 
 
+# ---------------------------------------------------------------- canais de publicação (fidelidade)
+class SelecaoCanaisPublicacao(discord.ui.ChannelSelect):
+    def __init__(self) -> None:
+        super().__init__(
+            placeholder="Escolha os canais de publicação (vazio = nenhum)…",
+            channel_types=[
+                discord.ChannelType.text,
+                discord.ChannelType.news,
+                discord.ChannelType.forum,
+                discord.ChannelType.media,
+            ],
+            min_values=0,
+            max_values=25,
+            row=0,
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        v: SecaoPublicacoes = self.view  # type: ignore[assignment]
+        valor = ",".join(str(c.id) for c in self.values) or None
+        await v.cog.bot.banco.set_config(v.guild.id, "canais_publicacao", valor)
+        await v.atualizar(interaction)
+
+
+class SecaoPublicacoes(SecaoBase):
+    def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
+        super().__init__(cog, dono_id, guild)
+        self.selecao = SelecaoCanaisPublicacao()
+        self.add_item(self.selecao)
+        self.add_item(BotaoVoltar())
+
+    async def construir_embed(self) -> discord.Embed:
+        valor = await self.cog.bot.banco.get_config(self.guild.id, "canais_publicacao")
+        ids = [int(parte) for parte in (valor or "").split(",") if parte.isdigit()]
+        # já vem marcado com o que está salvo: escolher um canal novo não apaga os outros
+        self.selecao.default_values = [discord.Object(id=i) for i in ids if self.guild.get_channel(i) is not None]
+        linhas = [f"📸 <#{i}>" for i in ids] or ["*nenhum canal ainda*"]
+        e = embed("📸 Canais de publicação", "\n".join(linhas))
+        e.set_footer(text=textos.SETUP_PUBLICACOES_RODAPE)
+        return e
+
+
 # ---------------------------------------------------------------- publicar
 class SecaoPublicar(SecaoBase):
     def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
@@ -517,6 +618,7 @@ SECAO_CLASSES = {
     "xp": SecaoXP,
     "publicar": SecaoPublicar,
     "visibilidade": SecaoVisibilidade,
+    "publicacoes": SecaoPublicacoes,
 }
 
 
@@ -524,6 +626,7 @@ SECAO_CLASSES = {
 class Configuracao(commands.Cog):
     def __init__(self, bot: "Kiza") -> None:
         self.bot = bot
+        self.trava_porteiro: dict[int, asyncio.Lock] = {}
 
     # ------------------------------------------------------------ navegação do /setup
     async def embed_hub(self, guild: discord.Guild) -> discord.Embed:
@@ -535,6 +638,7 @@ class Configuracao(commands.Cog):
         grupos = sum(1 for v in (await banco.grupos_cargos(guild.id)).values() if v)
         xp = len(await banco.listar_cargos_xp(guild.id))
         vis = len(await banco.visibilidades(guild.id))
+        publicacoes = len([p for p in cfg.get("canais_publicacao", "").split(",") if p.isdigit()])
         e = embed(textos.SETUP_HUB_TITULO, textos.SETUP_HUB_DESC)
         e.add_field(
             name="Situação",
@@ -544,7 +648,8 @@ class Configuracao(commands.Cog):
                 f"🛡️ Cargos com nível de permissão: **{niveis}**\n"
                 f"🎨 Grupos do painel de cargos: **{grupos}/{len(config.GRUPOS_CARGOS)}**\n"
                 f"⭐ Cargos de nível de XP: **{xp}/{len(config.NIVEIS_XP_OPCOES)}**\n"
-                f"🔒 Categorias/canais com visibilidade definida: **{vis}**"
+                f"🔒 Categorias/canais com visibilidade definida: **{vis}**\n"
+                f"📸 Canais de publicação (fidelidade): **{publicacoes}**"
             ),
             inline=False,
         )
@@ -621,6 +726,9 @@ class Configuracao(commands.Cog):
             ("Sugestões", tem("canal_sugestoes"), "canal de sugestões"),
             ("XP, economia e jogos", tem("cargo_membro"), "cargo Membro"),
             ("Visibilidade de categorias/canais", bool(await banco.visibilidades(guild.id)), "seção Visibilidade do /setup"),
+            ("Porteiro nas boas-vindas", tem("cargo_porteiro"), "cargo Porteiro (botão em Cargos base)"),
+            ("Pedido de rank (Helper)", tem("cargo_helper"), "cargo Helper em Cargos base"),
+            ("Publicações na fidelidade", tem("canais_publicacao"), "seção Publicações do /setup"),
         ]
         linhas = [f"{'✅' if ok else '❌'} **{nome}**" + ("" if ok else f" — falta: {falta}") for nome, ok, falta in funcoes]
         e = embed("🩺 Configuração da Kiza", None)
@@ -655,7 +763,7 @@ class Configuracao(commands.Cog):
         # hierarquia de cargos
         ids_para_gerenciar = set(grupos_id for lista in grupos.values() for grupos_id in lista)
         ids_para_gerenciar.update(role_id for _, role_id in cargos_xp)
-        for chave in ("cargo_visitante", "cargo_membro"):
+        for chave in ("cargo_visitante", "cargo_membro", "cargo_helper"):
             if tem(chave):
                 ids_para_gerenciar.add(int(cfg[chave]))
         altos = []
@@ -675,6 +783,18 @@ class Configuracao(commands.Cog):
                 value="⚠️ Nenhum cargo Staff/Admin mapeado. Por enquanto só o dono e quem tem *Administrador* mandam em mim.",
                 inline=False,
             )
+
+        # cargo Helper (dado pelo botão do tíquete Solicitar rank)
+        helper = guild.get_role(int(cfg["cargo_helper"])) if tem("cargo_helper") else None
+        if helper is not None:
+            avisos = []
+            if not any(helper.id in por_nivel[n] for n in range(config.NIVEL_HELPER, 4)):
+                avisos.append(textos.SETUP_HELPER_SEM_NIVEL.format(cargo=helper.mention))
+            perigosas = permissoes_perigosas(helper.permissions)
+            if perigosas:
+                avisos.append(textos.SETUP_HELPER_PERIGOSO.format(cargo=helper.mention, permissoes=", ".join(perigosas)))
+            if avisos:
+                e.add_field(name="Cargo Helper", value="\n".join(avisos), inline=False)
 
         e.add_field(
             name="Módulos carregados",

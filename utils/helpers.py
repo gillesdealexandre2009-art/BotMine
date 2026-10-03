@@ -158,6 +158,18 @@ def pode_gerenciar_cargo(guild: discord.Guild, cargo: discord.Role) -> bool:
     return not cargo.is_default() and not cargo.managed and cargo < guild.me.top_role
 
 
+PERMISSOES_PERIGOSAS = (
+    ("administrator", "Administrador"),
+    ("manage_guild", "Gerenciar Servidor"),
+    ("manage_roles", "Gerenciar Cargos"),
+)
+
+
+def permissoes_perigosas(perms: discord.Permissions) -> list[str]:
+    """Permissões que um cargo dado por botão (ex.: Helper) não deveria ter."""
+    return [nome for attr, nome in PERMISSOES_PERIGOSAS if getattr(perms, attr)]
+
+
 def faltas_no_canal(canal: discord.abc.GuildChannel, guild: discord.Guild, extras: tuple[str, ...] = ()) -> list[str]:
     """Permissões que faltam à Kiza num canal (nomes amigáveis)."""
     perms = canal.permissions_for(guild.me)
