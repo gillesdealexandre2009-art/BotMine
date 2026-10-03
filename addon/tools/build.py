@@ -9,19 +9,26 @@ O que é conferido antes de empacotar:
   * todo .json dos packs abre como JSON em UTF-8 sem BOM (e .js/.lang também sem BOM,
     porque os códigos § dependem disso);
   * os manifests: UUIDs, versões e dependências entre BP e RP batem, e as versões dos
-    módulos @minecraft/* são as mesmas do package.json;
-  * todo import dos scripts (a partir de scripts/main.js) aponta para um arquivo que existe,
-    e todo módulo @minecraft/* importado está nas dependências do manifest;
+    módulos @minecraft/* são as mesmas do package.json; BP e RP não usam versão beta;
+  * o pack "Vulpus Chat": usa @minecraft/server na versão beta, o alias @minecraft/server-beta
+    do package.json começa com essa versão + ".", não depende do BP nem do RP e a versão é a
+    mesma dos outros dois;
+  * todo import dos scripts (a partir de scripts/main.js de cada pack com script) aponta para
+    um arquivo que existe dentro do próprio pack, e todo módulo @minecraft/* importado está nas
+    dependências do manifest;
   * texturas: o item_texture.json aponta para PNGs que existem, o ícone do item existe no
     item_texture.json e todo caminho "textures/vulpus/..." citado no RP ou nos scripts existe;
   * idiomas: languages.json lista arquivos que existem e toda chave usada pelos itens está
     em todos os .lang;
+  * glyphs: font/glyph_E2.png tem 256x256 e font/glyph_E3.png tem 512x512;
   * o verificar_ui.py (se existir) não acusa erro. Se o jogo não estiver instalado, só avisa.
 
 Saída em dist/:
-  * Vulpus_BP.mcpack e Vulpus_RP.mcpack: um zip por pack, com o manifest.json na raiz;
-  * Vulpus.mcaddon: um zip com as pastas vulpus_bp/ e vulpus_rp/ na raiz (cada uma com o
-    seu manifest.json). Dois cliques nele e o Minecraft importa os dois packs de uma vez.
+  * Vulpus_BP.mcpack, Vulpus_RP.mcpack e Vulpus_Chat.mcpack: um zip por pack, com o
+    manifest.json na raiz;
+  * Vulpus.mcaddon: um zip com as pastas vulpus_bp/, vulpus_rp/ e vulpus_chat_bp/ na raiz
+    (cada uma com o seu manifest.json). Dois cliques nele e o Minecraft importa os três packs
+    de uma vez; importar não ativa nada, e o chat só carrega num mundo com "APIs Beta".
 
 Saída do programa: 0 = pacote gerado, 1 = algo errado (a mensagem diz o quê).
 """
@@ -30,6 +37,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import struct
 import subprocess
 import sys
 import zipfile
@@ -38,10 +46,17 @@ from pathlib import Path
 ADDON = Path(__file__).resolve().parent.parent
 BP = ADDON / "vulpus_bp"
 RP = ADDON / "vulpus_rp"
+CHAT = ADDON / "vulpus_chat_bp"
+PACKS = ((BP, "Vulpus_BP"), (RP, "Vulpus_RP"), (CHAT, "Vulpus_Chat"))
 DIST = ADDON / "dist"
 VERIFICAR_UI = ADDON / "tools" / "verificar_ui.py"
 PACKAGE_JSON = ADDON / "package.json"
 CONFIG_JS = BP / "scripts" / "config.js"
+ALIAS_BETA = "@minecraft/server-beta"
+PREFIXO_ALIAS = "npm:@minecraft/server@"
+# Folhas de glyph do RP e o lado exigido em px (spec 03, §4.1).
+FOLHAS_GLYPH = {"glyph_E2.png": 256, "glyph_E3.png": 512}
+PNG_ASSINATURA = b"\x89PNG\r\n\x1a\n"
 
 BOM = b"\xef\xbb\xbf"
 IGNORAR = {"__pycache__", ".DS_Store", "Thumbs.db"}
@@ -101,7 +116,7 @@ def ler_json(caminho: Path, r: Relatorio):
 def conferir_arquivos(r: Relatorio) -> dict[Path, object]:
     """Valida encoding e JSON de todos os arquivos de texto dos packs."""
     jsons: dict[Path, object] = {}
-    for pack in (BP, RP):
+    for pack, _ in PACKS:
         if not (pack / "manifest.json").is_file():
             r.erro(f"{rel(pack)}/manifest.json não existe")
         for arq in arquivos(pack):
@@ -152,6 +167,11 @@ def conferir_manifests(jsons: dict[Path, object], r: Relatorio) -> dict[str, str
         r.erro(f"manifest incompleto: falta {e}")
         return modulos
 
+    for nome_pack, manifest in (("vulpus_bp", bp), ("vulpus_rp", rp)):
+        for d in manifest.get("dependencies", []):
+            if "beta" in str(d.get("version", "")):
+                r.erro(f"{nome_pack}/manifest.json: {d.get('module_name')} usa versão beta; só o pack do chat pode")
+
     versao_addon = ".".join(str(n) for n in bp_header["version"])
     if CONFIG_JS.is_file():
         achou = re.search(r"""VERSAO\s*=\s*["']([^"']+)["']""", CONFIG_JS.read_text(encoding="utf-8"))
@@ -167,12 +187,56 @@ def conferir_manifests(jsons: dict[Path, object], r: Relatorio) -> dict[str, str
     return modulos
 
 
-def conferir_scripts(modulos: dict[str, str], r: Relatorio) -> None:
-    """Segue os imports a partir de main.js e confere que todo arquivo existe."""
-    pasta = BP / "scripts"
+def conferir_chat(jsons: dict[Path, object], r: Relatorio) -> dict[str, str]:
+    """Confere o manifest do pack do chat. Devolve {módulo @minecraft: versão} dele."""
+    chat = jsons.get(CHAT / "manifest.json")
+    bp = jsons.get(BP / "manifest.json")
+    rp = jsons.get(RP / "manifest.json")
+    if not isinstance(chat, dict):
+        return {}
+    modulos: dict[str, str] = {}
+    try:
+        header = chat["header"]
+        for d in chat.get("dependencies", []):
+            if "module_name" in d:
+                modulos[d["module_name"]] = d["version"]
+            elif "uuid" in d:
+                r.erro("vulpus_chat_bp/manifest.json: o chat não pode depender do BP nem do RP (tire a dependência por uuid)")
+        uuids = [header["uuid"]] + [m["uuid"] for m in chat["modules"]]
+        outros: list[str] = []
+        for manifest in (bp, rp):
+            if isinstance(manifest, dict):
+                outros += [manifest["header"]["uuid"]] + [m["uuid"] for m in manifest["modules"]]
+        if len(set(uuids)) != len(uuids) or set(uuids) & set(outros):
+            r.erro("vulpus_chat_bp/manifest.json: UUID repetido (com ele mesmo ou com o BP/RP)")
+        if isinstance(bp, dict) and header["version"] != bp["header"]["version"]:
+            r.erro("o manifest do chat está com versão diferente da do BP")
+        for m in chat["modules"]:
+            if m.get("type") == "script" and not (CHAT / m.get("entry", "")).is_file():
+                r.erro(f"vulpus_chat_bp/manifest.json: a entrada do script ({m.get('entry')}) não existe")
+    except (KeyError, TypeError) as e:
+        r.erro(f"vulpus_chat_bp/manifest.json incompleto: falta {e}")
+        return modulos
+
+    versao = modulos.get("@minecraft/server", "")
+    if "beta" not in versao:
+        r.erro(f"vulpus_chat_bp/manifest.json: @minecraft/server deveria ser beta (está '{versao}')")
+    dev = (ler_json(PACKAGE_JSON, r) or {}) if PACKAGE_JSON.is_file() else {}
+    alias = dev.get("devDependencies", {}).get(ALIAS_BETA, "") if isinstance(dev, dict) else ""
+    if not alias.startswith(PREFIXO_ALIAS + versao + "."):
+        r.erro(
+            f"package.json: {ALIAS_BETA} ('{alias}') não bate com o manifest do chat ({versao}); "
+            f"use {PREFIXO_ALIAS}{versao}.<versão do jogo>-stable"
+        )
+    return modulos
+
+
+def conferir_scripts(pack: Path, modulos: dict[str, str], r: Relatorio) -> None:
+    """Segue os imports a partir de scripts/main.js e confere que todo arquivo existe no pack."""
+    pasta = pack / "scripts"
     main = pasta / "main.js"
     if not main.is_file():
-        r.erro("vulpus_bp/scripts/main.js não existe")
+        r.erro(f"{rel(main)} não existe")
         return
     vistos: set[Path] = set()
     fila = [main]
@@ -186,7 +250,7 @@ def conferir_scripts(modulos: dict[str, str], r: Relatorio) -> None:
         for alvo in alvos:
             if alvo.startswith("@minecraft/"):
                 if alvo not in modulos:
-                    r.erro(f"{rel(atual)} importa {alvo}, que não está nas dependências do manifest do BP")
+                    r.erro(f"{rel(atual)} importa {alvo}, que não está nas dependências do manifest de {pack.name}")
                 continue
             if not alvo.startswith("."):
                 r.erro(f"{rel(atual)} importa '{alvo}': só caminhos relativos ou @minecraft/* funcionam no jogo")
@@ -195,7 +259,9 @@ def conferir_scripts(modulos: dict[str, str], r: Relatorio) -> None:
                 r.erro(f"{rel(atual)} importa '{alvo}' sem a extensão .js (o jogo exige)")
                 continue
             destino = (atual.parent / alvo).resolve()
-            if not destino.is_file():
+            if not destino.is_relative_to(pasta.resolve()):
+                r.erro(f"{rel(atual)} importa '{alvo}', fora de {rel(pasta)} (packs não compartilham módulos)")
+            elif not destino.is_file():
                 r.erro(f"{rel(atual)} importa '{alvo}', mas {rel(destino)} não existe (sistema ainda não feito?)")
             else:
                 fila.append(destino)
@@ -278,6 +344,26 @@ def conferir_idiomas(jsons: dict[Path, object], r: Relatorio) -> None:
                 r.erro(f"{rel(arq)} usa a chave {chave}, que falta em {idioma}.lang")
 
 
+def tamanho_png(caminho: Path) -> tuple[int, int] | None:
+    """Largura e altura lidas do cabeçalho IHDR; None se não for PNG."""
+    cabeca = caminho.read_bytes()[:24]
+    if len(cabeca) < 24 or not cabeca.startswith(PNG_ASSINATURA) or cabeca[12:16] != b"IHDR":
+        return None
+    return struct.unpack(">II", cabeca[16:24])
+
+
+def conferir_glyphs(r: Relatorio) -> None:
+    """As folhas de glyph existem e têm o tamanho certo."""
+    for nome, lado in FOLHAS_GLYPH.items():
+        arq = RP / "font" / nome
+        if not arq.is_file():
+            r.erro(f"{rel(arq)} não existe (rode python tools/gerar_glyphs.py)")
+            continue
+        tamanho = tamanho_png(arq)
+        if tamanho != (lado, lado):
+            r.erro(f"{rel(arq)} tem {tamanho}, mas precisa ter {lado}x{lado}")
+
+
 def rodar_verificar_ui(r: Relatorio) -> None:
     """Roda o verificar_ui.py. Código 2 = jogo não encontrado: só avisa."""
     if not VERIFICAR_UI.is_file():
@@ -305,10 +391,10 @@ def zipar(destino: Path, entradas: list[tuple[Path, Path]]) -> None:
 
 
 def empacotar() -> list[Path]:
-    """Gera os dois .mcpack e o .mcaddon em dist/."""
+    """Gera os três .mcpack e o .mcaddon em dist/."""
     saidas = []
     tudo: list[tuple[Path, Path]] = []
-    for pack, nome in ((BP, "Vulpus_BP"), (RP, "Vulpus_RP")):
+    for pack, nome in PACKS:
         entradas = [(arq, arq.relative_to(pack)) for arq in arquivos(pack)]
         zipar(DIST / f"{nome}.mcpack", entradas)
         saidas.append(DIST / f"{nome}.mcpack")
@@ -329,9 +415,11 @@ def main(argv: list[str] | None = None) -> int:
     r = Relatorio()
     jsons = conferir_arquivos(r)
     modulos = conferir_manifests(jsons, r)
-    conferir_scripts(modulos, r)
+    conferir_scripts(BP, modulos, r)
+    conferir_scripts(CHAT, conferir_chat(jsons, r), r)
     conferir_texturas(jsons, r)
     conferir_idiomas(jsons, r)
+    conferir_glyphs(r)
     if not args.sem_ui:
         rodar_verificar_ui(r)
 
@@ -347,7 +435,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\n✔ Tudo certo ({len(jsons)} JSON conferidos). Gerado em dist/:")
     for saida in saidas:
         print(f"  • {saida.name} ({saida.stat().st_size / 1024:.0f} KB)")
-    print("Para instalar: dois cliques em dist/Vulpus.mcaddon.")
+    print("Para instalar: dois cliques em dist/Vulpus.mcaddon (o chat só liga num mundo com APIs Beta).")
     return 0
 
 

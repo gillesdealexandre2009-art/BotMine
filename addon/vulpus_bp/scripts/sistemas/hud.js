@@ -1,38 +1,43 @@
 // @ts-check
-// HUD na actionbar (a cada 1 s): Caudas, coordenadas e direção. Pausa na contagem de teleporte.
+// Scoreboard lateral: o texto vai no title com FLAG_SIDEBAR e o RP (ui/vulpus/vulpus_hud.json) desenha a
+// caixa. A actionbar fica livre para os avisos normais. Protocolo: docs/spec/03_spec_fase2.md §7.
 import { system, world } from "@minecraft/server";
 import { online } from "../core/jogadores.js";
-import { emEspera } from "../core/teleporte.js";
+import { tituloLivre } from "../core/tela.js";
 import { direcao, registrarErro } from "../core/util.js";
 import * as textos from "../textos/hud.js";
 import { hudLigada } from "./ajustes.js";
 import { saldo } from "./caudas.js";
+import { infoNivel } from "./niveis.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 
-const TICKS_POR_SEGUNDO = 20;
-const TICKS_HUD = TICKS_POR_SEGUNDO;
+/** Marca do title da sidebar (igual à do vulpus_hud.json; o verificar_ui.py confere). */
+export const FLAG_SIDEBAR = "§v§s§b§r";
+
+/** De quantos em quantos ticks o loop olha cada jogador. */
+const TICKS_CICLO = 10;
+/** Intervalo mínimo entre dois envios com texto novo. */
+const TICKS_ENTRE_ENVIOS = 20;
+/** Reenvio do mesmo texto (recupera a caixa depois de um rebuild do HUD, como trocar o GUI scale). */
+const TICKS_REENVIO = 200;
 /** Quanto tempo o "+N" fica aparecendo depois que o saldo muda. */
 const TICKS_MUDANCA = 60;
+/** Espera do primeiro envio depois de entrar (cliente carregando). */
+const TICKS_PRIMEIRO_ENVIO = 40;
+const TEMPOS = { fadeInDuration: 10, stayDuration: 70, fadeOutDuration: 20 };
 
-/** @type {Map<string, number>} id → último saldo mostrado */
+/** @type {Map<string, { texto: string, tick: number }>} id → último title enviado (só a flag = desligada) */
+const enviados = new Map();
+/** @type {Map<string, number>} id → tick a partir do qual a sidebar pode enviar */
+const esperas = new Map();
+/** @type {Map<string, number>} id → saldo no ciclo anterior */
 const ultimoSaldo = new Map();
 /** @type {Map<string, { valor: number, ate: number }>} id → mudança de saldo em destaque */
 const mudancas = new Map();
-/** @type {Map<string, number>} id → tick até quando a HUD fica quieta */
-const pausas = new Map();
 
 /**
- * Deixa a actionbar livre por um tempo (para outro aviso aparecer sem a HUD cobrir).
- * @param {Player} player
- * @param {number} segundos
- */
-export function pausarHud(player, segundos) {
-  pausas.set(player.id, system.currentTick + Math.max(0, segundos) * TICKS_POR_SEGUNDO);
-}
-
-/**
- * Mudança de saldo desde a última HUD, somada enquanto o destaque estiver valendo.
+ * Mudança de saldo desde o ciclo anterior, somada enquanto o destaque estiver valendo.
  * @param {Player} player
  * @param {number} caudas
  */
@@ -50,33 +55,90 @@ function mudancaRecente(player, caudas) {
   return vigente;
 }
 
-/** @param {Player} player */
-function mostrarHud(player) {
+/**
+ * Texto completo do title (flag + 6 linhas).
+ * @param {Player} player
+ * @param {number} caudas
+ * @param {number} mudanca
+ * @param {number} quantosOnline
+ */
+function montar(player, caudas, mudanca, quantosOnline) {
+  const { nivel, fracao, rank } = infoNivel(player);
+  const { x, y, z } = player.location;
+  const linhas = textos.LINHAS({
+    rank,
+    nivel,
+    fracao,
+    caudas,
+    mudanca,
+    online: quantosOnline,
+    x,
+    y,
+    z,
+    direcao: direcao(player.getRotation().y),
+  });
+  return FLAG_SIDEBAR + linhas.join("\n");
+}
+
+/**
+ * @param {Player} player
+ * @param {string} texto
+ */
+function enviar(player, texto) {
+  player.onScreenDisplay.setTitle(texto, TEMPOS);
+  enviados.set(player.id, { texto, tick: system.currentTick });
+}
+
+/**
+ * Um ciclo da sidebar para o jogador: envia só quando mudou, ou no reenvio de segurança.
+ * @param {Player} player
+ * @param {number} quantosOnline
+ */
+function atualizar(player, quantosOnline) {
+  const agora = system.currentTick;
+  const espera = esperas.get(player.id);
+  if (espera !== undefined) {
+    if (espera > agora) return;
+    esperas.delete(player.id);
+  }
   const caudas = saldo(player);
   const mudanca = mudancaRecente(player, caudas);
-  if (!hudLigada(player) || emEspera(player)) return;
-  const pausa = pausas.get(player.id);
-  if (pausa !== undefined) {
-    if (pausa > system.currentTick) return;
-    pausas.delete(player.id);
+  if (!tituloLivre(player)) return;
+  const ultimo = enviados.get(player.id);
+  if (!hudLigada(player)) {
+    if (ultimo && ultimo.texto !== FLAG_SIDEBAR) enviar(player, FLAG_SIDEBAR);
+    return;
   }
-  const { x, y, z } = player.location;
-  const texto = textos.LINHA({ caudas, mudanca, x, y, z, direcao: direcao(player.getRotation().y) });
-  player.onScreenDisplay.setActionBar(texto);
+  const texto = montar(player, caudas, mudanca, quantosOnline);
+  const passou = ultimo ? agora - ultimo.tick : Infinity;
+  if (texto === ultimo?.texto ? passou >= TICKS_REENVIO : passou >= TICKS_ENTRE_ENVIOS) enviar(player, texto);
 }
 
 system.runInterval(() => {
-  for (const player of online()) {
+  const jogadores = online();
+  for (const player of jogadores) {
     try {
-      mostrarHud(player);
+      atualizar(player, jogadores.length);
     } catch (e) {
-      registrarErro(`HUD de ${player.name}`, e);
+      registrarErro(`Sidebar de ${player.name}`, e);
     }
   }
-}, TICKS_HUD);
+}, TICKS_CICLO);
+
+world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
+  if (initialSpawn) {
+    enviados.delete(player.id);
+    esperas.set(player.id, system.currentTick + TICKS_PRIMEIRO_ENVIO);
+    return;
+  }
+  // Respawn: força o reenvio no próximo ciclo, sem perder se a sidebar estava ligada.
+  const ultimo = enviados.get(player.id);
+  if (ultimo) ultimo.tick = -Infinity;
+});
 
 world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+  enviados.delete(playerId);
+  esperas.delete(playerId);
   ultimoSaldo.delete(playerId);
   mudancas.delete(playerId);
-  pausas.delete(playerId);
 });

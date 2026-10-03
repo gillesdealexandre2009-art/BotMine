@@ -5,18 +5,17 @@ import { ItemLockMode, ItemStack, system, world } from "@minecraft/server";
 import { ITEM_MENU } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { dadosJogador, editarJogador } from "../core/db.js";
+import { mostrarTitulo } from "../core/tela.js";
 import { erro, msg, ok, registrarErro } from "../core/util.js";
 import * as textos from "../textos/boas_vindas.js";
-import { pausarHud } from "./hud.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {"entregue" | "tinha" | "cheio"} ResultadoItem */
 
 /** Espera o cliente terminar de carregar antes do título (no tick da entrada ele não aparece). */
 const TICKS_ATE_SAUDAR = 40;
-const SEGUNDOS_BARRA_RETORNO = 4;
 /** Título: entrada, permanência e saída, em ticks. */
-const TEMPOS_TITULO = { fadeInDuration: 10, stayDuration: 80, fadeOutDuration: 20 };
+const TEMPOS_TITULO = { entrada: 10, fica: 80, saida: 20 };
 
 /**
  * Tem algum item do menu no inventário.
@@ -65,15 +64,9 @@ function receber(player) {
     d.ultimaVez = agora;
   });
   if (primeiraVez) {
-    player.onScreenDisplay.setTitle(textos.TITULO_PRIMEIRA, {
-      ...TEMPOS_TITULO,
-      subtitle: textos.SUBTITULO_PRIMEIRA(player.name),
-    });
+    mostrarTitulo(player, textos.TITULO_PRIMEIRA, { ...TEMPOS_TITULO, subtitulo: textos.SUBTITULO_PRIMEIRA(player.name) });
     msg(player, textos.CHAT_PRIMEIRA(player.name));
-  } else {
-    pausarHud(player, SEGUNDOS_BARRA_RETORNO);
-    player.onScreenDisplay.setActionBar(textos.BARRA_RETORNO(player.name));
-  }
+  } else player.onScreenDisplay.setActionBar(textos.BARRA_RETORNO(player.name));
   garantirItem(player);
 }
 

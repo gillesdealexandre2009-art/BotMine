@@ -10,7 +10,6 @@ import { teleportar } from "../core/teleporte.js";
 import { erro, msg, ok, registrarErro, som } from "../core/util.js";
 import { JOGADOR_OFFLINE } from "../textos/geral.js";
 import * as textos from "../textos/tpa.js";
-import { pausarHud } from "./hud.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 
@@ -30,8 +29,6 @@ import { pausarHud } from "./hud.js";
  */
 
 const TICKS_POR_SEGUNDO = 20;
-/** Quanto tempo o aviso de pedido fica na actionbar sem a HUD por cima. */
-const SEGUNDOS_AVISO = 4;
 
 /** @type {Map<string, Pedido>} id de quem pediu → pedido (um por vez) */
 const pedidos = new Map();
@@ -107,8 +104,6 @@ function enviarPedido(player, alvo, tipo) {
   const vemAte = tipo === "ir";
   msg(alvo, textos.CHEGOU_PEDIDO(player.name, vemAte, segundos));
   som(alvo, SONS.pedido);
-  // A HUD reescreve a actionbar a cada 1 s; pausa para o aviso ficar visível.
-  pausarHud(alvo, SEGUNDOS_AVISO);
   alvo.onScreenDisplay.setActionBar(textos.BARRA_PEDIDO(player.name));
 }
 

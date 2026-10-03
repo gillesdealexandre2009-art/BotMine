@@ -1,6 +1,8 @@
 // @ts-check
-// Ajustes de cada jogador: HUD, pedidos de TPA e sons do menu.
+// Ajustes de cada jogador: scoreboard lateral, tema do menu, pedidos de TPA e sons do menu.
+// Não importa hud.js: a sidebar percebe a troca sozinha no próximo ciclo.
 import { ICONES } from "../config.js";
+import { registrarComando } from "../core/comandos.js";
 import { config, dadosJogador, editarJogador } from "../core/db.js";
 import { Lista } from "../core/forms.js";
 import { ok } from "../core/util.js";
@@ -9,7 +11,7 @@ import * as textos from "../textos/ajustes.js";
 /** @typedef {import("@minecraft/server").Player} Player */
 
 /**
- * HUD ligada para o jogador (sem escolha própria, vale o hudPadrao da staff).
+ * Scoreboard lateral ligada para o jogador (sem escolha própria, vale o hudPadrao da staff).
  * @param {Player | string} player
  * @returns {boolean}
  */
@@ -17,16 +19,29 @@ export function hudLigada(player) {
   return dadosJogador(player).ajustes.hud ?? config().hudPadrao;
 }
 
+/**
+ * Liga ou desliga a scoreboard lateral e avisa.
+ * @param {Player} player
+ */
+function alternarHud(player) {
+  const ligada = !hudLigada(player);
+  editarJogador(player, (d) => {
+    d.ajustes.hud = ligada;
+  });
+  ok(player, textos.HUD_MUDOU(ligada));
+}
+
 /** @param {boolean} ligado */
 const icone = (ligado) => (ligado ? ICONES.sim : ICONES.nao);
 
 /**
- * Lista de alternâncias; cada clique troca o valor e reabre o menu com o estado novo.
+ * Lista de alternâncias; cada clique troca o valor e reabre o menu com o estado novo
+ * (a troca de tema já reabre no tema novo).
  * @param {Player} player
  * @param {() => any} [voltar]
  */
 export async function menuAjustes(player, voltar) {
-  const { tpa, sons } = dadosJogador(player).ajustes;
+  const { tpa, sons, tema } = dadosJogador(player).ajustes;
   const hud = hudLigada(player);
   /** @param {(p: Player) => void} trocar */
   const eReabrir = (trocar) => async (/** @type {Player} */ p) => {
@@ -35,15 +50,16 @@ export async function menuAjustes(player, voltar) {
   };
   await new Lista(textos.TITULO)
     .texto(textos.CORPO)
+    .botao(textos.BOTAO_HUD(hud), icone(hud), eReabrir(alternarHud))
     .botao(
-      textos.BOTAO_HUD(hud),
-      icone(hud),
+      textos.BOTAO_TEMA(tema),
+      ICONES.tema,
       eReabrir((p) => {
+        const novo = tema === "black" ? "laranja" : "black";
         editarJogador(p, (d) => {
-          d.ajustes.hud = !hud;
+          d.ajustes.tema = novo;
         });
-        if (hud) p.onScreenDisplay.setActionBar(" ");
-        ok(p, textos.HUD_MUDOU(!hud));
+        ok(p, textos.TEMA_MUDOU(novo));
       }),
     )
     .botao(
@@ -69,3 +85,5 @@ export async function menuAjustes(player, voltar) {
     .voltar(voltar)
     .abrir(player);
 }
+
+registrarComando({ nome: "hud", descricao: textos.DESC_HUD }, (p) => alternarHud(p));

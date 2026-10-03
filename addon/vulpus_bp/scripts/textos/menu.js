@@ -5,6 +5,13 @@ export const TITULO = "VULPUS";
 
 /** @param {string} nome */
 export const SAUDACAO = (nome) => `Que bom te ver na toca, §6${nome}§r!`;
+/**
+ * Selo + rank + nível, embaixo da saudação.
+ * @param {string} selo  glyph pronto (identidade.selo)
+ * @param {string} rank  nome do rank
+ * @param {string} nivel  já formatado
+ */
+export const LINHA_RANK = (selo, rank, nivel) => `${selo} §f${rank} §8• §7Nv §f${nivel}`;
 /** @param {string} caudas  já formatado */
 export const LINHA_CAUDAS = (caudas) => `§6★ §r${caudas} Caudas`;
 /** @param {number} quantos */
@@ -20,11 +27,14 @@ export const DICAS = [
   "Briga e teleporte não combinam.",
   "Marque suas casas e viaje fácil.",
   "Muito TPA? Bloqueie em Ajustes.",
-  "A HUD liga e desliga em Ajustes.",
+  "O placar do lado sai em Ajustes.",
   "Leia as Regras: a toca agradece.",
   "Ficar AFK não rende Caudas.",
   "Sem o item? Use /vulpus:menu.",
   "Cada história vira uma Cauda!",
+  "Ativo no jogo = mais XP.",
+  "Tema Black? Passa em Ajustes.",
+  "Venda e compre no Leilão!",
 ];
 
 // Rótulos dos slots (~70px de largura)
@@ -34,6 +44,9 @@ export const CASAS = "Casas";
 export const TPA = (pedidos) => (pedidos > 0 ? `TPA (${pedidos})` : "TPA");
 export const VOLTAR = "Voltar";
 export const CAUDAS = "Caudas";
+/** @param {number} itens  na caixa de retirada */
+export const LEILAO = (itens) => (itens > 0 ? `Leilão (${itens})` : "Leilão");
+export const NIVEL = "Nível";
 export const PERFIL = "Perfil";
 export const AJUSTES = "Ajustes";
 export const REGRAS = "Regras";

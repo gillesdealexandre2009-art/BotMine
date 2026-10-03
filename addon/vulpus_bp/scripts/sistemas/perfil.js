@@ -7,9 +7,12 @@ import { config, dadosJogador } from "../core/db.js";
 import { Lista } from "../core/forms.js";
 import { outros, porId } from "../core/jogadores.js";
 import { erro } from "../core/util.js";
+import { glyph } from "../glyphs.js";
 import { JOGADOR_OFFLINE } from "../textos/geral.js";
 import * as textos from "../textos/perfil.js";
 import { sequenciaAtual } from "./caudas.js";
+import { CARGOS, cargoDe, ehKitsune, selo } from "./identidade.js";
+import { infoNivel } from "./niveis.js";
 
 /**
  * Perfil de quem abriu ou, com alvoId, de outra pessoa.
@@ -22,10 +25,20 @@ export async function menuPerfil(player, voltar, alvoId) {
   const proprio = id === player.id;
   const alvoOnline = proprio ? player : porId(id);
   const dados = dadosJogador(alvoOnline ?? id);
+  const info = infoNivel(alvoOnline ?? id);
+  // Cargo e Kitsune vêm das tags: só dá para ler de quem está online.
+  const cargo = alvoOnline ? cargoDe(alvoOnline) : null;
   const lista = new Lista(proprio ? textos.TITULO : textos.TITULO_DE(dados.nome)).texto(
     textos.CORPO({
       nome: dados.nome,
       online: Boolean(alvoOnline),
+      selo: alvoOnline ? selo(alvoOnline) : glyph(info.rank.glyph),
+      rank: info.rank,
+      nivel: info.nivel,
+      xpNoNivel: info.xpNoNivel,
+      xpParaProximo: info.xpParaProximo,
+      cargo: cargo ? CARGOS[cargo] : null,
+      kitsune: alvoOnline ? ehKitsune(alvoOnline) : false,
       caudas: dados.caudas,
       tempo: dados.tempo,
       primeira: dados.primeira,

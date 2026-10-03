@@ -1,6 +1,7 @@
 // @ts-check
-// Painel da staff: definir spawn, configurações, dar Caudas e pegar o item do menu.
-import { CHAVE_SPAWN, ICONES, PADROES, VERSAO } from "../config.js";
+// Painel da staff: definir spawn, configurações (em 4 grupos), dar Caudas, cargos e Kitsune,
+// leilão e pegar o item do menu.
+import { CHAVE_SPAWN, ICONES, VERSAO } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { config, lerMundo, salvarConfig, todosJogadores } from "../core/db.js";
 import { Lista, perguntar } from "../core/forms.js";
@@ -11,6 +12,8 @@ import * as geral from "../textos/geral.js";
 import * as textos from "../textos/staff.js";
 import { garantirItem } from "./boas_vindas.js";
 import { DAR_MAXIMO, darCaudas } from "./caudas.js";
+import { menuCargos } from "./identidade.js";
+import { menuLeilaoStaff } from "./leilao.js";
 import { definirSpawn } from "./spawn.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -32,12 +35,51 @@ const FAIXAS = {
   diariaBase: [0, 100000],
   diariaBonusDia: [0, 10000],
   diariaBonusMax: [0, 365],
+  xpPorMinuto: [0, 100],
+  xpDiaria: [0, 10000],
+  taxaAnuncioPct: [0, 50],
+  taxaVendaPct: [0, 50],
+  precoMinimo: [1, 1000000],
+  precoMaximo: [1, 1000000],
+  anunciosPorJogador: [0, 50],
+  duracaoAnuncioHoras: [1, 720],
+  caixaLimite: [9, 200],
 };
 const LINK_MAXIMO = 100;
 /** Convite do Discord: discord.gg/xxx ou discord.com/invite/xxx (com ou sem https://). */
 const LINK_DISCORD = /^(https?:\/\/)?(www\.)?(discord\.gg|discord\.com\/invite)\/[\w-]{2,40}\/?$/i;
 
-const CHAVES = /** @type {ChaveConfig[]} */ (Object.keys(PADROES));
+/**
+ * Configurações em 4 formulários; cada chave de PADROES está em um grupo só.
+ * @type {{ titulo: string, icone: string, chaves: ChaveConfig[] }[]}
+ */
+const GRUPOS = [
+  {
+    titulo: textos.GRUPO_TELEPORTE,
+    icone: ICONES.tpa,
+    chaves: ["esperaTeleporte", "recargaTeleporte", "combateSegundos", "tpaExpira", "limiteCasas"],
+  },
+  {
+    titulo: textos.GRUPO_CAUDAS,
+    icone: ICONES.caudas,
+    chaves: ["caudasPorIntervalo", "intervaloCaudasMin", "diariaBase", "diariaBonusDia", "diariaBonusMax", "xpPorMinuto", "xpDiaria"],
+  },
+  {
+    titulo: textos.GRUPO_LEILAO,
+    icone: ICONES.leilao,
+    chaves: [
+      "leilaoLigado",
+      "taxaAnuncioPct",
+      "taxaVendaPct",
+      "precoMinimo",
+      "precoMaximo",
+      "anunciosPorJogador",
+      "duracaoAnuncioHoras",
+      "caixaLimite",
+    ],
+  },
+  { titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao"] },
+];
 
 /**
  * Painel da staff (confere a permissão de novo ao abrir).
@@ -60,11 +102,10 @@ export async function menuStaff(player, voltar) {
       }),
     )
     .botao(textos.BOTAO_SPAWN, ICONES.spawn, (p) => definirSpawn(p))
-    .botao(textos.BOTAO_CONFIG, ICONES.ajustes, async (p) => {
-      await editarConfig(p);
-      await aqui();
-    })
+    .botao(textos.BOTAO_CONFIG, ICONES.ajustes, (p) => menuConfig(p, aqui))
     .botao(textos.BOTAO_DAR, ICONES.caudas, (p) => escolherQuemGanha(p, aqui))
+    .botao(textos.BOTAO_CARGOS, ICONES.cargos, (p) => menuCargos(p, aqui))
+    .botao(textos.BOTAO_LEILAO, ICONES.leilao, (p) => menuLeilaoStaff(p, aqui))
     .botao(textos.BOTAO_ITEM, ICONES.nova, (p) => {
       if (garantirItem(p) === "tinha") msg(p, textos.ITEM_JA_TEM);
     })
@@ -98,16 +139,39 @@ function limparLink(bruto) {
 }
 
 /**
- * Formulário com todas as configurações; salva só o que mudou.
+ * Escolha do grupo de configurações.
  * @param {Player} player
+ * @param {() => any} voltar
  */
-async function editarConfig(player) {
+async function menuConfig(player, voltar) {
+  if (!ehStaff(player)) {
+    erro(player, geral.SO_STAFF);
+    return;
+  }
+  const aqui = () => menuConfig(player, voltar);
+  const lista = new Lista(textos.TITULO_CONFIG).texto(textos.CONFIG_ESCOLHA);
+  for (const grupo of GRUPOS) {
+    lista.botao(grupo.titulo, grupo.icone, async (p) => {
+      await editarConfig(p, grupo.titulo, grupo.chaves);
+      await aqui();
+    });
+  }
+  await lista.voltar(voltar).abrir(player);
+}
+
+/**
+ * Formulário com as configurações de um grupo; salva só o que mudou.
+ * @param {Player} player
+ * @param {string} titulo
+ * @param {ChaveConfig[]} chaves
+ */
+async function editarConfig(player, titulo, chaves) {
   const atual = config();
-  const valores = await perguntar(player, textos.TITULO_CONFIG, CHAVES.map((chave) => campoDe(chave, atual)));
-  if (!valores) return;
+  const valores = await perguntar(player, titulo, chaves.map((chave) => campoDe(chave, atual)));
+  if (!valores || !ehStaff(player)) return;
   /** @type {Record<string, unknown>} */
   const mudancas = {};
-  CHAVES.forEach((chave, i) => {
+  chaves.forEach((chave, i) => {
     let valor = valores[i];
     if (chave === "linkDiscord") {
       valor = limparLink(String(valor));
@@ -118,6 +182,13 @@ async function editarConfig(player) {
     }
     if (valor !== atual[chave]) mudancas[chave] = valor;
   });
+  const minimo = mudancas.precoMinimo ?? atual.precoMinimo;
+  const maximo = mudancas.precoMaximo ?? atual.precoMaximo;
+  if (typeof minimo === "number" && typeof maximo === "number" && minimo > maximo) {
+    erro(player, textos.PRECO_INVERTIDO);
+    delete mudancas.precoMinimo;
+    delete mudancas.precoMaximo;
+  }
   const mudou = Object.keys(mudancas);
   if (!mudou.length) {
     msg(player, textos.CONFIG_IGUAL);

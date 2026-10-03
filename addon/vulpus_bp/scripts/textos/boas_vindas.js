@@ -1,12 +1,13 @@
 // @ts-check
 // Textos da primeira entrada, do retorno e do item do menu.
+import { G, glyph } from "../glyphs.js";
 
 export const TITULO_PRIMEIRA = "§6Vulpus";
 /** @param {string} nome */
 export const SUBTITULO_PRIMEIRA = (nome) => `§fQue bom te ver na toca, §e${nome}§f!`;
 /** @param {string} nome */
 export const CHAT_PRIMEIRA = (nome) =>
-  `Oi, §e${nome}§r! Eu sou a Kiza, a raposa que cuida desta toca. ` +
+  `${glyph(G.TITULO)}\nOi, §e${nome}§r! Eu sou a Kiza, a raposa que cuida desta toca. ` +
   "Use o §6Menu do Vulpus§r no seu inventário (ou §e/vulpus:menu§r) para ver tudo o que dá para fazer.";
 /** @param {string} nome */
 export const BARRA_RETORNO = (nome) => `§6Que bom te ver de novo, §e${nome}§6!`;

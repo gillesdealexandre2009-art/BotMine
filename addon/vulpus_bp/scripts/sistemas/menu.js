@@ -1,5 +1,5 @@
 // @ts-check
-// Menu principal (Hub): logo no meio, 4 botões de cada lado e o canto da staff.
+// Menu principal (Hub): logo no meio, 5 botões de cada lado e o canto da staff.
 import { system, world } from "@minecraft/server";
 import { ICONES, ITEM_MENU } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
@@ -11,6 +11,9 @@ import * as textos from "../textos/menu.js";
 import { menuAjustes } from "./ajustes.js";
 import { menuCasas } from "./casas.js";
 import { menuCaudas, saldo } from "./caudas.js";
+import { selo } from "./identidade.js";
+import { menuLeilao, resumoCaixa } from "./leilao.js";
+import { infoNivel, menuNivel } from "./niveis.js";
 import { menuPerfil } from "./perfil.js";
 import { menuRegras } from "./regras.js";
 import { irSpawn } from "./spawn.js";
@@ -28,8 +31,10 @@ const ultimoUso = new Map();
 /** @param {Player} player */
 function corpo(player) {
   const dica = textos.DICAS[Math.floor(Math.random() * textos.DICAS.length)];
+  const { rank, nivel } = infoNivel(player);
   return [
     textos.SAUDACAO(player.name),
+    textos.LINHA_RANK(selo(player), rank.nome, formatarNumero(nivel)),
     textos.LINHA_CAUDAS(formatarNumero(saldo(player))),
     textos.LINHA_ONLINE(online().length),
     textos.LINHA_DICA(dica),
@@ -50,10 +55,12 @@ export async function abrirMenu(player) {
     .slot(1, { texto: textos.CASAS, icone: ICONES.casas, acao: (p) => menuCasas(p, volta) })
     .slot(2, { texto: textos.TPA(pedidos), icone: ICONES.tpa, acao: (p) => menuTpa(p, volta) })
     .slot(3, { texto: textos.VOLTAR, icone: ICONES.voltar, acao: irVoltar })
-    .slot(4, { texto: textos.CAUDAS, icone: ICONES.caudas, acao: (p) => menuCaudas(p, volta) })
-    .slot(5, { texto: textos.PERFIL, icone: ICONES.perfil, acao: (p) => menuPerfil(p, volta) })
-    .slot(6, { texto: textos.AJUSTES, icone: ICONES.ajustes, acao: (p) => menuAjustes(p, volta) })
-    .slot(7, { texto: textos.REGRAS, icone: ICONES.regras, acao: (p) => menuRegras(p, volta) })
+    .slot(4, { texto: textos.PERFIL, icone: ICONES.perfil, acao: (p) => menuPerfil(p, volta) })
+    .slot(5, { texto: textos.CAUDAS, icone: ICONES.caudas, acao: (p) => menuCaudas(p, volta) })
+    .slot(6, { texto: textos.LEILAO(resumoCaixa(player).itens), icone: ICONES.leilao, acao: (p) => menuLeilao(p, volta) })
+    .slot(7, { texto: textos.NIVEL, icone: ICONES.nivel, acao: (p) => menuNivel(p, volta) })
+    .slot(8, { texto: textos.AJUSTES, icone: ICONES.ajustes, acao: (p) => menuAjustes(p, volta) })
+    .slot(9, { texto: textos.REGRAS, icone: ICONES.regras, acao: (p) => menuRegras(p, volta) })
     .staff(ehStaff(player) ? { texto: textos.STAFF, icone: ICONES.staff, acao: (p) => menuStaff(p, volta) } : undefined)
     .abrir(player);
 }

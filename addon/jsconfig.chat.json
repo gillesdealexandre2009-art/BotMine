@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "types": [],
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": { "@minecraft/server": ["./node_modules/@minecraft/server-beta/index.d.ts"] }
+  },
+  "include": ["vulpus_chat_bp/scripts/**/*.js"]
+}

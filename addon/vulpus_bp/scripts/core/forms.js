@@ -1,29 +1,41 @@
 // @ts-check
 // Framework de menus. O RP troca o visual quando o título começa com uma FLAG:
-// HUB = menu principal (9 slots fixos) e LISTA = submenus. O ModalFormData fica vanilla.
+// HUB = menu principal (11 slots fixos) e LISTA = submenus; TEMA_BLACK logo depois troca as texturas.
+// O ModalFormData fica vanilla nos dois temas.
 import { system } from "@minecraft/server";
 import { ActionFormData, FormCancelationReason, ModalFormData } from "@minecraft/server-ui";
 import { ICONES, SONS } from "../config.js";
 import * as textos from "../textos/geral.js";
+import { dadosJogador } from "./db.js";
 import { limitar, registrarErro, rodarSeguro, som } from "./util.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
+/** @typedef {import("@minecraft/server").RawMessage} RawMessage */
+/** @typedef {string | RawMessage} Texto  texto pronto ou RawMessage (traduzido pelo jogo) */
 /** @typedef {import("@minecraft/server-ui").ActionFormResponse} ActionFormResponse */
 /** @typedef {import("@minecraft/server-ui").ModalFormResponse} ModalFormResponse */
 
-/** Flags de título: só códigos § válidos e idênticas às do JSON UI (tools/verificar_ui.py confere). */
-export const FLAG = Object.freeze({ BASE: "§v§u§l§p", HUB: "§v§u§l§p§0§r", LISTA: "§v§u§l§p§1§r" });
+/**
+ * Flags de título: só códigos § válidos e idênticas às do JSON UI (tools/verificar_ui.py confere).
+ * TEMA_BLACK é um token que vem logo depois de HUB ou LISTA.
+ */
+export const FLAG = Object.freeze({
+  BASE: "§v§u§l§p",
+  HUB: "§v§u§l§p§0§r",
+  LISTA: "§v§u§l§p§1§r",
+  TEMA_BLACK: "§v§b§r",
+});
 
 /**
  * @typedef {object} Botao
- * @property {string} texto
+ * @property {Texto} texto
  * @property {string} [icone]  caminho da textura (veja ICONES)
  * @property {(p: Player) => any} [acao]  roda depois que o form fecha
  */
 
 /**
  * @typedef {{ tipo: "botao", botao: Botao }
- *   | { tipo: "cabecalho" | "rotulo", texto: string }
+ *   | { tipo: "cabecalho" | "rotulo", texto: Texto }
  *   | { tipo: "divisor" }} ItemLista
  */
 
@@ -43,9 +55,9 @@ export const FLAG = Object.freeze({ BASE: "§v§u§l§p", HUB: "§v§u§l§p§0�
  * @property {string[]} [opcoes]
  */
 
-/** Hub: 0-3 coluna esquerda, 4-7 coluna direita, 8 staff. */
-const SLOTS_HUB = 9;
-const SLOT_STAFF = 8;
+/** Hub: 0-4 coluna esquerda, 5-9 coluna direita, 10 staff. */
+const SLOTS_HUB = 11;
+const SLOT_STAFF = 10;
 /** Com o chat aberto o jogador fica "ocupado": tenta de novo a cada 10 ticks, por até ~10 s. */
 const TICKS_ENTRE_TENTATIVAS = 10;
 const TENTATIVAS = 20;
@@ -84,6 +96,15 @@ export async function mostrar(player, form) {
 }
 
 /**
+ * Flag do layout + o token do tema do jogador.
+ * @param {Player} player
+ * @param {string} flag  FLAG.HUB ou FLAG.LISTA
+ */
+function prefixoTitulo(player, flag) {
+  return dadosJogador(player).ajustes.tema === "black" ? flag + FLAG.TEMA_BLACK : flag;
+}
+
+/**
  * Roda a ação do botão escolhido (com try/catch, inclusive se for async).
  * @param {Player} player
  * @param {Botao | undefined} botao
@@ -91,11 +112,12 @@ export async function mostrar(player, form) {
  */
 function executar(player, botao) {
   if (!botao) return false;
-  if (botao.acao) rodarSeguro(player, `Botão "${botao.texto}"`, botao.acao);
+  const nome = typeof botao.texto === "string" ? botao.texto : "rawtext";
+  if (botao.acao) rodarSeguro(player, `Botão "${nome}"`, botao.acao);
   return true;
 }
 
-/** Menu principal: sempre manda 9 botões; slot vazio vai com texto "" e o RP esconde. */
+/** Menu principal: sempre manda 11 botões; slot vazio vai com texto "" e o RP esconde. */
 export class Hub {
   constructor() {
     this._titulo = "";
@@ -117,7 +139,7 @@ export class Hub {
   }
 
   /**
-   * @param {number} indice  0-3 coluna esquerda, 4-7 coluna direita (8 = staff)
+   * @param {number} indice  0-4 coluna esquerda, 5-9 coluna direita (10 = staff)
    * @param {Botao | undefined} botao  undefined deixa o slot vazio
    */
   slot(indice, botao) {
@@ -136,7 +158,7 @@ export class Hub {
    * @returns {Promise<boolean>} true se clicou em algum botão
    */
   async abrir(player) {
-    const form = new ActionFormData().title(FLAG.HUB + this._titulo).body(this._texto);
+    const form = new ActionFormData().title(prefixoTitulo(player, FLAG.HUB) + this._titulo).body(this._texto);
     for (const botao of this._slots) form.button(botao?.texto ?? "", botao?.icone);
     som(player, SONS.abrir);
     const resposta = await mostrar(player, form);
@@ -149,6 +171,7 @@ export class Lista {
   /** @param {string} [titulo] */
   constructor(titulo = "") {
     this._titulo = titulo;
+    /** @type {Texto} */
     this._texto = "";
     /** @type {ItemLista[]} */
     this._itens = [];
@@ -156,14 +179,14 @@ export class Lista {
     this._voltar = undefined;
   }
 
-  /** Texto do topo. @param {string} t */
+  /** Texto do topo. @param {Texto} t */
   texto(t) {
     this._texto = t;
     return this;
   }
 
   /**
-   * @param {string} texto
+   * @param {Texto} texto
    * @param {string} [icone]
    * @param {(p: Player) => any} [acao]
    */
@@ -172,13 +195,13 @@ export class Lista {
     return this;
   }
 
-  /** @param {string} t */
+  /** @param {Texto} t */
   cabecalho(t) {
     this._itens.push({ tipo: "cabecalho", texto: t });
     return this;
   }
 
-  /** @param {string} t */
+  /** @param {Texto} t */
   rotulo(t) {
     this._itens.push({ tipo: "rotulo", texto: t });
     return this;
@@ -203,7 +226,7 @@ export class Lista {
    * @returns {Promise<boolean>} true se clicou em algum botão
    */
   async abrir(player) {
-    const form = new ActionFormData().title(FLAG.LISTA + this._titulo).body(this._texto);
+    const form = new ActionFormData().title(prefixoTitulo(player, FLAG.LISTA) + this._titulo).body(this._texto);
     /** @type {Botao[]} Só os botões, na ordem do selection. */
     const botoes = [];
     for (const item of this._itens) {

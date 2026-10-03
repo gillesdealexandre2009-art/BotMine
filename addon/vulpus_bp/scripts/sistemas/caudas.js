@@ -11,6 +11,7 @@ import { diaAnterior, diaBrasilia, erro, msAteMeiaNoiteBrasilia, msg, ok, regist
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/caudas.js";
 import { hudLigada } from "./ajustes.js";
+import { ganharXpDiaria, ganharXpMinutoAtivo } from "./niveis.js";
 
 /** @typedef {import("../core/db.js").DadosJogador} DadosJogador */
 
@@ -134,6 +135,7 @@ export function resgatarDiaria(player) {
     d.diaria = { dia: info.hoje, sequencia: info.proxima };
   });
   const novo = adicionarCaudas(player, premio);
+  ganharXpDiaria(player);
   ok(player, textos.DIARIA_OK(premio, info.proxima, novo));
   if (perdeu) msg(player, textos.DIARIA_PERDEU);
   return true;
@@ -256,10 +258,12 @@ function checarPresenca(player) {
     return;
   }
   const segundos = segundosDesde(antes);
-  const ativos = antes.ativos + (seMexeu(antes, player) ? 1 : 0);
+  const ativo = seMexeu(antes, player);
+  const ativos = antes.ativos + (ativo ? 1 : 0);
   editarJogador(player, (d) => {
     d.tempo += segundos;
   });
+  if (ativo) ganharXpMinutoAtivo(player);
   const cfg = config();
   const pagar = ativos >= Math.max(1, Math.floor(cfg.intervaloCaudasMin));
   iniciarPresenca(player, pagar ? 0 : ativos);

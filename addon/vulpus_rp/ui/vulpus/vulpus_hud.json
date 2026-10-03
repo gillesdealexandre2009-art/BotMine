@@ -1,0 +1,101 @@
+{
+  "namespace": "vulpus_hud",
+
+  "sidebar": {
+    "type": "panel",
+    "size": [ "100%", "100%" ],
+    "layer": 20,
+    "controls": [
+      { "dados_visivel@vulpus_hud.dados": {} },
+      { "caixa@vulpus_hud.caixa": {} }
+    ]
+  },
+
+  "dados": {
+    "type": "panel",
+    "size": [ 0, 0 ],
+    "property_bag": { "#preserved_text": "" },
+    "bindings": [
+      { "binding_name": "#hud_title_text_string", "binding_condition": "always" },
+      {
+        "binding_name": "#hud_title_text_string",
+        "binding_name_override": "#preserved_text",
+        "binding_condition": "visibility_changed"
+      },
+      {
+        "binding_type": "view",
+        "source_property_name": "((not (#hud_title_text_string = #preserved_text)) and (not ((#hud_title_text_string - '§v§s§b§r') = #hud_title_text_string)))",
+        "target_property_name": "#visible",
+        "binding_condition": "always"
+      }
+    ]
+  },
+
+  "caixa": {
+    "type": "panel",
+    "size": [ "100%cm", "100%cm" ],
+    "anchor_from": "right_middle",
+    "anchor_to": "right_middle",
+    "offset": [ -4, 0 ],
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_visivel",
+        "resolve_sibling_scope": true,
+        "source_property_name": "((not ((#preserved_text - '§v§s§b§r') = #preserved_text)) and (not ((#preserved_text - '§v§s§b§r') = '')))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "fundo": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/painel",
+          "size": [ "100%sm + 12px", "100%sm + 10px" ],
+          "alpha": 0.9,
+          "layer": 1
+        }
+      },
+      { "conteudo@vulpus_hud.conteudo": {} }
+    ]
+  },
+
+  "conteudo": {
+    "type": "stack_panel",
+    "orientation": "vertical",
+    "size": [ "100%cm", "100%c" ],
+    "layer": 2,
+    "controls": [
+      { "titulo": { "type": "image", "texture": "textures/vulpus/ui/titulo", "size": [ 65, 14 ] } },
+      { "espaco": { "type": "panel", "size": [ 1, 4 ] } },
+      { "texto@vulpus_hud.texto": {} }
+    ]
+  },
+
+  "texto": {
+    "type": "label",
+    "text": "#text",
+    "size": [ "default", "default" ],
+    "min_size": [ 112, "default" ],
+    "max_size": [ 170, 160 ],
+    "text_alignment": "left",
+    "color": [ 1.0, 1.0, 1.0 ],
+    "shadow": true,
+    "localize": false,
+    "font_type": "default",
+    "controls": [
+      { "dados_texto@vulpus_hud.dados": {} }
+    ],
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_texto",
+        "source_property_name": "(#preserved_text - '§v§s§b§r')",
+        "target_property_name": "#text",
+        "binding_condition": "always"
+      }
+    ]
+  }
+}

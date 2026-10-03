@@ -1,18 +1,20 @@
 {
   "name": "vulpus-addon",
-  "version": "0.1.0",
-  "description": "Addon Vulpus para Minecraft Bedrock: menu em JSON UI e sistemas base.",
+  "version": "0.2.0",
+  "description": "Addon Vulpus para Minecraft Bedrock: menu em JSON UI, sistemas, níveis, scoreboard lateral e chat.",
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "tsc -p jsconfig.json",
+    "check": "tsc -p jsconfig.json && tsc -p jsconfig.chat.json",
     "texturas": "python tools/gerar_texturas.py",
+    "glyphs": "python tools/gerar_glyphs.py",
     "verificar": "python tools/verificar_ui.py",
     "build": "python tools/build.py",
     "dev": "python tools/instalar_dev.py"
   },
   "devDependencies": {
     "@minecraft/server": "2.10.0",
+    "@minecraft/server-beta": "npm:@minecraft/server@2.11.0-beta.1.26.52-stable",
     "@minecraft/server-ui": "2.2.0",
     "typescript": "^5.9.0"
   }

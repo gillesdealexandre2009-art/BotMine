@@ -6,6 +6,7 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {typeof PADROES} Config */
+/** @typedef {"laranja" | "black"} Tema */
 
 /**
  * @typedef {object} Casa
@@ -18,9 +19,10 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
 
 /**
  * @typedef {object} DadosJogador
- * @property {number} v  versão do formato (1)
+ * @property {number} v  versão do formato (2; a 1 é da fase 1, completada com os padrões)
  * @property {string} nome  último nome visto
  * @property {number} caudas  saldo de Caudas
+ * @property {number} xp  XP total (inteiro ≥ 0); o nível é calculado em sistemas/niveis.js
  * @property {number} tempo  segundos jogados
  * @property {number} primeira  ms da primeira entrada (0 = ainda não entrou)
  * @property {number} ultimaVez  ms da última entrada
@@ -28,7 +30,8 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {{ dia: string, sequencia: number }} diaria  dia (Brasília, "2026-10-02") da última diária e dias seguidos
  * @property {Casa[]} casas
  * @property {import("./teleporte.js").Local | null} voltar
- * @property {{ hud: boolean | null, tpa: boolean, sons: boolean }} ajustes  hud null = usar config().hudPadrao
+ * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema }} ajustes
+ *   hud (scoreboard lateral) null = usar config().hudPadrao
  * @property {boolean} recebeuItem
  */
 
@@ -43,9 +46,10 @@ let cacheConfig;
 /** @returns {DadosJogador} */
 function dadosNovos() {
   return {
-    v: 1,
+    v: 2,
     nome: "",
     caudas: 0,
+    xp: 0,
     tempo: 0,
     primeira: 0,
     ultimaVez: 0,
@@ -53,7 +57,7 @@ function dadosNovos() {
     diaria: { dia: "", sequencia: 0 },
     casas: [],
     voltar: null,
-    ajustes: { hud: null, tpa: true, sons: true },
+    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja" },
     recebeuItem: false,
   };
 }
@@ -118,6 +122,7 @@ const ehPosicao = (valor) =>
 /**
  * Junta o que foi lido com os padrões. Campo que falta ou veio com tipo errado (JSON antigo ou
  * editado à mão) ganha o valor padrão; casa sem nome ou sem posição é descartada.
+ * Dados da v1 (fase 1) saem como v2 com xp 0 e tema laranja.
  * @param {any} lido
  * @returns {DadosJogador}
  */
@@ -130,6 +135,7 @@ function completar(lido) {
     ...base,
     nome: typeof lido.nome === "string" ? lido.nome : base.nome,
     caudas: Math.max(0, Math.floor(numero(lido.caudas, base.caudas))),
+    xp: Math.max(0, Math.floor(numero(lido.xp, base.xp))),
     tempo: Math.max(0, numero(lido.tempo, base.tempo)),
     primeira: numero(lido.primeira, base.primeira),
     ultimaVez: numero(lido.ultimaVez, base.ultimaVez),
@@ -146,6 +152,7 @@ function completar(lido) {
       hud: typeof ajustes.hud === "boolean" ? ajustes.hud : null,
       tpa: booleano(ajustes.tpa, base.ajustes.tpa),
       sons: booleano(ajustes.sons, base.ajustes.sons),
+      tema: ajustes.tema === "black" ? "black" : "laranja",
     },
     recebeuItem: booleano(lido.recebeuItem, base.recebeuItem),
   };

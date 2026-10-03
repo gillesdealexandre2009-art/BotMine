@@ -3,7 +3,8 @@
 
 Uso:
     python tools/instalar_dev.py                          copia os packs para as pastas de desenvolvimento
-    python tools/instalar_dev.py --mundo "Testes Claude"  também ativa os dois packs nesse mundo
+    python tools/instalar_dev.py --mundo "Testes Claude"  também ativa o BP e o RP nesse mundo
+    python tools/instalar_dev.py --mundo "Teste" --chat   ativa também o pack do chat (mundo com APIs Beta)
     python tools/instalar_dev.py --simular                só mostra o que faria, sem mexer em nada
 
 O que faz:
@@ -11,11 +12,14 @@ O que faz:
       %APPDATA%\\Minecraft Bedrock\\Users\\Shared\\games\\com.mojang
     e, se não houver, a da versão antiga (UWP)
       %LOCALAPPDATA%\\Packages\\Microsoft.MinecraftUWP_8wekyb3d8bbwe\\LocalState\\games\\com.mojang
-  * apaga e recria só development_behavior_packs\\Vulpus_BP e development_resource_packs\\Vulpus_RP;
+  * apaga e recria só development_behavior_packs\\Vulpus_BP, development_behavior_packs\\Vulpus_Chat_BP
+    e development_resource_packs\\Vulpus_RP;
   * com --mundo, acha o mundo pelo nome (levelname.txt), guarda uma cópia .bak de
-    world_behavior_packs.json e world_resource_packs.json e adiciona os dois packs, sem repetir.
+    world_behavior_packs.json e world_resource_packs.json e adiciona o BP e o RP, sem repetir;
+  * com --chat, ativa também o "Vulpus Chat". O mundo precisa do experimento APIs Beta, que
+    não dá para desligar depois: teste primeiro num mundo novo.
 
-Feche o mundo antes de rodar. Saída: 0 = certo, 1 = algo deu errado (a mensagem diz o quê).
+Pode rodar com o jogo aberto, mas o mundo precisa ser fechado e aberto de novo. Saída: 0 = certo, 1 = algo deu errado (a mensagem diz o quê).
 """
 from __future__ import annotations
 
@@ -32,6 +36,9 @@ PACKS = (
     (ADDON / "vulpus_bp", "development_behavior_packs", "Vulpus_BP", "world_behavior_packs.json"),
     (ADDON / "vulpus_rp", "development_resource_packs", "Vulpus_RP", "world_resource_packs.json"),
 )
+# O chat é copiado sempre, mas só é ativado no mundo com --chat.
+CHAT = (ADDON / "vulpus_chat_bp", "development_behavior_packs", "Vulpus_Chat_BP", "world_behavior_packs.json")
+AVISO_CHAT = "o mundo precisa do experimento APIs Beta, que não dá para desligar depois"
 IGNORAR = shutil.ignore_patterns("__pycache__", ".DS_Store", "Thumbs.db")
 
 
@@ -79,8 +86,21 @@ def achar_mundo(nome: str) -> list[Path]:
     return achados
 
 
+def esvaziar(pasta: Path) -> None:
+    """Apaga tudo dentro da pasta. Com o jogo aberto, o Windows não deixa apagar as pastas que ele
+    está vigiando (Acesso negado): elas ficam vazias e a cópia escreve dentro delas."""
+    for raiz, pastas, arquivos in os.walk(pasta, topdown=False):
+        for nome in arquivos:
+            (Path(raiz) / nome).unlink()
+        for nome in pastas:
+            try:
+                (Path(raiz) / nome).rmdir()
+            except OSError:
+                pass
+
+
 def copiar_packs(mojang: Path, simular: bool) -> None:
-    for origem, tipo, nome, _ in PACKS:
+    for origem, tipo, nome, _ in (*PACKS, CHAT):
         destino = mojang / tipo / nome
         if destino.exists():
             print(f"  • apagar {destino}")
@@ -88,14 +108,16 @@ def copiar_packs(mojang: Path, simular: bool) -> None:
         if simular:
             continue
         if destino.exists():
-            shutil.rmtree(destino)
+            esvaziar(destino)
         destino.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(origem, destino, ignore=IGNORAR)
+        shutil.copytree(origem, destino, ignore=IGNORAR, dirs_exist_ok=True)
 
 
-def ativar_no_mundo(mundo: Path, simular: bool) -> None:
-    """Põe os dois packs na lista do mundo, com backup e sem duplicar."""
-    for origem, _, _, nome_arquivo in PACKS:
+def ativar_no_mundo(mundo: Path, simular: bool, chat: bool) -> None:
+    """Põe os packs na lista do mundo (o chat só com chat=True), com backup e sem duplicar.
+    A cópia .bak é feita uma vez por arquivo, antes da primeira mudança (o original)."""
+    com_copia: set[Path] = set()
+    for origem, _, _, nome_arquivo in (*PACKS, CHAT) if chat else PACKS:
         header = ler_manifest(origem)["header"]
         entrada = {"pack_id": header["uuid"], "version": header["version"]}
         arquivo = mundo / nome_arquivo
@@ -115,11 +137,13 @@ def ativar_no_mundo(mundo: Path, simular: bool) -> None:
         else:
             print(f"  • {nome_arquivo}: adicionar {json.dumps(entrada)}")
             lista.append(entrada)
-        if arquivo.is_file():
+        copiar = arquivo.is_file() and arquivo not in com_copia
+        if copiar:
+            com_copia.add(arquivo)
             print(f"    (cópia de segurança em {arquivo.name}.bak)")
         if simular:
             continue
-        if arquivo.is_file():
+        if copiar:
             shutil.copy2(arquivo, arquivo.with_name(arquivo.name + ".bak"))
         arquivo.write_text(json.dumps(lista, indent=2) + "\n", encoding="utf-8")
 
@@ -129,11 +153,16 @@ def main(argv: list[str] | None = None) -> int:
         if hasattr(fluxo, "reconfigure"):
             fluxo.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="Instala o addon Vulpus nas pastas de desenvolvimento do jogo.")
-    parser.add_argument("--mundo", metavar="NOME", help="nome do mundo onde ativar os dois packs")
+    parser.add_argument("--mundo", metavar="NOME", help="nome do mundo onde ativar o BP e o RP")
+    parser.add_argument("--chat", action="store_true", help=f"com --mundo, ativa também o pack do chat ({AVISO_CHAT})")
     parser.add_argument("--simular", action="store_true", help="só mostra o que faria")
     args = parser.parse_args(argv)
 
-    for origem, *_ in PACKS:
+    if args.chat and not args.mundo:
+        print("✖ --chat só vale junto com --mundo.")
+        return 1
+
+    for origem, *_ in (*PACKS, CHAT):
         if not (origem / "manifest.json").is_file():
             print(f"✖ Falta {origem.name}/manifest.json. Rode isto de dentro do projeto do addon.")
             return 1
@@ -164,7 +193,9 @@ def main(argv: list[str] | None = None) -> int:
         copiar_packs(mojang, args.simular)
         if mundo is not None:
             print(f'Mundo "{args.mundo}" em {mundo}')
-            ativar_no_mundo(mundo, args.simular)
+            if args.chat:
+                print(f"  ! Vulpus Chat: {AVISO_CHAT}. Ligue em Editar mundo > Experimentos > APIs Beta.")
+            ativar_no_mundo(mundo, args.simular, args.chat)
     except (OSError, ValueError) as e:
         print(f"✖ Não deu certo: {e}")
         print("  Se o jogo estiver aberto, feche o mundo (ou o jogo) e tente de novo.")

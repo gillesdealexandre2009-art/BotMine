@@ -49,7 +49,12 @@ export const COMANDOS = [
   ["/vulpus:voltar", "volta para o último lugar"],
   ["/vulpus:caudas", "abre o menu de Caudas"],
   ["/vulpus:diaria", "pega a recompensa diária"],
+  ["/vulpus:leilao", "abre o leilão"],
+  ["/vulpus:vender <preço>", "anuncia o item da mão no leilão"],
+  ["/vulpus:caixa", "abre a caixa de retirada do leilão"],
   ["/vulpus:perfil [jogador]", "mostra um perfil"],
+  ["/vulpus:nivel [jogador]", "mostra o nível"],
+  ["/vulpus:hud", "liga/desliga o placar do lado"],
 ];
 export const COMANDOS_STAFF_TITULO = "§6Só da staff";
 /** @type {[string, string][]} */
@@ -57,6 +62,8 @@ export const COMANDOS_STAFF = [
   ["/vulpus:staff", "abre o painel da staff"],
   ["/vulpus:definirspawn", "define o spawn onde você está"],
   ["/vulpus:darcaudas <jogador> <valor>", "dá Caudas (valor negativo tira)"],
+  ["/vulpus:cargo <jogador> <cargo>", "admin, staff, helper ou nenhum"],
+  ["/vulpus:kitsune <jogador>", "liga/desliga o selo Kitsune"],
 ];
 
 // A lenda de Kiza (mesma lore do Discord, sem emoji)
