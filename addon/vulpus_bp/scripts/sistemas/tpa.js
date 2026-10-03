@@ -132,7 +132,8 @@ function aceitar(player, pedido) {
     const { x, y, z } = alvo.location;
     return { x, y, z, d: alvo.dimension.id };
   };
-  if (!teleportar(viajante, destino, { nome: anfitriao.name })) {
+  const parceiro = () => porId(idAnfitriao);
+  if (!teleportar(viajante, destino, { nome: anfitriao.name, tema: "tpa", parceiro })) {
     if (viajante.id !== player.id) erro(player, textos.NAO_PODE_VIAJAR(viajante.name));
     return;
   }

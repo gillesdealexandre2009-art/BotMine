@@ -142,11 +142,12 @@ export function erro(player, texto) {
  * Som só para o jogador. Fica mudo se ele desligou os sons em Ajustes.
  * @param {Player | undefined} player
  * @param {string} id
+ * @param {import("@minecraft/server").PlayerSoundOptions} [opcoes]  tom, volume e local (opcionais)
  */
-export function som(player, id) {
+export function som(player, id, opcoes) {
   if (!player?.isValid || !dadosJogador(player).ajustes.sons) return;
   try {
-    player.playSound(id);
+    player.playSound(id, opcoes);
   } catch (e) {
     registrarErro(`Som ${id}`, e);
   }

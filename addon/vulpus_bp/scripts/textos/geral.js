@@ -16,8 +16,12 @@ export const NAO = "Não";
 export const CONFIRMAR = "Confirmar";
 
 // Teleporte (os de erro já saem em §c; §e destaca e §c volta à cor)
-/** Contagem na actionbar. @param {number} segundos */
-export const TP_ESPERA = (segundos) => `§6» §fTeleporte em §e${segundos}s§f. Não se mexe! §6«`;
+/**
+ * Contagem na actionbar, com a barrinha que enche.
+ * @param {number} segundos
+ * @param {string} barra  já com as cores (glyphs.barra)
+ */
+export const TP_ESPERA = (segundos, barra) => `§6» §fNão se mexe! ${barra} §e${segundos}s §6«`;
 export const TP_CANCELADO_BARRA = "§c✖ Teleporte cancelado";
 export const TP_CANCELADO_ANDOU = "Ih, você se mexeu! Cancelei o teleporte.";
 export const TP_CANCELADO_DANO = "Ai! Você levou dano, então cancelei o teleporte.";
@@ -29,3 +33,11 @@ export const TP_RECARGA = (segundos) => `Calma, raposinha! Minhas caudas ainda r
 export const TP_CHEGOU = (destino) => (destino ? `Zás! Chegamos §8» §6${destino}` : "Zás! Chegamos.");
 export const TP_SEM_DESTINO = "Opa, o destino sumiu do mapa. Cancelei o teleporte.";
 export const TP_FALHOU = "Não consegui te levar até lá. Tenta de novo?";
+/** Título da chegada: o nome do destino. @param {string} [destino] */
+export const TP_TITULO = (destino) => `§6${destino ?? "Zás!"}`;
+export const TP_SUB_KITSUNE = "§7Viagem de raposa concluída";
+export const TP_SUB_CASA = "§7Lar, doce toca";
+export const TP_SUB_SPAWN = "§7O coração do Vulpus";
+export const TP_TITULO_VOLTAR = "§7De volta!";
+export const TP_SUB_VOLTAR = "§8Ao seu último lugar";
+export const TP_SUB_TPA = "§7Visita entregue pelas caudas";

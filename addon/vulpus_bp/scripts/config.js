@@ -98,8 +98,6 @@ export const SONS = {
   abrir: "random.pop",
   erro: "note.bass",
   ok: "random.orb",
-  teleporte: "mob.endermen.portal",
-  contagem: "note.hat",
   pedido: "random.levelup",
   nivel: "random.levelup",
 };

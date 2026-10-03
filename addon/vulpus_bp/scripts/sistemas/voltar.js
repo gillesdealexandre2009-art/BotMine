@@ -16,7 +16,7 @@ export function irVoltar(player) {
     erro(player, textos.SEM_LOCAL);
     return;
   }
-  teleportar(player, () => dadosJogador(player).voltar ?? undefined, { nome: textos.DESTINO });
+  teleportar(player, () => dadosJogador(player).voltar ?? undefined, { nome: textos.DESTINO, tema: "voltar" });
 }
 
 registrarComando({ nome: "voltar", descricao: textos.CMD_VOLTAR }, (p) => irVoltar(p));

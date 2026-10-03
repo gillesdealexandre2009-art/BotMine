@@ -202,8 +202,8 @@ export const PADROES = { esperaTeleporte: 3, recargaTeleporte: 10, combateSegund
   limiteCasas: 3, caudasPorIntervalo: 5, intervaloCaudasMin: 10, diariaBase: 25, diariaBonusDia: 5,
   diariaBonusMax: 7, linkDiscord: "", hudPadrao: true };
 export const ICONES = { /* tabela acima */ };
-export const SONS = { abrir: "random.pop", erro: "note.bass", ok: "random.orb", teleporte: "mob.endermen.portal",
-  contagem: "note.hat", pedido: "random.levelup" };
+export const SONS = { abrir: "random.pop", erro: "note.bass", ok: "random.orb", pedido: "random.levelup" };
+// Os sons do teleporte ficam em core/efeitos.js (com tom e volume).
 ```
 
 ### `scripts/core/util.js` [core]
@@ -222,7 +222,7 @@ export const SONS = { abrir: "random.pop", erro: "note.bass", ok: "random.orb", 
   - `msg(player, texto)`;
   - `ok(player, texto)`, que toca o som ok;
   - `erro(player, texto)`, que usa §c e o som de erro;
-  - `som(player, id)`.
+  - `som(player, id, opcoes?)`, com `PlayerSoundOptions` (tom, volume, local).
   - Todas ignoram jogador inválido (`player.isValid` é PROPRIEDADE na 2.x).
 
 ### `scripts/core/db.js` [core]
@@ -276,23 +276,31 @@ export async function perguntar(player, titulo, campos) → any[]|undefined     
 - Tipo `Local = {x,y,z,d, rx?, ry?}`, onde `d` é `dimension.id` (ex.: "minecraft:overworld").
 - `localDe(player) → Local`, com rotação.
 - `teleportar(player, destino: Local | (() => Local|undefined), opcoes?)`:
-  - `opcoes`: `{ nome?: string, semEspera?: boolean, salvarVoltar?: boolean (padrão true), aoChegar?: (p)=>void }`.
+  - `opcoes`: `{ nome?: string, semEspera?: boolean, salvarVoltar?: boolean (padrão true), tema?: "kitsune"|"casa"|"spawn"|"voltar"|"tpa", parceiro?: () => Player|undefined, aoChegar?: (p)=>void }`.
   - Bloqueios:
     - em combate (`config().combateSegundos`): erro e não teleporta;
     - recarga (`recargaTeleporte` desde o último teleporte): erro com os segundos restantes.
   - Espera (`esperaTeleporte` s):
-    - contagem na actionbar com som `contagem` a cada segundo;
+    - contagem na actionbar com barrinha (glyphs) e os efeitos de `core/efeitos.js`;
     - cancela se andar mais de 0,6 bloco ou levar dano.
   - Staff pula a espera e a recarga.
   - No fim:
     - resolve o destino (uma função pode retornar undefined, o que cancela);
     - salva a origem em `dados.voltar` se `salvarVoltar`;
     - `player.teleport({x,y,z}, {dimension: world.getDimension(d), rotation: rx!=null?{x:rx,y:ry}:undefined, checkForBlocks:false, keepVelocity:false})`;
-    - som `teleporte` e mensagem de chegada.
+    - efeitos de saída e de chegada (`core/efeitos.js`) e mensagem de chegada.
   - Só uma espera por jogador: uma nova cancela a anterior.
 - `emCombate(player) → boolean` e `marcarCombate(entity)`. O módulo assina `world.afterEvents.entityHurt` e marca combate quando um player apanha de uma entidade ou quando um player causa o dano.
 - `emEspera(player) → boolean`, usado pela HUD para pausar.
 - `cancelarEspera(player, motivo?)`.
+
+### `scripts/core/efeitos.js` [efeitos]
+Efeitos do teleporte, só com API estável (`Dimension.spawnParticle`, `MolangVariableMap`, `Player.playSound` com tom e volume, `Camera.fade`). Toda chamada ao jogo é protegida: um efeito que falhar vai para o log uma vez e o teleporte segue.
+- Espera: `inicioEspera` (som de carga), `passoEspera` a cada 2 ticks (caudas de fogo em espiral; nasce uma cauda por segundo, de 2 a 5), `segundoEspera` (selo de fogo no chão e `note.chime` subindo de tom), `previaParceiro` (TPA: portalzinho nos pés de quem recebe a visita), `preparar` (fade da tela 4 ticks antes; sem espera, na hora).
+- Teleporte: `saida` (rajada, anel de fogo e faíscas na origem; "puf" para quem está a até 16 blocos) e `chegada` (3 pulsos, em 4, 9 e 15 ticks: anel, coluna, título com `mostrarTitulo`, enfeite do tema e faíscas).
+- `cancelado`: fumaça e `extinguish.candle`.
+- Temas: `kitsune` (padrão), `casa` (corações e pétalas), `spawn` (anel dourado de 2 blocos, totem e sino), `voltar` (chamas e almas cinzentas, fade escuro), `tpa` (brilhos e coração; quem recebe ouve a chegada).
+- Limite de 96 partículas por tick no servidor inteiro; sons passam por `som()` (respeitam `ajustes.sons`).
 - Use ticks (`system.currentTick`) para tempos curtos.
 
 ### `scripts/core/comandos.js` [core]

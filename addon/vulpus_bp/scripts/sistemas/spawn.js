@@ -65,7 +65,7 @@ export function irSpawn(player) {
     erro(player, textos.SEM_SPAWN);
     return;
   }
-  teleportar(player, destino, { nome: textos.DESTINO });
+  teleportar(player, destino, { nome: textos.DESTINO, tema: "spawn" });
 }
 
 /**

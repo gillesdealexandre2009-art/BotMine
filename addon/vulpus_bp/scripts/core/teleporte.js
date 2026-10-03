@@ -1,11 +1,12 @@
 // @ts-check
-// Teleporte com as regras do servidor: combate, recarga e espera parado (com contagem).
+// Teleporte com as regras do servidor: combate, recarga e espera parado (com contagem e efeitos).
 import { Player, system, world } from "@minecraft/server";
-import { SONS } from "../config.js";
+import { barra } from "../glyphs.js";
 import * as textos from "../textos/geral.js";
 import { config, editarJogador } from "./db.js";
+import * as efeitos from "./efeitos.js";
 import { ehStaff } from "./permissoes.js";
-import { erro, msg, registrarErro, rodarSeguro, som } from "./util.js";
+import { erro, msg, registrarErro, rodarSeguro } from "./util.js";
 
 /**
  * Um lugar no mundo. d = dimension.id ("minecraft:overworld"...); rx/ry = rotação (opcional).
@@ -17,6 +18,8 @@ import { erro, msg, registrarErro, rodarSeguro, som } from "./util.js";
  * @property {string} [nome]  nome do destino na mensagem de chegada
  * @property {boolean} [semEspera]  pula a espera parado (combate e recarga continuam valendo)
  * @property {boolean} [salvarVoltar]  guarda a origem em dados.voltar (padrão true)
+ * @property {import("./efeitos.js").TemaTeleporte} [tema]  visual e sons do efeito (padrão "kitsune")
+ * @property {() => Player | undefined} [parceiro]  quem recebe a visita (TPA): vê o portal e ouve a chegada
  * @property {(p: Player) => void} [aoChegar]
  */
 
@@ -27,6 +30,12 @@ const TOLERANCIA_MOVIMENTO = 0.6;
 const PASSO_ESPERA = 2;
 /** Quanto tempo o aviso de cancelamento fica na actionbar sem a HUD por cima. */
 const TICKS_AVISO_CANCELADO = 3 * TICKS_POR_SEGUNDO;
+/** De quantos em quantos ticks a barrinha da actionbar é atualizada. */
+const PASSO_BARRA = 4;
+/** De quantos em quantos ticks o portal aparece nos pés de quem recebe a visita (TPA). */
+const PASSO_PREVIA = 6;
+/** Segmentos da barrinha da contagem. */
+const SEGMENTOS_BARRA = 10;
 
 /** @type {Map<string, number>} id → tick do último dano dado ou levado em combate */
 const ultimoCombate = new Map();
@@ -117,6 +126,7 @@ export function cancelarEspera(player, motivo) {
   avisos.set(player.id, system.currentTick + TICKS_AVISO_CANCELADO);
   player.onScreenDisplay.setActionBar(textos.TP_CANCELADO_BARRA);
   erro(player, motivo);
+  efeitos.cancelado(player);
 }
 
 /**
@@ -144,22 +154,29 @@ export function teleportar(player, destino, opcoes = {}) {
   cancelarEspera(player);
   const espera = staff || opcoes.semEspera ? 0 : Math.max(0, Math.floor(cfg.esperaTeleporte));
   if (espera === 0) return concluir(player, destino, opcoes);
-  esperar(player, espera, () => concluir(player, destino, opcoes));
+  esperar(player, espera, opcoes, () => concluir(player, destino, opcoes, true));
   return true;
 }
 
 /**
- * Contagem na actionbar; cancela se o jogador andar ou trocar de dimensão.
+ * Contagem na actionbar (com barrinha) e as caudas de fogo; cancela se o jogador andar ou trocar
+ * de dimensão. Pouco antes do fim a tela começa o fade.
  * @param {Player} player
  * @param {number} segundos
+ * @param {OpcoesTeleporte} opcoes
  * @param {() => void} aoTerminar
  */
-function esperar(player, segundos, aoTerminar) {
+function esperar(player, segundos, opcoes, aoTerminar) {
   const id = player.id;
   const inicio = player.location;
   const dimensao = player.dimension.id;
-  const fim = system.currentTick + segundos * TICKS_POR_SEGUNDO;
+  const comeco = system.currentTick;
+  const total = segundos * TICKS_POR_SEGUNDO;
+  const fim = comeco + total;
   let mostrado = 0;
+  let ultimaBarra = -PASSO_BARRA;
+  let ultimaPrevia = -PASSO_PREVIA;
+  let preparado = false;
   const parar = () => {
     system.clearRun(run);
     esperas.delete(id);
@@ -176,14 +193,32 @@ function esperar(player, segundos, aoTerminar) {
         cancelarEspera(player, textos.TP_CANCELADO_ANDOU);
         return;
       }
-      const faltam = Math.ceil((fim - system.currentTick) / TICKS_POR_SEGUNDO);
+      const agora = system.currentTick;
+      const faltam = Math.ceil((fim - agora) / TICKS_POR_SEGUNDO);
       if (faltam <= 0) {
         parar();
         aoTerminar();
-      } else if (faltam !== mostrado) {
+        return;
+      }
+      const decorridos = agora - comeco;
+      const virouSegundo = faltam !== mostrado;
+      if (virouSegundo) {
         mostrado = faltam;
-        player.onScreenDisplay.setActionBar(textos.TP_ESPERA(faltam));
-        som(player, SONS.contagem);
+        efeitos.segundoEspera(player, opcoes.tema, segundos - faltam, faltam === 1);
+      }
+      if (virouSegundo || decorridos - ultimaBarra >= PASSO_BARRA) {
+        ultimaBarra = decorridos;
+        player.onScreenDisplay.setActionBar(textos.TP_ESPERA(faltam, barra(decorridos / total, SEGMENTOS_BARRA)));
+      }
+      efeitos.passoEspera(player, opcoes.tema, decorridos);
+      if (opcoes.parceiro && decorridos - ultimaPrevia >= PASSO_PREVIA) {
+        ultimaPrevia = decorridos;
+        const parceiro = opcoes.parceiro();
+        if (parceiro) efeitos.previaParceiro(parceiro, decorridos);
+      }
+      if (!preparado && fim - agora <= efeitos.TICKS_FADE) {
+        preparado = true;
+        efeitos.preparar(player, opcoes.tema, false);
       }
     } catch (e) {
       parar();
@@ -191,16 +226,19 @@ function esperar(player, segundos, aoTerminar) {
     }
   }, PASSO_ESPERA);
   esperas.set(id, run);
+  efeitos.inicioEspera(player);
 }
 
 /**
- * Resolve o destino, confere o combate de novo e teleporta (inclusive entre dimensões).
+ * Resolve o destino, confere o combate de novo e teleporta (inclusive entre dimensões), com o
+ * estouro na origem e o efeito de chegada.
  * @param {Player} player
  * @param {Local | (() => Local | undefined)} destino
  * @param {OpcoesTeleporte} opcoes
+ * @param {boolean} [preparado]  o fade já começou na espera
  * @returns {boolean} se teleportou
  */
-function concluir(player, destino, opcoes) {
+function concluir(player, destino, opcoes, preparado = false) {
   if (!player.isValid) return false;
   try {
     const alvo = typeof destino === "function" ? destino() : destino;
@@ -214,6 +252,9 @@ function concluir(player, destino, opcoes) {
       return false;
     }
     const origem = localDe(player);
+    const dimOrigem = player.dimension;
+    const posOrigem = player.location;
+    if (!preparado) efeitos.preparar(player, opcoes.tema, true);
     /** @type {import("@minecraft/server").TeleportOptions} */
     const opcoesTp = {
       dimension: world.getDimension(alvo.d),
@@ -225,6 +266,7 @@ function concluir(player, destino, opcoes) {
     if (alvo.rx != null && alvo.ry != null) opcoesTp.rotation = { x: alvo.rx, y: alvo.ry };
     player.teleport({ x: alvo.x, y: alvo.y, z: alvo.z }, opcoesTp);
     ultimoTeleporte.set(player.id, system.currentTick);
+    efeitos.saida(player, dimOrigem, posOrigem, opcoes.tema);
     if (opcoes.salvarVoltar !== false) {
       editarJogador(player, (dados) => {
         dados.voltar = origem;
@@ -235,7 +277,7 @@ function concluir(player, destino, opcoes) {
     erro(player, textos.TP_FALHOU);
     return false;
   }
-  som(player, SONS.teleporte);
+  efeitos.chegada(player, opcoes.tema, { nome: opcoes.nome, parceiro: opcoes.parceiro?.() });
   msg(player, textos.TP_CHEGOU(opcoes.nome));
   const aoChegar = opcoes.aoChegar;
   if (aoChegar) rodarSeguro(player, "Chegada do teleporte", aoChegar);

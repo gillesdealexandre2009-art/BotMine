@@ -126,7 +126,7 @@ function irCasa(player, casa) {
       const atual = acharCasa(player, casa.nome);
       return atual && { x: atual.x, y: atual.y, z: atual.z, d: atual.d };
     },
-    { nome: casa.nome },
+    { nome: casa.nome, tema: "casa" },
   );
 }
 
