@@ -1,0 +1,41 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Vulpus",
+    "description": "Menu e sistemas do servidor Vulpus",
+    "uuid": "29023842-68f5-46b9-af72-b9e58ee29803",
+    "version": [0, 1, 0],
+    "min_engine_version": [1, 26, 50]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "235d63b2-cc2b-4734-b848-689d24c69b52",
+      "version": [0, 1, 0]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "c87cf944-863b-451a-8db7-e2d42707bfe3",
+      "version": [0, 1, 0],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.10.0"
+    },
+    {
+      "module_name": "@minecraft/server-ui",
+      "version": "2.2.0"
+    },
+    {
+      "uuid": "23661f46-bc60-4947-81ed-343c0279e638",
+      "version": [0, 1, 0]
+    }
+  ],
+  "metadata": {
+    "authors": ["KOPE"]
+  }
+}

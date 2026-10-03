@@ -1,0 +1,42 @@
+// @ts-check
+// Textos do menu principal (Hub). O corpo cabe em ~7 linhas estreitas embaixo da logo: dicas curtas.
+
+export const TITULO = "VULPUS";
+
+/** @param {string} nome */
+export const SAUDACAO = (nome) => `Que bom te ver na toca, §6${nome}§r!`;
+/** @param {string} caudas  já formatado */
+export const LINHA_CAUDAS = (caudas) => `§6★ §r${caudas} Caudas`;
+/** @param {number} quantos */
+export const LINHA_ONLINE = (quantos) => `§7${quantos} online agora`;
+/** @param {string} dica */
+export const LINHA_DICA = (dica) => `§7${dica}`;
+
+/** Sorteadas a cada abertura. Até ~34 caracteres (duas linhas na coluna de ~118px do Hub). */
+export const DICAS = [
+  "Sem se mexer, o teleporte sai.",
+  "Diária todo dia = mais Caudas!",
+  "Caiu longe? O Voltar te leva lá.",
+  "Briga e teleporte não combinam.",
+  "Marque suas casas e viaje fácil.",
+  "Muito TPA? Bloqueie em Ajustes.",
+  "A HUD liga e desliga em Ajustes.",
+  "Leia as Regras: a toca agradece.",
+  "Ficar AFK não rende Caudas.",
+  "Sem o item? Use /vulpus:menu.",
+  "Cada história vira uma Cauda!",
+];
+
+// Rótulos dos slots (~70px de largura)
+export const SPAWN = "Spawn";
+export const CASAS = "Casas";
+/** @param {number} pedidos  recebidos e pendentes */
+export const TPA = (pedidos) => (pedidos > 0 ? `TPA (${pedidos})` : "TPA");
+export const VOLTAR = "Voltar";
+export const CAUDAS = "Caudas";
+export const PERFIL = "Perfil";
+export const AJUSTES = "Ajustes";
+export const REGRAS = "Regras";
+export const STAFF = "Staff";
+
+export const CMD_MENU = "Abre o menu do Vulpus";

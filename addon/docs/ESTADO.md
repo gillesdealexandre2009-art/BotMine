@@ -1,6 +1,6 @@
 # Addon Vulpus: estado da obra (passagem de bastão)
 
-Atualizado em 2026-10-02, por volta das 13:55. A obra foi parada a pedido do dono, porque ele mudou de computador.
+Atualizado em 2026-10-02, na conferência final. O addon está completo e conferido fora do jogo; falta o teste do dono dentro do jogo e, depois, o commit e o push.
 
 ## O que é
 
@@ -34,59 +34,75 @@ Nos documentos, `<SCR>` era a pasta temporária do outro computador, e `<repo>` 
 | Frente | Arquivos | Situação |
 |---|---|---|
 | Pesquisa e specs | `docs/` | **pronto** |
-| [texturas] | `tools/gerar_texturas.py`, `vulpus_rp/textures/**`, `pack_icon.png` (BP e RP) | **pronto**: agente concluiu e conferiu |
-| [ui] | `vulpus_rp/ui/server_form.json`, `_ui_defs.json`, `ui/vulpus/vulpus_menu.json`, `tools/verificar_ui.py`, `tools/brarchive.py` | **feito, falta a revisão final do agente**: ele foi interrompido na própria checagem. Conferido depois: `verificar_ui.py` dá **0 erros e 0 avisos** contra a vanilla 1.26.52 (93 controles, 35 texturas) |
-| [core] | `vulpus_bp/scripts/main.js`, `config.js`, `core/*.js`, `textos/geral.js` | **feito, falta o teste de fumaça**: interrompido no teste com mocks. Conferido depois: `node --check` ok e **tsc limpo** contra as tipagens 2.10.0 e 2.2.0 |
-| [sistemas1] | `scripts/sistemas/{menu,spawn,casas,voltar,tpa}.js` e os `textos/` correspondentes | **não começou** |
-| [sistemas2] | `scripts/sistemas/{caudas,perfil,ajustes,hud,regras,staff,boas_vindas}.js` e os `textos/` correspondentes | **não começou** |
-| [pacote] | manifests, `items/menu.json`, `texts/`, `package.json`, `jsconfig.json`, `tools/build.py`, `tools/instalar_dev.py`, `README.md` | **não começou** (as linhas do `.gitignore` já foram feitas) |
-| Verificação integrada | `npm run check`, `verificar_ui.py`, `gerar_texturas.py`, `build.py` | pendente |
-| Revisões adversariais | revisão do JSON UI e revisão da lógica dos scripts | pendente |
-| Conferência final | `.mcaddon` pronto e passo a passo de teste para o dono | pendente |
+| [texturas] | `tools/gerar_texturas.py`, `vulpus_rp/textures/**`, `pack_icon.png` (BP e RP) | **pronto** |
+| [ui] | `vulpus_rp/ui/server_form.json`, `_ui_defs.json`, `ui/vulpus/vulpus_menu.json`, `tools/verificar_ui.py`, `tools/brarchive.py` | **pronto e revisado** (revisor corrigiu `factory_variables` da Lista e o verificador) |
+| [core] | `vulpus_bp/scripts/main.js`, `config.js`, `core/*.js`, `textos/geral.js` | **pronto e revisado** |
+| [sistemas1] | `scripts/sistemas/{menu,spawn,casas,voltar,tpa}.js` e textos | **pronto e revisado** |
+| [sistemas2] | `scripts/sistemas/{caudas,perfil,ajustes,hud,regras,staff,boas_vindas}.js` e textos | **pronto e revisado** |
+| [pacote] | manifests, `items/menu.json`, `texts/`, `package.json`, `jsconfig.json`, `tools/build.py`, `tools/instalar_dev.py`, `README.md` | **pronto** |
+| Revisões | JSON UI, lógica dos scripts, conformidade com a spec | **feitas**: 2 correções na UI, 6 bugs corrigidos na lógica, textos e README ajustados |
+| Teste de fumaça | BDS 1.26.52.3 oficial + API simulada | **passou**: pack carrega sem erro, 17 comandos registrados, `/menu` sem prefixo funciona, simulação dos sistemas sem falhas |
+| Conferência final | checagens, limpeza, docs | **feita** |
+| Teste no jogo (cliente) | visual do JSON UI, item, TPA com 2 pessoas | **pendente: o dono** |
+| Commit e push na `main` | | **pendente** (depois do teste) |
 
-Observação: `main.js` já importa os 12 módulos de sistemas, que ainda não existem. O addon só carrega depois que [sistemas1] e [sistemas2] forem feitos.
+## Checagens da conferência final (2026-10-02)
+
+| Checagem | Resultado |
+|---|---|
+| `npm run check` (tsc contra 2.10.0 e 2.2.0) | 0 erros |
+| `node --check` nos scripts do BP | 34 de 34 ok (`docs/workflow_implementar.js` não passa de propósito: é roteiro de workflow, com `return` no topo) |
+| `python tools/verificar_ui.py` | 2 arquivos, 93 controles, 35 texturas, 0 erros, 0 avisos; `server_form.json` vanilla igual ao da 1.26.52 |
+| `python tools/gerar_texturas.py` | 13 PNGs prontos, nenhum alterado (logo protegida) |
+| `python tools/build.py` | 13 JSON ok; `dist/Vulpus.mcaddon` 66 KB (BP 53 KB, RP 12 KB) |
+| `python tools/instalar_dev.py --simular --mundo "Testes Claude"` | acha o com.mojang (GDK) e o mundo; ativaria BP e RP com `.bak` |
+| Lixo | sem `__pycache__`, `.ruff_cache`, BOM, emoji, `TODO` ou `console.log`; `node_modules/` e `dist/` cobertos pelo `.gitignore` da raiz |
+
+## O que falta testar no jogo
+
+1. O clique direito no item abre o menu. Se não abrir, acrescentar `minecraft:use_modifiers` em `items/menu.json`.
+2. Visual do Hub: logo, 8 botões, texto embaixo da logo sem cortar (nome longo), coroa da staff no canto.
+3. Visual da Lista (Casas, TPA): fundo laranja e marrom nos botões, cabeçalho laranja em Regras > Comandos, `§r` voltando à cor creme, Lista de 220 px cabendo em celular com GUI grande.
+4. Content Log sem "Unknown property" (`factory_variables`).
+5. Forms vanilla (ModalForm de nova casa, configurações da staff) continuam normais.
+6. TPA com 2 pessoas; `/vulpus:tpaceitar NomeErrado` dá erro e não aceita outro pedido.
+7. Teleporte cancelado andando: o aviso fica uns 3 s na actionbar.
+8. Repetir num mundo **sem experimentos e sem cheats**, igual ao BDS.
 
 ## Próximos passos
 
-1. **Ler** as duas specs e a seção 5 de `docs/pesquisa/02_tecnicas_comunidade.md`.
-2. **Recriar o material de apoio**, que ficou no outro PC:
-   - **UI vanilla para consulta:** `python addon/tools/brarchive.py "<data do jogo>\resource_packs\vanilla\__brarchive" <pasta>`. O `<data do jogo>` costuma ser `C:\XboxGames\Minecraft for Windows\Content\data`. Sem argumentos, o `verificar_ui.py` já extrai sozinho; para outra instalação, use `--jogo PASTA`.
-   - **Tipagens:** depois que o [pacote] criar o `package.json`, rodar `npm install` em `addon/`. Antes disso, dá para usar uma pasta temporária com `npm i @minecraft/server@2.10.0 @minecraft/server-ui@2.2.0 --legacy-peer-deps`.
-3. **Implementar** [sistemas1], [sistemas2] e [pacote] seguindo os contratos da spec técnica. Antes, ler o código real do core: `scripts/core/forms.js`, `teleporte.js`, `db.js` e `comandos.js`.
-4. **Verificação integrada:**
-   - `npm install` e `npm run check`, com zero erros;
-   - `node --check` em tudo;
-   - `python tools/verificar_ui.py`, com zero erros;
-   - `python tools/gerar_texturas.py`, que não sobrescreve uma logo trocada sem `--forcar`;
-   - `python tools/build.py`, que deve gerar `dist/Vulpus.mcaddon`.
-5. **Revisões adversariais:** a do JSON UI segue o checklist da seção 5 da pesquisa. A da lógica cobre:
-   - modo restrito e `system.run`;
-   - `UserBusy`;
-   - casos de borda do TPA;
-   - diária no fuso de Brasília;
-   - anti-AFK;
-   - `cheatsRequired: false` em todos os comandos.
-6. **Conferência final:** o `.mcaddon` pronto e o passo a passo de teste no jogo para o dono (há um checklist de 8 itens no fim da seção 5 da pesquisa). Depois, commit e push na `main`.
+1. O dono testa no jogo (passo a passo no `README.md`, seções "Teste rápido dos sistemas" e "Checklist").
+2. Corrigir o que o teste apontar.
+3. Commit e push na `main`.
+4. Depois: subir no BDS da BedHosting.
 
 ## Armadilhas já conhecidas
 
 - **Comandos:** `CustomCommand.cheatsRequired` vale **true** por padrão, então todo comando precisa de `cheatsRequired: false`.
 - **Callback de comando:** roda em modo restrito. Mostrar form ou mexer no mundo exige `system.run`.
+- **Seletor de jogador vazio:** `comandos.js` entrega `null` quando o nome foi passado e ninguém foi achado, e `undefined` quando o parâmetro opcional não veio. Os sistemas tratam `null` como `JOGADOR_OFFLINE`.
+- **`Player.name` lança erro** com jogador inválido na 2.x: conferir `isValid` antes.
 - **JSON UI:**
   - nunca inserir em `long_form.controls`;
   - nunca usar `$var` dentro de `modifications`;
   - cada botão precisa do binding `collection_details` no próprio button, senão o clique volta `canceled`;
   - nas expressões, só `=`, `not`, `and`, `or`, `-` e `+`;
-  - o `collection_index` conta label, header e divider, mas o `selection` conta só botões.
+  - o `collection_index` conta label, header e divider, mas o `selection` conta só botões;
+  - **células criadas por factory não herdam as variáveis do `root`**: passe-as em `factory_variables` (como a vanilla faz);
+  - o `texto_hub` usa `max_size` [100%, 84] (8 linhas), e não 72 como na spec: com nome longo, 72 ficava no limite.
 - **Hub:** sempre manda 9 botões (os vazios vão com texto `''`). O slot 8 é o da staff.
 - **Encoding:** arquivos com `§` precisam estar em UTF-8 sem BOM.
 - **Texturas:** o `gerar_texturas.py` marca cada PNG com uma assinatura e não sobrescreve um arquivo trocado à mão, a não ser com `--forcar`. Isso protege a logo oficial.
+- **Ferramentas neste PC:** o `python` do PATH é um atalho falso da Microsoft Store. Use `C:/Users/gille/vt/py` e `C:/Users/gille/vt/node` (no Bash: `export PATH="/c/Users/gille/vt/node:/c/Users/gille/vt/py:$PATH"`).
+- **BDS:** o servidor não carrega UI; ele só prova scripts, comandos e item. O visual só se confere no cliente.
+- **Mundo "Testes Claude":** tem experimentos ligados (incluindo Beta APIs) e cheats ativos. O addon não precisa deles, mas o teste final deve ser num mundo sem experimentos e sem cheats, igual ao servidor.
+- **Apoio de teste fora do repo:** BDS em `C:/Users/gille/vt/bds` (script `C:/Users/gille/vt/rodar_bds.js`) e API simulada em `C:/Users/gille/vt/mock/` (`node --import ./registrar.mjs teste.mjs`).
 
 ## Página de andamento (opcional)
 
 https://claude.ai/artifact/WcBX55EUA9v74XnYtm71Hk
 
-A página lê o documento `painel/estado` do banco dela, que se atualiza com a ferramenta ArtifactData. É preciso ler o artifact antes de publicar nele. Parou em 44%.
+A página lê o documento `painel/estado` do banco dela, que se atualiza com a ferramenta ArtifactData. É preciso ler o artifact antes de publicar nele.
 
 ## Pendências do bot Kiza (fora do addon, manuais)
 

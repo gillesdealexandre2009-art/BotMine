@@ -94,20 +94,60 @@ function gravarJson(chave, valor) {
 }
 
 /**
- * Junta o que foi lido com os padrões: campos que não existiam ganham o valor padrão.
+ * @param {unknown} valor
+ * @param {number} padrao
+ */
+const numero = (valor, padrao) => (typeof valor === "number" && Number.isFinite(valor) ? valor : padrao);
+
+/**
+ * @param {unknown} valor
+ * @param {boolean} padrao
+ */
+const booleano = (valor, padrao) => (typeof valor === "boolean" ? valor : padrao);
+
+/**
+ * Tem dimensão e coordenadas que dá para usar num teleporte.
+ * @param {any} valor
+ */
+const ehPosicao = (valor) =>
+  !!valor &&
+  typeof valor === "object" &&
+  typeof valor.d === "string" &&
+  [valor.x, valor.y, valor.z].every((n) => typeof n === "number" && Number.isFinite(n));
+
+/**
+ * Junta o que foi lido com os padrões. Campo que falta ou veio com tipo errado (JSON antigo ou
+ * editado à mão) ganha o valor padrão; casa sem nome ou sem posição é descartada.
  * @param {any} lido
  * @returns {DadosJogador}
  */
 function completar(lido) {
   const base = dadosNovos();
   if (!lido || typeof lido !== "object") return base;
+  const diaria = lido.diaria && typeof lido.diaria === "object" ? lido.diaria : {};
+  const ajustes = lido.ajustes && typeof lido.ajustes === "object" ? lido.ajustes : {};
   return {
     ...base,
-    ...lido,
-    v: 1,
-    diaria: { ...base.diaria, ...lido.diaria },
-    ajustes: { ...base.ajustes, ...lido.ajustes },
-    casas: Array.isArray(lido.casas) ? lido.casas : base.casas,
+    nome: typeof lido.nome === "string" ? lido.nome : base.nome,
+    caudas: Math.max(0, Math.floor(numero(lido.caudas, base.caudas))),
+    tempo: Math.max(0, numero(lido.tempo, base.tempo)),
+    primeira: numero(lido.primeira, base.primeira),
+    ultimaVez: numero(lido.ultimaVez, base.ultimaVez),
+    mortes: Math.max(0, Math.floor(numero(lido.mortes, base.mortes))),
+    diaria: {
+      dia: typeof diaria.dia === "string" ? diaria.dia : base.diaria.dia,
+      sequencia: Math.max(0, Math.floor(numero(diaria.sequencia, base.diaria.sequencia))),
+    },
+    casas: Array.isArray(lido.casas)
+      ? lido.casas.filter((c) => ehPosicao(c) && typeof c.nome === "string" && c.nome !== "")
+      : base.casas,
+    voltar: ehPosicao(lido.voltar) ? lido.voltar : null,
+    ajustes: {
+      hud: typeof ajustes.hud === "boolean" ? ajustes.hud : null,
+      tpa: booleano(ajustes.tpa, base.ajustes.tpa),
+      sons: booleano(ajustes.sons, base.ajustes.sons),
+    },
+    recebeuItem: booleano(lido.recebeuItem, base.recebeuItem),
   };
 }
 

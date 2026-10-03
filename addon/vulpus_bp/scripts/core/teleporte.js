@@ -25,6 +25,8 @@ const TICKS_POR_SEGUNDO = 20;
 const TOLERANCIA_MOVIMENTO = 0.6;
 /** De quantos em quantos ticks a espera confere o jogador. */
 const PASSO_ESPERA = 2;
+/** Quanto tempo o aviso de cancelamento fica na actionbar sem a HUD por cima. */
+const TICKS_AVISO_CANCELADO = 3 * TICKS_POR_SEGUNDO;
 
 /** @type {Map<string, number>} id → tick do último dano dado ou levado em combate */
 const ultimoCombate = new Map();
@@ -32,6 +34,8 @@ const ultimoCombate = new Map();
 const ultimoTeleporte = new Map();
 /** @type {Map<string, number>} id → runInterval da espera em andamento */
 const esperas = new Map();
+/** @type {Map<string, number>} id → tick até quando o aviso de cancelamento fica na actionbar */
+const avisos = new Map();
 
 /** @param {number} n */
 const arredondar = (n) => Math.round(n * 100) / 100;
@@ -87,11 +91,16 @@ export function marcarCombate(entity) {
 }
 
 /**
- * Está numa contagem de teleporte (a HUD pausa).
+ * Está numa contagem de teleporte ou acabou de ver o aviso de cancelamento (a HUD pausa).
  * @param {Player} player
  */
 export function emEspera(player) {
-  return esperas.has(player.id);
+  if (esperas.has(player.id)) return true;
+  const aviso = avisos.get(player.id);
+  if (aviso === undefined) return false;
+  if (aviso > system.currentTick) return true;
+  avisos.delete(player.id);
+  return false;
 }
 
 /**
@@ -105,6 +114,7 @@ export function cancelarEspera(player, motivo) {
   system.clearRun(run);
   esperas.delete(player.id);
   if (!motivo || !player.isValid) return;
+  avisos.set(player.id, system.currentTick + TICKS_AVISO_CANCELADO);
   player.onScreenDisplay.setActionBar(textos.TP_CANCELADO_BARRA);
   erro(player, motivo);
 }

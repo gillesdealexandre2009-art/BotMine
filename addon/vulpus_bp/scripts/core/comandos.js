@@ -22,8 +22,8 @@ import { registrarErro, rodarSeguro } from "./util.js";
  */
 
 /**
- * Recebe os argumentos na ordem de def.parametros: jogador → Player | undefined,
- * texto → string, inteiro → number; opcional ausente → undefined.
+ * Recebe os argumentos na ordem de def.parametros: jogador → Player (null se o nome ou seletor
+ * não achou ninguém online), texto → string, inteiro → number; opcional ausente → undefined.
  * @typedef {(player: Player, args: any[]) => any} HandlerComando
  */
 
@@ -71,7 +71,8 @@ function paraJogo(parametro) {
 }
 
 /**
- * Valores do jogo → argumentos na ordem de def.parametros (PlayerSelector chega como lista).
+ * Valores do jogo → argumentos na ordem de def.parametros (PlayerSelector chega como lista;
+ * lista vazia vira null, para não ser confundida com o opcional ausente).
  * @param {DefComando} def
  * @param {any[]} valores
  */
@@ -79,7 +80,7 @@ function argumentos(def, valores) {
   const ordem = emOrdemDoJogo(def);
   return (def.parametros ?? []).map((parametro) => {
     const valor = valores[ordem.indexOf(parametro)];
-    return parametro.tipo === "jogador" && Array.isArray(valor) ? valor[0] : valor;
+    return parametro.tipo === "jogador" && Array.isArray(valor) ? (valor[0] ?? null) : valor;
   });
 }
 

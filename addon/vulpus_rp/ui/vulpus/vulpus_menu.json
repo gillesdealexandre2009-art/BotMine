@@ -126,7 +126,7 @@
     "type": "label",
     "text": "#form_text",
     "size": [ "100%", "default" ],
-    "max_size": [ "100%", 72 ],
+    "max_size": [ "100%", 84 ],
     "text_alignment": "center",
     "color": "$vp_creme",
     "shadow": true,
@@ -264,7 +264,8 @@
         "label": "@vulpus_menu.rotulo_lista",
         "header": "@vulpus_menu.cabecalho_lista",
         "divider": "@vulpus_menu.divisor_lista"
-      }
+      },
+      "factory_variables": [ "$vp_botao", "$vp_botao_hover", "$vp_botao_press", "$vp_creme", "$vp_laranja", "$vp_divisor" ]
     },
     "collection_name": "form_buttons",
     "bindings": [

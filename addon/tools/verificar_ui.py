@@ -769,11 +769,24 @@ class Arvore:
         return inst
 
     def celulas(self, inst: Instancia, pilha: tuple) -> None:
-        """Filhos que o jogo cria fora de "controls": células de factory e o $scrolling_content."""
-        for tipo, alvo in alvos_de_factory(inst.props.get("factory")).items():
+        """Filhos que o jogo cria fora de "controls": células de factory e o $scrolling_content.
+
+        Célula de factory não herda as variáveis de quem a contém: só recebe as globais e as
+        listadas em "factory_variables" (é assim que a vanilla passa $icon_color e afins).
+        """
+        fabrica = inst.props.get("factory")
+        escopo_celula: dict = {}
+        if isinstance(fabrica, dict):
+            for nome in fabrica.get("factory_variables") or []:
+                if nome in inst.escopo:
+                    escopo_celula[nome] = inst.escopo[nome]
+                elif nome not in self.cat.globais:
+                    self.rel.erro(f"vulpus_menu.json: {inst.caminho}",
+                                  f"factory_variables passa {nome}, que não tem valor aqui")
+        for tipo, alvo in alvos_de_factory(fabrica).items():
             definicao = self.cat.achar(referencia_do_alvo(alvo), NAMESPACE)
             if definicao and definicao.ns == NAMESPACE:
-                inst.filhos.append(self.montar(f"{tipo}@{NAMESPACE}.{definicao.nome}", {}, inst.escopo,
+                inst.filhos.append(self.montar(f"{tipo}@{NAMESPACE}.{definicao.nome}", {}, escopo_celula,
                                                f"{inst.caminho}/<{tipo}>", pilha, fabrica=True))
         if inst.base_vanilla:
             for nome in sorted({chave.split("|")[0] for chave in inst.props if chave.startswith("$")}):

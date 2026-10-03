@@ -1,0 +1,26 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Vulpus",
+    "description": "Visual do menu do Vulpus",
+    "uuid": "23661f46-bc60-4947-81ed-343c0279e638",
+    "version": [0, 1, 0],
+    "min_engine_version": [1, 26, 50]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "9632c594-0c36-4568-8c99-709774135b04",
+      "version": [0, 1, 0]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "29023842-68f5-46b9-af72-b9e58ee29803",
+      "version": [0, 1, 0]
+    }
+  ],
+  "metadata": {
+    "authors": ["KOPE"]
+  }
+}

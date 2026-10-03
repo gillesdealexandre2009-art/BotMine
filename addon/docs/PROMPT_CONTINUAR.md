@@ -18,24 +18,13 @@ Contexto rápido:
 - Não agende tarefas nem rode retomadas sozinho. Se eu disser "pare", pare tudo.
 - Versões: Bedrock 1.26.52, `@minecraft/server` 2.10.0 e `@minecraft/server-ui` 2.2.0, ambas estáveis e sem experimentos.
 
-Situação atual:
-- **Prontos e conferidos:**
-  - as texturas;
-  - o JSON UI do menu (`verificar_ui.py` com 0 erros);
-  - a base dos scripts (core, com `tsc` limpo).
-- **Faltam:**
-  - [sistemas1]: menu, spawn, casas, voltar e tpa;
-  - [sistemas2]: caudas, perfil, ajustes, hud, regras, staff e boas_vindas;
-  - [pacote]: manifests, item, lang, `package.json`, `jsconfig.json`, `build.py`, `instalar_dev.py` e README.
-- **Depois disso:** a verificação integrada, as revisões adversariais (JSON UI e lógica) e a conferência final.
+Situação atual (2026-10-02):
+- **Pronto e conferido fora do jogo:** todas as frentes (texturas, JSON UI, core, sistemas, pacote), as revisões e a conferência final. O `dist/Vulpus.mcaddon` é gerado por `python tools/build.py`. Detalhes e resultados das checagens em `addon/docs/ESTADO.md`.
+- **Falta:** o teste dentro do jogo (passo a passo em `ESTADO.md` e no `README.md`) e, depois dele, o commit e o push na `main`.
 
-Pode seguir direto:
-1. Implemente o que falta conforme a spec técnica. Antes, leia o código real do core.
-2. Rode todas as verificações listadas no `ESTADO.md` até zerar os erros.
-3. Revise o JSON UI e os scripts tentando quebrar.
-4. Gere o `dist/Vulpus.mcaddon`.
-5. No fim, faça commit e push na `main` e me diga, passo a passo, o que testar no jogo.
+Pode seguir assim:
+1. Leia a seção "O que falta testar no jogo" do `ESTADO.md`.
+2. Rode de novo as checagens listadas lá, para confirmar que nada quebrou com o `git pull`.
+3. Corrija o que o meu teste no jogo apontar e me diga o que mudou.
 
-Se for usar workflows com agentes, o roteiro usado está em `addon/docs/workflow_implementar.js`. Troque `<SCR>` por uma pasta temporária e `<repo>` pela raiz do repositório. As frentes [ui], [texturas] e [core] já estão feitas, então não as refaça; só revise.
-
-ultracode
+O roteiro de workflow usado está em `addon/docs/workflow_implementar.js` (só como registro; não precisa rodar de novo).
