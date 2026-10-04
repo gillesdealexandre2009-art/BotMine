@@ -11,10 +11,12 @@ Saída:
 - vulpus_chat_bp/pack_icon.png (ícone do pack com um balão de fala);
 - docs/previas/glyphs.png (prévia ampliada, com o código de cada glyph, e simulação no tamanho do jogo).
 
-Tamanho no jogo: o Bedrock desenha a célula de glyph com o dobro da altura da letra (16 px de GUI para a
-célula de 8 da default8), qualquer que seja a resolução da folha. Por isso a folha E2 tem células de 32 px
-e a arte de até 16x16 fica no meio delas, como os ícones da vanilla (glyph_E0: arte de 14 a 16 px na célula
-de 32, centrada na vertical): cada pixel de arte vale meio pixel de GUI e o ícone sai da altura da letra.
+Tamanho no jogo (medido nos prints do dono): numa folha de página privada, 1 texel = 1 px de GUI, qualquer
+que seja o tamanho da folha ou da célula (a arte de 16 px saiu com ~16 px de GUI tanto na folha de 256 quanto
+na de 512, o dobro da letra). A letra da default8 tem 8 px de GUI (a maiúscula, 7). Por isso cada ícone tem
+no máximo 9x9 texels, contorno incluído, como os corações e a comida da HUD vanilla. A célula de 32 é
+desenhada centrada na linha de texto: a maiúscula cai nas linhas 12..18 da célula, e a arte centralizada na
+vertical (9 de altura: linhas 11..19) fica alinhada com a letra.
 
 A tabela de códigos é fixa (docs/spec/03_spec_fase2.md §4.2) e tem que bater com vulpus_bp/scripts/glyphs.js.
 Usa a mesma proteção do gerar_texturas.py: um PNG trocado à mão não é sobrescrito sem --forcar.
@@ -44,14 +46,12 @@ from gerar_texturas import (  # noqa: E402
     CONTORNO,
     CREME,
     CREME_SOMBRA,
-    DETALHES_16,
     FUNDO_CLARO,
     LARANJA,
     LARANJA_CLARO,
     LARANJA_ESCURO,
     LARANJA_MEDIO,
     OLHO,
-    RAPOSA_16,
     TRANSPARENTE,
     ampliar,
     botao,
@@ -60,7 +60,6 @@ from gerar_texturas import (  # noqa: E402
     fechar,
     linhas_de,
     pixel_art,
-    raposa,
     rgba,
     salvar_json,
     salvar_png,
@@ -130,442 +129,298 @@ CORES = {
     "Q": (108, 108, 120),
 }
 
-# ---------------------------------------------------------------- desenhos (até 14x14; o contorno escuro é automático)
+# ---------------------------------------------------------------- desenhos (até 7x7; o contorno escuro é automático)
+#
+# Com o contorno de 1 px o ícone fecha em até 9x9 texels, o tamanho dos corações, da armadura e da comida
+# da HUD vanilla. No jogo 1 texel = 1 px de GUI, então 9 texels = a altura da letra mais 1 px em cima e
+# 1 embaixo. Um '.' cercado de cor vira contorno (furo escuro), como o buraco da etiqueta.
 
 BROTO = """
-..........lll.
-.lll.....lgggG
-lgggl...lgggGG
-lggggG..gggGG.
-.gggGGg.ggGG..
-..GGGGgggG....
-......gG......
-......gG......
-......gG......
-....mmmmmm....
-..mmmmmmmmmm..
-.mmmmmmmmmmmm.
-nnnnnnnnnnnnnn
+gl...lg
+Ggl.lgG
+.GgGgG.
+...G...
+..mGm..
+.mmmmm.
+nnnnnnn
+"""
+
+RAPOSA = """
+o.....o
+ob...bo
+ooooooo
+oeoooeo
+ccooocc
+.ccccc.
+..cec..
 """
 
 FOLHA = """
-..........oooo
-........oorrrr
-.......orrrrbR
-......orrrrbrR
-.....orrrrbrrR
-....orrrrbrrRR
-...orrrrbrrrR.
-...orrrbrrrRR.
-..orrrbrrrRR..
-..orrbrrrRR...
-..orbrrRRR....
-..rbRRRR......
-..b...........
-.b............
+....rrO
+..rrrbr
+.rrrbrR
+.rrbrRR
+.rbrRR.
+.bRRR..
+b......
 """
 
 LUA = """
-....ccccc.....
-..cccccaa.....
-.ccccaa.......
-.cccaa......w.
-cccca.........
-cccca.........
-cccca.........
-cccca.....w...
-cccca.........
-.cccaa........
-.ccccaa.......
-..cccccaa.....
-....ccccc.....
+.ccc...
+cca....
+ca.....
+ca...w.
+ca.....
+cca....
+.ccc...
 """
 
 BRILHO = """
-......z......
-.....yzY.....
-.....yzY.....
-....yyzYY....
-...yyyzYYY...
-.yyyyzwzYYYY.
-zzzzzwwwzzzzz
-.YYYYzwzYYYY.
-...YYYzYYY...
-....YYzYY....
-.....YzY.....
-.....YzY.....
-......z......
+...y...
+...y...
+..yzY..
+yyzwzYY
+..YzY..
+...Y...
+...Y...
 """
 
 ADMIN = """
-z.....zz.....z
-yy...yzzy...yy
-yzy..yzyy..yyy
-yzyy.yyyy.yyyy
-yzyyyyyyyyyyyy
-yyyyyyyyyyyyyY
-YYYYYYYYYYYYYY
-YjjYYYjjYYYjjY
-YJJYYYJJYYYJJY
-ZZZZZZZZZZZZZZ
+z..z..z
+yy.y.yy
+yyyyyyy
+yjyjyjy
+YYYYYYY
+ZZZZZZZ
 """
 
 STAFF = """
-bbbbbbbbbbbb
-bOOOOOOOcccb
-bOooooocccdb
-bOoooocccddb
-bOooocccdddb
-bOoocccddddb
-bOocccdddddb
-bOcccddddddb
-.bccdddddddb
-.bcdddddddb.
-..bddddddb..
-...bddddb...
-....bddb....
-.....bb.....
+Ooooocc
+Ooooccd
+oooccdd
+ooccddd
+.ccddd.
+..cdd..
+...d...
 """
 
 HELPER = """
-......t......
-.....ttt.....
-.....twt.....
-....twttT....
-ttttwttttTTTT
-.twttttttTTT.
-..ttttttTTT..
-...ttttTTT...
-..tttTTTTTT..
-..ttTT.TTTT..
-.ttT.....TTT.
-.tT.......TT.
+...t...
+..ttt..
+ttwttTT
+.tttTT.
+..tTT..
+.tT.TT.
+.T...T.
 """
 
 KITSUNE = """
-.....p.....
-.....pp....
-....ppp..p.
-....pppp.p.
-...ppipppP.
-..ppiipppP.
-..ppiiippPP
-.ppiiwiipPP
-.ppiwwwipPP
-.ppiwwwiPPP
-.Ppiwwwipp.
-.PPiiwiiPP.
-..PPiiiPP..
-...PPPPP...
+...p...
+..pp...
+..ppp.p
+.ppippP
+ppiwipP
+piwwwiP
+.PiwiP.
 """
 
 CAUDAS = """
-....YYYYYY....
-..YYzzyyyyYY..
-.YzzyyyyZZZyY.
-.YzyyyyZcccZY.
-YzyyyyZccccZyY
-YzyyyZoocccZyY
-YyyyZoooocZyyY
-YyyZooooodZyyY
-YyyZoooodZyyyY
-YyZooooddZyyyY
-.YZoddddZyyyZ.
-.YZddZZZyyyZZ.
-..ZZZYyyyyZZ..
-....ZZZZZZ....
+.yyyyy.
+yzyyycY
+yyyyocY
+yyyooYY
+yyooyYY
+yodyYYY
+.YYYYY.
 """
 
 NIVEL = """
-......l......
-.....lxx.....
-....lxcxX....
-...lxcccxX...
-..lxcccccxX..
-.lxxxxcxxxxX.
-lxxxxxcxxxxxX
-.xxxxxcxxxxX.
-..xxxxcxxxX..
-...xxxxxxX...
-....xxxxX....
-.....xXX.....
-......X......
+...x...
+..xcx..
+.xcccX.
+xxxcxXX
+.xxcxX.
+..xxX..
+...X...
 """
 
-# Barra de nível: 6x14 exatos (a altura de uma maiúscula no jogo), sem o contorno automático (spec §4.2).
-# Os segmentos encostam um no outro: a borda dupla entre eles vira um risco de 1 px de GUI.
+# Barra de nível: 4x7 exatos (a altura da maiúscula), sem o contorno automático. A coluna 0 é a divisória;
+# como o avanço do glyph vai até a última coluna com pixel, os segmentos encostam e formam a barra.
 BARRA_CHEIA = """
-bbbbbb
-bOOOOb
-boooob
-boooob
-boooob
-boooob
-boooob
-boooob
-boooob
-boooob
-boooob
-boooob
-bddddb
-bbbbbb
+bbbb
+bOOO
+booo
+booo
+booo
+bddd
+bbbb
 """
 
 BARRA_VAZIA = """
-hhhhhh
-hffffh
-hffffh
-hffffh
-hffffh
-hffffh
-hffffh
-hffffh
-hffffh
-hffffh
-hffffh
-hffffh
-hffffh
-hhhhhh
+hhhh
+hfff
+hfff
+hfff
+hfff
+hfff
+hhhh
 """
 
 ONLINE = """
-........sss...
-.......sssss..
-...ccc.sssss..
-..ccccc.sss...
-..ccccck......
-..ccccck.sss..
-...ccck.sssss.
-........sssss.
-.ccccccc.ssss.
-ccccccccc.sss.
-ccccccccc.....
+.ccs.xx
+.ccs.xX
+.......
+.ccs...
+cccss..
+cccss..
+cccss..
 """
 
 LOCAL = """
-...oooo...
-.oOOooood.
-.oOoccood.
-oOocccccod
-oOocccccod
-oooocccood
-.ooooooodd
-.oooooood.
-..oooood..
-...ooodd..
-...oood...
-....odd...
-....od....
+.ooo.
+oOooo
+oocod
+ooood
+.ood.
+..d..
 """
 
 TEMPO = """
-bbbbbbbbbb
-.cssssssc.
-.cooooooc.
-..coooocs.
-...cooc...
-....cc....
-...csoc...
-..cs.ocs..
-.cs..ooc..
-.cooooooc.
-bbbbbbbbbb
+bbbbbbb
+.coooc.
+..coc..
+...o...
+..coc..
+.coooc.
+bbbbbbb
 """
 
 LEILAO = """
-...yyy........
-..yzyyy.......
-.yzyyyyY......
-yzyyyyYYY.....
-yyyyyYYYYY....
-.yyyYYYYYh....
-..yYYYYY.hh...
-...YYYY...hh..
-....YY.....hh.
-............hH
-..mmmmmmmm..HH
-.mmmmmmmmmm...
-.nnnnnnnnnn...
+..zy...
+.yyyY..
+.yyyYY.
+..myYYZ
+.mm.YZ.
+mn.....
+n......
 """
 
 VENDER = """
-..c...........
-.c............
-.c............
-..c...........
-...c..OOOOOOO.
-....cOooooood.
-....Occoooood.
-...Oocecooood.
-...ooocoooood.
-....ooooooood.
-.....oooooood.
-......ddddddd.
+..OOOOO
+.Oooooo
+Oo.oood
+.oooood
+..ddddd
 """
 
 COMPRAR = """
-....bbbb....
-...b....b...
-...b....b...
-.hhhhhhhhhh.
-.hmmmmmmmmh.
-.hmmmmmmmmh.
-.hmmmmmmmmh.
-hhmmmmmmmmhh
-hmmmmmmmmmmh
-hmmmmmmmmmmh
-hmmmmmmmmmmh
-hnnnnnnnnnnh
+..nnn..
+.n...n.
+mmmmmmm
+hmmmmmn
+hmmmmmn
+hmmmmmn
+nnnnnnn
 """
 
 CAIXA = """
-.hhhhhhhhhhhh.
-hmmmmmmmmmmmmh
-hmmmmmmmmmmmmh
-hnnnnnnnnnnnnh
-hhhhhyyyyhhhhh
-hmmmmyzzYmmmmh
-hmmmmyzYYmmmmh
-hmmmmmYYmmmmmh
-hmmmmmmmmmmmmh
-hnnnnnnnnnnnnh
+hhhhhhh
+mmmmmmm
+nnnynnn
+mmmYmmm
+mmmmmmm
+nnnnnnn
 """
 
 BUSCA = """
-...cccc.....
-..cssssc....
-.csaaaasc...
-.csaaaaas...
-.saaaaaas...
-.saaaaaas...
-..saaaas....
-...ssssbb...
-.......bbb..
-........bbb.
-.........bbb
-..........bb
+.ccc...
+cwaac..
+caaac..
+caaac..
+.cccb..
+....bb.
+.....bb
 """
 
 HISTORICO = """
-.ssssssssss..
-sccccccccccs.
-.cbbbbbbbbc..
-.cccccccccc..
-.cbbbbbbbc...
-.cccccccccc..
-.cbbbbbbbbc..
-.cccccccccc..
-.cbbbbbc.cc..
-.cccccccccc..
-sccccccccccs.
-.ssssssssss..
+ccccs.
+cbbcss
+cccccc
+cbbbbc
+cccccc
+cbbbbc
+cccccc
 """
 
 ENCANTADO = """
-..u.........
-.uvV........
-..V.....u...
-.......uvV..
-........V...
-....u.......
-...uvV......
-....V.......
+.u.....
+uvV....
+.V...u.
+....uvV
+..u..V.
+.uvV...
+..V....
 """
 
 # Clãs (linha 3 da folha E2): emblemas liberados por nível e as espadas da guerra.
 ESCUDO = """
-bbbbbbbbbbbb
-bOOOOOcOOOOb
-bOooooccoodb
-booooocsoodb
-booooocsoodb
-bccccccccccb
-bssssscsssdb
-booooocsoodb
-.boooocsodb.
-.boooocsodb.
-..booccodb..
-...bocsdb...
-....bccb....
-.....bb.....
+Ooocood
+ooocood
+ccccccc
+ooocood
+.oocod.
+..ocd..
+...c...
 """
 
 BANDEIRA = """
-nnnnnnnnnnnn
-.mmmmmmmmmm.
-.oOOOOOOOOo.
-.oooooooooo.
-.ooooccoooo.
-.oooccccooo.
-.ooccccccoo.
-.ooooccoooo.
-.ooooccoooo.
-.oooooooooo.
-.dddddddddd.
-.oooo..oooo.
-.ooo....ooo.
-.oo......oo.
+mOOOOOO
+moocoo.
+mdddddd
+m......
+m......
+m......
+nn.....
 """
 
 TORRE = """
-WW.WWWW.WW
-WQ.WQQW.WQ
-WqqqqqqqqQ
-WqqqqqqqqQ
-.WqqqqqqQ.
-.WqqqqqqQ.
-.WqqnnqqQ.
-.WqnnnnqQ.
-.WqnnnnqQ.
-.WqqqqqqQ.
-.WqqqqqqQ.
-WqqqqqqqqQ
-QQQQQQQQQQ
+W.W.W.W
+WWWWWWQ
+.qqqqQ.
+.qqnqQ.
+.qqqqQ.
+.qnnqQ.
+QqnnqQQ
 """
 
 PATA = """
-..ooo..ooo..
-..oOo..oOo..
-..ooo..ooo..
-............
-oo........oo
-oO..oooo..Oo
-oo.oOOoooo.o
-...oOooooo..
-...oooooo...
-....oooo....
+.oo.oo.
+.oo.oo.
+.......
+o.ooo.o
+.ooooo.
+.ooooo.
+..o.o..
 """
 
 TROFEU = """
-..yyyyyyyy..
-yyyzyyyyyyyy
-y.yzyyyyyY.y
-y.yzyyyyyY.y
-.yyyyyyyyYy.
-..yyyyyyYY..
-...yyyyYY...
-....yyYY....
-.....yY.....
-.....yY.....
-....yyYY....
-..YYYYYYYY..
-..ZZZZZZZZ..
+yyyyyyy
+yzyyyYy
+.yyyyY.
+..yYY..
+...Y...
+..yYY..
+.ZZZZZ.
 """
 
 GUERRA = """
-cs........sc
-csc......csc
-.csc....csc.
-..csc..csc..
-...cscsc....
-....cssc....
-....cssc....
-...cscsc....
-..YYc..cYY..
-...mY..Ym...
-..mm....mm..
-.mm......mm.
-YY........YY
+c.....c
+.c...c.
+..c.c..
+...c...
+.Yc.cY.
+.mY.Ym.
+m.....m
 """
 
 # (linha, coluna) na folha E2 -> nome da constante em glyphs.js
@@ -603,6 +458,7 @@ ICONES: dict[tuple[int, int], str] = {
 
 DESENHOS = {
     "BROTO": BROTO,
+    "RAPOSA": RAPOSA,
     "FOLHA": FOLHA,
     "LUA": LUA,
     "BRILHO": BRILHO,
@@ -637,17 +493,19 @@ GLYPHS_JS = ADDON / "vulpus_bp" / "scripts" / "glyphs.js"
 
 CELULA_E2 = 32
 CELULA_E3 = 32
-CELULA_GUI = 16  # altura da célula de glyph no jogo, em px de GUI (a letra da default8 tem 8)
+MAX_ICONE = 9  # lado máximo da arte de um ícone, contorno incluído (texels = px de GUI)
 FATIAS_TITULO = 5
 ALFA_LARGURA = 20  # ~8 %: marca a largura exata da fatia sem aparecer
 
 
 def arte(nome: str) -> Image.Image:
-    """Desenho do glyph já com contorno (RAPOSA é a logo em miniatura do gerar_texturas.py)."""
-    if nome == "RAPOSA":
-        return raposa(RAPOSA_16, DETALHES_16)
+    """Desenho do glyph já com contorno (a barra de nível não leva contorno)."""
     img = pixel_art(linhas_de(DESENHOS[nome]), CORES)
-    return img if nome in SEM_CONTORNO else contornar(_com_margem(img), CONTORNO)
+    img = img if nome in SEM_CONTORNO else contornar(_com_margem(img), CONTORNO)
+    caixa_arte = img.getbbox()
+    if caixa_arte is None or max(caixa_arte[2] - caixa_arte[0], caixa_arte[3] - caixa_arte[1]) > MAX_ICONE:
+        raise ValueError(f"{nome}: a arte precisa ter de 1 a {MAX_ICONE} texels de lado, com o contorno")
+    return img
 
 
 def _com_margem(img: Image.Image) -> Image.Image:
@@ -658,10 +516,11 @@ def _com_margem(img: Image.Image) -> Image.Image:
 
 
 def na_celula(img: Image.Image, celula: int) -> Image.Image:
-    """Recorta a arte e encosta à esquerda (x = 0), centralizada na vertical (como a vanilla).
+    """Recorta a arte e encosta à esquerda (x = 0), centralizada na vertical.
 
-    Na célula de 32, uma arte de 16 px ocupa as linhas 8..23: no jogo ela fica da altura da letra e
-    alinhada com o texto, já que a célula é desenhada centrada na linha.
+    O jogo desenha a célula de 32 centrada na linha de texto: a maiúscula cai nas linhas 12..18 da célula
+    e a letra inteira (com a perna do "g") nas 12..19. Centralizada, uma arte de 9 ocupa as linhas 11..19,
+    uma de 8 as 12..19 e uma de 7 (a barra) as 12..18, alinhadas com a letra.
     """
     caixa_arte = img.getbbox()
     if caixa_arte is None:
@@ -684,19 +543,19 @@ def conferir_glyphs_js() -> None:
         raise ValueError(f"glyphs.js não bate com a tabela deste script: {', '.join(sorted(diferentes))}")
 
 
-def folha_e2(celula: int = CELULA_E2) -> Image.Image:
-    """Folha de ícones; celula=16 recria a folha antiga (só para o "antes" da prévia)."""
-    folha = Image.new("RGBA", (16 * celula, 16 * celula), TRANSPARENTE)
+def folha_e2() -> Image.Image:
+    """Folha de ícones, 512x512 com células de 32."""
+    folha = Image.new("RGBA", (16 * CELULA_E2, 16 * CELULA_E2), TRANSPARENTE)
     for (linha, coluna), nome in ICONES.items():
-        folha.alpha_composite(na_celula(arte(nome), celula), (coluna * celula, linha * celula))
+        folha.alpha_composite(na_celula(arte(nome), CELULA_E2), (coluna * CELULA_E2, linha * CELULA_E2))
     return folha
 
 
 # ---------------------------------------------------------------- título VULPUS
 
 LARGURA_TITULO, ALTURA_TITULO = 130, 28
-# Título do chat (folha E3): 20 px na célula de 32 = 10 px de GUI, ~1,4x a altura da maiúscula (7).
-LARGURA_TITULO_CHAT, ALTURA_TITULO_CHAT = 95, 20
+# Título do chat (folha E3): 11 texels = 11 px de GUI, ~1,5x a altura da maiúscula (7), em 5 fatias de 11.
+LARGURA_TITULO_CHAT, ALTURA_TITULO_CHAT = 55, 11
 CORTE_ALFA = 110  # alfa médio a partir do qual o pixel reduzido fica opaco
 
 
@@ -727,7 +586,7 @@ def titulo(largura: int = LARGURA_TITULO, altura: int = ALTURA_TITULO) -> Image.
 
 
 def folha_e3(img_titulo: Image.Image) -> Image.Image:
-    """Título do chat (95x20) em 5 fatias de 19 px, cada uma numa célula de 32 px (x = 0, y = 6..25)."""
+    """Título do chat (55x11) em 5 fatias de 11 px, cada uma numa célula de 32 px (x = 0, y = 10..20)."""
     folha = Image.new("RGBA", (16 * CELULA_E3, 16 * CELULA_E3), TRANSPARENTE)
     largura, altura = img_titulo.width // FATIAS_TITULO, img_titulo.height
     topo = (CELULA_E3 - altura) // 2
@@ -847,8 +706,8 @@ CEU_PREVIA = (104, 140, 188, 255)  # fundo "do mundo" atrás da sidebar simulada
 CHAT_PREVIA = (0, 0, 0, 110)  # fundo translúcido da linha do chat
 MARGEM = 12
 
-# Simulação no tamanho do jogo: tudo é montado em meios pixels de GUI (a letra da default8 vale 2x2,
-# um pixel de arte da célula de 32 vale 1x1) e depois ampliado pela escala de GUI dividida por 2.
+# Simulação no tamanho do jogo: tudo é montado em meios pixels de GUI (um pixel da default8 e um texel de
+# glyph valem 2x2) e depois ampliado pela escala de GUI dividida por 2.
 MEIO = 2
 LETRA_GUI = 8  # célula da default8, em px de GUI
 LINHA_GUI = 10  # altura de uma linha de label, em px de GUI
@@ -887,9 +746,9 @@ def _tingir(img: Image.Image, cor: tuple[int, int, int], escurecer: int = 1) -> 
 class TextoJogo:
     """Label do jogo simulado: default8, cores §, sombra de 1 px e glyphs das folhas E2/E3.
 
-    Modelo (o do docstring do módulo): a célula de glyph tem 16 px de GUI, qualquer que seja a resolução
-    da folha, e fica centrada na célula de 8 px da letra; o avanço do glyph vai até a última coluna com
-    pixel, sem espaço extra.
+    Modelo (o do docstring do módulo): 1 texel do glyph = 1 px de GUI, qualquer que seja a resolução da
+    folha; a célula do glyph fica centrada na célula de 8 px da letra; o avanço do glyph vai até a última
+    coluna com pixel, sem espaço extra.
     """
 
     def __init__(self, default8: Image.Image, folhas: dict[int, Image.Image]) -> None:
@@ -912,18 +771,17 @@ class TextoJogo:
         return ampliar(celula, MEIO), (direita + 1) * MEIO
 
     def _glyph(self, ch: str) -> tuple[Image.Image, int]:
-        """Célula do glyph em meios px (16 px de GUI de lado) e o avanço em meios px."""
+        """Célula do glyph em meios px (1 texel = 1 px de GUI), o avanço e o recuo para cima em meios px."""
         folha = self.folhas[ord(ch) >> 8]
         lado = folha.width // 16
         linha, coluna = divmod(ord(ch) & 0xFF, 16)
         celula = folha.crop((coluna * lado, linha * lado, (coluna + 1) * lado, (linha + 1) * lado))
-        fator = CELULA_GUI * MEIO // lado
         direita = (celula.getbbox() or (0, 0, 0, 0))[2]
-        return ampliar(celula, fator), direita * fator
+        return ampliar(celula, MEIO), direita * MEIO, (lado - LETRA_GUI) // 2 * MEIO
 
     def folga(self) -> int:
         """Quanto a célula do glyph passa da célula da letra, em cima e embaixo (meios px)."""
-        return (CELULA_GUI - LETRA_GUI) // 2 * MEIO
+        return max(0, *((folha.width // 16 - LETRA_GUI) // 2 * MEIO for folha in self.folhas.values()))
 
     def render(self, texto: str) -> Image.Image:
         """Imagem transparente em meios px; a 1ª linha de letras começa em y = folga()."""
@@ -941,8 +799,8 @@ class TextoJogo:
                     i += 2
                     continue
                 if (ord(ch) >> 8) in self.folhas:
-                    img, avanco = self._glyph(ch)
-                    pecas.append((img, x, y0 - folga, cor))
+                    img, avanco, recuo = self._glyph(ch)
+                    pecas.append((img, x, y0 - recuo, cor))
                 else:
                     img, avanco = self._letra(ch)
                     if img is not None:
@@ -1061,44 +919,44 @@ def previa(
     black: dict[str, tuple[Image.Image, int | None]],
     default8: Image.Image,
 ) -> Image.Image:
-    """Glyphs a 2x com o código, simulação no tamanho do jogo (antes e agora), o título e as peças Black."""
-    zoom = 2
+    """Células E2 ampliadas com o código, simulação no tamanho do jogo, o título e as peças Black."""
+    zoom = 3
     passo = CELULA_E2 * zoom + 22
     p = Previa(2 * MARGEM + 12 * passo)
 
-    p.titulo_bloco("glyph_E2.png  (2x; o xadrez mostra a celula de 32 px; a arte de 16 px fica no meio)")
-    for linha in range(3):
+    p.titulo_bloco("glyph_E2.png  (3x; celula de 32 texels; a faixa clara e a maiuscula da linha de texto, 12..18)")
+    for linha in sorted({l for l, _ in ICONES}):
         for (l, coluna), nome in ICONES.items():
             if l != linha:
                 continue
             x = MARGEM + coluna * passo
-            p.colar(ampliar(_celula(e2, nome), zoom), x, p.y, xadrez=True)
+            p.colar(ampliar(_com_guia(_celula(e2, nome)), zoom), x, p.y)
             p.texto(x, p.y + CELULA_E2 * zoom + 2, f"E2{linha:X}{coluna:X}")
             p.texto(x, p.y + CELULA_E2 * zoom + 15, nome.lower(), cor=CINZA_PREVIA)
         p.y += CELULA_E2 * zoom + 38
 
-    agora = TextoJogo(default8, {0xE2: e2, 0xE3: e3})
-    antes = TextoJogo(default8, {0xE2: folha_e2(16), 0xE3: e3})
+    jogo = TextoJogo(default8, {0xE2: e2, 0xE3: e3})
+    todos = " ".join(_g(nome) for nome in ICONES.values() if nome not in SEM_CONTORNO)
     exemplo = "\n".join(
         [
             f"{_g('BROTO')} §aFilhote  {_g('ADMIN')} §cAdmin {_g('KITSUNE')}  §fHg",
-            f"{_g('CAUDAS')} §61.250 §a+5  {_g('ONLINE')} §f7 §7online",
-            f"{_g('LOCAL')} §f120 64 -30 §7NE  {_g('LEILAO')} {_g('CAIXA')} {_g('BUSCA')}",
+            f"{_g('CAUDAS')} §61.250 §a+5  {_g('ONLINE')} §f7 §7online  {_g('NIVEL')} §f17 {_barra_texto(4)}",
+            f"{_g('LOCAL')} §f120 64 -30 §7NE  {_g('LEILAO')} {_g('CAIXA')} {_g('BUSCA')} §fLeilao",
+            todos,
         ]
     )
-    p.titulo_bloco("no tamanho do jogo (fonte default8; celula de glyph = 16 px de GUI, centrada na linha)")
+    p.titulo_bloco("no tamanho do jogo (fonte default8; 1 texel de glyph = 1 px de GUI, celula centrada na linha)")
     p.em_fluxo(
         [
-            (f"{nome}, escala de GUI {escala}", ampliar(_no_fundo(jogo.render(exemplo), CEU_PREVIA), escala // MEIO))
+            (f"escala de GUI {escala}", ampliar(_no_fundo(jogo.render(exemplo), CEU_PREVIA), escala // MEIO))
             for escala in (2, 4)
-            for nome, jogo in (("antes: celula de 16 px", antes), ("agora: celula de 32 px", agora))
         ]
     )
 
     p.titulo_bloco("sidebar no tamanho do jogo: sem cargo e Admin com Kitsune")
     painel = Image.open(PASTA_UI / "painel.png").convert("RGBA")
-    sem_cargo = _sidebar(agora, painel, img_titulo, _linhas_sidebar(None, False))
-    admin = _sidebar(agora, painel, img_titulo, _linhas_sidebar(("ADMIN", "§c", "Admin"), True))
+    sem_cargo = _sidebar(jogo, painel, img_titulo, _linhas_sidebar(None, False))
+    admin = _sidebar(jogo, painel, img_titulo, _linhas_sidebar(("ADMIN", "§c", "Admin"), True))
     p.em_fluxo(
         [
             (f"{nome}, escala de GUI {escala}", ampliar(_no_fundo(caixa_sb, CEU_PREVIA, 8), escala // MEIO))
@@ -1116,7 +974,7 @@ def previa(
         ]
     )
     p.em_fluxo(
-        [(f"escala de GUI {escala}", ampliar(_no_fundo(agora.render(chat), CHAT_PREVIA), escala // MEIO)) for escala in (2, 4)]
+        [(f"escala de GUI {escala}", ampliar(_no_fundo(jogo.render(chat), CHAT_PREVIA), escala // MEIO)) for escala in (2, 4)]
     )
 
     p.titulo_bloco("titulo.png 130x28 (3x, 1x, 97x21 do Hub e 65x14 da sidebar)")
@@ -1130,7 +988,7 @@ def previa(
     p.titulo_bloco("glyph_E3.png: as 5 fatias (2x)")
     for i in range(FATIAS_TITULO):
         x = MARGEM + i * (CELULA_E3 * 2 + 14)
-        p.colar(ampliar(e3.crop((i * CELULA_E3, 0, (i + 1) * CELULA_E3, CELULA_E3)), 2), x, p.y, xadrez=True)
+        p.colar(ampliar(_com_guia(e3.crop((i * CELULA_E3, 0, (i + 1) * CELULA_E3, CELULA_E3))), 2), x, p.y)
         p.texto(x, p.y + CELULA_E3 * 2 + 2, f"E30{i}")
     p.y += CELULA_E3 * 2 + 24
 
@@ -1153,6 +1011,19 @@ def previa(
         p.texto(x + 60, p.y + 25, "Caudas", grande=True)
     p.y += 34 * 2 + MARGEM
     return p.final()
+
+
+def _com_guia(celula: Image.Image) -> Image.Image:
+    """Célula sobre xadrez de 4 texels, com a faixa da maiúscula (linhas 12..18) mais clara."""
+    fundo = Image.new("RGBA", celula.size, (52, 50, 60, 255))
+    desenho = ImageDraw.Draw(fundo)
+    for y in range(0, celula.height, 4):
+        for x in range(0, celula.width, 4):
+            if (x // 4 + y // 4) % 2:
+                desenho.rectangle((x, y, x + 3, y + 3), fill=(62, 60, 72, 255))
+    fundo.alpha_composite(Image.new("RGBA", (celula.width, 7), (255, 255, 255, 28)), (0, 12))
+    fundo.alpha_composite(celula)
+    return fundo
 
 
 def _xadrez(larg: int, alt: int) -> Image.Image:

@@ -117,7 +117,7 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
 
 ### 4.1 Formato
 - **Folhas** (confirmado no `font.brarchive` 1.26.52): a vanilla usa `glyph_00..D7`, `E0`, `E1` e `F9..FF`, então E2..F8 estão livres. Usamos:
-  - **E2**: ícones, folha de 512×512 px com células de 32 px (arte de até 16×16 no meio da célula);
+  - **E2**: ícones, folha de 512×512 px com células de 32 px (arte de até 9×9, contorno incluído, centralizada na vertical);
   - **E3**: título, folha de 512×512 px com células de 32 px.
 - **Código** = `0xE200 + linha*16 + coluna` (ex.: linha 1, coluna 0 = `\uE210`).
 - **Posição na célula:**
@@ -125,7 +125,8 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
   - o resto da célula fica transparente;
   - a largura que o jogo usa vai até a última coluna com pixel não transparente.
   - Nas fatias do título, ponha um pixel de alfa ~8 % na coluna 0 e na última coluna da fatia (truque da wiki), para a largura ficar exata.
-- **Tamanho na tela** (corrigido depois do teste no jogo): o Bedrock desenha a célula de glyph com 16 px de GUI, o dobro da célula de 8 px da letra, qualquer que seja a resolução da folha. Na folha de 256 (células de 16) os ícones saíram com ~2× a altura da letra. Com células de 32 e a arte de 16 px centrada na vertical (como os ícones da vanilla em `glyph_E0`: arte de 14 a 16 px nas linhas 8..24 da célula de 32), cada pixel de arte vale 0,5 px de GUI e o ícone fica da altura da letra (8 px de GUI; a maiúscula tem 7).
+- **Tamanho na tela** (medido nos prints do dono, GUI scale 2): numa folha de página privada, **1 texel = 1 px de GUI**, qualquer que seja o tamanho da folha ou da célula. A mesma arte de 16 px saiu com ~2× a altura da letra tanto na folha de 256 (células de 16) quanto na de 512 (células de 32): maiúscula 7 px de GUI, coroa 15-16, segmento de barra de 14 texels 13. A ideia antiga de que "a célula vira 16 px de GUI" estava errada. Por isso cada ícone tem **no máximo 9×9 texels** com o contorno (como corações, armadura e comida da HUD vanilla) e a barra tem 7 de altura (a maiúscula). O tamanho da folha não muda o tamanho na tela.
+- **Alinhamento vertical:** a célula de 32 é desenhada centrada na linha de texto; a maiúscula cai nas linhas 12..18 da célula (a arte de 16 nas linhas 8..23 sobrou 4 px de GUI acima da letra e 5 abaixo). Arte centralizada na vertical da célula fica alinhada com a letra: 9 de altura nas linhas 11..19, 8 nas 12..19, 7 nas 12..18.
 - **Cor:** códigos § tingem o glyph (multiplicativo, a testar). Para manter as cores originais, sempre use `glyph(c)`, que devolve `"§f" + c + "§r"`. Depois dele, ponha de novo a cor do texto.
 - **Onde funcionam:** chat, nameTag, scoreboard/title/actionbar, labels de JSON UI com `font_type` padrão, nome e lore de item.
 - **Onde NÃO usar:**
@@ -138,12 +139,12 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
 
 ### 4.2 Tabela fixa de códigos
 
-| Código | Nome (`G.`) | Arte (16×16 salvo indicação) | Uso |
+| Código | Nome (`G.`) | Arte (até 9×9 com o contorno, salvo indicação) | Uso |
 |---|---|---|---|
 | `\uE200` | `BROTO` | broto verde (#5DBB3F/#3E8A2A) de 2 folhas sobre um montinho de terra marrom | rank 0 Filhote |
-| `\uE201` | `RAPOSA` | cabeça de raposa de frente, laranja, orelhas pontudas com miolo brasa, focinho creme e olhos escuros (a logo em miniatura) | rank 1 Raposinha |
+| `\uE201` | `RAPOSA` | cabeça de raposa de frente, laranja, orelhas pontudas com miolo brasa, focinho creme e olhos escuros (desenho próprio de 9×9 no estilo da logo) | rank 1 Raposinha |
 | `\uE202` | `FOLHA` | folha de outono laranja/vermelha (#E2552B) com nervura brasa e cabinho | rank 2 Raposa Andarilha |
-| `\uE203` | `LUA` | lua crescente creme com sombra azul-clara (#9FC7E8) e 2 estrelinhas de 1 px | rank 3 Raposa Lunar |
+| `\uE203` | `LUA` | lua crescente creme com sombra azul-clara (#9FC7E8) e 1 estrelinha de 1 px | rank 3 Raposa Lunar |
 | `\uE204` | `BRILHO` | brilho de 4 pontas dourado (#FFD34D/#E0A100) com miolo branco | rank 4 Raposa de Nove Caudas |
 | `\uE205` | `ADMIN` | coroa dourada de 3 pontas com 3 joias vermelhas | cargo Admin |
 | `\uE206` | `STAFF` | escudo laranja com borda brasa e faixa creme na diagonal | cargo Staff |
@@ -151,9 +152,9 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
 | `\uE208` | `KITSUNE` | chama de raposa (kitsunebi) rosa (#F47FFF/#B84FD0) com miolo branco | booster (só cosmético) |
 | `\uE210` | `CAUDAS` | moeda dourada com uma cauda de raposa creme gravada | moeda |
 | `\uE211` | `NIVEL` | losango verde (orbe de XP, #7CFC4A/#3FA81E) com seta creme para cima | nível |
-| `\uE212` | `BARRA_CHEIA` | segmento de 6×14 px (linhas 9..22 da célula de 32 = 3×7 px de GUI, a altura da maiúscula), laranja com a linha de cima laranja-claro e contorno brasa; os segmentos encostam e formam a barra | barra de nível |
-| `\uE213` | `BARRA_VAZIA` | segmento de 6×14 px, fundo #3A2A22 com contorno #8A5A36 | barra de nível |
-| `\uE214` | `ONLINE` | duas silhuetas de cabeça e ombros, creme e creme-sombra | online |
+| `\uE212` | `BARRA_CHEIA` | segmento de 4×7 texels (linhas 12..18 da célula de 32 = 4×7 px de GUI, a altura da maiúscula): divisória brasa na coluna 0, laranja com a linha de cima laranja-claro e a de baixo laranja-escuro, borda brasa em cima e embaixo; os segmentos encostam e formam a barra | barra de nível |
+| `\uE213` | `BARRA_VAZIA` | segmento de 4×7 texels, fundo #3A2A22 com contorno #8A5A36 (sem borda à direita) | barra de nível |
+| `\uE214` | `ONLINE` | silhueta de cabeça e ombros creme com uma bolinha verde (#7CFC4A) de online | online |
 | `\uE215` | `LOCAL` | pino de mapa laranja com furo creme | coordenadas |
 | `\uE216` | `TEMPO` | ampulheta creme com areia laranja | tempo / expira |
 | `\uE220` | `LEILAO` | martelo de leilão: cabo marrom e cabeça dourada | leilão |
@@ -163,7 +164,7 @@ Ninguém além da [integracao] edita `config.js`, `db.js`, `forms.js`, `menu.js`
 | `\uE224` | `BUSCA` | lupa (aro creme, cabo brasa) | busca |
 | `\uE225` | `HISTORICO` | pergaminho creme com linhas brasa | histórico |
 | `\uE226` | `ENCANTADO` | brilho roxo (#B26BFF) de 3 pontos | item encantado |
-| `\uE300`..`\uE304` | `TITULO` (os 5 juntos) | "VULPUS" reduzido da mesma arte do `titulo.png` para 95×20, cortado em 5 fatias de 19 px, cada uma numa célula de 32 px da folha E3 (y = 6..25): 10 px de GUI, ~1,4× a maiúscula | só no chat (seção 4.4) |
+| `\uE300`..`\uE304` | `TITULO` (os 5 juntos) | "VULPUS" reduzido da mesma arte do `titulo.png` para 55×11, cortado em 5 fatias de 11 px, cada uma numa célula de 32 px da folha E3 (y = 10..20): 11 px de GUI, ~1,5× a maiúscula | só no chat (seção 4.4) |
 
 As células E2 que não estão na tabela ficam transparentes. Uma folha só pode ganhar código novo numa célula livre; código existente nunca muda.
 
@@ -973,7 +974,7 @@ Valida os 3 packs:
 - o chat usa `@minecraft/server` `2.11.0-beta`, e o alias do `package.json` começa com essa versão + `.`;
 - os scripts do chat não importam fora de `vulpus_chat_bp`;
 - BP e RP não usam beta;
-- `font/glyph_E2.png` tem 256² e `glyph_E3.png` tem 512².
+- `font/glyph_E2.png` e `glyph_E3.png` têm 512².
 
 Saídas:
 - `Vulpus_BP.mcpack`, `Vulpus_RP.mcpack` e **`Vulpus_Chat.mcpack`**;
