@@ -1,5 +1,6 @@
 // @ts-check
-// Ajustes de cada jogador: scoreboard lateral, tema do menu, pedidos de TPA e sons do menu.
+// Ajustes de cada jogador: scoreboard lateral (e a linha do clã nela), tema do menu, pedidos de TPA,
+// sons do menu e o visual Kitsune.
 // Não importa hud.js: a sidebar percebe a troca sozinha no próximo ciclo.
 import { ICONES } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
@@ -7,6 +8,7 @@ import { config, dadosJogador, editarJogador } from "../core/db.js";
 import { Lista } from "../core/forms.js";
 import { ok } from "../core/util.js";
 import * as textos from "../textos/ajustes.js";
+import { menuKitsune } from "./kitsune.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 
@@ -41,7 +43,7 @@ const icone = (ligado) => (ligado ? ICONES.sim : ICONES.nao);
  * @param {() => any} [voltar]
  */
 export async function menuAjustes(player, voltar) {
-  const { tpa, sons, tema } = dadosJogador(player).ajustes;
+  const { tpa, sons, tema, cla } = dadosJogador(player).ajustes;
   const hud = hudLigada(player);
   /** @param {(p: Player) => void} trocar */
   const eReabrir = (trocar) => async (/** @type {Player} */ p) => {
@@ -82,6 +84,17 @@ export async function menuAjustes(player, voltar) {
         ok(p, textos.SONS_MUDOU(!sons));
       }),
     )
+    .botao(
+      textos.BOTAO_CLA(cla),
+      icone(cla),
+      eReabrir((p) => {
+        editarJogador(p, (d) => {
+          d.ajustes.cla = !cla;
+        });
+        ok(p, textos.CLA_MUDOU(!cla));
+      }),
+    )
+    .botao(textos.BOTAO_KITSUNE, ICONES.kitsune, (p) => menuKitsune(p, () => menuAjustes(p, voltar)))
     .voltar(voltar)
     .abrir(player);
 }

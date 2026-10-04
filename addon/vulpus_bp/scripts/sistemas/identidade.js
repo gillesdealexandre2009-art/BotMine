@@ -1,6 +1,6 @@
 // @ts-check
-// Identidade: cargo (Admin/Staff/Helper), selo Kitsune, nameTag de 2 linhas e o canal no scoreboard
-// que o pack "Vulpus Chat" lê (formato da spec 03, §8.5). Só escreve o que mudou.
+// Identidade: cargo (Admin/Staff/Helper), selo Kitsune, tag do clã, apelido, nameTag de 2 linhas e o canal
+// que o pack "Vulpus Chat" lê (scoreboard da spec 03, §8.5, e as tags de entidade da spec 04). Só escreve o que mudou.
 import { CommandPermissionLevel, Player, PlayerPermissionLevel, system, world } from "@minecraft/server";
 import { ICONES, TAG_ADMIN, TAG_HELPER, TAG_KITSUNE, TAG_STAFF } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
@@ -11,6 +11,8 @@ import { erro, msg, ok, registrarErro } from "../core/util.js";
 import { G, glyph } from "../glyphs.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/niveis.js";
+import { aoMudarCla, tagDe, tagPintada } from "./cla_dados.js";
+import { aoMudarVisual, apelidoDe, nomeExibido, resetarVisual, temaNomeDe } from "./kitsune.js";
 import { aoSubirNivel, infoNivel } from "./niveis.js";
 
 /** @typedef {"admin" | "staff" | "helper"} Cargo */
@@ -38,6 +40,11 @@ const OBJ_RANK = Object.freeze({ id: "vulpus_rank", nome: "Vulpus rank" });
 const OBJ_CARGO = Object.freeze({ id: "vulpus_cargo", nome: "Vulpus cargo" });
 const VERSAO_CANAL = 1;
 const PARTICIPANTE_VERSAO = "#versao";
+
+/** Tags de entidade lidas pelo chat: clã ("vulpus:cla:ABC:6[:tema]"), apelido e tema do nome (Kitsune). */
+const TAG_CLA = "vulpus:cla:";
+const TAG_NOME = "vulpus:nome:";
+const TAG_TEMA = "vulpus:tema:";
 
 const TICKS_PRIMEIRA = 20;
 const TICKS_VARREDURA = 600;
@@ -134,14 +141,34 @@ export function atualizarIdentidade(player) {
   const cargo = cargoDe(player);
   const kitsune = ehKitsune(player);
   const marca = cargo ? CARGOS[cargo] : info.rank;
-  const linha1 = `${glyph(marca.glyph)} ${marca.cor}${marca.nome} §7Nv ${info.nivel}${kitsune ? ` ${glyph(G.KITSUNE)}` : ""}`;
-  const nameTag = `${linha1}\n§f${player.name}`;
+  const cla = tagDe(player);
+  const prefixoCla = cla ? `§8[${tagPintada(cla)}§8]§r ` : "";
+  const linha1 = `${prefixoCla}${glyph(marca.glyph)} ${marca.cor}${marca.nome} §7Nv ${info.nivel}${kitsune ? ` ${glyph(G.KITSUNE)}` : ""}`;
+  const nameTag = `${linha1}\n${nomeExibido(player)}`;
   if (player.nameTag !== nameTag) player.nameTag = nameTag;
+  const apelido = apelidoDe(player);
+  const temaNome = temaNomeDe(player);
+  sincronizarTags(player, [
+    cla ? `${TAG_CLA}${cla.tag}:${cla.cor}${cla.tema ? `:${cla.tema}` : ""}` : "",
+    apelido ? TAG_NOME + encodeURIComponent(apelido) : "",
+    temaNome ? TAG_TEMA + temaNome : "",
+  ]);
   const c = canalValido();
   if (!c) return;
   gravarScore(c.nivel, player, info.nivel);
   gravarScore(c.rank, player, info.rank.indice);
   gravarScore(c.cargo, player, cargo ? CARGOS[cargo].codigo : 0);
+}
+
+/**
+ * Deixa no jogador só as tags de clã, apelido e tema desejadas ("" = nenhuma daquele tipo).
+ * @param {Player} player
+ * @param {string[]} desejadas
+ */
+function sincronizarTags(player, desejadas) {
+  const atuais = player.getTags().filter((t) => t.startsWith(TAG_CLA) || t.startsWith(TAG_NOME) || t.startsWith(TAG_TEMA));
+  for (const tag of atuais) if (!desejadas.includes(tag)) player.removeTag(tag);
+  for (const tag of desejadas) if (tag && !atuais.includes(tag)) player.addTag(tag);
 }
 
 /**
@@ -293,6 +320,12 @@ async function menuPessoa(player, alvoId, voltar) {
     else erro(p, geral.JOGADOR_OFFLINE);
     await aqui();
   });
+  if (apelidoDe(alvo) || temaNomeDe(alvo)) {
+    lista.botao(textos.BOTAO_RESETAR_VISUAL, ICONES.apelido, async (p) => {
+      resetarVisual(p, alvoId);
+      await aqui();
+    });
+  }
   await lista.voltar(voltar).abrir(player);
 }
 
@@ -312,6 +345,13 @@ function lerCargo(texto) {
 }
 
 aoSubirNivel((player) => atualizarIdentidade(player));
+aoMudarVisual((player) => atualizarSeguro(player));
+aoMudarCla((ids) => {
+  for (const id of ids) {
+    const player = porId(id);
+    if (player) atualizarSeguro(player);
+  }
+});
 
 world.afterEvents.worldLoad.subscribe(() => {
   try {

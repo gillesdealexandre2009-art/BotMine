@@ -131,6 +131,7 @@ export const BOTAO_CARGO = (nome, atual) => (atual ? `${nome} §a✔` : nome);
 export const NENHUM = "Nenhum";
 /** @param {boolean} ligado */
 export const BOTAO_KITSUNE = (ligado) => `Kitsune: ${ligado ? "§dligado" : "§8desligado"}`;
+export const BOTAO_RESETAR_VISUAL = "Tirar apelido e cor do nome";
 
 export const CARGO_SO_ADMIN = "Cargo só admin muda.";
 export const CARGO_INVALIDO = "Cargo desconhecido. Use §eadmin§c, §estaff§c, §ehelper§c ou §enenhum§c.";

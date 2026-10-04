@@ -32,6 +32,16 @@ const GIRO_MINIMO = 2;
  */
 /** @type {Map<string, Presenca>} */
 const presencas = new Map();
+/** @type {((player: Player) => void)[]} Quem quer saber de cada minuto ativo (ex.: XP do clã). */
+const ouvintesMinuto = [];
+
+/**
+ * Registra quem recebe cada minuto ativo (o mesmo anti-AFK das Caudas e do XP, sem outro loop).
+ * @param {(player: Player) => void} fn
+ */
+export function aoMinutoAtivo(fn) {
+  ouvintesMinuto.push(fn);
+}
 
 /**
  * Saldo de Caudas (vale para quem está offline, pelo id).
@@ -263,7 +273,16 @@ function checarPresenca(player) {
   editarJogador(player, (d) => {
     d.tempo += segundos;
   });
-  if (ativo) ganharXpMinutoAtivo(player);
+  if (ativo) {
+    ganharXpMinutoAtivo(player);
+    for (const ouvinte of ouvintesMinuto) {
+      try {
+        ouvinte(player);
+      } catch (e) {
+        registrarErro("Ouvinte do minuto ativo", e);
+      }
+    }
+  }
   const cfg = config();
   const pagar = ativos >= Math.max(1, Math.floor(cfg.intervaloCaudasMin));
   iniciarPresenca(player, pagar ? 0 : ativos);

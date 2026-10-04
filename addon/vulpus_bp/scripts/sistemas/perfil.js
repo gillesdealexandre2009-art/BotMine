@@ -11,8 +11,10 @@ import { glyph } from "../glyphs.js";
 import { JOGADOR_OFFLINE } from "../textos/geral.js";
 import * as textos from "../textos/perfil.js";
 import { sequenciaAtual } from "./caudas.js";
+import { claDe, membroDe, tagPintada } from "./cla_dados.js";
 import { CARGOS, cargoDe, ehKitsune, selo } from "./identidade.js";
-import { infoNivel } from "./niveis.js";
+import { apelidoDe, nomeExibido } from "./kitsune.js";
+import { infoNivel, menuNivel } from "./niveis.js";
 
 /**
  * Perfil de quem abriu ou, com alvoId, de outra pessoa.
@@ -28,9 +30,13 @@ export async function menuPerfil(player, voltar, alvoId) {
   const info = infoNivel(alvoOnline ?? id);
   // Cargo e Kitsune vêm das tags: só dá para ler de quem está online.
   const cargo = alvoOnline ? cargoDe(alvoOnline) : null;
+  const cla = claDe(id);
+  const aqui = () => menuPerfil(player, voltar, alvoId);
   const lista = new Lista(proprio ? textos.TITULO : textos.TITULO_DE(dados.nome)).texto(
     textos.CORPO({
-      nome: dados.nome,
+      nome: alvoOnline ? nomeExibido(alvoOnline) : dados.nome,
+      conta: alvoOnline && apelidoDe(alvoOnline) ? alvoOnline.name : null,
+      cla: cla ? { tag: tagPintada(cla), nome: cla.nome, cargo: membroDe(cla, id)?.cargo ?? "membro" } : null,
       online: Boolean(alvoOnline),
       selo: alvoOnline ? selo(alvoOnline) : glyph(info.rank.glyph),
       rank: info.rank,
@@ -48,6 +54,7 @@ export async function menuPerfil(player, voltar, alvoId) {
       limiteCasas: config().limiteCasas,
     }),
   );
+  lista.botao(textos.BOTAO_NIVEL, ICONES.nivel, (p) => menuNivel(p, aqui, alvoId));
   if (proprio) lista.botao(textos.BOTAO_OUTRO, ICONES.online, (p) => escolherJogador(p, () => menuPerfil(p, voltar)));
   await lista.voltar(voltar).abrir(player);
 }

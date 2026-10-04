@@ -55,6 +55,14 @@ export const COMANDOS = [
   ["/vulpus:perfil [jogador]", "mostra um perfil"],
   ["/vulpus:nivel [jogador]", "mostra o nível"],
   ["/vulpus:hud", "liga/desliga o placar do lado"],
+  ["/vulpus:cla", "abre o menu do clã"],
+  ["/vulpus:c <mensagem>", "fala só com o seu clã"],
+  ["/vulpus:claconvidar <jogador>", "convida alguém para o clã"],
+  ["/vulpus:claaceitar [tag]", "aceita um convite de clã"],
+  ["/vulpus:clarecusar [tag]", "recusa um convite de clã"],
+  ["/vulpus:clacasa [nome]", "vai para uma casa do clã"],
+  ["/vulpus:cladepositar <valor>", "deposita Caudas no banco do clã"],
+  ["/vulpus:apelido [nome]", "apelido do selo Kitsune (tirar = volta ao nome da conta)"],
 ];
 export const COMANDOS_STAFF_TITULO = "§6Só da staff";
 /** @type {[string, string][]} */
@@ -64,6 +72,8 @@ export const COMANDOS_STAFF = [
   ["/vulpus:darcaudas <jogador> <valor>", "dá Caudas (valor negativo tira)"],
   ["/vulpus:cargo <jogador> <cargo>", "admin, staff, helper ou nenhum"],
   ["/vulpus:kitsune <jogador>", "liga/desliga o selo Kitsune"],
+  ["/vulpus:resetapelido <jogador>", "tira o apelido e a cor do nome de alguém"],
+  ["/vulpus:clabypass", "liga/desliga o bypass da proteção dos clãs"],
 ];
 
 // A lenda de Kiza (mesma lore do Discord, sem emoji)

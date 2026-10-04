@@ -11,9 +11,11 @@ import * as textos from "../textos/menu.js";
 import { menuAjustes } from "./ajustes.js";
 import { menuCasas } from "./casas.js";
 import { menuCaudas, saldo } from "./caudas.js";
+import { menuCla, rotuloHub } from "./clas.js";
 import { selo } from "./identidade.js";
 import { menuLeilao, resumoCaixa } from "./leilao.js";
-import { infoNivel, menuNivel } from "./niveis.js";
+import { nomeVisivel } from "./kitsune.js";
+import { infoNivel } from "./niveis.js";
 import { menuPerfil } from "./perfil.js";
 import { menuRegras } from "./regras.js";
 import { irSpawn } from "./spawn.js";
@@ -33,7 +35,7 @@ function corpo(player) {
   const dica = textos.DICAS[Math.floor(Math.random() * textos.DICAS.length)];
   const { rank, nivel } = infoNivel(player);
   return [
-    textos.SAUDACAO(player.name),
+    textos.SAUDACAO(nomeVisivel(player)),
     textos.LINHA_RANK(selo(player), rank.nome, formatarNumero(nivel)),
     textos.LINHA_CAUDAS(formatarNumero(saldo(player))),
     textos.LINHA_ONLINE(online().length),
@@ -58,7 +60,7 @@ export async function abrirMenu(player) {
     .slot(4, { texto: textos.PERFIL, icone: ICONES.perfil, acao: (p) => menuPerfil(p, volta) })
     .slot(5, { texto: textos.CAUDAS, icone: ICONES.caudas, acao: (p) => menuCaudas(p, volta) })
     .slot(6, { texto: textos.LEILAO(resumoCaixa(player).itens), icone: ICONES.leilao, acao: (p) => menuLeilao(p, volta) })
-    .slot(7, { texto: textos.NIVEL, icone: ICONES.nivel, acao: (p) => menuNivel(p, volta) })
+    .slot(7, { texto: rotuloHub(player), icone: ICONES.cla, acao: (p) => menuCla(p, volta) })
     .slot(8, { texto: textos.AJUSTES, icone: ICONES.ajustes, acao: (p) => menuAjustes(p, volta) })
     .slot(9, { texto: textos.REGRAS, icone: ICONES.regras, acao: (p) => menuRegras(p, volta) })
     .staff(ehStaff(player) ? { texto: textos.STAFF, icone: ICONES.staff, acao: (p) => menuStaff(p, volta) } : undefined)

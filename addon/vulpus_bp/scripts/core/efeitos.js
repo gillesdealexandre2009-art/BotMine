@@ -17,8 +17,8 @@ import { registrarErro, som } from "./util.js";
 /** @typedef {import("@minecraft/server").RGB} RGB */
 
 /**
- * Tema do efeito: kitsune (padrão), casa, spawn, voltar ou tpa.
- * @typedef {"kitsune" | "casa" | "spawn" | "voltar" | "tpa"} TemaTeleporte
+ * Tema do efeito: kitsune (padrão), casa, spawn, voltar, tpa ou cla (casa do clã).
+ * @typedef {"kitsune" | "casa" | "spawn" | "voltar" | "tpa" | "cla"} TemaTeleporte
  */
 
 /**
@@ -50,6 +50,7 @@ const P = Object.freeze({
   PETALA: "minecraft:cherry_leaves_particle",
   TOTEM: "minecraft:totem_particle",
   BRILHO: "minecraft:villager_happy",
+  CRITICO: "minecraft:basic_crit_particle",
 });
 
 const S = Object.freeze({
@@ -64,12 +65,14 @@ const S = Object.freeze({
   FOGOS: "firework.twinkle",
   ALMA: "particle.soul_escape",
   ALLAY: "mob.allay.item_given",
+  ARMADURA: "armor.equip_gold",
 });
 
 const LARANJA = { red: 1, green: 0.5, blue: 0.08 };
 const DOURADO = { red: 1, green: 0.78, blue: 0.22 };
 const ROSA = { red: 1, green: 0.45, blue: 0.55 };
 const CINZA = { red: 0.62, green: 0.66, blue: 0.78 };
+const CARMIM = { red: 0.85, green: 0.12, blue: 0.1 };
 
 /** Raio das caudas em volta do jogador, em blocos. */
 const RAIO_CAUDAS = 0.85;
@@ -275,6 +278,18 @@ const TEMAS = {
     floreio: (dim, c) => {
       if (nuvem(dim, c, { n: 6, largura: 0.8, y0: 0.5, alto: 1.5 }, P.BRILHO)) {
         anel(dim, c, { raio: 0.5, n: 2, y: 2.2 }, P.CORACAO);
+      }
+    },
+  },
+  cla: {
+    cores: [CARMIM, DOURADO],
+    fatuo: P.FATUO,
+    fade: { red: 0.3, green: 0.04, blue: 0.03 },
+    sons: [[S.ARMADURA, 1, 1], [S.SINO_VILA, 0.8, 0.8], [S.RAPOSA, 1.1, 0.8]],
+    subtitulo: textos.TP_SUB_CLA,
+    floreio: (dim, c) => {
+      if (anel(dim, c, { raio: 1.6, n: 12, y: 0.1 }, P.CHAMA, [CARMIM, DOURADO])) {
+        nuvem(dim, c, { n: 10, largura: 0.6, y0: 0.8, alto: 1.2 }, P.CRITICO);
       }
     },
   },

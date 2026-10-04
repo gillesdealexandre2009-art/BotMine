@@ -1,6 +1,6 @@
 // @ts-check
-// Painel da staff: definir spawn, configurações (em 4 grupos), dar Caudas, cargos e Kitsune,
-// leilão e pegar o item do menu.
+// Painel da staff: definir spawn, configurações (em 5 grupos), dar Caudas, cargos e Kitsune,
+// leilão, clãs e pegar o item do menu.
 import { CHAVE_SPAWN, ICONES, VERSAO } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { config, lerMundo, salvarConfig, todosJogadores } from "../core/db.js";
@@ -12,6 +12,7 @@ import * as geral from "../textos/geral.js";
 import * as textos from "../textos/staff.js";
 import { garantirItem } from "./boas_vindas.js";
 import { DAR_MAXIMO, darCaudas } from "./caudas.js";
+import { menuClasStaff } from "./clas.js";
 import { menuCargos } from "./identidade.js";
 import { menuLeilaoStaff } from "./leilao.js";
 import { definirSpawn } from "./spawn.js";
@@ -44,13 +45,28 @@ const FAIXAS = {
   anunciosPorJogador: [0, 50],
   duracaoAnuncioHoras: [1, 720],
   caixaLimite: [9, 200],
+  custoCriarCla: [0, 1000000],
+  claXpPorMinuto: [0, 100],
+  claCaudasPorXp: [1, 100000],
+  custoCasaCla: [0, 1000000],
+  distanciaSpawnBase: [0, 100000],
+  custoMoverBase: [0, 1000000],
+  aumentoMoverBasePct: [0, 500],
+  recargaMoverBaseHoras: [0, 720],
+  zonaAmortecimento: [0, 64],
+  custoGuerra: [0, 1000000],
+  guerraNivelMinimo: [1, 8],
+  guerraMembrosMinimos: [1, 30],
+  guerraAvisoMin: [0, 1440],
+  duracaoGuerraHoras: [1, 168],
+  recargaGuerraDias: [0, 60],
 };
 const LINK_MAXIMO = 100;
 /** Convite do Discord: discord.gg/xxx ou discord.com/invite/xxx (com ou sem https://). */
 const LINK_DISCORD = /^(https?:\/\/)?(www\.)?(discord\.gg|discord\.com\/invite)\/[\w-]{2,40}\/?$/i;
 
 /**
- * Configurações em 4 formulários; cada chave de PADROES está em um grupo só.
+ * Configurações em 5 formulários; cada chave de PADROES está em um grupo só.
  * @type {{ titulo: string, icone: string, chaves: ChaveConfig[] }[]}
  */
 const GRUPOS = [
@@ -76,6 +92,27 @@ const GRUPOS = [
       "anunciosPorJogador",
       "duracaoAnuncioHoras",
       "caixaLimite",
+    ],
+  },
+  {
+    titulo: textos.GRUPO_CLAS,
+    icone: ICONES.cla,
+    chaves: [
+      "custoCriarCla",
+      "claXpPorMinuto",
+      "claCaudasPorXp",
+      "custoCasaCla",
+      "distanciaSpawnBase",
+      "custoMoverBase",
+      "aumentoMoverBasePct",
+      "recargaMoverBaseHoras",
+      "zonaAmortecimento",
+      "custoGuerra",
+      "guerraNivelMinimo",
+      "guerraMembrosMinimos",
+      "guerraAvisoMin",
+      "duracaoGuerraHoras",
+      "recargaGuerraDias",
     ],
   },
   { titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao"] },
@@ -106,6 +143,7 @@ export async function menuStaff(player, voltar) {
     .botao(textos.BOTAO_DAR, ICONES.caudas, (p) => escolherQuemGanha(p, aqui))
     .botao(textos.BOTAO_CARGOS, ICONES.cargos, (p) => menuCargos(p, aqui))
     .botao(textos.BOTAO_LEILAO, ICONES.leilao, (p) => menuLeilaoStaff(p, aqui))
+    .botao(textos.BOTAO_CLAS, ICONES.cla, (p) => menuClasStaff(p, aqui))
     .botao(textos.BOTAO_ITEM, ICONES.nova, (p) => {
       if (garantirItem(p) === "tinha") msg(p, textos.ITEM_JA_TEM);
     })

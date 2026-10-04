@@ -16,6 +16,7 @@ export const BOTAO_CONFIG = "Configurações";
 export const BOTAO_DAR = "Dar Caudas";
 export const BOTAO_CARGOS = "Cargos e Kitsune";
 export const BOTAO_LEILAO = "Leilão (staff)";
+export const BOTAO_CLAS = "Clãs (staff)";
 export const BOTAO_ITEM = "Pegar item do menu";
 
 export const TITULO_CONFIG = "Configurações do Vulpus";
@@ -23,6 +24,7 @@ export const CONFIG_ESCOLHA = "§7O que você quer ajustar?";
 export const GRUPO_TELEPORTE = "Teleporte e casas";
 export const GRUPO_CAUDAS = "Caudas e XP";
 export const GRUPO_LEILAO = "Leilão";
+export const GRUPO_CLAS = "Clãs e guerras";
 export const GRUPO_GERAL = "Geral";
 /** Rótulos dos campos de configuração (as chaves são as de PADROES). */
 export const CAMPOS = {
@@ -48,6 +50,21 @@ export const CAMPOS = {
   anunciosPorJogador: "Leilão: anúncios por pessoa",
   duracaoAnuncioHoras: "Leilão: duração do anúncio (h)",
   caixaLimite: "Leilão: itens na caixa de retirada",
+  custoCriarCla: "Clã: Caudas para criar",
+  claXpPorMinuto: "Clã: XP por minuto ativo de cada membro",
+  claCaudasPorXp: "Clã: Caudas depositadas para 1 XP",
+  custoCasaCla: "Clã: Caudas do banco por casa do clã",
+  distanciaSpawnBase: "Base: distância mínima da borda até o spawn",
+  custoMoverBase: "Base: custo para mover (nível 1)",
+  aumentoMoverBasePct: "Base: aumento do custo de mover por nível (%)",
+  recargaMoverBaseHoras: "Base: espera entre mudanças (h)",
+  zonaAmortecimento: "Base: zona de amortecimento (blocos)",
+  custoGuerra: "Guerra: Caudas de cada clã no baú",
+  guerraNivelMinimo: "Guerra: nível mínimo dos dois clãs",
+  guerraMembrosMinimos: "Guerra: pessoas mínimas em cada clã",
+  guerraAvisoMin: "Guerra: aviso antes de começar (min)",
+  duracaoGuerraHoras: "Guerra: duração (h)",
+  recargaGuerraDias: "Guerra: trégua entre o mesmo par (dias)",
 };
 export const DICA_LINK = "discord.gg/convite";
 /** @param {string[]} mudou */

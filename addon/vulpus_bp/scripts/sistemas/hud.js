@@ -4,11 +4,15 @@
 import { system, world } from "@minecraft/server";
 import { online } from "../core/jogadores.js";
 import { tituloLivre } from "../core/tela.js";
+import { dadosJogador } from "../core/db.js";
 import { direcao, registrarErro } from "../core/util.js";
 import * as textos from "../textos/hud.js";
 import { hudLigada } from "./ajustes.js";
 import { saldo } from "./caudas.js";
+import { claDe, EMBLEMAS, tagPintada } from "./cla_dados.js";
+import { guerraDe, ladoDe } from "./cla_guerra.js";
 import { CARGOS, cargoDe, ehKitsune } from "./identidade.js";
+import { apelidoDe, nomeExibido, temaNomeDe } from "./kitsune.js";
 import { infoNivel } from "./niveis.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -57,7 +61,8 @@ function mudancaRecente(player, caudas) {
 }
 
 /**
- * Texto completo do title (flag + 6 linhas, ou 7 com o cargo). Cargo e Kitsune vêm da mesma regra do nameTag.
+ * Texto completo do title (flag + 6 a 10 linhas: nome Kitsune, cargo, clã e guerra são opcionais).
+ * Cargo, Kitsune e apelido vêm da mesma regra do nameTag.
  * @param {Player} player
  * @param {number} caudas
  * @param {number} mudanca
@@ -67,7 +72,26 @@ function montar(player, caudas, mudanca, quantosOnline) {
   const { nivel, fracao, rank } = infoNivel(player);
   const { x, y, z } = player.location;
   const cargo = cargoDe(player);
+  const cla = claDe(player);
+  const guerra = cla ? guerraDe(cla.id) : undefined;
+  const lado = guerra && cla ? ladoDe(guerra, cla.id) : undefined;
+  const outro = lado === "a" ? "b" : "a";
   const linhas = textos.LINHAS({
+    nome: apelidoDe(player) || temaNomeDe(player) ? nomeExibido(player) : null,
+    cla:
+      cla && dadosJogador(player).ajustes.cla
+        ? { emblema: EMBLEMAS[cla.emblema] ?? EMBLEMAS[0], tag: tagPintada(cla), nome: cla.nome }
+        : null,
+    guerra:
+      guerra && lado
+        ? {
+            ativa: guerra.estado === "ativa",
+            nossos: guerra.pontos[lado],
+            deles: guerra.pontos[outro],
+            tagDeles: guerra.tags[outro],
+            minutos: Math.max(0, Math.ceil((guerra.inicio - Date.now()) / 60000)),
+          }
+        : null,
     rank,
     cargo: cargo ? CARGOS[cargo] : null,
     kitsune: ehKitsune(player),

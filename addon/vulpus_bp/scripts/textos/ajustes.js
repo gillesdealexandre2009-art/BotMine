@@ -12,6 +12,9 @@ export const BOTAO_HUD = (ligada) => `Scoreboard lateral: ${ligada ? "§aligada"
 export const BOTAO_TEMA = (tema) => `Tema do menu: ${tema === "black" ? "§fBlack" : "§6Laranja"}`;
 /** @param {boolean} aceitando */
 export const BOTAO_TPA = (aceitando) => `Pedidos de TPA: ${aceitando ? "§aaceitando" : "§cbloqueados"}`;
+/** @param {boolean} ligada */
+export const BOTAO_CLA = (ligada) => `Clã no placar: ${ligada ? "§aaparece" : "§cescondido"}`;
+export const BOTAO_KITSUNE = "Visual Kitsune (apelido e cor)";
 /** @param {boolean} ligados */
 export const BOTAO_SONS = (ligados) => `Sons do menu: ${ligados ? "§aligados" : "§cdesligados"}`;
 
@@ -26,5 +29,8 @@ export const TPA_MUDOU = (aceitando) =>
   aceitando ? "Pedidos de TPA liberados de novo." : "Pedidos de TPA bloqueados. Ninguém vai te chamar.";
 /** @param {boolean} ligados */
 export const SONS_MUDOU = (ligados) => (ligados ? "Sons ligados. Pi-pi-pi!" : "Sons desligados. Silêncio de raposa.");
+
+/** @param {boolean} ligada */
+export const CLA_MUDOU = (ligada) => (ligada ? "O clã volta a aparecer no placar." : "Clã escondido do placar.");
 
 export const DESC_HUD = "Liga ou desliga o placar do lado da tela";

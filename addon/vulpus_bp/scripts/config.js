@@ -37,7 +37,43 @@ export const PADROES = {
   anunciosPorJogador: 5,
   duracaoAnuncioHoras: 48,
   caixaLimite: 54,
+  custoCriarCla: 500,
+  claXpPorMinuto: 1,
+  claCaudasPorXp: 10,
+  custoCasaCla: 250,
+  distanciaSpawnBase: 200,
+  custoMoverBase: 500,
+  aumentoMoverBasePct: 60,
+  recargaMoverBaseHoras: 24,
+  zonaAmortecimento: 12,
+  custoGuerra: 1000,
+  guerraNivelMinimo: 2,
+  guerraMembrosMinimos: 3,
+  guerraAvisoMin: 60,
+  duracaoGuerraHoras: 24,
+  recargaGuerraDias: 7,
 };
+
+/**
+ * Níveis dos clãs (do 1 ao 8). xp = XP total do clã para poder subir para este nível; custo = Caudas
+ * do banco do clã para subir; membros = máximo de pessoas; raio = metade do lado da base quadrada
+ * (8 = 17x17 blocos; 1024 = 2049x2049); casas = casas do clã; cores e emblemas = quantos itens das
+ * listas de sistemas/cla_dados.js (CORES_CLA e EMBLEMAS) ficam liberados. Mexer aqui vale para todos.
+ * A base cresce até o raio do nível só onde houver espaço: nunca encosta em outra base (nem na zona de
+ * amortecimento dela) nem chega perto do spawn (sistemas/cla_terreno.js).
+ */
+export const NIVEIS_CLA = Object.freeze(
+  [
+    { nivel: 1, xp: 0, custo: 0, membros: 4, raio: 8, casas: 1, cores: 4, emblemas: 1 },
+    { nivel: 2, xp: 1000, custo: 1000, membros: 6, raio: 16, casas: 1, cores: 5, emblemas: 1 },
+    { nivel: 3, xp: 3000, custo: 3000, membros: 8, raio: 32, casas: 2, cores: 6, emblemas: 2 },
+    { nivel: 4, xp: 7000, custo: 6000, membros: 10, raio: 64, casas: 2, cores: 7, emblemas: 2 },
+    { nivel: 5, xp: 14000, custo: 12000, membros: 14, raio: 128, casas: 3, cores: 8, emblemas: 3 },
+    { nivel: 6, xp: 25000, custo: 25000, membros: 18, raio: 256, casas: 3, cores: 10, emblemas: 4 },
+    { nivel: 7, xp: 45000, custo: 50000, membros: 22, raio: 512, casas: 4, cores: 11, emblemas: 4 },
+    { nivel: 8, xp: 80000, custo: 100000, membros: 30, raio: 1024, casas: 5, cores: 12, emblemas: 5 },
+  ].map((n) => Object.freeze(n)),
+);
 
 /** Ícones dos botões: texturas vanilla conferidas na 1.26.52. */
 export const ICONES = {
@@ -92,6 +128,19 @@ export const ICONES = {
   catLivros: "textures/items/book_enchanted",
   catShulkers: "textures/blocks/shulker_top_undyed",
   catOutros: "textures/items/stick",
+  // Clãs
+  cla: "textures/items/banner_pattern",
+  membros: "textures/ui/FriendsIcon",
+  convites: "textures/ui/invite",
+  banco: "textures/blocks/chest_front",
+  terreno: "textures/items/map_empty",
+  casaCla: "textures/items/campfire",
+  guerra: "textures/items/diamond_sword",
+  aliados: "textures/ui/trade_icon",
+  sair: "textures/items/door_wood",
+  bypass: "textures/blocks/barrier",
+  kitsune: "textures/items/blaze_powder",
+  apelido: "textures/items/name_tag",
 };
 
 export const SONS = {
@@ -100,4 +149,5 @@ export const SONS = {
   ok: "random.orb",
   pedido: "random.levelup",
   nivel: "random.levelup",
+  guerra: "horn.call.0",
 };

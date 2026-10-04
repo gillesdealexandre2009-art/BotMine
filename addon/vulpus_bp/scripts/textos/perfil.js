@@ -7,21 +7,30 @@ export const TITULO = "Perfil";
 export const TITULO_DE = (nome) => `Perfil de ${nome}`;
 export const TITULO_OUTROS = "Ver outro jogador";
 export const BOTAO_OUTRO = "Ver outro jogador";
+export const BOTAO_NIVEL = "Nível e ranks";
 export const SO_VOCE = "§7Só você na toca agora. Chama a galera!";
 export const ESCOLHA = "§7Quem você quer espiar?";
 export const DESC_PERFIL = "Mostra o seu perfil (ou o de alguém online)";
 
 /** @typedef {import("../sistemas/niveis.js").Rank} Rank */
 /** @typedef {import("../sistemas/identidade.js").InfoCargo} InfoCargo */
+/** @typedef {import("../sistemas/cla_dados.js").CargoCla} CargoCla */
+
+/** @type {Readonly<Record<CargoCla, string>>} */
+const CARGOS_CLA = Object.freeze({ lider: "Líder", vice: "Vice", oficial: "Oficial", membro: "Membro", recruta: "Recruta" });
 
 /**
- * @param {{ nome: string, online: boolean, selo: string, rank: Rank, nivel: number, xpNoNivel: number,
+ * nome pode vir pintado (apelido/tema Kitsune); conta = nome da conta quando há apelido (para a moderação).
+ * @param {{ nome: string, conta: string | null, cla: { tag: string, nome: string, cargo: CargoCla } | null,
+ *   online: boolean, selo: string, rank: Rank, nivel: number, xpNoNivel: number,
  *   xpParaProximo: number, cargo: InfoCargo | null, kitsune: boolean, caudas: number, tempo: number,
  *   primeira: number, sequencia: number, mortes: number, casas: number, limiteCasas: number }} info
  */
 export const CORPO = (info) =>
   [
     `§6${info.nome} ${info.online ? "§a• online" : "§8• offline"}`,
+    ...(info.conta ? [`§7Conta: §f${info.conta}`] : []),
+    ...(info.cla ? [`§7Clã: §8[${info.cla.tag}§8] §f${info.cla.nome} §7(${CARGOS_CLA[info.cla.cargo]})`] : []),
     "",
     `${info.selo} ${info.rank.cor}${info.rank.nome}`,
     `§7Nível §f${formatarNumero(info.nivel)} §8• §f${formatarNumero(info.xpNoNivel)}§7/${formatarNumero(info.xpParaProximo)} XP`,

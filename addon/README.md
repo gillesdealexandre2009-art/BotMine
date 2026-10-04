@@ -4,9 +4,9 @@ Addon de Minecraft Bedrock do servidor **Vulpus**, com a Kiza (a raposa kitsune)
 
 - **O que tem:** um menu próprio, com a imagem "VULPUS" no topo, a logo no meio e 5 botões de cada lado:
   - à esquerda: Spawn, Casas, TPA, Voltar e Perfil;
-  - à direita: Caudas, Leilão, Nível, Ajustes e Regras;
+  - à direita: Caudas, Leilão, Clã, Ajustes e Regras;
   - um botão extra da Staff (a coroa), que só a staff vê.
-- **Novidades da versão 0.2.0:** níveis e ranks iguais aos do Discord, cargos e selos sobre a cabeça, um placar do lado da tela (scoreboard lateral), tema Black para o menu, símbolos próprios (glyphs), o leilão e um chat com selo e nível.
+- **Novidades da versão 0.2.0:** níveis e ranks iguais aos do Discord, cargos e selos sobre a cabeça, um placar do lado da tela (scoreboard lateral), tema Black para o menu, símbolos próprios (glyphs), o leilão, um chat com selo e nível, **clãs** (tag, base protegida, banco, guerras e alianças) e o **visual Kitsune** (apelido e nome colorido).
 - **Versão do jogo:** Bedrock **1.26.52**.
 - **Peças:** três packs.
   - `vulpus_bp`: o pack de comportamento (os sistemas). Não precisa de experimento;
@@ -86,7 +86,7 @@ Ao importar uma versão nova com o mesmo número, o jogo pode manter a antiga. N
 - **Sobre a cabeça** (nameTag) ficam 2 linhas: o selo com o cargo ou o rank e o nível, e embaixo o nome.
 - **Cargos:** Admin (operador ou tag `vulpus:admin`), Staff (tag `vulpus:staff`) e Helper (tag `vulpus:helper`). O cargo aparece no lugar do rank. Helper é só selo: não abre o painel da staff.
 - **Kitsune:** a tag `vulpus:kitsune` põe o selo do booster. É só enfeite.
-- No menu, o botão **Nível** mostra o seu nível, os ranks, o ranking e como ganhar XP.
+- Em **Perfil > Nível e ranks** (ou `/vulpus:nivel`) aparecem o seu nível, os ranks, o ranking e como ganhar XP. O lugar do antigo botão Nível no menu agora é do **Clã**.
 
 ## Placar do lado e tema
 
@@ -133,6 +133,71 @@ Compra e venda de itens por Caudas, entre as pessoas do servidor. Abre pelo bot�
 - **"Para conferir":** se uma operação foi interrompida (o servidor caiu no meio, por exemplo), o lote vai para essa lista da staff, com o motivo. Antes de clicar em "Devolver", confira se a pessoa já não está com o item no inventário, senão ele duplica.
 - **Backup:** restaure sempre o mundo **inteiro** de uma vez. Voltar só uma parte (o mundo sem as estruturas, ou o contrário) deixa o registro dos anúncios e os itens guardados desencontrados, e esses lotes vão para "Para conferir".
 
+## Clãs
+
+O clã é a turma de cada um na toca. Abre pelo botão **Clã** do menu ou por `/vulpus:cla`.
+
+- **Criar:** custa 500 Caudas. Escolha um nome (3 a 24 letras), uma **tag de 3 letras ou números** (ex.: `RDL`) e a cor. A tag aparece **antes do nome sobre a cabeça** e **no chat** (com o pack do chat). Nomes e tags com palavrão são recusados; tag e nome não se repetem ("Raposas da Lua", "raposas-da-lua" e "RaposasDaLua" contam como o mesmo nome). O nome usa só letras do nosso alfabeto (com acento), números, espaço e `_ ' . -`.
+- **Um clã por pessoa.** Para entrar: aceite um convite (vale 5 min; `/vulpus:claaceitar`) ou procure um clã em "Procurar clãs": se estiver **aberto**, entra na hora; se estiver **fechado**, fica um pedido para alguém do clã aprovar.
+- **Cargos:** Líder, Vice, Oficial, Membro e Recruta (quem entra começa como Recruta). O Líder pode tudo e escolhe, em Ajustes do clã > Cargos e permissões, o que cada cargo pode e quanto pode sacar do banco por dia:
+
+| Permissão | Padrão |
+|---|---|
+| Construir e mexer na base | Vice, Oficial, Membro (Recruta não) |
+| Convidar e aprovar pedidos | Vice, Oficial |
+| Expulsar e promover (só quem está abaixo) | Vice; Oficial só expulsa |
+| Sacar do banco | Vice (5.000/dia), Oficial (1.000/dia) |
+| Base, proteções e casas do clã | Vice |
+| Guerras e alianças | Vice |
+| Editar o clã e subir de nível | Vice |
+
+- **Passar a liderança** pede confirmação (quem passa vira Vice). **Dissolver** pede duas confirmações: o banco volta inteiro para quem lidera, a base some e uma guerra em andamento conta como rendição.
+- **Banco:** qualquer membro deposita (`/vulpus:cladepositar <valor>`); sacar só com permissão e dentro do limite do dia. O extrato mostra os últimos 30 movimentos. O banco paga a subida de nível, a guerra, as casas do clã e a mudança da base.
+- **Nível (1 a 8):** o clã ganha XP com cada **minuto ativo** dos membros (o mesmo anti-AFK das Caudas) e com depósitos (10 Caudas = 1 XP; sacar e depositar de novo não conta). Com o XP, alguém com permissão sobe o nível pagando com o banco:
+
+| Nível | XP | Custo | Pessoas | Raio da base | Casas |
+|---|---|---|---|---|---|
+| 1 | 0 | 0 | 4 | 8 (17x17) | 1 |
+| 2 | 1.000 | 1.000 | 6 | 16 | 1 |
+| 3 | 3.000 | 3.000 | 8 | 32 | 2 |
+| 4 | 7.000 | 6.000 | 10 | 64 | 2 |
+| 5 | 14.000 | 12.000 | 14 | 128 | 3 |
+| 6 | 25.000 | 25.000 | 18 | 256 | 3 |
+| 7 | 45.000 | 50.000 | 22 | 512 | 4 |
+| 8 | 80.000 | 100.000 | 30 | 1024 (2049x2049) | 5 |
+
+  Cada nível também libera mais cores e emblemas. A tabela fica em `vulpus_bp/scripts/config.js` (`NIVEIS_CLA`).
+- **Base:** em Terreno, fique no centro e toque em "Marcar base aqui" (só no Mundo normal). A base é um **quadrado** em volta do centro, com **todas as alturas**. A primeira marcação é grátis; **mudar a base de lugar custa Caudas do banco**, mais caro a cada nível (500 no nível 1, +60% por nível), e só uma vez a cada 24 h (tirar a base e marcar de novo não pula a espera). A base não pode encostar em outra base (nem na zona dela) e a borda fica a 200 blocos do spawn; se faltar espaço, ela fica menor que o raio do nível e cresce quando houver lugar ("Crescer a base até o nível"). "Ver os limites" mostra a borda com partículas.
+- **Proteção:** dentro da base, quem não é do clã não quebra, não coloca, não abre baús, não usa portas, alavancas, botões e placas de escrever, não usa baldes nem isqueiro, não mexe em suportes de armadura nem fere os bichos. Nos Ajustes de Terreno dá para ligar e desligar: TNT, creeper e outras explosões não quebram a base (inclusive explosão que começa do lado de fora) e estranhos não colocam entidades (barco, carrinho, suporte, cristal do End).
+- **Zona de amortecimento:** 12 blocos em volta da borda onde quem é de fora **não coloca redstone nem máquinas** (pistão, observador, dispenser, dropper, funil, TNT, trilhos, slime/mel, fogo, cristal do End, carga de vento) **nem usa balde** (lava, água, balde de peixe ou de neve, e o vazio, que pega líquido). Para pistão e redstone a zona tem 1 bloco a mais (um pistão empurra até 12 blocos). Com a proteção de entidades ligada, também não usa barco, carrinho, suporte e vara de pesca ali. Isso evita "invadir com redstone" de fora.
+- **Exceções:** pessoas de confiança (até 10, em Terreno) constroem; aliados com acesso abrem portas e baús (mas não constroem, não plantam e não põem placa, linha ou estandarte); a staff só passa com o **bypass** ligado (`/vulpus:clabypass`, fica no log).
+- **Ao entrar e sair** de uma base aparece "Território de [TAG]" na barra de baixo.
+- **Guerras:** quem tem permissão declara guerra a outro clã. Regras (a staff muda em Configurações > Clãs e guerras):
+  - os dois clãs precisam de nível 2+ e de 3+ pessoas; um clã só tem uma guerra por vez; o mesmo par só guerreia de novo depois de 7 dias; aliados não guerreiam;
+  - declarar tira 1.000 Caudas do banco (vai para o **baú de guerra**); a guerra começa **1 hora depois** (todo mundo é avisado) e dura **24 horas**;
+  - quando começa, o clã alvo põe a parte dele no baú (o que tiver no banco, até 1.000);
+  - durante a guerra, a **base de cada lado fica aberta só para o clã inimigo**; as explosões continuam como o clã escolheu;
+  - cada **abate** entre os dois clãs vale 1 ponto, em qualquer lugar do mapa (a mesma pessoa abatida pelo mesmo jogador só conta de novo depois de 10 min, e só vale entre quem já era do clã quando a guerra foi declarada: conta reserva que entra no meio não vira ponto); o placar aparece no menu e no placar do lado;
+  - no fim, quem tiver mais pontos leva o baú inteiro; empate devolve a parte de cada um; **render-se** dá a vitória ao outro lado;
+  - a guerra continua certinha depois de reiniciar o servidor.
+- **Fogo amigo:** quem é do mesmo clã não se fere (o clã pode ligar o fogo amigo nos Ajustes).
+- **Aliados:** até 3. Um clã pede, o outro aceita; qualquer lado desfaz.
+- **Casas do clã:** criadas por quem cuida do terreno (250 Caudas do banco cada); qualquer membro vai com `/vulpus:clacasa [nome]`, com o efeito de teleporte do clã.
+- **Chat do clã:** `/vulpus:c <mensagem>` fala só com quem está no clã (até 8 palavras soltas; frase maior vai entre aspas: `/vulpus:c "bora pra mina às 20h"`). (Não existe "modo falar no clã": sem o pack Beta o addon não consegue segurar o chat normal, e a mensagem vazaria.)
+- **Ranking de clãs:** por nível, XP e pessoas.
+- **Placar do lado:** mostra a tag e o nome do clã e, em guerra, o placar (dá para esconder a linha do clã em Ajustes).
+- **Staff:** Staff > Clãs (staff): ver qualquer clã, trocar a tag, encerrar uma guerra sem vencedor (cada lado recebe a sua parte), remover o clã (o banco volta para quem lidera) e o log.
+
+## Visual Kitsune
+
+Mimo para quem tem o selo **Kitsune** (booster do Discord). **É só visual**, sem nenhuma vantagem no jogo. Fica em Ajustes > Visual Kitsune ou `/vulpus:apelido`.
+
+- **Apelido:** de 3 a 16 letras, aparece no lugar do nome sobre a cabeça, no chat, no placar do lado e no menu. Só letras do nosso alfabeto (com acento), números, espaço e `_ . -`. Não vale palavrão, nome de cargo ("Admin", "Staff", "Porteiro"...) nem o nome de outra pessoa da toca, nem disfarçado com número no lugar de letra ("K1za", "4dmin"). O nome da conta continua no Perfil ("Conta: ...") para a moderação. `/vulpus:apelido tirar` volta ao nome da conta.
+- **Cor do nome:** 18 temas, entre cores sólidas e degradês letra a letra (Pôr do sol, Oceano, Sakura, Lava, Aurora, Floresta, Arco-íris, Gelo, Ouro, Ametista, Lunar, Brasa...). O chat mostra o mesmo apelido e o mesmo tema.
+- **Cor do clã:** quem tem o selo e pode editar o clã também escolhe um desses temas para a tag e o nome do clã. Os outros usam as cores normais, liberadas pelo nível.
+- Sem o selo, o apelido e a cor ficam guardados, mas não aparecem.
+- A staff tira o apelido e a cor de alguém em Staff > Cargos e Kitsune ou com `/vulpus:resetapelido <jogador>`.
+
 ## Comandos
 
 Os comandos funcionam com o `vulpus:` na frente e, na maioria, também sem ele (por exemplo, `/menu`). O `/hud` curto já é do jogo, então use sempre `/vulpus:hud`.
@@ -158,6 +223,14 @@ Os comandos funcionam com o `vulpus:` na frente e, na maioria, também sem ele (
 | `/vulpus:perfil [jogador]` | abre o seu perfil (ou o de outra pessoa online) |
 | `/vulpus:nivel [jogador]` | mostra o nível (o seu ou o de alguém online) |
 | `/vulpus:hud` | liga ou desliga o placar do lado |
+| `/vulpus:cla` | abre o menu do clã |
+| `/vulpus:c <mensagem>` | fala só com o seu clã |
+| `/vulpus:claconvidar <jogador>` | convida alguém online para o seu clã |
+| `/vulpus:claaceitar [tag]` | aceita um convite de clã (sem tag: se houver só um) |
+| `/vulpus:clarecusar [tag]` | recusa um convite de clã |
+| `/vulpus:clacasa [nome]` | vai para uma casa do clã (sem nome: a primeira) |
+| `/vulpus:cladepositar <valor>` | deposita Caudas no banco do clã |
+| `/vulpus:apelido [nome]` | apelido do selo Kitsune (sem nome abre o menu; `tirar` volta ao nome da conta) |
 
 Só para a staff:
 
@@ -168,10 +241,12 @@ Só para a staff:
 | `/vulpus:darcaudas <jogador> <valor>` | dá Caudas (valor negativo tira) |
 | `/vulpus:cargo <jogador> <cargo>` | muda o cargo: `admin`, `staff`, `helper` ou `nenhum` (só Admin consegue) |
 | `/vulpus:kitsune <jogador>` | liga ou desliga o selo Kitsune |
+| `/vulpus:resetapelido <jogador>` | tira o apelido e a cor do nome de alguém |
+| `/vulpus:clabypass` | liga ou desliga o bypass da proteção dos clãs (fica no log) |
 
 **Quem é staff:** operador do mundo (ou quem tem nível de comando de operador), ou quem tiver a tag `vulpus:staff` ou `vulpus:admin`. Para dar a tag, use `/tag NOME add vulpus:staff` ou, pelo menu, Staff > Cargos e Kitsune.
 
-**Configurações da staff:** Staff > Configurações tem 4 grupos: "Teleporte e casas", "Caudas e XP", "Leilão" e "Geral".
+**Configurações da staff:** Staff > Configurações tem 5 grupos: "Teleporte e casas", "Caudas e XP", "Leilão", "Clãs e guerras" e "Geral".
 
 ## Como trocar a logo
 
@@ -245,10 +320,16 @@ Num mundo com o BP e o RP ativos (o ideal é ter uma segunda pessoa para o TPA):
 4. **TPA:** mande um pedido para a outra pessoa, que deve ver o aviso no chat e na barra. Aceite pelo menu e por `/vulpus:tpaceitar`. Teste também recusar, cancelar, esperar 60 s para vencer e bloquear em Ajustes.
 5. **Voltar:** morra (não no vazio) e use Voltar; depois teleporte e use Voltar de novo.
 6. **Caudas e XP:** pegue a diária (+15 XP junto). Jogue se mexendo e veja o XP subir no placar do lado; parado, não sobe.
-7. **Nível:** abra o botão Nível, os Ranks, o Ranking e o Como ganhar XP. Para testar a troca de rank rápido, a staff pode pôr "XP por minuto ativo" em 100 nas Configurações (lembre de voltar para 3).
+7. **Nível:** abra Perfil > Nível e ranks, os Ranks, o Ranking e o Como ganhar XP. Para testar a troca de rank rápido, a staff pode pôr "XP por minuto ativo" em 100 nas Configurações (lembre de voltar para 3).
 8. **Perfil, Ajustes e Regras:** confira rank, nível e cargo no perfil; ligue e desligue o placar do lado; troque o tema para Black e de volta; abra todas as páginas de Regras.
 9. **Leilão:** anuncie um item da mão, veja ele em Comprar e em Meus anúncios, cancele (volta para o inventário) e anuncie de novo. Com outra conta, compre; o vendedor recebe as Caudas na caixa de retirada.
 10. **Staff:** com operador ou com a tag, abra o painel, defina o spawn, mude uma configuração de cada grupo, dê e tire Caudas, mude um cargo em "Cargos e Kitsune", remova um anúncio em "Leilão (staff)" e pegue o item. Sem ser staff, o botão não aparece e `/vulpus:staff` recusa.
+11. **Clãs** (precisa de 2 ou 3 contas; para ir rápido, a staff baixa os custos e o "Guerra: aviso antes de começar" para 0 em Configurações > Clãs e guerras):
+    - crie um clã, convide a outra conta e aceite; promova e rebaixe; deposite e saque;
+    - marque a base longe do spawn, veja os limites; com a conta de fora, tente quebrar, colocar, abrir um baú e uma porta (tudo barrado com aviso); na zona em volta, tente pôr um pistão (barrado) e um bloco comum (liberado);
+    - crie um segundo clã, suba os dois para o nível 2 (a staff dá Caudas e põe "Clã: XP por minuto ativo" alto), declare guerra, espere começar e confira que o inimigo mexe na base e que o abate conta ponto;
+    - render-se, alianças, casa do clã, `/vulpus:c`, dissolver.
+12. **Visual Kitsune:** com `/vulpus:kitsune` em você, troque o apelido e a cor do nome em Ajustes; confira sobre a cabeça, no chat, no placar e no Perfil ("Conta:").
 
 ## Checklist de teste no jogo
 
@@ -302,6 +383,14 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 11. **Armazém:** o bloco em (0, -64, 0) continua bedrock depois de tudo e nenhum baú fica no mapa.
 12. **Registro de conteúdo** sem "Unknown property" e sem erro `[Vulpus]`.
 13. **Telas de outros addons e formulários com campos** continuam iguais aos do jogo.
+14. **Clãs no jogo de verdade:**
+    - tag `[ABC]` antes do selo sobre a cabeça e no chat, com a cor (ou o degradê) do clã;
+    - TNT e creeper do lado de fora não abrem buraco na base; com a opção desligada, abrem;
+    - porta, alçapão, botão, alavanca, placa de escrever, baú, barril, funil e bigorna: barrados para quem é de fora;
+    - balde de lava/água e isqueiro na borda e na zona: barrados;
+    - barco na água dentro da zona: barrado;
+    - "Território de [TAG]" aparece ao entrar e ao sair;
+    - reiniciar o servidor no meio de uma guerra: ela continua com o mesmo placar e o mesmo horário de fim.
 
 ## Limitações
 
@@ -312,7 +401,9 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
   - O chat precisa da troca da versão Beta (veja "O chat").
 - **Placar do lado:** usa o mesmo espaço do `/title`. Um `/title` de outro addon ou de comando pode ser cortado pelo placar.
 - **Servidor:** o addon guarda tudo no próprio mundo e ainda não fala com o Discord (os níveis já usam a mesma conta, para ligar no futuro).
-- **Sem loja:** as Caudas só compram no leilão, de outras pessoas.
+- **Sem loja:** as Caudas só compram no leilão, de outras pessoas, e pagam as coisas do clã.
+- **Proteção dos clãs:** a API estável não tem evento de pistão, de líquido escorrendo nem de fogo se espalhando. A zona de amortecimento impede que alguém de fora monte essas coisas perto da base, mas algo construído **antes** da base existir (ou um rio de lava vindo de longe) não é barrado. Endermen, wither e bichos que quebram blocos também não são barrados, e placa de pressão e fio de armadilha disparam com quem pisa (não há como impedir pela API). Funis ficam proibidos na zona inteira (não dá para saber para onde apontam antes de colocar).
+- **Filtro de palavrões:** é simples (lista de palavras); a staff pode trocar a tag de um clã e tirar apelidos.
 
 ## Pastas
 

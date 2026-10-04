@@ -124,6 +124,10 @@ CORES = {
     "u": (216, 180, 255),
     # barra de nível
     "f": FUNDO_CLARO,  # #3A2A22
+    # pedra (torre do clã)
+    "W": (212, 212, 220),
+    "q": (160, 160, 170),
+    "Q": (108, 108, 120),
 }
 
 # ---------------------------------------------------------------- desenhos (até 14x14; o contorno escuro é automático)
@@ -468,6 +472,102 @@ ENCANTADO = """
 ....V.......
 """
 
+# Clãs (linha 3 da folha E2): emblemas liberados por nível e as espadas da guerra.
+ESCUDO = """
+bbbbbbbbbbbb
+bOOOOOcOOOOb
+bOooooccoodb
+booooocsoodb
+booooocsoodb
+bccccccccccb
+bssssscsssdb
+booooocsoodb
+.boooocsodb.
+.boooocsodb.
+..booccodb..
+...bocsdb...
+....bccb....
+.....bb.....
+"""
+
+BANDEIRA = """
+nnnnnnnnnnnn
+.mmmmmmmmmm.
+.oOOOOOOOOo.
+.oooooooooo.
+.ooooccoooo.
+.oooccccooo.
+.ooccccccoo.
+.ooooccoooo.
+.ooooccoooo.
+.oooooooooo.
+.dddddddddd.
+.oooo..oooo.
+.ooo....ooo.
+.oo......oo.
+"""
+
+TORRE = """
+WW.WWWW.WW
+WQ.WQQW.WQ
+WqqqqqqqqQ
+WqqqqqqqqQ
+.WqqqqqqQ.
+.WqqqqqqQ.
+.WqqnnqqQ.
+.WqnnnnqQ.
+.WqnnnnqQ.
+.WqqqqqqQ.
+.WqqqqqqQ.
+WqqqqqqqqQ
+QQQQQQQQQQ
+"""
+
+PATA = """
+..ooo..ooo..
+..oOo..oOo..
+..ooo..ooo..
+............
+oo........oo
+oO..oooo..Oo
+oo.oOOoooo.o
+...oOooooo..
+...oooooo...
+....oooo....
+"""
+
+TROFEU = """
+..yyyyyyyy..
+yyyzyyyyyyyy
+y.yzyyyyyY.y
+y.yzyyyyyY.y
+.yyyyyyyyYy.
+..yyyyyyYY..
+...yyyyYY...
+....yyYY....
+.....yY.....
+.....yY.....
+....yyYY....
+..YYYYYYYY..
+..ZZZZZZZZ..
+"""
+
+GUERRA = """
+cs........sc
+csc......csc
+.csc....csc.
+..csc..csc..
+...cscsc....
+....cssc....
+....cssc....
+...cscsc....
+..YYc..cYY..
+...mY..Ym...
+..mm....mm..
+.mm......mm.
+YY........YY
+"""
+
 # (linha, coluna) na folha E2 -> nome da constante em glyphs.js
 ICONES: dict[tuple[int, int], str] = {
     (0, 0): "BROTO",
@@ -493,6 +593,12 @@ ICONES: dict[tuple[int, int], str] = {
     (2, 4): "BUSCA",
     (2, 5): "HISTORICO",
     (2, 6): "ENCANTADO",
+    (3, 0): "ESCUDO",
+    (3, 1): "BANDEIRA",
+    (3, 2): "TORRE",
+    (3, 3): "PATA",
+    (3, 4): "TROFEU",
+    (3, 5): "GUERRA",
 }
 
 DESENHOS = {
@@ -518,6 +624,12 @@ DESENHOS = {
     "BUSCA": BUSCA,
     "HISTORICO": HISTORICO,
     "ENCANTADO": ENCANTADO,
+    "ESCUDO": ESCUDO,
+    "BANDEIRA": BANDEIRA,
+    "TORRE": TORRE,
+    "PATA": PATA,
+    "TROFEU": TROFEU,
+    "GUERRA": GUERRA,
 }
 
 SEM_CONTORNO = {"BARRA_CHEIA", "BARRA_VAZIA"}

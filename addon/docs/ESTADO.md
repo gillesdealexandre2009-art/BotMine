@@ -2,6 +2,57 @@
 
 > **Fase 2 (0.2.0) pronta fora do jogo.** Especificação em [`docs/spec/03_spec_fase2.md`](spec/03_spec_fase2.md): glyphs, tema Black, níveis e ranks, scoreboard lateral, leilão e o pack "Vulpus Chat". A seção "Fase 2" logo abaixo é a situação atual; o resto do arquivo é da fase 1 e continua valendo.
 
+## Clãs e visual Kitsune: situação em 2026-10-04
+
+Pedido do dono (sistema de clãs de SMP, depois ampliado: 8 níveis, mover base pago, toggles de explosão/entidades, zona de amortecimento, apelido e temas de cor Kitsune). Desenho final em [`docs/spec/04_spec_clas.md`](spec/04_spec_clas.md); explicação para o dono no `README.md` ("Clãs" e "Visual Kitsune").
+
+| Frente | Arquivos | Situação |
+|---|---|---|
+| Dados e ações | `sistemas/cla_dados.js`, `cla_acoes.js`, `textos/clas.js`, `core/filtro.js` | **pronto** |
+| Terreno e proteção | `sistemas/cla_terreno.js` | **pronto** (bases quadradas, sem varrer blocos) |
+| Guerras e fogo amigo | `sistemas/cla_guerra.js` | **pronto** (prazos com `Date.now()`, sobrevive a reinício) |
+| Menus e comandos | `sistemas/clas.js`, `menu.js` (slot 7 = Clã), `perfil.js` (Nível e ranks), `staff.js`, `ajustes.js`, `textos/regras.js` | **pronto** |
+| Visual Kitsune | `sistemas/kitsune.js`, `textos/kitsune.js`, `cores.js`, `identidade.js`, `hud.js` | **pronto** |
+| Chat | `vulpus_chat_bp/scripts/canal.js` e `formato.js` (tags de clã, apelido e tema; cópia de `pintar`) | **pronto** |
+| Glyphs | `tools/gerar_glyphs.py`, `glyph_E2.png`, `glyphs.js` (`\uE230`..`\uE235`) | **pronto** |
+| Teste no jogo (cliente e BDS) | checklist do README (itens 11, 12 e 14) | **pendente: o dono** |
+
+**Decisões fora do desenho original**
+- O botão **Nível** saiu do Hub para dar lugar ao **Clã**; Nível ficou em Perfil > "Nível e ranks" (e `/vulpus:nivel`).
+- Base **quadrada** (Chebyshev): mais fácil de entender pelas coordenadas e de calcular. A base guarda o próprio raio: cresce até o do nível só onde há espaço (sem encostar em outra base + zona, longe do spawn).
+- **Baú de guerra:** quem declara paga na hora; o alvo põe o que tiver (até o mesmo valor) quando a guerra começa; vence quem fizer mais abates. Explosões seguem os toggles do clã mesmo em guerra.
+- **Recruta** não constrói na base por padrão (proteção contra recém-chegado); o Líder muda isso.
+- **Sem "falar no clã" automático:** sem o pack Beta o chat normal não é interceptado; só `/vulpus:c`.
+- **Dissolver** devolve o banco ao líder (que já sacava sem limite); a staff ao remover também.
+- Versão continua **0.2.0** (nada foi publicado ainda). Se o dono importar o `.mcaddon` por cima de uma 0.2.0 já instalada, o jogo pode manter a antiga: use `npm run dev` ou apague a antiga antes.
+
+**Checagens (2026-10-04)**
+
+| Checagem | Resultado |
+|---|---|
+| `npm run check` (BP e chat) | 0 erros |
+| `node --check` nos `.js` do BP e do chat | 56 de 56 ok |
+| `python tools/verificar_ui.py` | 4 arquivos, 114 controles, 78 texturas, 0 erros, 0 avisos |
+| `python tools/build.py` | 21 JSON ok; `Vulpus.mcaddon` 200 KB |
+| `mock/teste_clas.mjs` (novo) | 0 falhas (criar, convites, cargos, banco, 8 níveis, base e custo de mover, proteção, zona, explosões, entidades, guerra completa, aliados, chat do clã, apelido e temas no BP e no chat, staff, dissolver) |
+| `mock/teste.mjs`, `teste_fase2.mjs`, `teste_fumaca.mjs`, `teste_efeitos.mjs`, `mock_leilao/teste*.mjs` | 0 falhas (ajustados: 34 comandos e Nível pelo Perfil) |
+| `mock/teste_clas_adv.mjs` (revisão adversarial) | 0 falhas |
+| BDS 1.26.52.3 (VulpusTeste) | sem erro de script; `help` mostra os 10 comandos novos, `/vulpus:c` com 8 parâmetros; servidor parado |
+
+**Armadilhas novas**
+- No Bash deste PC, heredoc engole `\\`: para editar arquivo com barra invertida via Python, grave o script num arquivo antes.
+- `mock/mc_server.mjs` ganhou `world.beforeEvents` (6 sinais), `Entity` com `matches` e `Direction` (cópia anterior em `mc_server.mjs.antes_clas`).
+- Os temas de cor existem em dois lugares (`cores.js` e `vulpus_chat_bp/scripts/formato.js`); o `teste_clas.mjs` confere que pintam igual.
+
+**Revisão adversarial (2026-10-04)** — teste novo `mock/teste_clas_adv.mjs` (97 checagens; mais de 30 falhavam no código anterior, e ele quebrava com o histórico corrompido)
+- **Achado no BDS:** `/vulpus:c` tinha 16 parâmetros e o jogo aceita 8: o comando nem registrava. Agora são 8 (palavras soltas, ou a frase entre aspas); o teste confere o limite em todos os comandos.
+- **Proteção:** todo balde (vazio, de peixe, de neve) conta como líquido e vale também na zona; carga de vento e vara de pesca barradas; anzol de estranho que fisga bicho da base some (`projectileHitEntity`); cama com a cabeça entrando na base barrada; zona + 1 bloco para mecanismos (o pistão empurra 12); aliado com acesso não planta nem põe linha/placa/estandarte; explosão só olha as bases perto (200 explosões de 1000 blocos com 150 bases: ~20 ms).
+- **Base:** tirar e marcar de novo não pula mais a espera de 24 h (campo novo `baseMudou`).
+- **Banco:** limite de saque NaN virava "sem limite"; agora vira 0 (e `saqueDisponivel` nunca devolve NaN).
+- **Guerra:** abate só conta entre quem já era do clã na declaração (conta reserva entrando em clã aberto no meio da guerra não vira ponto). Histórico e abates corrompidos no mundo derrubavam o menu (`null` no histórico): agora são saneados.
+- **Nomes:** nome de clã e apelido só com alfabeto latino (com acentos), contra o "а" cirílico; nome de clã compara só letras e números ("Raposas-da-Lua" = "Raposas da Lua"); apelido barra cargo/Kiza/pessoa com trocas de número ("K1za", "4dm1n", "K0pe") e "Porteiro"; glyphs somem de nome, descrição e casas; apelido salvo fora das regras não aparece (BP e chat).
+- `mock/mc_server.mjs`: `afterEvents.projectileHitEntity`, `Entity.isValid` e `Entity.remove()` (cópia anterior em `mc_server.mjs.antes_adv`).
+
 ## Fase 2 (0.2.0): situação em 2026-10-03
 
 Tudo implementado, integrado, revisado e conferido fora do jogo (BDS e API simulada). Falta o teste do dono no jogo e o commit.
@@ -108,6 +159,7 @@ Addon de Minecraft Bedrock para o servidor Vulpus. O mascote é a Kiza Misuchi, 
 | `docs/resultados/texturas.md` | relatório da frente de texturas, com as decisões tomadas |
 | `docs/workflow_implementar.js` | roteiro do workflow usado (6 frentes, verificação e revisões) |
 | `docs/spec/03_spec_fase2.md` | especificação da fase 2 (fonte da verdade da 0.2.0) |
+| `docs/spec/04_spec_clas.md` | desenho final dos clãs e do visual Kitsune |
 | `docs/previas/glyphs.png` | folha com os glyphs, o título VULPUS e as texturas do tema Black |
 | `docs/workflow_fase2.js` | roteiro do workflow da fase 2 |
 

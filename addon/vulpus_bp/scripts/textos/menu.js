@@ -35,6 +35,9 @@ export const DICAS = [
   "Ativo no jogo = mais XP.",
   "Tema Black? Passa em Ajustes.",
   "Venda e compre no Leilão!",
+  "Junte a turma num clã!",
+  "Clã forte tem base protegida.",
+  "Fale só com o clã: /vulpus:c",
 ];
 
 // Rótulos dos slots (~70px de largura)
@@ -46,7 +49,6 @@ export const VOLTAR = "Voltar";
 export const CAUDAS = "Caudas";
 /** @param {number} itens  na caixa de retirada */
 export const LEILAO = (itens) => (itens > 0 ? `Leilão (${itens})` : "Leilão");
-export const NIVEL = "Nível";
 export const PERFIL = "Perfil";
 export const AJUSTES = "Ajustes";
 export const REGRAS = "Regras";

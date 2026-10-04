@@ -1,5 +1,6 @@
 // @ts-check
-// Códigos dos glyphs do RP (font/glyph_E2.png e glyph_E3.png). Tabela fixa: docs/spec/03_spec_fase2.md §4.2.
+// Códigos dos glyphs do RP (font/glyph_E2.png e glyph_E3.png). Tabela fixa: docs/spec/03_spec_fase2.md §4.2
+// (a linha dos clãs, códigos E230 a E235, está em docs/spec/04_spec_clas.md).
 
 export const G = Object.freeze({
   BROTO: "\uE200",
@@ -25,6 +26,12 @@ export const G = Object.freeze({
   BUSCA: "\uE224",
   HISTORICO: "\uE225",
   ENCANTADO: "\uE226",
+  ESCUDO: "\uE230",
+  BANDEIRA: "\uE231",
+  TORRE: "\uE232",
+  PATA: "\uE233",
+  TROFEU: "\uE234",
+  GUERRA: "\uE235",
   TITULO: "\uE300\uE301\uE302\uE303\uE304",
 });
 

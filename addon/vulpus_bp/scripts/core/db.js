@@ -30,9 +30,11 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {{ dia: string, sequencia: number }} diaria  dia (Brasília, "2026-10-02") da última diária e dias seguidos
  * @property {Casa[]} casas
  * @property {import("./teleporte.js").Local | null} voltar
- * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema }} ajustes
- *   hud (scoreboard lateral) null = usar config().hudPadrao
+ * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema, cla: boolean }} ajustes
+ *   hud (scoreboard lateral) null = usar config().hudPadrao; cla = linha do clã no placar
  * @property {boolean} recebeuItem
+ * @property {string} apelido  nome de exibição (só vale com o selo Kitsune; "" = o nome da conta)
+ * @property {string} temaNome  tema de cor do nome (cores.js; só vale com o selo Kitsune; "" = sem tema)
  */
 
 /** Teto por propriedade (o jogo aceita até 32767 caracteres). */
@@ -57,8 +59,10 @@ function dadosNovos() {
     diaria: { dia: "", sequencia: 0 },
     casas: [],
     voltar: null,
-    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja" },
+    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja", cla: true },
     recebeuItem: false,
+    apelido: "",
+    temaNome: "",
   };
 }
 
@@ -153,8 +157,11 @@ function completar(lido) {
       tpa: booleano(ajustes.tpa, base.ajustes.tpa),
       sons: booleano(ajustes.sons, base.ajustes.sons),
       tema: ajustes.tema === "black" ? "black" : "laranja",
+      cla: booleano(ajustes.cla, base.ajustes.cla),
     },
     recebeuItem: booleano(lido.recebeuItem, base.recebeuItem),
+    apelido: typeof lido.apelido === "string" ? lido.apelido.slice(0, 16) : base.apelido,
+    temaNome: typeof lido.temaNome === "string" ? lido.temaNome.slice(0, 16) : base.temaNome,
   };
 }
 
