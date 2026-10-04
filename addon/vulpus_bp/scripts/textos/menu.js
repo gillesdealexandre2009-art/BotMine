@@ -53,5 +53,6 @@ export const PERFIL = "Perfil";
 export const AJUSTES = "Ajustes";
 export const REGRAS = "Regras";
 export const STAFF = "Staff";
+export const DONO = "Dono";
 
 export const CMD_MENU = "Abre o menu do Vulpus";

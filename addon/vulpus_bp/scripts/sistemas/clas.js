@@ -218,7 +218,7 @@ async function menuVerCla(player, claId, voltar) {
     erro(player, textos.CLA_SUMIU);
     return voltar();
   }
-  const lider = membroDe(cla, cla.dono)?.nome ?? "?";
+  const lider = cla.dono ? (membroDe(cla, cla.dono)?.nome ?? "?") : textos.SEM_LIDER;
   const lista = new Lista(textos.TITULO_VER(cla.tag)).texto(textos.FICHA(cla, lider, defNivel(cla.nivel).membros));
   if (!claDe(player)) {
     lista.botao(cla.aberto ? textos.BOTAO_ENTRAR : textos.BOTAO_PEDIR, ICONES.nova, (p) => {
@@ -846,7 +846,7 @@ async function menuClaStaff(player, claId, voltar) {
   const cla = claPorId(claId);
   if (!cla || !ehStaff(player)) return voltar();
   const aqui = () => menuClaStaff(player, claId, voltar);
-  const lider = membroDe(cla, cla.dono)?.nome ?? "?";
+  const lider = cla.dono ? (membroDe(cla, cla.dono)?.nome ?? "?") : textos.SEM_LIDER;
   const guerra = guerraDe(cla.id);
   const lista = new Lista(textos.TITULO_VER(cla.tag)).texto(textos.FICHA_STAFF(cla, lider, defNivel(cla.nivel).membros, guerra));
   lista.botao(textos.BOTAO_MUDAR_TAG, ICONES.editar, async (p) => {

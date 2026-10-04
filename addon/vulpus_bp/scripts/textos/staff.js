@@ -18,6 +18,7 @@ export const BOTAO_CARGOS = "Cargos e Kitsune";
 export const BOTAO_LEILAO = "Leilão (staff)";
 export const BOTAO_CLAS = "Clãs (staff)";
 export const BOTAO_ITEM = "Pegar item do menu";
+export const BOTAO_DONO = "Painel de Dono";
 
 export const TITULO_CONFIG = "Configurações do Vulpus";
 export const CONFIG_ESCOLHA = "§7O que você quer ajustar?";

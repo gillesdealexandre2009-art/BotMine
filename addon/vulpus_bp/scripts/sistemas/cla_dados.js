@@ -54,7 +54,7 @@ import { aoMinutoAtivo } from "./caudas.js";
  * @property {number} emblema  índice em EMBLEMAS
  * @property {string} desc
  * @property {number} criado  ms
- * @property {string} dono  id do líder
+ * @property {string} dono  id do líder ("" = time sem líder: só o Painel de Dono cria ou deixa assim)
  * @property {Membro[]} membros
  * @property {boolean} aberto  aberto = entra direto; fechado = pede para entrar
  * @property {{ id: string, nome: string, t: number }[]} pedidos  pedidos de entrada (fechado)
@@ -193,10 +193,12 @@ function completarCla(lido, id) {
       saque: { dia: typeof saque.dia === "string" ? saque.dia : "", valor: inteiro(saque.valor, 0) },
     });
   }
-  if (!membros.length) return undefined;
+  // dono "" = sem líder de propósito (Painel de Dono): pode até ficar sem membros, e ninguém é Líder.
+  const semLider = lido.dono === "";
+  if (!membros.length && !semLider) return undefined;
   // Exatamente um líder: o dono, se ainda for membro; senão quem tiver o maior cargo.
-  let dono = typeof lido.dono === "string" && vistos.has(lido.dono) ? lido.dono : undefined;
-  if (!dono) {
+  let dono = semLider ? "" : typeof lido.dono === "string" && vistos.has(lido.dono) ? lido.dono : undefined;
+  if (dono === undefined) {
     const ordenados = [...membros].sort((a, b) => CARGOS_CLA.indexOf(a.cargo) - CARGOS_CLA.indexOf(b.cargo) || a.desde - b.desde);
     dono = ordenados[0].id;
   }
@@ -536,7 +538,7 @@ function gravar(cla) {
 
 /**
  * Cria o clã com o fundador como líder (sem cobrar: quem chama cobra antes).
- * @param {{ id: string, nome: string }} fundador
+ * @param {{ id: string, nome: string } | null} fundador  null = sem líder e sem membros (só o Painel de Dono)
  * @param {{ nome: string, tag: string, cor: string }} dados
  * @returns {Cla | undefined} undefined se não gravou
  */
@@ -553,8 +555,8 @@ export function novoCla(fundador, dados) {
       tag: dados.tag,
       cor: dados.cor,
       criado: agora,
-      dono: fundador.id,
-      membros: [{ id: fundador.id, nome: fundador.nome, cargo: "lider", desde: agora }],
+      dono: fundador ? fundador.id : "",
+      membros: fundador ? [{ id: fundador.id, nome: fundador.nome, cargo: "lider", desde: agora }] : [],
       aberto: false,
     },
     id,
@@ -563,7 +565,7 @@ export function novoCla(fundador, dados) {
   salvarMundo(CHAVE_SEQ, n + 1);
   clas.set(id, cla);
   reindexar();
-  notificar([fundador.id]);
+  notificar(fundador ? [fundador.id] : []);
   return cla;
 }
 

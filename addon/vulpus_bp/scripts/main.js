@@ -22,4 +22,5 @@ import "./sistemas/cla_terreno.js";
 import "./sistemas/clas.js";
 import "./sistemas/regras.js";
 import "./sistemas/staff.js";
+import "./sistemas/dono.js";
 import "./sistemas/boas_vindas.js";

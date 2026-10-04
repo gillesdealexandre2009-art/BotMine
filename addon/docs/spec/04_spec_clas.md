@@ -28,7 +28,7 @@ Imports sem ciclo: `cla_dados → caudas`; `cla_guerra → cla_dados`; `cla_terr
 | `vulpus:cla:log` | últimas 40 ações da staff |
 | `DadosJogador` | `+ apelido`, `+ temaNome`, `+ ajustes.cla` (linha do clã no placar) |
 
-- A fonte da verdade é o registro de cada clã; os índices (tag, nome, quem é de qual clã) são montados em memória a partir dele. Dado ilegível fica de fora (log); campo errado ganha o padrão; exatamente um líder; listas com teto (JSON bem abaixo de 30.000).
+- A fonte da verdade é o registro de cada clã; os índices (tag, nome, quem é de qual clã) são montados em memória a partir dele. Dado ilegível fica de fora (log); campo errado ganha o padrão; exatamente um líder (ou nenhum, com `dono: ""`, só pelo Painel de Dono); listas com teto (JSON bem abaixo de 30.000).
 - `editarCla(id, fn)` edita uma cópia e só troca a memória se gravou; `fn` pode devolver `false` para desistir. `moverBanco` nunca deixa negativo nem passa de 1e9.
 - XP por depósito só na parte que passa do maior aporte já visto (`aporte = depositado - sacado`): sacar e depositar de novo não rende XP.
 - Convites ficam só em memória (5 min). Pedidos de entrada valem 3 dias.

@@ -4,6 +4,7 @@
 import { CHAVE_SPAWN, ICONES, VERSAO } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { config, lerMundo, salvarConfig, todosJogadores } from "../core/db.js";
+import { ehDono } from "../core/dono.js";
 import { Lista, perguntar } from "../core/forms.js";
 import { online } from "../core/jogadores.js";
 import { ehStaff } from "../core/permissoes.js";
@@ -13,6 +14,7 @@ import * as textos from "../textos/staff.js";
 import { garantirItem } from "./boas_vindas.js";
 import { DAR_MAXIMO, darCaudas } from "./caudas.js";
 import { menuClasStaff } from "./clas.js";
+import { menuDono } from "./dono.js";
 import { menuCargos } from "./identidade.js";
 import { menuLeilaoStaff } from "./leilao.js";
 import { definirSpawn } from "./spawn.js";
@@ -135,7 +137,7 @@ export async function menuStaff(player, voltar) {
     return;
   }
   const aqui = () => menuStaff(player, voltar);
-  await new Lista(textos.TITULO)
+  const lista = new Lista(textos.TITULO)
     .texto(
       textos.CORPO({
         versao: VERSAO,
@@ -152,9 +154,10 @@ export async function menuStaff(player, voltar) {
     .botao(textos.BOTAO_CLAS, ICONES.cla, (p) => menuClasStaff(p, aqui))
     .botao(textos.BOTAO_ITEM, ICONES.nova, (p) => {
       if (garantirItem(p) === "tinha") msg(p, textos.ITEM_JA_TEM);
-    })
-    .voltar(voltar)
-    .abrir(player);
+    });
+  // Painel de Dono: separado do da staff, o botão só aparece para quem é dono (staff comum não é).
+  if (ehDono(player)) lista.botao(textos.BOTAO_DONO, ICONES.dono, (p) => menuDono(p, aqui));
+  await lista.voltar(voltar).abrir(player);
 }
 
 /**

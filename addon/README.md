@@ -211,6 +211,17 @@ O clã é a turma de cada um na toca. Abre pelo botão **Clã** do menu ou por `
 - **Placar do lado:** mostra a tag e o nome do clã e, em guerra, o placar (dá para esconder a linha do clã em Ajustes).
 - **Staff:** Staff > Clãs (staff): ver qualquer clã, trocar a tag, encerrar uma guerra sem vencedor (cada lado recebe a sua parte), remover o clã (o banco volta para quem lidera) e o log.
 
+## Painel de Dono
+
+Painel só do **dono do servidor**, separado do da staff (staff comum e operador não são dono). "Time" aqui é o clã.
+
+- **Como virar dono:** a primeira vez, um **Operador** usa `/vulpus:dono reivindicar` (só funciona enquanto não existe nenhum dono). Depois disso, só um dono adiciona ou tira outros (Painel > Donos, ou `/vulpus:dono adddono <nome>` / `remdono <nome>`); o último dono não sai. Também dá para fixar donos pelo nome da conta em `DONOS`, no `vulpus_bp/scripts/config.js` (vazio por padrão; com um nome lá, o reivindicar fecha).
+- **Como abrir:** `/vulpus:dono`, ou Staff > Painel de Dono (o botão só aparece para dono). Dono que não é staff vê o botão **Dono** no canto do menu.
+- **Times:** criar sem cobrar Caudas (nome, tag e cor com as validações de sempre; com ou sem líder), definir ou trocar o líder (o anterior vira Vice), definir o nível de 1 a 8 (a base acompanha o raio do nível), adicionar e remover pessoas sem convite (também offline, pelo nome de quem já entrou no mundo), forçar alguém a mudar de time (sai do anterior: um time por pessoa) e consultar o time de alguém. Time **sem líder** funciona normal: ninguém tem os poderes de Líder até o dono definir um.
+- **Guerras:** começar agora entre dois times (sem aviso, sem custo, sem baú e sem exigir nível, pessoas ou trégua; fica marcada como forçada), somar ou definir pontos, finalizar na hora (vence quem tem mais pontos, ou o lado que o dono escolher), cancelar (sem vencedor; as apostas voltam), definir o vencedor e ver as guerras em andamento e as finalizadas. Finalizada é finalizada de verdade: a proteção volta, abates param de contar, sai do placar e dos menus, o baú é pago uma vez só, e finalizar ou cancelar de novo responde "Essa guerra já foi finalizada". Definir o vencedor de uma guerra já finalizada só corrige o histórico (e não vale se o baú já foi pago a outro lado).
+- **Log do dono:** cada ação (e cada tentativa de quem não é dono) fica registrada com data, hora, alvo e ok/erro; as últimas 200 aparecem em Painel > Log do dono, e o Content Log mostra as linhas `[Vulpus][Dono]`.
+- **Atalhos:** `/vulpus:dono ajuda` lista todos (`criar "Time Azul" AZL azul`, `lider AZL Fulano`, `nivel AZL 3`, `add AZL Fulano`, `remover Fulano`, `mover Fulano AZL`, `time Fulano`, `guerra AZL VRM`, `pontos AZL 2` ou `pontos AZL 5 definir`, `finalizar AZL [VRM]`, `cancelar AZL`, `vencedor <id> AZL`, `guerras`, `log`). Nome com espaço vai entre aspas.
+
 ## Visual Kitsune
 
 Mimo para quem tem o selo **Kitsune** (booster do Discord). **É só visual**, sem nenhuma vantagem no jogo. Fica em Ajustes > Visual Kitsune ou `/vulpus:apelido`.
@@ -267,6 +278,8 @@ Só para a staff:
 | `/vulpus:kitsune <jogador>` | liga ou desliga o selo Kitsune |
 | `/vulpus:resetapelido <jogador>` | tira o apelido e a cor do nome de alguém |
 | `/vulpus:clabypass` | liga ou desliga o bypass da proteção dos clãs (fica no log) |
+
+Só para o dono: `/vulpus:dono [ação]` abre o Painel de Dono ou faz uma ação dele (veja "Painel de Dono"); `/vulpus:dono reivindicar` vale para o primeiro Operador enquanto não houver dono.
 
 **Quem é staff:** operador do mundo (ou quem tem nível de comando de operador), ou quem tiver a tag `vulpus:staff` ou `vulpus:admin`. Para dar a tag, use `/tag NOME add vulpus:staff` ou, pelo menu, Staff > Cargos e Kitsune.
 

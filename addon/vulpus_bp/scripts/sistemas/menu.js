@@ -5,6 +5,7 @@ import { ICONES, ITEM_MENU } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { Hub } from "../core/forms.js";
 import { online } from "../core/jogadores.js";
+import { ehDono } from "../core/dono.js";
 import { ehStaff } from "../core/permissoes.js";
 import { formatarNumero, rodarSeguro } from "../core/util.js";
 import * as textos from "../textos/menu.js";
@@ -12,6 +13,7 @@ import { menuAjustes } from "./ajustes.js";
 import { menuCasas } from "./casas.js";
 import { menuCaudas, saldo } from "./caudas.js";
 import { menuCla, rotuloHub } from "./clas.js";
+import { menuDono } from "./dono.js";
 import { selo } from "./identidade.js";
 import { menuLeilao, resumoCaixa } from "./leilao.js";
 import { nomeVisivel } from "./kitsune.js";
@@ -44,6 +46,18 @@ function corpo(player) {
 }
 
 /**
+ * Botão do canto: Staff para a staff (o Painel de Dono fica dentro dela); Dono para quem é dono sem ser staff.
+ * @param {Player} player
+ * @param {() => any} volta
+ * @returns {import("../core/forms.js").Botao | undefined}
+ */
+function cantoHub(player, volta) {
+  if (ehStaff(player)) return { texto: textos.STAFF, icone: ICONES.staff, acao: (p) => menuStaff(p, volta) };
+  if (ehDono(player)) return { texto: textos.DONO, icone: ICONES.dono, acao: (p) => menuDono(p, volta) };
+  return undefined;
+}
+
+/**
  * Abre o menu principal. Os submenus recebem um "voltar" que reabre o Hub.
  * @param {Player} player
  */
@@ -63,7 +77,7 @@ export async function abrirMenu(player) {
     .slot(7, { texto: rotuloHub(player), icone: ICONES.cla, acao: (p) => menuCla(p, volta) })
     .slot(8, { texto: textos.AJUSTES, icone: ICONES.ajustes, acao: (p) => menuAjustes(p, volta) })
     .slot(9, { texto: textos.REGRAS, icone: ICONES.regras, acao: (p) => menuRegras(p, volta) })
-    .staff(ehStaff(player) ? { texto: textos.STAFF, icone: ICONES.staff, acao: (p) => menuStaff(p, volta) } : undefined)
+    .staff(cantoHub(player, volta))
     .abrir(player);
 }
 

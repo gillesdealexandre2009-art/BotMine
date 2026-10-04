@@ -34,19 +34,23 @@ import { claDe, claPorId, editarCla, membroDe, moverBanco, pode } from "./cla_da
  * @property {Record<string, number>} recentes  id da vítima → ms da última vez que ela rendeu ponto
  * @property {Record<string, number>} seq  abates seguidos de cada pessoa (zera quando ela morre)
  * @property {Record<string, number>} cabecas  id do líder → ms da última recompensa pela cabeça dele
+ * @property {boolean} [forcada]  começada pelo Painel de Dono (sem aviso, sem custo e sem baú)
  */
 
 /**
  * @typedef {object} GuerraFim
+ * @property {string} id  o mesmo da Guerra ("" em histórico antigo)
  * @property {string} a
  * @property {string} b
  * @property {{ a: string, b: string }} tags
  * @property {{ a: number, b: number }} pontos
  * @property {Lado | null} vencedor
- * @property {"tempo" | "rendicao" | "staff" | "dissolvido"} motivo
+ * @property {"tempo" | "rendicao" | "staff" | "dissolvido" | "dono" | "cancelada"} motivo  dono/cancelada = Painel de Dono
  * @property {number} premio
  * @property {number} fim
  * @property {{ nome: string, n: number, lado: Lado } | null} cacador  quem mais abateu (o "Caçador" da guerra)
+ * @property {boolean} forcada  começada pelo Painel de Dono
+ * @property {boolean} porDono  vencedor definido pelo dono depois do fim (o baú não é pago de novo)
  */
 
 /** @typedef {{ guerras: Guerra[], historico: GuerraFim[], recargas: Record<string, number> }} EstadoGuerras */
@@ -106,7 +110,7 @@ function lerAbates(v) {
  * Lê o estado das guerras (uma vez), descartando o que estiver quebrado.
  * @returns {EstadoGuerras}
  */
-function lerEstado() {
+export function lerEstado() {
   if (estado) return estado;
   const lido = lerMundo(CHAVE, {});
   const bruto = lido && typeof lido === "object" ? lido : {};
@@ -130,24 +134,28 @@ function lerEstado() {
       recentes: lerNumeros(g.recentes),
       seq: lerNumeros(g.seq),
       cabecas: lerNumeros(g.cabecas),
+      forcada: g.forcada === true,
     }));
   estado = {
     guerras,
     historico: (Array.isArray(bruto.historico) ? bruto.historico : [])
       .filter((h) => h && typeof h.a === "string" && typeof h.b === "string")
       .map((h) => ({
+        id: typeof h.id === "string" ? h.id : "",
         a: h.a,
         b: h.b,
         tags: parTexto(h.tags),
         pontos: par(h.pontos),
         vencedor: h.vencedor === "a" || h.vencedor === "b" ? h.vencedor : null,
-        motivo: ["tempo", "rendicao", "staff", "dissolvido"].includes(h.motivo) ? h.motivo : "tempo",
+        motivo: ["tempo", "rendicao", "staff", "dissolvido", "dono", "cancelada"].includes(h.motivo) ? h.motivo : "tempo",
         premio: num(h.premio),
         fim: num(h.fim),
         cacador:
           h.cacador && typeof h.cacador.nome === "string" && (h.cacador.lado === "a" || h.cacador.lado === "b")
             ? { nome: h.cacador.nome, n: num(h.cacador.n), lado: h.cacador.lado }
             : null,
+        forcada: h.forcada === true,
+        porDono: h.porDono === true,
       }))
       .slice(0, HISTORICO_MAXIMO),
     recargas: bruto.recargas && typeof bruto.recargas === "object" ? bruto.recargas : {},
@@ -156,7 +164,7 @@ function lerEstado() {
 }
 
 /** Grava o estado; tira recargas vencidas, vítimas e cabeças fora da janela antes. */
-function salvar() {
+export function salvar() {
   const e = lerEstado();
   const agora = Date.now();
   const recarga = Math.max(0, config().recargaGuerraDias) * DIA_MS;
@@ -329,11 +337,12 @@ function falhar(player, texto) {
 
 /**
  * Começa a guerra: o alvo põe a parte dele no baú (o que tiver no banco, até a aposta) e todo mundo é avisado.
+ * A forçada pelo dono não tem baú.
  * @param {Guerra} g
  */
-function iniciar(g) {
+export function iniciar(g) {
   const alvo = claPorId(g.b);
-  const aposta = Math.max(0, Math.floor(config().custoGuerra));
+  const aposta = g.forcada ? 0 : Math.max(0, Math.floor(config().custoGuerra));
   const parte = alvo ? Math.min(alvo.banco, aposta) : 0;
   if (parte > 0 && editarCla(g.b, (c) => moverBanco(c, "guerra", -parte, textos.AUTOR_GUERRA))) g.aposta.b = parte;
   g.estado = "ativa";
@@ -349,14 +358,16 @@ function iniciar(g) {
 
 /**
  * Termina a guerra e paga o baú: o vencedor leva tudo; no empate (ou se a staff encerrar) cada um recebe a sua parte.
+ * Só uma vez: a guerra sai da lista antes de pagar, e uma que já saiu não faz nada.
  * @param {Guerra} g
  * @param {GuerraFim["motivo"]} motivo
  * @param {Lado | null} [vencedor]  sem passar, vence quem tiver mais pontos
+ * @returns {boolean} se terminou agora (false = já tinha terminado)
  */
-function terminar(g, motivo, vencedor) {
+export function terminar(g, motivo, vencedor) {
   const e = lerEstado();
   const i = e.guerras.indexOf(g);
-  if (i < 0) return;
+  if (i < 0) return false;
   e.guerras.splice(i, 1);
   const lado = vencedor !== undefined ? vencedor : g.pontos.a > g.pontos.b ? "a" : g.pontos.b > g.pontos.a ? "b" : null;
   const total = g.aposta.a + g.aposta.b;
@@ -374,6 +385,7 @@ function terminar(g, motivo, vencedor) {
   }
   const cacador = cacadorDe(g);
   e.historico.unshift({
+    id: g.id,
     a: g.a,
     b: g.b,
     tags: g.tags,
@@ -383,18 +395,21 @@ function terminar(g, motivo, vencedor) {
     premio: lado ? total : 0,
     fim: Date.now(),
     cacador: cacador ? { nome: cacador.nome, n: cacador.n, lado: cacador.lado } : null,
+    forcada: g.forcada === true,
+    porDono: false,
   });
   e.historico = e.historico.slice(0, HISTORICO_MAXIMO);
   e.recargas[chavePar(g.a, g.b)] = Date.now();
   salvar();
   world.sendMessage(PREFIXO + textos.GUERRA_TERMINOU(g, lado, motivo, lado ? total : 0));
-  if (!cacador) return;
+  if (!cacador) return true;
   world.sendMessage(PREFIXO + textos.CACADOR(g, cacador.nome, cacador.lado, cacador.n));
   const quem = online().find((p) => p.id === cacador.id);
   if (quem) {
     som(quem, SONS.nivel);
     mostrarTitulo(quem, textos.TITULO_CACADOR, { subtitulo: textos.SUBTITULO_CACADOR(g, cacador.n) });
   }
+  return true;
 }
 
 /**

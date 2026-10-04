@@ -13,6 +13,15 @@ export const PREFIXO_JOGADOR = "vulpus:j:";
 export const CHAVE_CONFIG = "vulpus:config";
 export const CHAVE_SPAWN = "vulpus:spawn";
 
+/**
+ * Donos do servidor pelo nome da conta (sem diferenciar maiúsculas), ex.: ["MeuGamertag"]. Vazio por padrão:
+ * o primeiro dono entra com /vulpus:dono reivindicar (só Operador, e só enquanto não houver nenhum dono)
+ * e os outros são adicionados por um dono no Painel de Dono (core/dono.js). Com um nome aqui, reivindicar
+ * fica fechado. Dono não é o mesmo que staff: staff comum não é dono.
+ * @type {readonly string[]}
+ */
+export const DONOS = Object.freeze([]);
+
 /** Padrões editáveis pela staff (vulpus:config mescla por cima). Tempos em segundos, salvo "Min" e "Horas"; "Pct" é porcentagem. */
 export const PADROES = {
   esperaTeleporte: 3,
@@ -89,6 +98,7 @@ export const ICONES = {
   ajustes: "textures/ui/gear",
   regras: "textures/items/book_writable",
   staff: "textures/ui/permissions_op_crown",
+  dono: "textures/items/gold_helmet",
   nova: "textures/ui/plus",
   editar: "textures/ui/pencil_edit_icon",
   apagar: "textures/ui/icon_trash",

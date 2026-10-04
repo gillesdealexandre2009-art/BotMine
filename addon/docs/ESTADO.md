@@ -2,6 +2,46 @@
 
 > **Fase 2 (0.2.0) pronta fora do jogo.** Especificação em [`docs/spec/03_spec_fase2.md`](spec/03_spec_fase2.md): glyphs, tema Black, níveis e ranks, scoreboard lateral, leilão e o pack "Vulpus Chat". A seção "Fase 2" logo abaixo é a situação atual; o resto do arquivo é da fase 1 e continua valendo.
 
+## Painel de Dono: situação em 2026-10-04
+
+Pedido do dono (beta test): painel separado do da staff para mexer à força em times (clãs) e guerras, com permissão de dono conferida no backend e log próprio. Explicação para o dono no `README.md` ("Painel de Dono").
+
+| Frente | Arquivos | Situação |
+|---|---|---|
+| Permissão e log | `core/dono.js` (novo: `ehDono`, `reivindicarDono`, `adicionarDono`, `removerDono`, `registrarLogDono`, `logDono`), `config.js` (`DONOS` vazio, `ICONES.dono`) | **pronto** |
+| Ações | `sistemas/dono_acoes.js` (novo; cada ação passa por `executar`: confere `ehDono` antes de tudo e loga ok/erro) | **pronto** |
+| Painel e comando | `sistemas/dono.js` (novo: menus e `/vulpus:dono [ação] [a] [b] [c] [d]`), `textos/dono.js`, botão em `staff.js`, canto do Hub em `menu.js` (só dono que não é staff), `main.js` | **pronto** |
+| Teste | `C:/Users/gille/vt/mock/teste_dono.mjs` (novo, 212 checagens) | **0 falhas** |
+| Teste no jogo (cliente) | reivindicar, criar times, guerra forçada, finalizar | **pendente: o dono** |
+
+**Dados novos:** `vulpus:donos` (`[{id, nome, t}]`, até 20) e `vulpus:dono:log` (`[{t, a, x, al, ok, m}]`, as últimas 200, cortado para caber em 28.000 caracteres). Guerra ganhou `forcada`; o histórico ganhou `id`, `forcada` e `porDono`; motivos novos `dono` e `cancelada`. Dados antigos continuam valendo (campos novos com padrão).
+
+**Mudanças estruturais (mínimas) nos clãs e guerras**
+- `cla_dados.js`: `dono: ""` = time sem líder (de propósito); `completarCla` aceita isso (até sem membros) e ninguém vira Líder; `novoCla(null, ...)` cria sem líder. Motivo: o modelo exigia exatamente um líder e descartava clã sem membros.
+- `cla_acoes.js`: `limpar` exportado (mesma limpeza de nome); `acabarCla` não devolve o banco a ninguém se o time não tem líder (antes criaria um jogador `vulpus:j:` vazio).
+- `cla_guerra.js`: `lerEstado`, `salvar`, `iniciar` e `terminar` exportados; `iniciar` não cobra baú de guerra forçada; `terminar` devolve se terminou (já era idempotente: a guerra sai da lista antes de pagar; o ciclo, os abates, a proteção e a sidebar leem só a lista).
+- `clas.js` (fichas pública e da staff) e `textos/clas.js` (`SEM_LIDER`, motivos novos, "Vitória de X!" sem baú, "Sem vencedor" no cancelamento, histórico com "forçada" e "vencedor pelo dono").
+- Usos de `cla.dono` conferidos: `sair`, `transferirLideranca`, `dissolver`, `definirCargoPerms`, menus de membro/permissões e a cabeça do líder (`cla_guerra`) só comparam com o id de quem age, então "" nunca bate.
+
+**Decisões**
+- Adicionar pelo painel entra como Membro (não Recruta) e respeita o limite de pessoas do nível (suba o nível antes); quem já é de outro time sai dele antes.
+- Definir vencedor de guerra já finalizada só corrige o histórico (`porDono`) e é recusado se o baú já foi pago a outro lado (pagar de novo quebraria o "uma vez só").
+- Reivindicar fica fechado se `DONOS` tiver algum nome.
+- Testes antigos: `teste.mjs`, `teste_clas.mjs` e `teste_fumaca.mjs` esperavam 34 comandos; agora 35 (o `/vulpus:dono`, de propósito). Nada mais mudou neles.
+
+**Checagens (2026-10-04)**
+
+| Checagem | Resultado |
+|---|---|
+| `npm run check` (BP e chat) | 0 erros |
+| `node --check` nos `.js` do BP e do chat | 60 de 60 ok |
+| `python tools/verificar_ui.py` | 4 arquivos, 144 controles, 117 texturas, 0 erros, 0 avisos |
+| `python tools/build.py` | 0 erros; `Vulpus.mcaddon` 258 KB |
+| `mock/teste_dono.mjs` | 212 ok, 0 falhas |
+| `mock/teste.mjs`, `teste_clas.mjs`, `teste_clas_adv.mjs`, `teste_efeitos.mjs`, `teste_fase2.mjs`, `teste_fumaca.mjs`, `mock_leilao/teste*.mjs` | 0 falhas |
+| BDS 1.26.52.3 (VulpusTeste) | sem erro de script (só o aviso conhecido do alias `hud`); `help dono` mostra `/vulpus:dono` com 5 parâmetros; servidor parado |
+| `instalar_dev.py --mundo "Testes Claude" --chat` | copiado; packs já ativos |
+
 ## Temas do painel: situação em 2026-10-04
 
 Pedido do dono: 5 temas para o menu; Laranja e Black para todos, **Sakura**, **Lunar** e **Espírito** só com o selo Kitsune (tag `vulpus:kitsune`), cada um com painel, cabeçalho, botões (3 estados), X (3 estados), divisor, título VULPUS e logo próprios. Explicação para o dono no `README.md` ("Temas do menu"); prévia em `docs/previas/temas.png`.

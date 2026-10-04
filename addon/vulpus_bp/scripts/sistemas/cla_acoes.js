@@ -103,8 +103,8 @@ function meuCla(player, permissao) {
   return cla;
 }
 
-/** Espaços nas pontas saem, espaço repetido vira um, códigos § e glyphs (selos falsos) somem. @param {string} t */
-const limpar = (t) => t.replace(/§./g, "").replace(/[-]/g, "").trim().replace(/\s+/g, " ");
+/** Espaços nas pontas saem, espaço repetido vira um, códigos § e glyphs (selos falsos) somem (também no Painel de Dono). @param {string} t */
+export const limpar = (t) => t.replace(/§./g, "").replace(/[-]/g, "").trim().replace(/\s+/g, " ");
 
 /**
  * Valor inteiro entre 1 e VALOR_MAXIMO, ou undefined.
@@ -440,9 +440,11 @@ function acabarCla(cla) {
   encerrarGuerrasDe(cla.id);
   const atual = claPorId(cla.id);
   if (!atual || !apagarCla(cla.id)) return undefined;
-  if (atual.banco > 0) adicionarCaudas(atual.dono, atual.banco);
+  // Time sem líder (Painel de Dono): não há para quem devolver o banco.
+  const devolvido = atual.dono ? atual.banco : 0;
+  if (devolvido > 0) adicionarCaudas(atual.dono, devolvido);
   for (const [id, lista] of convites) convites.set(id, lista.filter((c) => c.claId !== cla.id));
-  return atual.banco;
+  return devolvido;
 }
 
 /**

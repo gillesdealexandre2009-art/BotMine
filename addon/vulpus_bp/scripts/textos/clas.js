@@ -160,6 +160,8 @@ export const FICHA = (cla, lider, max) =>
     `§7Fundado em §f${formatarData(cla.criado)}`,
     `§7Entrada: ${cla.aberto ? "§aaberta" : "§7por pedido"}`,
   ].join("\n");
+/** No lugar do nome do líder, quando o time está sem líder (Painel de Dono). */
+export const SEM_LIDER = "§8sem líder";
 export const BOTAO_ENTRAR = "Entrar no clã";
 export const BOTAO_PEDIR = "Pedir para entrar";
 
@@ -516,13 +518,21 @@ export const BOTAO_HISTORICO = "Histórico";
 export const TITULO_HISTORICO = "Guerras passadas";
 export const HISTORICO_VAZIO = "§7Nenhuma guerra ainda. Paz na toca!";
 /** @type {Readonly<Record<GuerraFim["motivo"], string>>} */
-const MOTIVOS_FIM = Object.freeze({ tempo: "fim do tempo", rendicao: "rendição", staff: "encerrada pela staff", dissolvido: "clã dissolvido" });
+const MOTIVOS_FIM = Object.freeze({
+  tempo: "fim do tempo",
+  rendicao: "rendição",
+  staff: "encerrada pela staff",
+  dissolvido: "clã dissolvido",
+  dono: "finalizada pelo dono",
+  cancelada: "cancelada pelo dono",
+});
 /** @param {GuerraFim} h @param {string} claId */
 export const LINHA_HISTORICO = (h, claId) => {
   const meu = h.a === claId ? "a" : "b";
   const resultado = h.vencedor === null ? "§7empate" : h.vencedor === meu ? "§avitória" : "§cderrota";
   const cacador = h.cacador ? ` §8• §6Caçador: §f${h.cacador.nome} §8(${h.cacador.n})` : "";
-  return `§8${formatarData(h.fim)} §f[${h.tags.a}] ${h.pontos.a} x ${h.pontos.b} [${h.tags.b}] ${resultado} §8(${MOTIVOS_FIM[h.motivo] ?? h.motivo})${cacador}`;
+  const extras = `${h.forcada ? " §8• forçada" : ""}${h.porDono ? " §8• vencedor pelo dono" : ""}`;
+  return `§8${formatarData(h.fim)} §f[${h.tags.a}] ${h.pontos.a} x ${h.pontos.b} [${h.tags.b}] ${resultado} §8(${MOTIVOS_FIM[h.motivo] ?? h.motivo})${cacador}${extras}`;
 };
 export const TITULO_DECLARAR = "Declarar guerra";
 /** @param {number} custo */
@@ -566,7 +576,13 @@ export const SUBTITULO_GUERRA = (g) => `§7[${g.tags.a}] x [${g.tags.b}]`;
 /** @param {Guerra} g @param {"a" | "b" | null} vencedor @param {GuerraFim["motivo"]} motivo @param {number} premio */
 export const GUERRA_TERMINOU = (g, vencedor, motivo, premio) =>
   `${glyph(G.GUERRA)} Fim da guerra ${TAG_GUERRA(g, "a")} §f${g.pontos.a} x ${g.pontos.b} ${TAG_GUERRA(g, "b")} §8(${MOTIVOS_FIM[motivo]})§r. ` +
-  (vencedor ? `Vitória de ${TAG_GUERRA(g, vencedor)}, que leva §6${formatarNumero(premio)}§r Caudas!` : "Empate: cada lado recebe a sua parte de volta.");
+  (vencedor
+    ? premio > 0
+      ? `Vitória de ${TAG_GUERRA(g, vencedor)}, que leva §6${formatarNumero(premio)}§r Caudas!`
+      : `Vitória de ${TAG_GUERRA(g, vencedor)}!`
+    : motivo === "cancelada"
+      ? "Sem vencedor: cada lado recebe a sua parte de volta."
+      : "Empate: cada lado recebe a sua parte de volta.");
 /** @param {Guerra} g @param {string} tag @param {string} matador @param {string} vitima */
 export const ABATE = (g, tag, matador, vitima) =>
   `${glyph(G.GUERRA)} §f${matador} §8[${tag}] §7abateu §f${vitima}§7. Placar: §f[${g.tags.a}] ${g.pontos.a} x ${g.pontos.b} [${g.tags.b}]`;
