@@ -17,6 +17,7 @@ export const BOTAO_DAR = "Dar Caudas";
 export const BOTAO_CARGOS = "Cargos e Kitsune";
 export const BOTAO_LEILAO = "Leilão (staff)";
 export const BOTAO_CLAS = "Clãs (staff)";
+export const BOTAO_CACADA = "Caçada (staff)";
 export const BOTAO_ITEM = "Pegar item do menu";
 export const BOTAO_DONO = "Painel de Dono";
 
@@ -26,6 +27,7 @@ export const GRUPO_TELEPORTE = "Teleporte e casas";
 export const GRUPO_CAUDAS = "Caudas e XP";
 export const GRUPO_LEILAO = "Leilão";
 export const GRUPO_CLAS = "Clãs e guerras";
+export const GRUPO_CACADA = "Caçada";
 export const GRUPO_GERAL = "Geral";
 /** Rótulos dos campos de configuração (as chaves são as de PADROES). */
 export const CAMPOS = {
@@ -74,12 +76,22 @@ export const CAMPOS = {
   ctfCaptura: "Bandeira: pontos por captura",
   ctfDevolver: "Bandeira: pontos por devolver a própria",
   ctfMatarCarregador: "Bandeira: pontos por derrubar quem leva a sua",
+  cacadaLigada: "Caçada aberta (pôr recompensa nova)",
+  cacadaMinimo: "Caçada: menor recompensa",
+  cacadaMaximo: "Caçada: maior recompensa de uma vez",
+  cacadaTaxaPct: "Caçada: taxa sobre o valor (%, some da economia)",
+  cacadaLimite: "Caçada: cabeças pagas por pessoa ao mesmo tempo",
+  cacadaVidaMin: "Caçada: vítima viva há pelo menos (min)",
+  cacadaRecargaHoras: "Caçada: a mesma pessoa caça a mesma cabeça a cada (h)",
+  cacadaDuracaoDias: "Caçada: cada parte volta para quem pagou em (dias)",
+  cacadaAnuncio: "Caçada: anunciar cabeça que passa de (0 = não)",
 };
 export const DICA_LINK = "discord.gg/convite";
 /** @param {string[]} mudou */
 export const CONFIG_SALVA = (mudou) => `Configurações salvas! Mudou: §e${mudou.join("§r, §e")}§r.`;
 export const CONFIG_IGUAL = "Nada mudou, tudo como estava.";
 export const PRECO_INVERTIDO = "O preço mínimo ficou maior que o máximo. Mantive os dois como estavam.";
+export const CACADA_INVERTIDA = "A menor recompensa ficou maior que a maior. Mantive as duas como estavam.";
 export const LINK_INVALIDO = "Esse link não parece um convite do Discord (ex.: discord.gg/vulpus). Mantive o anterior.";
 
 export const TITULO_DAR = "Dar Caudas";

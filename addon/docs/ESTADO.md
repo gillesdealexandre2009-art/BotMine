@@ -2,6 +2,46 @@
 
 > **Fase 2 (0.2.0) pronta fora do jogo.** Especificação em [`docs/spec/03_spec_fase2.md`](spec/03_spec_fase2.md): glyphs, tema Black, níveis e ranks, scoreboard lateral, leilão e o pack "Vulpus Chat". A seção "Fase 2" logo abaixo é a situação atual; o resto do arquivo é da fase 1 e continua valendo.
 
+## Caçada (recompensa por cabeças): situação em 2026-10-04
+
+Pedido do dono: pôr recompensa na cabeça de alguém, que só vale se quem matar for de fora do clã da vítima (aliados também não contam), no menu Caudas sem mexer no Hub. Desenho em [`docs/spec/05_spec_cacada.md`](spec/05_spec_cacada.md); explicação para o dono no `README.md` ("Caçada").
+
+| Frente | Arquivos | Situação |
+|---|---|---|
+| Regras, dados, menus e comandos | `sistemas/cacada.js`, `textos/cacada.js` (novos) | **pronto** |
+| Integração (mínima, por ganchos) | `caudas.js` (`adicionarSecaoCaudas`), `identidade.js` (`registrarMarcaNome`), `hud.js` + `textos/hud.js` (linha "Sua cabeça vale"), `staff.js` + `textos/staff.js` (botão, grupo "Caçada", faixas), `textos/regras.js`, `config.js`, `main.js` | **pronto** |
+| Glyph | `\uE236` CAVEIRA em `tools/gerar_glyphs.py`, `glyph_E2.png`, `glyphs.js`, prévia `docs/previas/glyphs.png` | **pronto** |
+| Teste | `C:/Users/gille/vt/mock/teste_cacada.mjs` (novo, 142 checagens) | **0 falhas** |
+| Teste no jogo (cliente) | README, "Teste rápido" item 13 e checklist item 16 | **pendente: o dono** |
+
+**Decisões**
+- **Taxa por fora:** quem põe 100 paga 110 (a taxa arredonda para cima e some); a cabeça vale 100 e o reembolso devolve 100.
+- **Prazo por parte:** cada pagador tem o próprio prazo de 7 dias, contado da última vez que pôs naquela cabeça (pôr mais renova a parte dele). Quem pôs depois não perde o prazo por causa de quem pôs antes.
+- **Pagadores em segredo** para o público (o mural mostra quantos); a staff vê os nomes. A vítima é avisada sem saber quem.
+- **Vida mínima** conta da última morte de qualquer tipo (monstro, queda, PvP que não pagou), guardada no mundo (sobrevive a reinício).
+- **Caçada fechada** (configuração): ninguém põe recompensa nova; as existentes continuam valendo, sendo caçadas e expirando.
+- **Alvo offline:** vale (procurar pelo nome no menu ou `/vulpus:recompensa`, com o jogador como texto); precisa já ter entrado na toca.
+- **Histórico curto** dos jogadores: só as caçadas; o log completo (pôs, caçou, expirou, staff tirou) fica com a staff.
+- **Formulário velho / clique duplo:** cada fluxo de pôr tem um número por pessoa; só o mais novo confirma, e uma vez só. Grava a cabeça antes de cobrar; na coleta apaga antes de pagar.
+
+**Testes antigos mudados de propósito** (cópias em `*.mjs.antes_cacada`): `teste.mjs`, `teste_clas.mjs`, `teste_dono.mjs` e `teste_fumaca.mjs` esperavam 35 comandos; agora 38 (`cacada`, `recompensa`, `tirarrecompensa`). Nada mais mudou neles; o `mc_server.mjs` não mudou.
+
+**Checagens (2026-10-04)**
+
+| Checagem | Resultado |
+|---|---|
+| `npm run check` (BP e chat) | 0 erros |
+| `node --check` nos `.js` do BP e do chat | 65 de 65 ok |
+| `python tools/gerar_glyphs.py` | 14 PNGs; `glyph_E2.png` e a prévia mudaram (a caveira nova) |
+| `python tools/verificar_ui.py` | 4 arquivos, 144 controles, 120 texturas, 0 erros, 0 avisos |
+| `python tools/build.py` | 0 erros; 41 JSON; `Vulpus.mcaddon` 301 KB |
+| `mock/teste_cacada.mjs` | 142 ok, 0 falhas |
+| `mock/teste.mjs`, `teste_clas.mjs`, `teste_clas_adv.mjs`, `teste_ctf.mjs`, `teste_dono.mjs`, `teste_efeitos.mjs`, `teste_fase2.mjs`, `teste_fumaca.mjs`, `mock_leilao/teste*.mjs` | 0 falhas |
+| BDS 1.26.52.3 (VulpusTeste) | sem erro de script (só o aviso conhecido do alias `hud`); `help cacada`, `help recompensa` (`<jogador: string> <valor: int>`) e `help tirarrecompensa` ok; `reload` sem erro; servidor parado |
+| `instalar_dev.py --mundo "Testes Claude" --chat` | copiado; packs já ativos |
+
+**O que só o cliente confirma:** a caveira de 9x9 alinhada com o texto no nameTag de 3 linhas e na sidebar, e se o `owner` do projétil chega quando o jogo não preenche o `damagingEntity` (o normal é o próprio atirador vir no `damagingEntity`).
+
 ## Capture the Flag: situação em 2026-10-04
 
 Pedido do dono: CTF integrado às guerras de clãs (bandeira obrigatória por base, todos sabem onde fica, captura +10, devolver +2, derrubar quem leva +3, modo evento com duração em minutos no Painel de Dono). Desenho em [`docs/spec/04_spec_clas.md`](spec/04_spec_clas.md) §7; explicação para o dono no `README.md` ("Capture the Flag").

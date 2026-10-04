@@ -252,6 +252,21 @@ Mimo para quem tem o selo **Kitsune** (booster do Discord). **É só visual**, s
 - **Perdeu o selo:** o tema que a pessoa escolheu para o clã sai e a tag volta para a cor normal que o clã tinha antes (ou a primeira cor, se aquela não estiver liberada). Se ela estava offline quando o selo saiu, isso acontece assim que entrar (e a cada 10 s para quem está online). Se outro Kitsune trocou o tema do clã depois, o tema dele fica.
 - A staff tira o apelido e a cor de alguém em Staff > Cargos e Kitsune ou com `/vulpus:resetapelido <jogador>`.
 
+## Caçada (recompensa por cabeças)
+
+Ponha Caudas na cabeça de alguém: quem derrubar essa pessoa em PvP leva tudo. Fica em **Caudas > Caçada > Mural de recompensas** (o Hub não mudou) ou `/vulpus:cacada`.
+
+- **Pôr recompensa:** no mural, "Pôr recompensa" mostra quem está online e tem "Procurar pelo nome" para quem está offline (precisa já ter entrado na toca). Ou `/vulpus:recompensa <jogador> <valor>` (nome com espaço vai entre aspas). Vale de **50 a 100.000** Caudas, que saem do saldo **na hora** (é a garantia), mais **10% de taxa** que some da economia (arredonda para cima). Antes de pagar aparece a conta (valor, taxa e total).
+- **Regras de quem põe:** na própria cabeça não dá. Várias pessoas somam na mesma cabeça; pôr de novo na mesma soma na sua parte. Cada pessoa tem parte em no máximo **5 cabeças** ao mesmo tempo. Quem pagou fica em segredo no mural (a staff vê); a vítima é avisada de que alguém pôs, sem saber quem.
+- **Quem leva:** quem der o **golpe final em PvP** (flecha, tridente e outros projéteis contam para quem atirou) leva **tudo** e a cabeça zera. **Não vale:** quem é do **mesmo clã** da vítima, de clã **aliado** do clã dela, quem **pagou** por aquela cabeça, a própria vítima, e morte por monstro, queda, lava ou qualquer coisa sem jogador. Quem matou e não levou recebe o motivo no chat.
+- **Anti-farm:** a vítima precisa estar **viva há 5 min** (desde a última morte, de qualquer jeito) e cada pessoa caça a **mesma** cabeça no máximo **1 vez a cada 24 h**. Fora isso, nada barra.
+- **Prazo:** cada parte vale **7 dias** a partir da última vez que aquela pessoa pôs. Sem caçador, a parte volta para quem pagou **sem a taxa**, direto no saldo, até offline (aparece "+N Caudas (recompensa sem caçador)" para quem está online).
+- **Diversão:** o mural lista as cabeças da mais valiosa para a menor, com quem está online e quanto falta para a parte mais antiga voltar; cabeça que passa de **500** é anunciada para todos (uma vez); a caçada é anunciada para todos ("Fulano caçou a cabeça de Beltrano e levou X Caudas!") com som, título e chamas; quem tem a cabeça a prêmio ganha uma **caveira com o valor curto** (ex.: "1,2k") em cima do nome e a linha "Sua cabeça vale X" no placar do lado; tem o **Ranking de caçadores** (total levado) e as **Últimas caçadas**.
+- **Staff:** Staff > Caçada (staff) lista as cabeças com quem pagou; "Tirar e devolver" devolve a cada pagador (sem a taxa). Também `/vulpus:tirarrecompensa <jogador>`. O "Log da Caçada" mostra quem pôs, quem caçou, o que expirou e o que a staff tirou (as últimas 100).
+- **Valores** (Staff > Configurações > Caçada): aberta ou fechada (fechada = ninguém põe recompensa nova; as que existem continuam valendo e expirando), menor e maior recompensa, taxa (%), cabeças por pessoa, vida mínima (min), espera para caçar a mesma cabeça (h), prazo (dias) e o valor do anúncio (0 = não anuncia).
+- **Não mexe na guerra nem nas bandeiras:** a Caçada é paralela; um abate de guerra também pode render a recompensa, mas não muda pontos.
+- **Sem pay-to-win:** só Caudas do jogo; o selo Kitsune não dá nada aqui.
+
 ## Comandos
 
 Os comandos funcionam com o `vulpus:` na frente e, na maioria, também sem ele (por exemplo, `/menu`). O `/hud` curto já é do jogo, então use sempre `/vulpus:hud`.
@@ -271,6 +286,8 @@ Os comandos funcionam com o `vulpus:` na frente e, na maioria, também sem ele (
 | `/vulpus:tpanegar [jogador]` | recusa um pedido de TPA (sem nome: igual ao `tpaceitar`) |
 | `/vulpus:caudas` | abre o menu das Caudas (a moeda do jogo) |
 | `/vulpus:diaria` | pega a recompensa diária |
+| `/vulpus:cacada` | abre o mural da Caçada |
+| `/vulpus:recompensa <jogador> <valor>` | põe Caudas na cabeça de alguém (online ou offline) |
 | `/vulpus:leilao` | abre o leilão |
 | `/vulpus:vender <preço>` | anuncia no leilão o item da mão por esse preço |
 | `/vulpus:caixa` | abre a caixa de retirada do leilão |
@@ -297,12 +314,13 @@ Só para a staff:
 | `/vulpus:kitsune <jogador>` | liga ou desliga o selo Kitsune |
 | `/vulpus:resetapelido <jogador>` | tira o apelido e a cor do nome de alguém |
 | `/vulpus:clabypass` | liga ou desliga o bypass da proteção dos clãs (fica no log) |
+| `/vulpus:tirarrecompensa <jogador>` | tira a recompensa da cabeça de alguém e devolve a quem pagou (sem a taxa) |
 
 Só para o dono: `/vulpus:dono [ação]` abre o Painel de Dono ou faz uma ação dele (veja "Painel de Dono"); `/vulpus:dono reivindicar` vale para o primeiro Operador enquanto não houver dono.
 
 **Quem é staff:** operador do mundo (ou quem tem nível de comando de operador), ou quem tiver a tag `vulpus:staff` ou `vulpus:admin`. Para dar a tag, use `/tag NOME add vulpus:staff` ou, pelo menu, Staff > Cargos e Kitsune.
 
-**Configurações da staff:** Staff > Configurações tem 5 grupos: "Teleporte e casas", "Caudas e XP", "Leilão", "Clãs e guerras" e "Geral".
+**Configurações da staff:** Staff > Configurações tem 6 grupos: "Teleporte e casas", "Caudas e XP", "Leilão", "Clãs e guerras", "Caçada" e "Geral".
 
 ## Como trocar a logo
 
@@ -387,6 +405,7 @@ Num mundo com o BP e o RP ativos (o ideal é ter uma segunda pessoa para o TPA):
     - render-se, alianças, casa do clã, `/vulpus:c`, dissolver.
     - **bandeiras:** marque a bandeira dos dois clãs (Terreno), comece uma guerra de 15 min pelo Painel de Dono e: pegue a bandeira inimiga (ela vai para cima da cabeça), tente `/vulpus:spawn` e uma pérola (barrados), leve até a sua (captura +10), morra levando (cai; quem te derrubou ganha +3), devolva a sua caída (+2), deixe uma cair e espere 30 s.
 12. **Visual Kitsune:** com `/vulpus:kitsune` em você, troque o apelido e a cor do nome em Ajustes; confira sobre a cabeça, no chat, no placar e no Perfil ("Conta:"). Escolha um tema para o clã, tire o selo com `/vulpus:kitsune` de novo: em até 10 s a tag do clã volta para a cor de antes.
+13. **Caçada** (2 ou 3 contas): ponha uma recompensa pelo mural e por `/vulpus:recompensa` (confira a taxa na confirmação e no saldo); a caveira aparece em cima do nome da vítima e "Sua cabeça vale" no placar dela; mate a vítima com uma conta do mesmo clã (não paga, com o motivo) e com uma de fora (paga tudo, anúncio para todos); mate de novo logo depois (não paga: 5 min); a staff tira uma recompensa em Staff > Caçada (staff) e o valor volta.
 
 ## Checklist de teste no jogo
 
@@ -455,6 +474,8 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
     - de elytra: ela vai para o inventário ao pegar; vestir de novo volta para o inventário;
     - no celular: a bandeira e o feixe não pesam (anotar o FPS perto de duas bandeiras).
 
+16. **Caçada:** a caveira com o valor aparece em cima do nome (3 linhas) e some ao caçar; matar com arco conta para quem atirou; o anúncio e o som chegam para todos.
+
 ## Limitações
 
 - **Formulários com campos:** ficam com o visual normal do Minecraft em todos os temas, de propósito. Mexer neles quebra fácil a cada atualização.
@@ -467,6 +488,7 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 - **Sem loja:** as Caudas só compram no leilão, de outras pessoas, e pagam as coisas do clã.
 - **Proteção dos clãs:** a API estável não tem evento de pistão, de líquido escorrendo nem de fogo se espalhando. A zona de amortecimento impede que alguém de fora monte essas coisas perto da base, mas algo construído **antes** da base existir (ou um rio de lava vindo de longe) não é barrado. Endermen, wither e bichos que quebram blocos também não são barrados, e placa de pressão e fio de armadilha disparam com quem pisa (não há como impedir pela API). Funis ficam proibidos na zona inteira (não dá para saber para onde apontam antes de colocar).
 - **Bandeiras:** o Bedrock não tem o efeito "brilho" (glowing) na API estável: quem leva a bandeira fica marcado pelas chamas em volta e pela bandeira acima da cabeça. A API também não tem como cortar o planeio no ar: a elytra é tirada do peito (vai para o inventário). Tridente com Correnteza não é barrado (um salto muito grande derruba a bandeira, como um teleporte).
+- **Caçada:** vale quem o jogo aponta como autor do golpe final. Morte por queda, lava ou fogo depois de levar um golpe pode chegar sem jogador, e aí não paga.
 - **Filtro de palavrões:** é simples (lista de palavras); a staff pode trocar a tag de um clã e tirar apelidos.
 
 ## Pastas

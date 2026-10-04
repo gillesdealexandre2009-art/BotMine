@@ -423,6 +423,17 @@ c.....c
 m.....m
 """
 
+# Caçada (linha 3, coluna 6): caveira da cabeça com recompensa (nameTag, sidebar e mural).
+CAVEIRA = """
+.wwwww.
+wwwwwws
+w..w..s
+w..w..s
+www.wss
+.wwwss.
+.w.w.s.
+"""
+
 # (linha, coluna) na folha E2 -> nome da constante em glyphs.js
 ICONES: dict[tuple[int, int], str] = {
     (0, 0): "BROTO",
@@ -454,6 +465,7 @@ ICONES: dict[tuple[int, int], str] = {
     (3, 3): "PATA",
     (3, 4): "TROFEU",
     (3, 5): "GUERRA",
+    (3, 6): "CAVEIRA",
 }
 
 DESENHOS = {
@@ -486,6 +498,7 @@ DESENHOS = {
     "PATA": PATA,
     "TROFEU": TROFEU,
     "GUERRA": GUERRA,
+    "CAVEIRA": CAVEIRA,
 }
 
 SEM_CONTORNO = {"BARRA_CHEIA", "BARRA_VAZIA"}

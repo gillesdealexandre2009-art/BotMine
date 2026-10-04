@@ -69,6 +69,15 @@ export const PADROES = {
   ctfCaptura: 10,
   ctfDevolver: 2,
   ctfMatarCarregador: 3,
+  cacadaLigada: true,
+  cacadaMinimo: 50,
+  cacadaMaximo: 100000,
+  cacadaTaxaPct: 10,
+  cacadaLimite: 5,
+  cacadaVidaMin: 5,
+  cacadaRecargaHoras: 24,
+  cacadaDuracaoDias: 7,
+  cacadaAnuncio: 500,
 };
 
 /**
@@ -167,6 +176,10 @@ export const ICONES = {
   kitsune: "textures/items/blaze_powder",
   apelido: "textures/items/name_tag",
   bandeira: "textures/vulpus/ui/bandeira",
+  // Caçada (recompensa por cabeças)
+  cacada: "textures/items/crossbow_arrow",
+  mural: "textures/items/paper",
+  cabeca: "textures/ui/wither_effect",
 };
 
 export const SONS = {
@@ -176,4 +189,6 @@ export const SONS = {
   pedido: "random.levelup",
   nivel: "random.levelup",
   guerra: "horn.call.0",
+  cacada: "block.bell.hit",
+  cacou: "note.pling",
 };

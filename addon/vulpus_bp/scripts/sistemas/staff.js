@@ -1,6 +1,6 @@
 // @ts-check
-// Painel da staff: definir spawn, configurações (em 5 grupos), dar Caudas, cargos e Kitsune,
-// leilão, clãs e pegar o item do menu.
+// Painel da staff: definir spawn, configurações (em 6 grupos), dar Caudas, cargos e Kitsune,
+// leilão, clãs, Caçada e pegar o item do menu.
 import { CHAVE_SPAWN, ICONES, VERSAO } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { config, lerMundo, salvarConfig, todosJogadores } from "../core/db.js";
@@ -12,6 +12,7 @@ import { erro, msg, ok } from "../core/util.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/staff.js";
 import { garantirItem } from "./boas_vindas.js";
+import { menuCacadaStaff } from "./cacada.js";
 import { DAR_MAXIMO, darCaudas } from "./caudas.js";
 import { menuClasStaff } from "./clas.js";
 import { menuDono } from "./dono.js";
@@ -70,13 +71,21 @@ const FAIXAS = {
   ctfCaptura: [0, 100],
   ctfDevolver: [0, 100],
   ctfMatarCarregador: [0, 100],
+  cacadaMinimo: [1, 1000000],
+  cacadaMaximo: [1, 1000000],
+  cacadaTaxaPct: [0, 50],
+  cacadaLimite: [1, 20],
+  cacadaVidaMin: [0, 120],
+  cacadaRecargaHoras: [0, 168],
+  cacadaDuracaoDias: [1, 30],
+  cacadaAnuncio: [0, 1000000],
 };
 const LINK_MAXIMO = 100;
 /** Convite do Discord: discord.gg/xxx ou discord.com/invite/xxx (com ou sem https://). */
 const LINK_DISCORD = /^(https?:\/\/)?(www\.)?(discord\.gg|discord\.com\/invite)\/[\w-]{2,40}\/?$/i;
 
 /**
- * Configurações em 5 formulários; cada chave de PADROES está em um grupo só.
+ * Configurações em 6 formulários; cada chave de PADROES está em um grupo só.
  * @type {{ titulo: string, icone: string, chaves: ChaveConfig[] }[]}
  */
 const GRUPOS = [
@@ -133,6 +142,21 @@ const GRUPOS = [
       "ctfMatarCarregador",
     ],
   },
+  {
+    titulo: textos.GRUPO_CACADA,
+    icone: ICONES.cacada,
+    chaves: [
+      "cacadaLigada",
+      "cacadaMinimo",
+      "cacadaMaximo",
+      "cacadaTaxaPct",
+      "cacadaLimite",
+      "cacadaVidaMin",
+      "cacadaRecargaHoras",
+      "cacadaDuracaoDias",
+      "cacadaAnuncio",
+    ],
+  },
   { titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao"] },
 ];
 
@@ -162,6 +186,7 @@ export async function menuStaff(player, voltar) {
     .botao(textos.BOTAO_CARGOS, ICONES.cargos, (p) => menuCargos(p, aqui))
     .botao(textos.BOTAO_LEILAO, ICONES.leilao, (p) => menuLeilaoStaff(p, aqui))
     .botao(textos.BOTAO_CLAS, ICONES.cla, (p) => menuClasStaff(p, aqui))
+    .botao(textos.BOTAO_CACADA, ICONES.cacada, (p) => menuCacadaStaff(p, aqui))
     .botao(textos.BOTAO_ITEM, ICONES.nova, (p) => {
       if (garantirItem(p) === "tinha") msg(p, textos.ITEM_JA_TEM);
     });
@@ -245,6 +270,13 @@ async function editarConfig(player, titulo, chaves) {
     erro(player, textos.PRECO_INVERTIDO);
     delete mudancas.precoMinimo;
     delete mudancas.precoMaximo;
+  }
+  const minCacada = mudancas.cacadaMinimo ?? atual.cacadaMinimo;
+  const maxCacada = mudancas.cacadaMaximo ?? atual.cacadaMaximo;
+  if (typeof minCacada === "number" && typeof maxCacada === "number" && minCacada > maxCacada) {
+    erro(player, textos.CACADA_INVERTIDA);
+    delete mudancas.cacadaMinimo;
+    delete mudancas.cacadaMaximo;
   }
   const mudou = Object.keys(mudancas);
   if (!mudou.length) {

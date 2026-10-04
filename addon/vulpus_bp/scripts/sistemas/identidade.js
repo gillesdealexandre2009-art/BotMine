@@ -52,6 +52,8 @@ const TICKS_VARREDURA = 600;
 /** @type {{ versao: ScoreboardObjective, nivel: ScoreboardObjective, rank: ScoreboardObjective, cargo: ScoreboardObjective } | undefined} */
 let canal;
 let mundoCarregado = false;
+/** @type {((player: Player) => string)[]} Linhas extras em cima do nameTag (ex.: a caveira da Caçada); "" = sem linha. */
+const marcasNome = [];
 
 /**
  * Objective pelo id, criando se não existir.
@@ -132,7 +134,34 @@ function gravarScore(obj, participante, valor) {
 }
 
 /**
- * nameTag (2 linhas: selo + cargo ou rank + nível / nome) e canal do chat, só o que mudou.
+ * Registra uma linha extra em cima do nameTag (quem registra chama atualizarIdentidade quando ela muda).
+ * Fica aqui para o sistema dono da linha importar este arquivo, e não o contrário (sem import circular).
+ * @param {(player: Player) => string} fn  "" = sem a linha
+ */
+export function registrarMarcaNome(fn) {
+  marcasNome.push(fn);
+}
+
+/**
+ * Linhas extras do nameTag (uma marca que falha só fica de fora).
+ * @param {Player} player
+ */
+function marcasDe(player) {
+  return marcasNome
+    .map((fn) => {
+      try {
+        return fn(player);
+      } catch (e) {
+        registrarErro("Marca do nameTag", e);
+        return "";
+      }
+    })
+    .filter((linha) => linha !== "");
+}
+
+/**
+ * nameTag (2 linhas: selo + cargo ou rank + nível / nome, mais as marcas registradas em cima) e canal do
+ * chat, só o que mudou.
  * @param {Player} player
  */
 export function atualizarIdentidade(player) {
@@ -144,7 +173,7 @@ export function atualizarIdentidade(player) {
   const cla = tagDe(player);
   const prefixoCla = cla ? `§8[${tagPintada(cla)}§8]§r ` : "";
   const linha1 = `${prefixoCla}${glyph(marca.glyph)} ${marca.cor}${marca.nome} §7Nv ${info.nivel}${kitsune ? ` ${glyph(G.KITSUNE)}` : ""}`;
-  const nameTag = `${linha1}\n${nomeExibido(player)}`;
+  const nameTag = [...marcasDe(player), linha1, nomeExibido(player)].join("\n");
   if (player.nameTag !== nameTag) player.nameTag = nameTag;
   const apelido = apelidoDe(player);
   const temaNome = temaNomeDe(player);

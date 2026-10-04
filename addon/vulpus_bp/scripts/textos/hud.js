@@ -12,6 +12,7 @@ import { barra, G, glyph } from "../glyphs.js";
  * @property {{ emblema: string, tag: string, nome: string } | null} cla  tag já pintada; null = sem a linha
  * @property {{ ativa: boolean, nossos: number, deles: number, tagDeles: string, minutos: number } | null} guerra
  * @property {import("../sistemas/ctf.js").InfoCtf | null} ctf  bandeiras (só em guerra ativa com elas)
+ * @property {number} cabeca  recompensa da Caçada na cabeça de quem vê (0 = sem a linha)
  * @property {Rank} rank
  * @property {InfoCargo | null} cargo  Admin, Staff ou Helper; null = sem cargo
  * @property {boolean} kitsune  selo Kitsune (booster)
@@ -93,18 +94,25 @@ const LINHAS_CTF = (c) => {
 };
 
 /**
- * As linhas da sidebar (até 28 caracteres visíveis cada): 6 fixas, mais nome Kitsune e cargo em cima e
- * clã, guerra e bandeiras embaixo (até 12).
+ * Linha da Caçada: quanto vale a própria cabeça.
+ * @param {number} valor
+ */
+const LINHA_CABECA = (valor) => `${glyph(G.CAVEIRA)} §cSua cabeça vale §6${formatarNumero(valor)}`;
+
+/**
+ * As linhas da sidebar (até 28 caracteres visíveis cada): 6 fixas, mais nome Kitsune e cargo em cima, a
+ * cabeça a prêmio depois das Caudas e clã, guerra e bandeiras embaixo (até 13; o label do RP cabe 16).
  * @param {InfoSidebar} info
  * @returns {string[]}
  */
-export const LINHAS = ({ nome, cla, guerra, ctf, rank, cargo, kitsune, nivel, fracao, caudas, mudanca, online, x, y, z, direcao }) => [
+export const LINHAS = ({ nome, cla, guerra, ctf, cabeca, rank, cargo, kitsune, nivel, fracao, caudas, mudanca, online, x, y, z, direcao }) => [
   ...(nome ? [nome] : []),
   ...(cargo ? [`${glyph(cargo.glyph)} ${cargo.cor}${cargo.nome}${KITSUNE(kitsune)}`] : []),
   `${glyph(rank.glyph)} ${rank.cor}${rank.nome}${cargo ? "" : KITSUNE(kitsune)}`,
   `§7Nível §f${formatarNumero(nivel)} §8• §7${Math.floor(limitar(fracao, 0, 1) * 100)}%`,
   barra(fracao, 10),
   `${glyph(G.CAUDAS)} §6${formatarNumero(caudas)}${DESTAQUE(mudanca)}`,
+  ...(cabeca > 0 ? [LINHA_CABECA(cabeca)] : []),
   `${glyph(G.ONLINE)} §f${formatarNumero(online)} §7online`,
   `${glyph(G.LOCAL)} §f${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)} §7${direcao}`,
   ...(cla ? [LINHA_CLA(cla)] : []),

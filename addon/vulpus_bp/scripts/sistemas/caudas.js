@@ -36,6 +36,23 @@ const presencas = new Map();
 const ouvintesMinuto = [];
 
 /**
+ * Seção extra do menu de Caudas: cabeçalho e botões de outro sistema (ex.: a Caçada), registrada por ele
+ * para este arquivo não importar o sistema (sem import circular).
+ * @typedef {{ texto: (p: Player) => string, icone: string, abrir: (p: Player, voltar: () => any) => any }} BotaoSecao
+ * @typedef {{ titulo: string, botoes: BotaoSecao[] }} SecaoCaudas
+ */
+/** @type {SecaoCaudas[]} */
+const secoes = [];
+
+/**
+ * Põe uma seção no fim do menu de Caudas (antes do Voltar).
+ * @param {SecaoCaudas} secao
+ */
+export function adicionarSecaoCaudas(secao) {
+  secoes.push(secao);
+}
+
+/**
  * Registra quem recebe cada minuto ativo (o mesmo anti-AFK das Caudas e do XP, sem outro loop).
  * @param {(player: Player) => void} fn
  */
@@ -173,7 +190,7 @@ export async function menuCaudas(player, voltar) {
   const dados = dadosJogador(player);
   const info = infoDiaria(dados);
   const aqui = () => menuCaudas(player, voltar);
-  await new Lista(textos.TITULO)
+  const lista = new Lista(textos.TITULO)
     .texto(
       textos.CORPO({
         saldo: dados.caudas,
@@ -188,9 +205,12 @@ export async function menuCaudas(player, voltar) {
       await aqui();
     })
     .botao(textos.BOTAO_RANKING, ICONES.ranking, (p) => menuRanking(p, aqui))
-    .botao(textos.BOTAO_COMO_GANHAR, ICONES.tempo, (p) => menuComoGanhar(p, aqui))
-    .voltar(voltar)
-    .abrir(player);
+    .botao(textos.BOTAO_COMO_GANHAR, ICONES.tempo, (p) => menuComoGanhar(p, aqui));
+  for (const secao of secoes) {
+    lista.cabecalho(secao.titulo);
+    for (const b of secao.botoes) lista.botao(b.texto(player), b.icone, (p) => b.abrir(p, aqui));
+  }
+  await lista.voltar(voltar).abrir(player);
 }
 
 /**
