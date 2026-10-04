@@ -1,0 +1,22 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.vulpus.bandeira.tremular": {
+      "loop": true,
+      "bones": {
+        "pano1": {
+          "rotation": [0, "math.sin(query.life_time * 300) * 6", 0]
+        },
+        "pano2": {
+          "rotation": [0, "math.sin(query.life_time * 300 - 60) * 9", 0]
+        },
+        "pano3": {
+          "rotation": [0, "math.sin(query.life_time * 300 - 120) * 12", 0]
+        },
+        "pano4": {
+          "rotation": [0, "math.sin(query.life_time * 300 - 180) * 14", 0]
+        }
+      }
+    }
+  }
+}

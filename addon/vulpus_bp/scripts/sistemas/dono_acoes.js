@@ -25,7 +25,9 @@ import { expandirBase } from "./cla_terreno.js";
 /** @typedef {{ id: string, nome: string }} Pessoa */
 /** Texto de sucesso, ou { erro } com o motivo. @typedef {string | { erro: string }} Resultado */
 
-const HORA_MS = 60 * 60 * 1000;
+const MINUTO_MS = 60 * 1000;
+/** Guerra forçada: até 7 dias (em minutos). */
+const MINUTOS_MAXIMO = 7 * 24 * 60;
 const PONTOS_MAXIMO = 1_000_000;
 
 /**
@@ -420,13 +422,16 @@ export function consultarTime(autor, alvo) {
 
 /**
  * Começa uma guerra AGORA entre dois times: sem aviso, sem custo, sem baú e sem os requisitos de nível,
- * membros e recarga. Fica marcada como forçada (na guerra e no histórico).
+ * membros e recarga. Fica marcada como forçada (na guerra e no histórico). Modo evento: com minutos, dura
+ * isso em vez de duracaoGuerraHoras. Sem bandeira num dos times, a guerra vale só pelos abates (sem CTF).
  * @param {Player} autor
  * @param {string} refA
  * @param {string} refB
+ * @param {unknown} [minutosBruto]  vazio ou 0 = a duração padrão
  */
-export function iniciarGuerra(autor, refA, refB) {
-  return executar(autor, "iniciar guerra", `${textoDe(refA)} x ${textoDe(refB)}`, () => {
+export function iniciarGuerra(autor, refA, refB, minutosBruto) {
+  const alvoLog = `${textoDe(refA)} x ${textoDe(refB)}${minutosBruto ? ` (${textoDe(minutosBruto)} min)` : ""}`;
+  return executar(autor, "iniciar guerra", alvoLog, () => {
     const a = acharTime(refA);
     if (!a) return { erro: textos.TIME_NAO_ACHADO(textoDe(refA)) };
     const b = acharTime(refB);
@@ -434,12 +439,14 @@ export function iniciarGuerra(autor, refA, refB) {
     if (a.id === b.id) return { erro: textos.MESMO_TIME };
     if (guerraDe(a.id)) return { erro: textos.JA_EM_GUERRA(a.tag) };
     if (guerraDe(b.id)) return { erro: textos.JA_EM_GUERRA(b.tag) };
+    const pedidos = minutosBruto === undefined || textoDe(minutosBruto) === "" ? 0 : Number(textoDe(minutosBruto));
+    if (!Number.isInteger(pedidos) || pedidos < 0 || pedidos > MINUTOS_MAXIMO) return { erro: textos.MINUTOS_INVALIDOS(MINUTOS_MAXIMO) };
+    const minutos = pedidos || Math.max(1, config().duracaoGuerraHoras) * 60;
     const estado = lerEstado();
     const agora = Date.now();
     let n = agora;
     const usado = (/** @type {string} */ id) => estado.guerras.some((g) => g.id === id) || estado.historico.some((h) => h.id === id);
     while (usado(n.toString(36))) n++;
-    const horas = Math.max(1, config().duracaoGuerraHoras);
     /** @type {Guerra} */
     const g = {
       id: n.toString(36),
@@ -449,7 +456,7 @@ export function iniciarGuerra(autor, refA, refB) {
       cores: { a: a.cor, b: b.cor },
       declarada: agora,
       inicio: agora,
-      fim: agora + horas * HORA_MS,
+      fim: agora + minutos * MINUTO_MS,
       estado: "aviso",
       lembrou: true,
       aposta: { a: 0, b: 0 },
@@ -462,7 +469,7 @@ export function iniciarGuerra(autor, refA, refB) {
     };
     estado.guerras.push(g);
     iniciar(g);
-    return textos.GUERRA_INICIADA(g, horas);
+    return textos.GUERRA_INICIADA(g, minutos);
   });
 }
 

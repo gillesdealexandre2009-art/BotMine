@@ -69,6 +69,11 @@ export const CAMPOS = {
   guerraAntiFarmMin: "Guerra: a mesma vítima só vale ponto a cada (min)",
   guerraBonusSequencia: "Guerra: pontos extras por 3, 5 e 10 abates seguidos",
   guerraBonusLider: "Guerra: pontos extras pela cabeça do líder (1x por hora)",
+  bandeiraDistanciaMax: "Bandeira: distância máxima do centro da base",
+  recargaBandeiraHoras: "Bandeira: espera para mover (h)",
+  ctfCaptura: "Bandeira: pontos por captura",
+  ctfDevolver: "Bandeira: pontos por devolver a própria",
+  ctfMatarCarregador: "Bandeira: pontos por derrubar quem leva a sua",
 };
 export const DICA_LINK = "discord.gg/convite";
 /** @param {string[]} mudou */

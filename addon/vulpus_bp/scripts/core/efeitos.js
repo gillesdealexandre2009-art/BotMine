@@ -1,6 +1,7 @@
 // @ts-check
 // Efeitos do teleporte: caudas de fogo de raposa na espera, fade de câmera, estouro na saída e na
 // chegada, com tema por destino. Nada aqui pode quebrar o teleporte: toda chamada ao jogo é protegida.
+// emitir, anel e nuvem também servem às bandeiras (ctf.js), dentro do mesmo teto de partículas por tick.
 import {
   LocationInUnloadedChunkError,
   LocationOutOfWorldBoundariesError,
@@ -153,7 +154,7 @@ function mapaCor(cor) {
  * @param {RGB} [cor]
  * @returns {boolean}
  */
-function emitir(dim, id, pos, cor) {
+export function emitir(dim, id, pos, cor) {
   if (system.currentTick !== tickOrcamento) {
     tickOrcamento = system.currentTick;
     gastos = 0;
@@ -180,7 +181,7 @@ function emitir(dim, id, pos, cor) {
  * @param {RGB[]} [cores]  alterna as cores pelo anel
  * @returns {boolean}
  */
-function anel(dim, c, forma, id, cores) {
+export function anel(dim, c, forma, id, cores) {
   const passo = (Math.PI * 2) / forma.n;
   for (let i = 0; i < forma.n; i++) {
     const a = (forma.giro ?? 0) + i * passo;
@@ -198,7 +199,7 @@ function anel(dim, c, forma, id, cores) {
  * @param {string} id
  * @param {RGB} [cor]
  */
-function nuvem(dim, c, caixa, id, cor) {
+export function nuvem(dim, c, caixa, id, cor) {
   for (let i = 0; i < caixa.n; i++) {
     const pos = {
       x: c.x + (Math.random() * 2 - 1) * caixa.largura,

@@ -2,6 +2,47 @@
 
 > **Fase 2 (0.2.0) pronta fora do jogo.** Especificação em [`docs/spec/03_spec_fase2.md`](spec/03_spec_fase2.md): glyphs, tema Black, níveis e ranks, scoreboard lateral, leilão e o pack "Vulpus Chat". A seção "Fase 2" logo abaixo é a situação atual; o resto do arquivo é da fase 1 e continua valendo.
 
+## Capture the Flag: situação em 2026-10-04
+
+Pedido do dono: CTF integrado às guerras de clãs (bandeira obrigatória por base, todos sabem onde fica, captura +10, devolver +2, derrubar quem leva +3, modo evento com duração em minutos no Painel de Dono). Desenho em [`docs/spec/04_spec_clas.md`](spec/04_spec_clas.md) §7; explicação para o dono no `README.md` ("Capture the Flag").
+
+| Frente | Arquivos | Situação |
+|---|---|---|
+| Regras e estado | `sistemas/ctf.js`, `sistemas/ctf_estado.js`, `textos/ctf.js` (novos) | **pronto** |
+| Integração (mínima) | `cla_dados.js` (`bandeira`, `bandeiraMudou`, `problemaBandeira`), `cla_terreno.js` (`marcarBandeira`, `recargaBandeira`), `cla_guerra.js` (exigência, `g.ctf`, `aoMudarGuerra`, `capturas` no histórico), `core/teleporte.js` (`registrarBloqueioTeleporte`), `core/efeitos.js` (exporta `emitir`/`anel`/`nuvem`), `clas.js`, `textos/clas.js`, `hud.js`, `textos/hud.js`, `dono.js`, `dono_acoes.js`, `textos/dono.js`, `config.js`, `staff.js`, `textos/staff.js`, `main.js` | **pronto** |
+| Entidade e visual | `vulpus_bp/entities/bandeira.json`; RP `entity/`, `models/entity/`, `animations/`, `render_controllers/`, `textures/vulpus/entidades/` (12 cores), `ui/bandeira.png`, `texts/*.lang`; `tools/gerar_bandeira.py`; prévia `docs/previas/bandeiras.png` | **pronto** (BDS valida o BP; RP conferido pelo `build.py`) |
+| Build | `tools/build.py`: `conferir_entidades` (client entity x BP, texturas, geometria, animações, render controllers, `Texture./Geometry./Material.`, `query.property` com `client_sync`, ossos) e o nome da entidade nos `.lang` | **pronto** (6 mutações pegas) |
+| Teste | `C:/Users/gille/vt/mock/teste_ctf.mjs` (novo, 108 checagens) | **0 falhas** |
+| Teste no jogo (cliente) | README, checklist item 15 e o roteiro de bandeiras no "Teste rápido" (item 11) | **pendente: o dono** |
+
+**Decisões**
+- **Guerra forçada sem bandeira:** fica sem CTF (só abates) e o dono é avisado ("sem bandeiras: falta pedestal num dos times"). Mais simples que o dono posicionar a bandeira.
+- **Bandeira sempre de pé:** a entidade fica no pedestal também fora de guerra (marco visual da base); o feixe, o fantasma e o toque só existem com guerra ativa de bandeiras.
+- **Pedestais copiados no começo da guerra** (`g.ctf.a/b.pos`): mexer no nível ou na base durante a guerra não move a bandeira dela.
+- **Cor do pano:** uma textura por cor (12, geradas por script) escolhida no render controller pela propriedade `vulpus:cor`; o tema Kitsune usa a cor sólida do clã. Tamanho pequeno por evento (`minecraft:scale` 0,45 num component group), sem molang de escala.
+- **"Brilho":** não existe efeito glowing no Bedrock (conferido nos efeitos da 1.26): anel de chamas na cor da bandeira + a bandeira pequena acima da cabeça. **Elytra:** a API estável não corta o planeio; a elytra sai do peito para o inventário (sem espaço, não pega; vestiu de novo sem espaço, cai). Fogos, pérola e fruta do coro cancelados no `beforeEvents.itemUse`.
+- **Teleporte de fora do addon** (comando, pérola lançada antes de pegar): salto de mais de 16 blocos entre duas conferências derruba a bandeira onde a pessoa estava.
+- Os +3 de derrubar quem leva são por evento (sem o anti-farm); o +1 do abate continua com o anti-farm. Para pegar, devolver e capturar vale a regra dos abates: só quem já era do clã na declaração.
+- 2 min de recarga e 30 s de volta sozinha são constantes em `ctf.js` (os pontos, a distância e a espera para mover estão em Configurações).
+
+**Testes antigos mudados de propósito** (cópias em `*.mjs.antes_ctf`): `teste_clas.mjs`, `teste_clas_adv.mjs` e `teste_dono.mjs` marcam as bandeiras antes de declarar guerra normal (longe de onde os jogadores andam, para não pegar a bandeira sem querer) e conferem a recusa sem bandeira. Nada mais mudou neles. `mock/mc_server.mjs` ganhou `spawnEntity`/`getEntities`, entidade com tags, propriedades, `triggerEvent`, `teleport` e `nameTag`, `EquipmentSlot`, `equippable`/`health`/`addEffect`/`getHeadLocation` no jogador, `Block.isAir`/`isLiquid` e `afterEvents.playerDimensionChange` (cópia anterior em `mc_server.mjs.antes_ctf`).
+
+**Checagens (2026-10-04)**
+
+| Checagem | Resultado |
+|---|---|
+| `npm run check` (BP e chat) | 0 erros |
+| `node --check` nos `.js` do BP e do chat | 63 de 63 ok |
+| `python tools/gerar_glyphs.py` | 14 PNGs prontos, nenhum versionado alterado |
+| `python tools/verificar_ui.py` | 4 arquivos, 144 controles, 118 texturas, 0 erros, 0 avisos |
+| `python tools/build.py` | 0 erros; 41 JSON; `Vulpus.mcaddon` 287 KB |
+| `mock/teste_ctf.mjs` | 108 ok, 0 falhas |
+| `mock/teste.mjs`, `teste_clas.mjs`, `teste_clas_adv.mjs`, `teste_dono.mjs`, `teste_efeitos.mjs`, `teste_fase2.mjs`, `teste_fumaca.mjs`, `mock_leilao/teste*.mjs`, `chat_sim/teste.mjs` | 0 falhas |
+| BDS 1.26.52.3 (VulpusTeste) | sem erro de script nem de entidade (só o aviso conhecido do alias `hud`); `summon vulpus:bandeira 0 -60 0` → "Object successfully summoned" (e a conferência removeu a sem dono em até 4 s); sonda temporária: `setProperty` (`vulpus:cor`, `vulpus:mini`), `triggerEvent` (`vulpus:mini`/`vulpus:normal`), `teleport`, `nameTag` e `remove` sem erro, propriedades valendo no tick seguinte; sonda e área de carregamento removidas; servidor parado |
+| `instalar_dev.py --mundo "Testes Claude" --chat` | copiado; packs já ativos |
+
+**O que só o cliente confirma:** o pano tremulando e a cor (UV por face com `uv_size` negativo no lado norte), a bandeira pequena seguindo a cabeça (teleporte todo tick: pode ficar um pouco atrás), o feixe visto de longe e o peso no celular.
+
 ## Painel de Dono: situação em 2026-10-04
 
 Pedido do dono (beta test): painel separado do da staff para mexer à força em times (clãs) e guerras, com permissão de dono conferida no backend e log próprio. Explicação para o dono no `README.md` ("Painel de Dono").

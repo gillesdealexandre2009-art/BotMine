@@ -1,5 +1,6 @@
 // @ts-check
-// Terreno dos clãs: a base (quadrado com o raio do nível, todas as alturas, só no Mundo normal), a zona de
+// Terreno dos clãs: a base (quadrado com o raio do nível, todas as alturas, só no Mundo normal), o pedestal da
+// bandeira (dentro da base; as regras do Capture the Flag ficam em ctf.js), a zona de
 // amortecimento em volta dela, a proteção contra quem é de fora, o aviso de território e o bypass da staff.
 // Tudo é matemática de quadrados (distância de Chebyshev entre centros): nada de varrer blocos.
 // Os eventos "before" rodam em modo restrito: aqui só se lê e cancela; avisos vão por system.run.
@@ -11,7 +12,7 @@ import { ehStaff } from "../core/permissoes.js";
 import { emEspera } from "../core/teleporte.js";
 import { erro, formatarCoords, msg, ok, registrarErro, som } from "../core/util.js";
 import * as textos from "../textos/clas.js";
-import { aoMudarCla, claDe, claPorId, defNivel, editarCla, moverBanco, pode, registrarLog, todosClas } from "./cla_dados.js";
+import { aoMudarCla, claDe, claPorId, defNivel, editarCla, moverBanco, pode, problemaBandeira, registrarLog, todosClas } from "./cla_dados.js";
 import { emGuerraAtiva, guerraDe } from "./cla_guerra.js";
 
 /** @typedef {import("@minecraft/server").Vector3} Vector3 */
@@ -315,7 +316,45 @@ export function marcarBase(player) {
   if (!novo) return falhar(player, textos.ERRO_GRAVAR);
   ok(player, textos.BASE_MARCADA(formatarCoords({ x, y: player.location.y, z }), raio, custo));
   if (raio < defNivel(cla.nivel).raio) msg(player, textos.BASE_APERTADA(defNivel(cla.nivel).raio));
+  if (novo.bandeira && problemaBandeira(novo)) msg(player, textos.BANDEIRA_FICOU_FORA);
   mostrarLimites(player);
+  return true;
+}
+
+/**
+ * Ms que faltam para poder mover a bandeira (0 = pode). A primeira marcação não espera.
+ * @param {Cla} cla
+ */
+export function recargaBandeira(cla) {
+  if (!cla.bandeiraMudou) return 0;
+  const resto = cla.bandeiraMudou + Math.max(0, config().recargaBandeiraHoras) * HORA_MS - Date.now();
+  return resto > 0 ? resto : 0;
+}
+
+/**
+ * Marca (ou move) o pedestal da bandeira onde a pessoa está: dentro da base, a até bandeiraDistanciaMax
+ * blocos do centro, fora de guerra (aviso ou ativa) e respeitando a espera para mover.
+ * @param {Player} player
+ * @returns {boolean}
+ */
+export function marcarBandeira(player) {
+  const cla = claDe(player);
+  if (!cla) return falhar(player, textos.SEM_CLA);
+  if (!pode(cla, player.id, "terreno")) return falhar(player, textos.SEM_PERMISSAO);
+  if (!cla.base) return falhar(player, textos.BANDEIRA_SEM_BASE);
+  if (guerraDe(cla.id)) return falhar(player, textos.BANDEIRA_EM_GUERRA);
+  const pos = { x: Math.floor(player.location.x), y: Math.floor(player.location.y), z: Math.floor(player.location.z), d: player.dimension.id };
+  const problema = problemaBandeira(cla, pos);
+  if (problema) return falhar(player, textos.BANDEIRA_PROBLEMA(problema, Math.max(0, Math.floor(config().bandeiraDistanciaMax))));
+  const recarga = recargaBandeira(cla);
+  if (recarga > 0) return falhar(player, textos.BANDEIRA_RECARGA(Math.ceil(recarga / 1000)));
+  const novo = editarCla(cla.id, (c) => {
+    c.bandeira = { ...pos, marcada: Date.now() };
+    c.bandeiraMudou = c.bandeira.marcada;
+  });
+  if (!novo) return falhar(player, textos.ERRO_GRAVAR);
+  ok(player, textos.BANDEIRA_MARCADA(formatarCoords(pos)));
+  for (const p of online()) if (p.id !== player.id && claDe(p)?.id === cla.id) msg(p, textos.BANDEIRA_AVISO(player.name, formatarCoords(pos)));
   return true;
 }
 

@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:bandeira",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "c0": "textures/vulpus/entidades/bandeira_6",
+        "c1": "textures/vulpus/entidades/bandeira_e",
+        "c2": "textures/vulpus/entidades/bandeira_a",
+        "c3": "textures/vulpus/entidades/bandeira_b",
+        "c4": "textures/vulpus/entidades/bandeira_c",
+        "c5": "textures/vulpus/entidades/bandeira_d",
+        "c6": "textures/vulpus/entidades/bandeira_9",
+        "c7": "textures/vulpus/entidades/bandeira_5",
+        "c8": "textures/vulpus/entidades/bandeira_3",
+        "c9": "textures/vulpus/entidades/bandeira_2",
+        "c10": "textures/vulpus/entidades/bandeira_f",
+        "c11": "textures/vulpus/entidades/bandeira_g"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.bandeira"
+      },
+      "animations": {
+        "tremular": "animation.vulpus.bandeira.tremular"
+      },
+      "scripts": {
+        "animate": ["tremular"]
+      },
+      "render_controllers": ["controller.render.vulpus.bandeira"]
+    }
+  }
+}

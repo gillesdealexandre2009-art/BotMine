@@ -11,6 +11,7 @@ import { hudLigada } from "./ajustes.js";
 import { saldo } from "./caudas.js";
 import { claDe, EMBLEMAS, tagPintada } from "./cla_dados.js";
 import { guerraDe, ladoDe } from "./cla_guerra.js";
+import { infoSidebar } from "./ctf.js";
 import { CARGOS, cargoDe, ehKitsune } from "./identidade.js";
 import { apelidoDe, nomeExibido, temaNomeDe } from "./kitsune.js";
 import { infoNivel } from "./niveis.js";
@@ -61,7 +62,7 @@ function mudancaRecente(player, caudas) {
 }
 
 /**
- * Texto completo do title (flag + 6 a 10 linhas: nome Kitsune, cargo, clã e guerra são opcionais).
+ * Texto completo do title (flag + 6 a 12 linhas: nome Kitsune, cargo, clã, guerra e bandeiras são opcionais).
  * Cargo, Kitsune e apelido vêm da mesma regra do nameTag.
  * @param {Player} player
  * @param {number} caudas
@@ -92,6 +93,7 @@ function montar(player, caudas, mudanca, quantosOnline) {
             minutos: Math.max(0, Math.ceil((guerra.inicio - Date.now()) / 60000)),
           }
         : null,
+    ctf: guerra && cla ? infoSidebar(player, cla.id, guerra) : null,
     rank,
     cargo: cargo ? CARGOS[cargo] : null,
     kitsune: ehKitsune(player),

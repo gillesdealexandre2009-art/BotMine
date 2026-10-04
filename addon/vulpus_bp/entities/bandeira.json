@@ -1,0 +1,40 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "vulpus:bandeira",
+      "is_experimental": false,
+      "is_summonable": true,
+      "is_spawnable": false,
+      "spawn_category": "misc",
+      "properties": {
+        "vulpus:cor": { "type": "int", "range": [0, 11], "default": 0, "client_sync": true },
+        "vulpus:mini": { "type": "bool", "default": false }
+      }
+    },
+    "component_groups": {
+      "vulpus:pequena": {
+        "minecraft:scale": { "value": 0.45 }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["vulpus_bandeira", "inanimate"] },
+      "minecraft:collision_box": { "width": 0.4, "height": 3.1 },
+      "minecraft:physics": { "has_gravity": false, "has_collision": false },
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },
+      "minecraft:damage_sensor": { "triggers": { "cause": "all", "deals_damage": "no" } },
+      "minecraft:knockback_resistance": { "value": 1.0 },
+      "minecraft:fire_immune": {},
+      "minecraft:nameable": { "allow_name_tag_renaming": false, "always_show": true },
+      "minecraft:persistent": {}
+    },
+    "events": {
+      "vulpus:mini": {
+        "add": { "component_groups": ["vulpus:pequena"] }
+      },
+      "vulpus:normal": {
+        "remove": { "component_groups": ["vulpus:pequena"] }
+      }
+    }
+  }
+}

@@ -11,6 +11,7 @@ import { barra, G, glyph } from "../glyphs.js";
  * @property {string | null} nome  nome já pintado (só com apelido ou tema Kitsune; null = sem a linha)
  * @property {{ emblema: string, tag: string, nome: string } | null} cla  tag já pintada; null = sem a linha
  * @property {{ ativa: boolean, nossos: number, deles: number, tagDeles: string, minutos: number } | null} guerra
+ * @property {import("../sistemas/ctf.js").InfoCtf | null} ctf  bandeiras (só em guerra ativa com elas)
  * @property {Rank} rank
  * @property {InfoCargo | null} cargo  Admin, Staff ou Helper; null = sem cargo
  * @property {boolean} kitsune  selo Kitsune (booster)
@@ -58,12 +59,46 @@ const LINHA_GUERRA = (g) =>
     : `${glyph(G.GUERRA)} §eGuerra em ${g.minutos}min §8[§7${g.tagDeles}§8]`;
 
 /**
+ * Nome cortado com ".." para caber na linha.
+ * @param {string} nome
+ * @param {number} max
+ */
+const CORTAR = (nome, max) => ([...nome].length > max ? `${[...nome].slice(0, max - 2).join("")}..` : nome);
+
+/**
+ * Estado curto de uma bandeira. nossa = a do próprio clã (roubada é ruim); senão, a inimiga (com a gente é bom).
+ * @param {import("../sistemas/ctf.js").ResumoBandeira} b
+ * @param {boolean} nossa
+ * @param {number} max  letras do nome de quem leva
+ */
+const ESTADO_BANDEIRA = (b, nossa, max) => {
+  if (b.estado === "roubada") return `${nossa ? "§c" : "§a"}com ${CORTAR(b.quem ?? "?", max)}`;
+  if (b.estado === "caida") return `§ecaída ${b.segundos ?? 0}s`;
+  if (b.estado === "recarga") return `§7recarga ${b.segundos ?? 0}s`;
+  return nossa ? "§aem casa" : "§fem casa";
+};
+
+/**
+ * Linhas das bandeiras: a nossa e a inimiga, com a distância e a direção (N, NE, L...) até ela.
+ * @param {import("../sistemas/ctf.js").InfoCtf} c
+ */
+const LINHAS_CTF = (c) => {
+  const rumo = c.deles.longe ? "§8longe" : `§f${formatarNumero(c.deles.distancia)}m §7${c.deles.direcao}`;
+  return [
+    `${glyph(G.BANDEIRA)} §7Nossa: ${ESTADO_BANDEIRA(c.nossa, true, 12)}`,
+    c.deles.levando
+      ? `${glyph(G.BANDEIRA)} §8[§7${c.deles.tag}§8] §aleve p/ casa ${rumo}`
+      : `${glyph(G.BANDEIRA)} §8[§7${c.deles.tag}§8] ${ESTADO_BANDEIRA(c.deles, false, 8)} ${rumo}`,
+  ];
+};
+
+/**
  * As linhas da sidebar (até 28 caracteres visíveis cada): 6 fixas, mais nome Kitsune e cargo em cima e
- * clã e guerra embaixo (até 10).
+ * clã, guerra e bandeiras embaixo (até 12).
  * @param {InfoSidebar} info
  * @returns {string[]}
  */
-export const LINHAS = ({ nome, cla, guerra, rank, cargo, kitsune, nivel, fracao, caudas, mudanca, online, x, y, z, direcao }) => [
+export const LINHAS = ({ nome, cla, guerra, ctf, rank, cargo, kitsune, nivel, fracao, caudas, mudanca, online, x, y, z, direcao }) => [
   ...(nome ? [nome] : []),
   ...(cargo ? [`${glyph(cargo.glyph)} ${cargo.cor}${cargo.nome}${KITSUNE(kitsune)}`] : []),
   `${glyph(rank.glyph)} ${rank.cor}${rank.nome}${cargo ? "" : KITSUNE(kitsune)}`,
@@ -74,4 +109,5 @@ export const LINHAS = ({ nome, cla, guerra, rank, cargo, kitsune, nivel, fracao,
   `${glyph(G.LOCAL)} §f${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)} §7${direcao}`,
   ...(cla ? [LINHA_CLA(cla)] : []),
   ...(guerra ? [LINHA_GUERRA(guerra)] : []),
+  ...(ctf ? LINHAS_CTF(ctf) : []),
 ];

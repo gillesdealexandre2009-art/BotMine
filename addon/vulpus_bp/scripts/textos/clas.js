@@ -3,7 +3,7 @@
 // (nunca em títulos de menu). Os de erro já saem em §c (util.erro).
 import { formatarCoords, formatarData, formatarNumero, formatarTempo } from "../core/util.js";
 import { barra, G, glyph } from "../glyphs.js";
-import { EMBLEMAS, nomePintado, tagPintada } from "../sistemas/cla_dados.js";
+import { EMBLEMAS, nomePintado, problemaBandeira, tagPintada } from "../sistemas/cla_dados.js";
 
 /** @typedef {import("../sistemas/cla_dados.js").Cla} Cla */
 /** @typedef {import("../sistemas/cla_dados.js").CargoCla} CargoCla */
@@ -26,6 +26,18 @@ export const NOME = (cla) => `${glyph(EMBLEMAS[cla.emblema] ?? G.ESCUDO)} ${TAG(
 const TAG_GUERRA = (g, lado) => `§8[§${g.cores[lado]}${g.tags[lado]}§8]§r`;
 /** @param {number} n */
 const caudas = (n) => `${glyph(G.CAUDAS)} §6${formatarNumero(n)}§r`;
+
+/**
+ * Linha da bandeira (todo mundo sabe onde fica a bandeira de cada clã): coordenadas, ou por que não vale.
+ * @param {Cla} cla
+ */
+export const LINHA_BANDEIRA = (cla) => {
+  const problema = problemaBandeira(cla);
+  if (!problema && cla.bandeira) return `${glyph(G.BANDEIRA)} §7Bandeira: §f${formatarCoords(cla.bandeira)}`;
+  return `${glyph(G.BANDEIRA)} §7Bandeira: §8${problema === "sem" ? "não marcada" : "fora da base (marque de novo)"}`;
+};
+/** Coordenadas curtas da bandeira para listas (" • ⚑ x z"), ou "" sem bandeira válida. @param {Cla} cla */
+const BANDEIRA_CURTA = (cla) => (cla.bandeira && !problemaBandeira(cla) ? ` §8• ${glyph(G.BANDEIRA)} §7${cla.bandeira.x} ${cla.bandeira.z}` : "");
 
 /**
  * "3d 4h", "5h 12min" ou "40s".
@@ -159,6 +171,7 @@ export const FICHA = (cla, lider, max) =>
     `§7Nível: §f${cla.nivel} §8• §7Membros: §f${cla.membros.length}/${max}`,
     `§7Fundado em §f${formatarData(cla.criado)}`,
     `§7Entrada: ${cla.aberto ? "§aaberta" : "§7por pedido"}`,
+    LINHA_BANDEIRA(cla),
   ].join("\n");
 /** No lugar do nome do líder, quando o time está sem líder (Painel de Dono). */
 export const SEM_LIDER = "§8sem líder";
@@ -183,6 +196,7 @@ export const VISAO = ({ cla, info, online, cargo, guerra }) =>
     `${glyph(G.CAUDAS)} §7Banco: §6${formatarNumero(cla.banco)}`,
     `${glyph(G.ONLINE)} §7Membros: §f${cla.membros.length}/${info.atual.membros} §8• §a${online} online`,
     `${glyph(G.LOCAL)} §7Base: ${cla.base ? `§f${formatarCoords(cla.base)} §8• §7raio §f${cla.base.raio}` : "§8sem base"}`,
+    cla.base ? LINHA_BANDEIRA(cla) : "",
     guerra ? `${glyph(G.GUERRA)} ${guerra.estado === "ativa" ? "§cEM GUERRA" : "§eGuerra marcada"}` : "",
   ]
     .filter((l, i) => l !== "" || i === 3)
@@ -364,8 +378,11 @@ export const SUBTITULO_SUBIU = (cla) => `§7${cla.nome} está maior`;
 // ---------------------------------------------------------------- terreno
 
 export const TITULO_TERRENO = "Terreno";
-/** @param {{ cla: Cla, raioNivel: number, zona: number, custo: number, recarga: number }} t */
-export const TERRENO_CORPO = ({ cla, raioNivel, zona, custo, recarga }) =>
+/**
+ * @param {{ cla: Cla, raioNivel: number, zona: number, custo: number, recarga: number, recargaBandeira: number,
+ *   distanciaBandeira: number }} t
+ */
+export const TERRENO_CORPO = ({ cla, raioNivel, zona, custo, recarga, recargaBandeira, distanciaBandeira }) =>
   [
     cla.base
       ? `${glyph(G.LOCAL)} §7Centro: §f${formatarCoords(cla.base)} §8(Mundo normal)`
@@ -375,6 +392,10 @@ export const TERRENO_CORPO = ({ cla, raioNivel, zona, custo, recarga }) =>
     "",
     `§7Proteção: quem é de fora não quebra, não coloca, não abre baú e não usa portas e botões.`,
     `§7${cla.base ? "Mover" : "Marcar"} custa ${caudas(custo)}§7${recarga > 0 ? ` §8• §7liberado em §f${duracao(recarga / 1000)}` : ""}`,
+    "",
+    LINHA_BANDEIRA(cla),
+    `§7A bandeira fica num pedestal dentro da base, a até ${distanciaBandeira} blocos do centro. Sem ela, nada de guerra.` +
+      (recargaBandeira > 0 ? ` §8• §7mover em §f${duracao(recargaBandeira / 1000)}` : ""),
   ].join("\n");
 export const BOTAO_LIMITES = "Ver os limites (partículas)";
 export const BOTAO_CRESCER = "Crescer a base até o nível";
@@ -389,6 +410,12 @@ export const BOTAO_MOVER_BASE = (custo) => `Mover base para cá (${formatarNumer
 export const CONFIRMA_BASE = (mover, custo) =>
   `§7${mover ? "Mudar o centro da base para onde você está" : "Marcar o centro da base onde você está"}?\n` +
   `§7Custo: ${custo ? caudas(custo) : "§agrátis"}§7. Depois, só dá para mover de novo daqui a um tempo.`;
+/** @param {boolean} tem */
+export const BOTAO_MARCAR_BANDEIRA = (tem) => `${tem ? "Mover a bandeira para cá" : "Marcar a bandeira aqui"} ${glyph(G.BANDEIRA)}`;
+/** @param {boolean} mover */
+export const CONFIRMA_BANDEIRA = (mover) =>
+  `§7${mover ? "Mudar o pedestal da bandeira para onde você está" : "Pôr o pedestal da bandeira onde você está"}?\n` +
+  "§7Todo mundo vê onde ela fica e, na guerra, o inimigo vem pegar aqui. Depois, mover tem espera.";
 /** @param {"tnt" | "creeper" | "explosoes" | "entidades"} chave @param {boolean} ligado */
 export const BOTAO_PROTECAO = (chave, ligado) => `${NOMES_PROTECAO[chave]}: ${ligado ? "§asim" : "§cnão"}`;
 /** @param {"tnt" | "creeper" | "explosoes" | "entidades"} chave @param {boolean} ligado */
@@ -402,6 +429,18 @@ export const CONFIRMA_DESMARCAR = "§7Tirar a base? A área fica livre para todo
 export const SEM_BASE = "O clã ainda não tem base.";
 export const BASE_SO_OVERWORLD = "A base só pode ficar no Mundo normal.";
 export const BASE_EM_GUERRA = "No meio de uma guerra a base não muda.";
+export const BANDEIRA_SEM_BASE = "Marque a base primeiro: a bandeira fica dentro dela.";
+export const BANDEIRA_EM_GUERRA = "Com guerra marcada ou valendo, a bandeira não muda de lugar.";
+export const BANDEIRA_FICOU_FORA = "A bandeira ficou fora da base nova: marque o pedestal de novo (Terreno).";
+/** @param {"sem" | "sem_base" | "fora" | "longe"} problema @param {number} max */
+export const BANDEIRA_PROBLEMA = (problema, max) =>
+  problema === "longe" ? `Longe demais do centro da base: a bandeira fica a até ${max} blocos dele.` : "A bandeira precisa ficar dentro da base do clã.";
+/** @param {number} segundos */
+export const BANDEIRA_RECARGA = (segundos) => `A bandeira mudou há pouco. Dá para mover de novo em §e${duracao(segundos)}§c.`;
+/** @param {string} coords */
+export const BANDEIRA_MARCADA = (coords) => `Bandeira do clã no pedestal em §f${coords}§r. Todo mundo sabe onde ela fica!`;
+/** @param {string} quem @param {string} coords */
+export const BANDEIRA_AVISO = (quem, coords) => `${glyph(G.BANDEIRA)} §f${quem}§r pôs a bandeira do clã em §f${coords}§r.`;
 /** @param {number} segundos */
 export const BASE_RECARGA = (segundos) => `A base mudou há pouco. Dá para mover de novo em §e${duracao(segundos)}§c.`;
 /** @param {number} distancia */
@@ -493,9 +532,44 @@ export const SEM_GUERRA_CORPO = (cfg) =>
     `§7Extras: 3, 5 e 10 abates seguidos sem morrer (§a+${cfg.guerraBonusSequencia}§7) e a cabeça do líder inimigo (§a+${cfg.guerraBonusLider}§7, 1x por hora).`,
     "§7No fim, quem mais abateu vira o §6Caçador§7 da guerra.",
     `§7Baú: ${caudas(cfg.custoGuerra)} §7de cada banco (o alvo põe o que tiver, até isso).`,
+    `${glyph(G.BANDEIRA)} §7Bandeiras: os dois clãs precisam ter a bandeira marcada (Terreno). Pegue a do inimigo e leve até a sua, ` +
+      `em casa: captura §a+${cfg.ctfCaptura}§7. Devolver a sua caída §a+${cfg.ctfDevolver}§7; derrubar quem leva a sua §a+${cfg.ctfMatarCarregador}§7.`,
   ].join("\n");
-/** @param {Guerra} g @param {string} claId */
-export const GUERRA_CORPO = (g, claId) => {
+/**
+ * Estado de uma bandeira na guerra: em casa, com quem leva, caída ou recarregando.
+ * @param {import("../sistemas/ctf_estado.js").EstadoBandeira} b
+ */
+const ESTADO_BANDEIRA = (b) =>
+  b.estado === "roubada" ? `§ccom ${b.porNome}` : b.estado === "caida" ? "§ecaída no chão" : Date.now() < b.recarga ? "§7recarregando" : "§aem casa";
+/** @typedef {{ a: { x: number, y: number, z: number } | null, b: { x: number, y: number, z: number } | null }} BandeirasGuerra */
+/**
+ * Linhas das bandeiras na ficha da guerra: coordenadas dos dois lados e, valendo, o estado e as capturas.
+ * @param {Guerra} g
+ * @param {BandeirasGuerra} bandeiras  dos clãs (para a guerra em aviso)
+ */
+const LINHAS_BANDEIRAS = (g, bandeiras) => {
+  const ctf = g.ctf;
+  /** @type {readonly ("a" | "b")[]} */
+  const lados = ["a", "b"];
+  if (ctf) {
+    return [
+      "",
+      `${glyph(G.BANDEIRA)} §7Bandeiras §8(capturas §f${ctf.capturas.a} x ${ctf.capturas.b}§8)`,
+      ...lados.map((l) => `§7  ${TAG_GUERRA(g, l)} §f${formatarCoords(ctf[l].pos)} §8• ${ESTADO_BANDEIRA(ctf[l])}`),
+    ];
+  }
+  if (g.estado === "ativa") return ["", `${glyph(G.BANDEIRA)} §7Sem bandeiras nesta guerra: só abates.`];
+  return [
+    "",
+    `${glyph(G.BANDEIRA)} §7Bandeiras:`,
+    ...lados.map((l) => {
+      const pos = bandeiras[l];
+      return `§7  ${TAG_GUERRA(g, l)} ${pos ? `§f${formatarCoords(pos)}` : "§8não marcada"}`;
+    }),
+  ];
+};
+/** @param {Guerra} g @param {string} claId @param {BandeirasGuerra} bandeiras */
+export const GUERRA_CORPO = (g, claId, bandeiras) => {
   const agora = Date.now();
   const top = Object.values(g.abates)
     .sort((a, b) => b.n - a.n)
@@ -508,6 +582,7 @@ export const GUERRA_CORPO = (g, claId) => {
       : `§eComeça em §f${duracao((g.inicio - agora) / 1000)}`,
     `§7Baú de guerra: ${caudas(g.aposta.a + g.aposta.b)}`,
     `§7Vocês ${g.a === claId ? "declararam" : "foram desafiados"}.`,
+    ...LINHAS_BANDEIRAS(g, bandeiras),
     ...(top.length ? ["", "§7Mais abates:", ...top] : []),
   ].join("\n");
 };
@@ -531,14 +606,15 @@ export const LINHA_HISTORICO = (h, claId) => {
   const meu = h.a === claId ? "a" : "b";
   const resultado = h.vencedor === null ? "§7empate" : h.vencedor === meu ? "§avitória" : "§cderrota";
   const cacador = h.cacador ? ` §8• §6Caçador: §f${h.cacador.nome} §8(${h.cacador.n})` : "";
-  const extras = `${h.forcada ? " §8• forçada" : ""}${h.porDono ? " §8• vencedor pelo dono" : ""}`;
+  const bandeiras = h.capturas ? ` §8• ${glyph(G.BANDEIRA)} §7${h.capturas.a} x ${h.capturas.b}` : "";
+  const extras = `${bandeiras}${h.forcada ? " §8• forçada" : ""}${h.porDono ? " §8• vencedor pelo dono" : ""}`;
   return `§8${formatarData(h.fim)} §f[${h.tags.a}] ${h.pontos.a} x ${h.pontos.b} [${h.tags.b}] ${resultado} §8(${MOTIVOS_FIM[h.motivo] ?? h.motivo})${cacador}${extras}`;
 };
 export const TITULO_DECLARAR = "Declarar guerra";
 /** @param {number} custo */
 export const DECLARAR_CORPO = (custo) => `§7Declarar custa ${caudas(custo)}§7 do banco (vai para o baú de guerra). Escolha o alvo:`;
 /** @param {Cla} alvo */
-export const BOTAO_ALVO = (alvo) => `${TAG(alvo)} ${nomePintado(alvo)}\n§7Nv ${alvo.nivel} §8• §7${alvo.membros.length} pessoas`;
+export const BOTAO_ALVO = (alvo) => `${TAG(alvo)} ${nomePintado(alvo)}\n§7Nv ${alvo.nivel} §8• §7${alvo.membros.length} pessoas${BANDEIRA_CURTA(alvo)}`;
 /** @param {Cla} alvo @param {string} motivo */
 export const ALVO_BLOQUEADO = (alvo, motivo) => `§8[${alvo.tag}] ${alvo.nome}: §7${motivo}`;
 /** @param {Cla} alvo @param {Config} cfg */
@@ -558,13 +634,16 @@ export const GUERRA_MEMBROS = (n) => `os dois clãs precisam ter ${n}+ pessoas`;
 export const GUERRA_RECARGA = (segundos) => `trégua por mais ${duracao(segundos)}`;
 /** @param {number} custo */
 export const GUERRA_SEM_BANCO = (custo) => `o banco precisa de ${formatarNumero(custo)} Caudas`;
+export const GUERRA_SEM_BANDEIRA = "seu clã precisa marcar a bandeira dentro da base (Clã > Terreno > Marcar a bandeira)";
+/** @param {string} tag */
+export const GUERRA_ALVO_SEM_BANDEIRA = (tag) => `[${tag}] ainda não marcou a bandeira na base`;
 export const SEM_GUERRA = "Seu clã não está em guerra.";
 /** @param {Guerra} g @param {number} minutos */
 export const GUERRA_DECLARADA = (g, minutos) =>
   `${glyph(G.GUERRA)} ${TAG_GUERRA(g, "a")} declarou guerra a ${TAG_GUERRA(g, "b")}! Começa em §e${minutos} min§r.`;
 /** @param {number} aposta */
 export const GUERRA_REGRAS = (aposta) =>
-  `Guerra marcada! Quando começar, a base de cada lado abre só para o inimigo e cada abate vale 1 ponto (sequências e a cabeça do líder valem extra). Baú: §6${formatarNumero(aposta)}§r de cada lado.`;
+  `Guerra marcada! Quando começar, a base de cada lado abre só para o inimigo e cada abate vale 1 ponto (sequências e a cabeça do líder valem extra), e capturar a bandeira inimiga vale bem mais. Baú: §6${formatarNumero(aposta)}§r de cada lado.`;
 /** @param {Guerra} g @param {number} minutos */
 export const GUERRA_LEMBRETE = (g, minutos) => `${glyph(G.GUERRA)} A guerra ${TAG_GUERRA(g, "a")} x ${TAG_GUERRA(g, "b")} começa em §e${minutos} min§r. Preparem-se!`;
 /** @param {Guerra} g */
@@ -729,7 +808,7 @@ export const PERMS_OK = (cargo) => `Permissões de ${NOME_CARGO[cargo]} salvas.`
 export const TITULO_RANKING = "Ranking de clãs";
 /** @param {number} pos @param {Cla} cla @param {boolean} meu */
 export const RANKING_LINHA = (pos, cla, meu) =>
-  `§6${pos}. ${TAG(cla)} §f${cla.nome} §7Nv ${cla.nivel} §8• §7${formatarNumero(cla.xp)} XP §8• §7${cla.membros.length} pessoas${meu ? " §a«" : ""}`;
+  `§6${pos}. ${TAG(cla)} §f${cla.nome} §7Nv ${cla.nivel} §8• §7${formatarNumero(cla.xp)} XP §8• §7${cla.membros.length} pessoas${BANDEIRA_CURTA(cla)}${meu ? " §a«" : ""}`;
 /** @param {number} pos */
 export const RANKING_POSICAO = (pos) => `§7Seu clã está em §f${pos}º§7.`;
 /** @param {Cla} cla */

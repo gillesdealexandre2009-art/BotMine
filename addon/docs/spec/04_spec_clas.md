@@ -65,3 +65,49 @@ Imports sem ciclo: `cla_dados → caudas`; `cla_guerra → cla_dados`; `cla_terr
 ## 6. Limites conhecidos
 
 Sem evento estável para pistão, líquido escorrendo, fogo espalhando, endermen, wither e placa de pressão/fio pisados: a zona de amortecimento só impede que alguém de fora monte isso perto da base. Funis são barrados na zona inteira. Também não dá para barrar: máquina voadora (slime + observador) lançada de longe, flecha ou vento atirados de fora apertando botão ou abrindo porta, dispenser de longe atirando bola de fogo, raio do tridente com canalização, água/lava descendo morro de fora da zona, empurrão de bola de neve/ovo. Entrar na base (a pé, pérola, fruta do coro) é livre: a base protege blocos, bichos e baús, não a passagem. Teste adversarial: `C:/Users/gille/vt/mock/teste_clas_adv.mjs`. Teste: `C:/Users/gille/vt/mock/teste_clas.mjs`.
+
+## 7. Capture the Flag (bandeiras nas guerras)
+
+Pedido do dono (2026-10-04). Reaproveita clãs, terreno e guerras; as mudanças neles são pequenas e estão listadas abaixo.
+
+**Arquivos**
+
+| Arquivo | Conteúdo |
+|---|---|
+| `scripts/sistemas/ctf.js` (novo) | regras (pegar, capturar, cair, devolver, voltar sozinha, derrubar quem leva), restrições de quem leva, efeitos, sidebar (`infoSidebar`) e a entidade `vulpus:bandeira` (visual) |
+| `scripts/sistemas/ctf_estado.js` (novo) | tipos e leitura do estado guardado na guerra (`lerCtf`, `prepararCtf`); só dados |
+| `scripts/textos/ctf.js` (novo) | anúncios e avisos do CTF |
+| `vulpus_bp/entities/bandeira.json` (novo) | entidade: sem gravidade nem colisão, imune a dano (`damage_sensor` all), não empurrável, persistente, nome sempre visível; propriedades `vulpus:cor` (int 0..11, `client_sync`) e `vulpus:mini` (bool); eventos `vulpus:mini`/`vulpus:normal` (grupo com `minecraft:scale` 0,45) |
+| `vulpus_rp/entity/bandeira.entity.json`, `models/entity/bandeira.geo.json`, `animations/bandeira.animation.json`, `render_controllers/bandeira.render_controllers.json` (novos) | mastro de 48 px com ponta e pé dourados, pano de 28x16 em 4 ossos encadeados (UV por face; o lado norte espelhado com `uv_size` negativo), tremular com `math.sin(query.life_time ...)` em Y, textura escolhida por `Array.cores[query.property('vulpus:cor')]`, `ignore_lighting` |
+| `vulpus_rp/textures/vulpus/entidades/bandeira_<cor>.png`, `ui/bandeira.png`, `tools/gerar_bandeira.py` (novos) | uma textura 64x64 por cor de `CORES_CLA` (mesma ordem), ícone do botão, prévia `docs/previas/bandeiras.png` |
+
+Imports sem ciclo: `ctf_estado → cla_dados`; `cla_guerra → ctf_estado`; `ctf → cla_dados, cla_guerra, core`; `hud → ctf`. O glyph da bandeira já existia (`\uE231`).
+
+**Mudanças nos sistemas existentes (mínimas)**
+- `cla_dados.js`: `Cla.bandeira {x, y, z, d, marcada} | null` e `bandeiraMudou` (dado antigo: `null`/0); `problemaBandeira(cla, pos?)` → `"sem" | "sem_base" | "fora" | "longe" | undefined` (dentro da base pela régua de Chebyshev e a até `bandeiraDistanciaMax` do centro).
+- `cla_terreno.js`: `marcarBandeira` (permissão `terreno`, base marcada, sem guerra em aviso ou ativa, posição válida, espera `recargaBandeiraHoras` contada da última marcação; a primeira não espera) e `recargaBandeira`; mover a base avisa se a bandeira ficou de fora.
+- `cla_guerra.js`: `impedimentoGuerra` exige as duas bandeiras (por último, depois das outras regras); `iniciar` grava `g.ctf = prepararCtf(a, b)` (null = guerra só de abates); `terminar` avisa os ouvintes **logo depois de tirar a guerra da lista** (antes de pagar); `aoMudarGuerra("comecou" | "terminou", fn)`; `avisarClas` exportado; o histórico ganhou `capturas {a, b} | null`.
+- `core/teleporte.js`: `registrarBloqueioTeleporte(regra)` (conferida no começo e de novo na hora de teleportar). `core/efeitos.js`: `emitir`, `anel` e `nuvem` exportados (o mesmo teto de 96 partículas por tick).
+- `dono_acoes.iniciarGuerra(autor, a, b, minutos?)` (1 a 10.080; vazio/0 = `duracaoGuerraHoras`); o painel ("Iniciar guerra agora") pede os minutos; o comando é `guerra <TAG> <TAG> [minutos]`.
+- Menus: Terreno (linha da bandeira e "Marcar/Mover a bandeira"), Meu clã, ficha pública, Ranking, lista de alvos, ficha da guerra (bandeiras, estado e capturas), ficha do Painel de Dono, histórico. Sidebar: 2 linhas em guerra ativa com bandeiras (até 12 linhas).
+- `PADROES` (grupo "Clãs e guerras"): `bandeiraDistanciaMax` 64, `recargaBandeiraHoras` 1, `ctfCaptura` 10, `ctfDevolver` 2, `ctfMatarCarregador` 3.
+
+**Estado** (`guerra.ctf`, salvo a cada mudança): `{ a, b: { pos, estado: "casa" | "roubada" | "caida", por, porNome, chao, desde, recarga }, capturas: { a, b } }` (a/b = a bandeira do clã de cada lado). `pos` é copiado do clã quando a guerra começa (não muda no meio). Ao carregar do mundo (`/reload` ou reinício), `lerCtf` põe tudo em casa (`por`/`chao` limpos) e mantém `recarga` e `capturas`. Quem leva fica só na memória (`carregadores`).
+
+**Regras**
+- Só com a guerra `ativa` e `g.ctf`. Encostar = mesma dimensão, até 1,5 bloco na horizontal e os pés de 1,5 abaixo a 3 acima da base da bandeira; vivo (vida > 0) e fora do modo espectador; só quem é do clã desde antes da declaração (`desde <= g.declarada`, a regra dos abates; o novato vê o aviso na barra).
+- Pegar: bandeira inimiga em casa e fora da recarga, ou caída. Quem leva sem espaço para guardar a elytra não pega.
+- Capturar: quem leva encosta na própria bandeira **em casa** → `+ctfCaptura`, `capturas[lado]++`, a capturada volta ao pedestal com `recarga = agora + 2 min`; anúncio aos dois clãs, mensagem curta para quem não é dos clãs, título, fogos (anel na cor do clã, totem, faíscas) e sons.
+- Cair: morte (no lugar da morte), sair do jogo (último lugar visto), trocar de dimensão (`playerDimensionChange`, `fromLocation`), salto de mais de 16 blocos entre duas conferências (teleporte de fora do addon), vestir a elytra sem onde guardar. Procura o chão até 64 blocos abaixo; vazio, lava ou abaixo do mundo = volta na hora.
+- Caída: o dono encosta e devolve (`+ctfDevolver`); o inimigo pega; depois de 30 s volta sozinha.
+- Derrubar quem leva: se o matador é do clã dono da bandeira (e veterano), `+ctfMatarCarregador` por evento; o abate normal (+1 com anti-farm) é contado à parte por `cla_guerra.js`.
+- Quem leva: lentidão I (renovada a cada segundo, some sozinha), sem teleporte do addon, `itemUse` cancelado para pérola, fruta do coro, fogos e elytra, elytra do peito vai para o inventário.
+- Fim (qualquer motivo, inclusive Painel de Dono e staff): tudo volta ao pedestal, `carregadores` limpo, aviso aos dois clãs se alguma estava fora.
+
+**Entidade (visual)** — uma por clã com bandeira válida, sempre (também fora de guerra), com a tag `vulpus:bandeira:<id do clã>`. A cada 2 s (e logo depois de qualquer mudança de clã ou de estado) `sincronizar` adota as que já existem no mundo (depois de `/reload`), remove repetidas e as de clã sem bandeira, cria a que falta (só com o chunk carregado) e põe cada uma no lugar (pedestal, chão ou mini com quem leva), com `vulpus:cor`, `vulpus:mini` + evento e o nome `⚑ [TAG]` (vazio na mini). A mini é teleportada todo tick para 0,45 acima da cabeça. Conferido no BDS: `setProperty` só vale no tick seguinte (o `getProperty` do mesmo tick devolve o valor antigo), sem efeito no resultado.
+
+**Efeitos** (a cada 10 ticks, só com guerra de bandeiras): feixe de chamas coloridas (cor do clã) de 3,4 a 27 blocos acima do pedestal, a cada 1,5 bloco, com uma faísca no topo (fumaça branca durante a recarga); feixe menor na bandeira caída; fumaça "fantasma" no pedestal vazio; anel de chamas em volta de quem leva.
+
+**Desempenho:** toque a cada 2 ticks e efeitos a cada 10, só com guerra ativa de bandeiras e só para quem é dos dois clãs; a mini só é teleportada com alguém levando; fora disso, só a conferência das entidades a cada 2 s (`getEntities` por tipo).
+
+**Limites da API estável:** sem efeito "glowing" (o marcador é a bandeira acima da cabeça e o anel de chamas); sem como cortar o planeio no ar (a elytra é tirada do peito); Correnteza do tridente não é barrada (o salto grande derruba a bandeira). Teste: `C:/Users/gille/vt/mock/teste_ctf.mjs`.

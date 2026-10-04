@@ -18,8 +18,11 @@ O que é conferido antes de empacotar:
     dependências do manifest;
   * texturas: o item_texture.json aponta para PNGs que existem, o ícone do item existe no
     item_texture.json e todo caminho "textures/vulpus/..." citado no RP ou nos scripts existe;
-  * idiomas: languages.json lista arquivos que existem e toda chave usada pelos itens está
-    em todos os .lang;
+  * idiomas: languages.json lista arquivos que existem e toda chave usada pelos itens (e o nome de
+    cada entidade do BP) está em todos os .lang;
+  * entidades (o BDS só valida o BP): cada client entity do RP tem a entidade no BP, texturas,
+    geometria, animações e render controllers que existem, referências Texture./Geometry./Material.
+    conhecidas e propriedades lidas com query.property declaradas no BP com client_sync;
   * glyphs: font/glyph_E2.png e font/glyph_E3.png têm 512x512 (células de 32 px);
   * o verificar_ui.py (se existir) não acusa erro. Se o jogo não estiver instalado, só avisa.
 
@@ -343,6 +346,105 @@ def conferir_idiomas(jsons: dict[Path, object], r: Relatorio) -> None:
             if chave not in chaves:
                 r.erro(f"{rel(arq)} usa a chave {chave}, que falta em {idioma}.lang")
 
+    # Entidades: o nome de cada entidade do BP (entity.<id>.name) em todos os idiomas.
+    for arq, dados in jsons.items():
+        if arq.parent != BP / "entities" or not isinstance(dados, dict):
+            continue
+        ident = dados.get("minecraft:entity", {}).get("description", {}).get("identifier")
+        for idioma, chaves in chaves_por_idioma.items():
+            if ident and f"entity.{ident}.name" not in chaves:
+                r.erro(f"{rel(arq)}: falta entity.{ident}.name em {idioma}.lang")
+
+
+RE_PROPRIEDADE = re.compile(r"""q(?:uery)?\.property\(\s*'([^']+)'\s*\)""", re.I)
+RE_REF_RC = re.compile(r"\b(Texture|Geometry|Material)\.(\w+)", re.I)
+
+
+def conferir_entidades(jsons: dict[Path, object], r: Relatorio) -> None:
+    """Confere as entidades próprias do RP contra o BP (o BDS só valida o BP).
+
+    Para cada client entity em vulpus_rp/entity: há entidade com o mesmo id no BP; as texturas existem; a
+    geometria, as animações e os render controllers citados existem no RP; os Texture./Geometry./Material.
+    dos render controllers estão na client entity; as propriedades lidas com query.property existem no BP com
+    client_sync; e os ossos com parent apontam para um osso da mesma geometria.
+    """
+    def de_pasta(pasta: Path) -> list[tuple[Path, dict]]:
+        return [(a, d) for a, d in jsons.items() if isinstance(d, dict) and pasta in a.parents]
+
+    bp_entidades: dict[str, dict] = {}
+    for arq, dados in de_pasta(BP / "entities"):
+        desc = dados.get("minecraft:entity", {}).get("description", {})
+        if isinstance(desc.get("identifier"), str):
+            bp_entidades[desc["identifier"]] = desc
+    geometrias: set[str] = set()
+    for arq, dados in de_pasta(RP / "models"):
+        for geo in dados.get("minecraft:geometry", []) if isinstance(dados.get("minecraft:geometry"), list) else []:
+            ident = geo.get("description", {}).get("identifier")
+            if not ident:
+                continue
+            geometrias.add(ident)
+            ossos = {b.get("name") for b in geo.get("bones", [])}
+            for b in geo.get("bones", []):
+                if b.get("parent") and b["parent"] not in ossos:
+                    r.erro(f"{rel(arq)}: o osso {b.get('name')} tem parent {b['parent']}, que não existe em {ident}")
+    animacoes: dict[str, dict] = {}
+    for arq, dados in de_pasta(RP / "animations"):
+        animacoes.update(dados.get("animations", {}) if isinstance(dados.get("animations"), dict) else {})
+    controles: set[str] = set()
+    for arq, dados in de_pasta(RP / "animation_controllers"):
+        controles.update(dados.get("animation_controllers", {}).keys() if isinstance(dados.get("animation_controllers"), dict) else [])
+    renders: dict[str, dict] = {}
+    for arq, dados in de_pasta(RP / "render_controllers"):
+        renders.update(dados.get("render_controllers", {}) if isinstance(dados.get("render_controllers"), dict) else {})
+
+    for arq, dados in de_pasta(RP / "entity"):
+        desc = dados.get("minecraft:client_entity", {}).get("description", {})
+        ident = desc.get("identifier")
+        if not ident:
+            r.erro(f"{rel(arq)}: client entity sem identifier")
+            continue
+        bp = bp_entidades.get(ident)
+        if bp is None and not ident.startswith("minecraft:"):
+            r.erro(f"{rel(arq)}: {ident} não existe em vulpus_bp/entities")
+        props = (bp or {}).get("properties", {})
+        for nome, caminho in desc.get("textures", {}).items():
+            if not any((RP / f"{caminho}{ext}").is_file() for ext in (".png", ".tga")):
+                r.erro(f"{rel(arq)}: a textura {nome} aponta para {caminho}, que não existe no RP")
+        for nome, geo in desc.get("geometry", {}).items():
+            if geo not in geometrias:
+                r.erro(f"{rel(arq)}: a geometria {nome} ({geo}) não existe em vulpus_rp/models")
+        usados_anim = set(desc.get("scripts", {}).get("animate", []) or [])
+        for nome, anim in desc.get("animations", {}).items():
+            existe = anim in controles if anim.startswith("controller.") else anim in animacoes
+            if not existe:
+                r.erro(f"{rel(arq)}: a animação {nome} ({anim}) não existe no RP")
+        for nome in usados_anim:
+            chave = nome if isinstance(nome, str) else next(iter(nome), "")
+            if chave not in desc.get("animations", {}):
+                r.erro(f"{rel(arq)}: scripts.animate usa {chave}, que não está em animations")
+        textos_molang: list[str] = []
+        for rc in desc.get("render_controllers", []):
+            nome_rc = rc if isinstance(rc, str) else next(iter(rc), "")
+            dados_rc = renders.get(nome_rc)
+            if dados_rc is None:
+                r.erro(f"{rel(arq)}: o render controller {nome_rc} não existe no RP")
+                continue
+            texto_rc = json.dumps(dados_rc)
+            textos_molang.append(texto_rc)
+            secoes = {"texture": desc.get("textures", {}), "geometry": desc.get("geometry", {}), "material": desc.get("materials", {})}
+            for tipo, nome in RE_REF_RC.findall(texto_rc):
+                if nome not in secoes[tipo.lower()]:
+                    r.erro(f"{nome_rc}: {tipo}.{nome} não está na client entity {ident}")
+        for nome in desc.get("animations", {}).values():
+            if nome in animacoes:
+                textos_molang.append(json.dumps(animacoes[nome]))
+        for prop in sorted({p for t in textos_molang for p in RE_PROPRIEDADE.findall(t)}):
+            info = props.get(prop)
+            if not isinstance(info, dict):
+                r.erro(f"{rel(arq)}: query.property('{prop}') não é propriedade de {ident} no BP")
+            elif info.get("client_sync") is not True:
+                r.erro(f"{rel(arq)}: a propriedade {prop} precisa de client_sync: true no BP para o RP ler")
+
 
 def tamanho_png(caminho: Path) -> tuple[int, int] | None:
     """Largura e altura lidas do cabeçalho IHDR; None se não for PNG."""
@@ -419,6 +521,7 @@ def main(argv: list[str] | None = None) -> int:
     conferir_scripts(CHAT, conferir_chat(jsons, r), r)
     conferir_texturas(jsons, r)
     conferir_idiomas(jsons, r)
+    conferir_entidades(jsons, r)
     conferir_glyphs(r)
     if not args.sem_ui:
         rodar_verificar_ui(r)

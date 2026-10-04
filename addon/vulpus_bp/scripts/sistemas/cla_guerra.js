@@ -3,6 +3,8 @@
 // de 3/5/10, cabeça do líder), terminar, anunciar o Caçador (quem mais abateu) e pagar o baú de guerra.
 // Também o PvP dos clãs: fogo amigo desligado entre membros. Os prazos usam Date.now() e ficam salvos no
 // mundo (vulpus:cla:guerras): uma guerra continua de onde parou depois de /reload ou de reiniciar.
+// As bandeiras (Capture the Flag) ficam em ctf.js: aqui só a exigência para declarar, o estado guardado
+// na guerra (ctf_estado.js) e o aviso de começo e fim (aoMudarGuerra).
 import { Player, system, world } from "@minecraft/server";
 import { SONS } from "../config.js";
 import { config, lerMundo, salvarMundo } from "../core/db.js";
@@ -11,7 +13,8 @@ import { mostrarTitulo } from "../core/tela.js";
 import { erro, msg, ok, registrarErro, som } from "../core/util.js";
 import * as textos from "../textos/clas.js";
 import { PREFIXO } from "../textos/geral.js";
-import { claDe, claPorId, editarCla, membroDe, moverBanco, pode } from "./cla_dados.js";
+import { claDe, claPorId, editarCla, membroDe, moverBanco, pode, problemaBandeira } from "./cla_dados.js";
+import { lerCtf, prepararCtf } from "./ctf_estado.js";
 
 /** @typedef {import("./cla_dados.js").Cla} Cla */
 /** @typedef {"a" | "b"} Lado  a = quem declarou, b = o alvo */
@@ -35,6 +38,7 @@ import { claDe, claPorId, editarCla, membroDe, moverBanco, pode } from "./cla_da
  * @property {Record<string, number>} seq  abates seguidos de cada pessoa (zera quando ela morre)
  * @property {Record<string, number>} cabecas  id do líder → ms da última recompensa pela cabeça dele
  * @property {boolean} [forcada]  começada pelo Painel de Dono (sem aviso, sem custo e sem baú)
+ * @property {import("./ctf_estado.js").Ctf | null} [ctf]  bandeiras (Capture the Flag); null = só abates
  */
 
 /**
@@ -51,6 +55,7 @@ import { claDe, claPorId, editarCla, membroDe, moverBanco, pode } from "./cla_da
  * @property {{ nome: string, n: number, lado: Lado } | null} cacador  quem mais abateu (o "Caçador" da guerra)
  * @property {boolean} forcada  começada pelo Painel de Dono
  * @property {boolean} porDono  vencedor definido pelo dono depois do fim (o baú não é pago de novo)
+ * @property {{ a: number, b: number } | null} capturas  bandeiras capturadas por lado (null = guerra sem CTF)
  */
 
 /** @typedef {{ guerras: Guerra[], historico: GuerraFim[], recargas: Record<string, number> }} EstadoGuerras */
@@ -69,6 +74,28 @@ const CABECA_MS = HORA_MS;
 
 /** @type {EstadoGuerras | undefined} */
 let estado;
+/** Quem quer saber quando uma guerra começa (comecou) ou termina (terminou): as bandeiras (ctf.js). */
+const ouvintes = { comecou: /** @type {((g: Guerra) => void)[]} */ ([]), terminou: /** @type {((g: Guerra) => void)[]} */ ([]) };
+
+/**
+ * Registra quem quer saber do começo ou do fim de uma guerra.
+ * @param {"comecou" | "terminou"} quando
+ * @param {(g: Guerra) => void} fn
+ */
+export function aoMudarGuerra(quando, fn) {
+  ouvintes[quando].push(fn);
+}
+
+/** @param {"comecou" | "terminou"} quando @param {Guerra} g */
+function notificar(quando, g) {
+  for (const fn of ouvintes[quando]) {
+    try {
+      fn(g);
+    } catch (e) {
+      registrarErro(`Guerra (${quando})`, e);
+    }
+  }
+}
 
 /** @param {unknown} v */
 const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
@@ -135,6 +162,7 @@ export function lerEstado() {
       seq: lerNumeros(g.seq),
       cabecas: lerNumeros(g.cabecas),
       forcada: g.forcada === true,
+      ctf: lerCtf(g.ctf),
     }));
   estado = {
     guerras,
@@ -156,6 +184,7 @@ export function lerEstado() {
             : null,
         forcada: h.forcada === true,
         porDono: h.porDono === true,
+        capturas: h.capturas && typeof h.capturas === "object" ? par(h.capturas) : null,
       }))
       .slice(0, HISTORICO_MAXIMO),
     recargas: bruto.recargas && typeof bruto.recargas === "object" ? bruto.recargas : {},
@@ -261,6 +290,9 @@ export function impedimentoGuerra(cla, alvo) {
   const recarga = recargaPar(cla.id, alvo.id);
   if (recarga > 0) return textos.GUERRA_RECARGA(Math.ceil(recarga / 1000));
   if (cla.banco < Math.max(0, cfg.custoGuerra)) return textos.GUERRA_SEM_BANCO(Math.max(0, cfg.custoGuerra));
+  // Capture the Flag: as duas bandeiras precisam estar marcadas (e dentro da base) antes de declarar.
+  if (problemaBandeira(cla)) return textos.GUERRA_SEM_BANDEIRA;
+  if (problemaBandeira(alvo)) return textos.GUERRA_ALVO_SEM_BANDEIRA(alvo.tag);
   return undefined;
 }
 
@@ -270,7 +302,7 @@ export function impedimentoGuerra(cla, alvo) {
  * @param {string} texto
  * @param {string} [idSom]
  */
-function avisarClas(claIds, texto, idSom) {
+export function avisarClas(claIds, texto, idSom) {
   for (const p of online()) {
     const cla = claDe(p);
     if (!cla || !claIds.includes(cla.id)) continue;
@@ -346,6 +378,8 @@ export function iniciar(g) {
   const parte = alvo ? Math.min(alvo.banco, aposta) : 0;
   if (parte > 0 && editarCla(g.b, (c) => moverBanco(c, "guerra", -parte, textos.AUTOR_GUERRA))) g.aposta.b = parte;
   g.estado = "ativa";
+  // As bandeiras ficam onde estavam agora (sem as duas, a guerra é só de abates: forçada pelo dono).
+  g.ctf = prepararCtf(g.a, g.b);
   salvar();
   world.sendMessage(PREFIXO + textos.GUERRA_COMECOU(g));
   for (const p of online()) {
@@ -354,6 +388,7 @@ export function iniciar(g) {
     som(p, SONS.guerra);
     mostrarTitulo(p, textos.TITULO_GUERRA, { subtitulo: textos.SUBTITULO_GUERRA(g) });
   }
+  notificar("comecou", g);
 }
 
 /**
@@ -369,6 +404,8 @@ export function terminar(g, motivo, vencedor) {
   const i = e.guerras.indexOf(g);
   if (i < 0) return false;
   e.guerras.splice(i, 1);
+  // Bandeiras de volta aos pedestais e quem levava perde o status (qualquer fim: tempo, staff, dono...).
+  notificar("terminou", g);
   const lado = vencedor !== undefined ? vencedor : g.pontos.a > g.pontos.b ? "a" : g.pontos.b > g.pontos.a ? "b" : null;
   const total = g.aposta.a + g.aposta.b;
   /** @param {Lado} quem @param {number} valor @param {import("./cla_dados.js").TipoMov} tipo */
@@ -397,6 +434,7 @@ export function terminar(g, motivo, vencedor) {
     cacador: cacador ? { nome: cacador.nome, n: cacador.n, lado: cacador.lado } : null,
     forcada: g.forcada === true,
     porDono: false,
+    capturas: g.ctf ? { a: g.ctf.capturas.a, b: g.ctf.capturas.b } : null,
   });
   e.historico = e.historico.slice(0, HISTORICO_MAXIMO);
   e.recargas[chavePar(g.a, g.b)] = Date.now();

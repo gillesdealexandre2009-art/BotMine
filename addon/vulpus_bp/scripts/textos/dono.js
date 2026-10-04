@@ -1,7 +1,7 @@
 // @ts-check
 // Textos do Painel de Dono (sistemas/dono.js e dono_acoes.js). "Time" = clã. Os de erro já saem em §c.
-import { formatarData, formatarNumero } from "../core/util.js";
-import { NOME_CARGO } from "./clas.js";
+import { formatarCoords, formatarData, formatarNumero } from "../core/util.js";
+import { LINHA_BANDEIRA, NOME_CARGO } from "./clas.js";
 
 /** @typedef {import("../sistemas/cla_dados.js").Cla} Cla */
 /** @typedef {import("../sistemas/cla_dados.js").CargoCla} CargoCla */
@@ -131,8 +131,16 @@ export const SEM_LIDER = "ninguém";
 export const MESMO_TIME = "Escolha dois times diferentes.";
 /** @param {string} tag */
 export const JA_EM_GUERRA = (tag) => `[${tag}] já está numa guerra. Finalize ou cancele antes.`;
-/** @param {Guerra} g @param {number} horas */
-export const GUERRA_INICIADA = (g, horas) => `Guerra ${PAR(g)} começou agora (forçada, sem baú, ${horas}h). Id: ${g.id}`;
+/** Estado de uma bandeira na guerra. */
+const ESTADOS = Object.freeze({ casa: "em casa", roubada: "roubada", caida: "caída" });
+/** @param {number} minutos */
+const DURACAO =(minutos) => (minutos % 60 === 0 ? `${minutos / 60}h` : `${minutos} min`);
+/** @param {Guerra} g @param {number} minutos */
+export const GUERRA_INICIADA = (g, minutos) =>
+  `Guerra ${PAR(g)} começou agora (forçada, sem baú, ${DURACAO(minutos)}, ${g.ctf ? "com bandeiras" : "sem bandeiras: falta pedestal num dos times"}). Id: ${g.id}`;
+/** @param {number} max */
+export const MINUTOS_INVALIDOS = (max) => `Duração inválida: use minutos de 1 a ${max} (0 ou vazio = a duração padrão).`;
+export const ROTULO_MINUTOS = "Duração em minutos (0 = padrão; evento: 15)";
 export const VALOR_INVALIDO = "Valor inválido: use um número inteiro (somar aceita negativo; definir, 0 ou mais).";
 /** @param {string} ref */
 export const LADO_INVALIDO = (ref) => `"${ref}" não está nessa guerra.`;
@@ -205,6 +213,7 @@ export const FICHA = (cla, lider, max, guerra) =>
     `§7Nível: §f${cla.nivel} §8• §7Membros: §f${cla.membros.length}/${max}`,
     `§7Pessoas: §f${cla.membros.map((m) => `${m.nome} (${NOME_CARGO[m.cargo]})`).join(", ") || "ninguém"}`,
     `§7Banco: §6${formatarNumero(cla.banco)} §8• §7Base: ${cla.base ? `§fraio ${cla.base.raio}` : "§8nenhuma"}`,
+    LINHA_BANDEIRA(cla),
     guerra ? `§cGuerra: ${PLACAR(guerra)}` : "§7Sem guerra",
   ].join("\n");
 export const BOTAO_LIDER = "Definir líder";
@@ -230,7 +239,14 @@ export const ROTULO_TIME_A = "Time A";
 export const ROTULO_TIME_B = "Time B";
 export const TITULO_GUERRA = "Guerra (dono)";
 /** @param {Guerra} g */
-export const GUERRA_CORPO = (g) => [LINHA_ATIVA(g), `§7Abates: §f${Object.values(g.abates).reduce((s, x) => s + x.n, 0)}`].join("\n");
+export const GUERRA_CORPO = (g) =>
+  [
+    LINHA_ATIVA(g),
+    `§7Abates: §f${Object.values(g.abates).reduce((s, x) => s + x.n, 0)}`,
+    g.ctf
+      ? `§7Bandeiras: [${g.tags.a}] §f${formatarCoords(g.ctf.a.pos)} §7(${ESTADOS[g.ctf.a.estado]}) §8• §7[${g.tags.b}] §f${formatarCoords(g.ctf.b.pos)} §7(${ESTADOS[g.ctf.b.estado]}) §8• §7capturas §f${g.ctf.capturas.a} x ${g.ctf.capturas.b}`
+      : "§7Sem bandeiras (só abates)",
+  ].join("\n");
 export const BOTAO_PONTOS = "Alterar pontuação";
 export const BOTAO_FINALIZAR = "Finalizar pelo placar";
 /** @param {string} tag */
@@ -274,7 +290,7 @@ export const AJUDA = [
   "§fcriar <nome> <TAG> [cor] [líder] §7- nome com espaço vai entre aspas",
   "§flider <TAG> <nome> §7| §fnivel <TAG> <1-8>",
   "§fadd <TAG> <nome> §7| §fremover <nome> §7| §fmover <nome> <TAG> §7| §ftime <nome>",
-  "§fguerra <TAG> <TAG> §7- começa agora, sem custo",
+  "§fguerra <TAG> <TAG> [minutos] §7- começa agora, sem custo (minutos = modo evento, ex.: 15)",
   "§fpontos <TAG> <valor> [definir] §7- soma (ou define) os pontos do lado dessa TAG",
   "§ffinalizar <TAG|id> [TAG vencedora] §7| §fcancelar <TAG|id> §7| §fvencedor <TAG|id> <TAG>",
   "§fguerras §7| §flog",

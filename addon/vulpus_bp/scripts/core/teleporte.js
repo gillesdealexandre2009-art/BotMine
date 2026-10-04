@@ -45,9 +45,36 @@ const ultimoTeleporte = new Map();
 const esperas = new Map();
 /** @type {Map<string, number>} id → tick até quando o aviso de cancelamento fica na actionbar */
 const avisos = new Map();
+/** @type {((p: Player) => string | undefined)[]} regras extras de outros sistemas (ex.: quem leva a bandeira) */
+const bloqueios = [];
 
 /** @param {number} n */
 const arredondar = (n) => Math.round(n * 100) / 100;
+
+/**
+ * Regra extra que barra o teleporte do addon (spawn, casas, voltar, TPA, casa do clã): devolve o motivo
+ * (texto de erro) ou undefined se pode. Vale no começo e de novo na hora de teleportar.
+ * @param {(p: Player) => string | undefined} regra
+ */
+export function registrarBloqueioTeleporte(regra) {
+  bloqueios.push(regra);
+}
+
+/**
+ * Primeiro motivo de alguma regra extra para barrar o teleporte, ou undefined.
+ * @param {Player} player
+ */
+function bloqueado(player) {
+  for (const regra of bloqueios) {
+    try {
+      const motivo = regra(player);
+      if (motivo) return motivo;
+    } catch (e) {
+      registrarErro("Regra do teleporte", e);
+    }
+  }
+  return undefined;
+}
 
 /**
  * Onde o jogador está agora, com a rotação.
@@ -144,6 +171,11 @@ export function teleportar(player, destino, opcoes = {}) {
   const combate = restanteCombate(player);
   if (combate > 0) {
     erro(player, textos.TP_COMBATE(combate));
+    return false;
+  }
+  const motivo = bloqueado(player);
+  if (motivo) {
+    erro(player, motivo);
     return false;
   }
   const recarga = staff ? 0 : segundosRestantes(ultimoTeleporte, player.id, cfg.recargaTeleporte);
@@ -249,6 +281,11 @@ function concluir(player, destino, opcoes, preparado = false) {
     const combate = restanteCombate(player);
     if (combate > 0) {
       erro(player, textos.TP_COMBATE(combate));
+      return false;
+    }
+    const motivo = bloqueado(player);
+    if (motivo) {
+      erro(player, motivo);
       return false;
     }
     const origem = localDe(player);

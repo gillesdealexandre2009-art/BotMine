@@ -39,6 +39,10 @@ import { aoMinutoAtivo } from "./caudas.js";
  * Centro da base (bloco), quando foi marcada e o raio que ela ganhou (até o do nível, onde couber).
  * @typedef {{ x: number, y: number, z: number, d: string, marcada: number, raio: number }} Base
  */
+/**
+ * Pedestal da bandeira do clã (bloco onde ela fica, dentro da base) e quando foi marcado (Capture the Flag).
+ * @typedef {{ x: number, y: number, z: number, d: string, marcada: number }} Bandeira
+ */
 /** Proteções extras da base, ligadas por quem tem "terreno". */
 /** @typedef {{ tnt: boolean, creeper: boolean, explosoes: boolean, entidades: boolean }} ProtecaoBase */
 
@@ -67,6 +71,8 @@ import { aoMinutoAtivo } from "./caudas.js";
  * @property {Base | null} base
  * @property {number} mudancasBase  quantas vezes a base já foi marcada (a primeira é grátis)
  * @property {number} baseMudou  ms da última marcação (a espera para mover vale mesmo se a base foi tirada)
+ * @property {Bandeira | null} bandeira  pedestal da bandeira (precisa para declarar guerra; só vale dentro da base)
+ * @property {number} bandeiraMudou  ms da última marcação da bandeira (a primeira não espera)
  * @property {ProtecaoBase} protecao
  * @property {CasaCla[]} casas
  * @property {string[]} aliados  ids de clãs
@@ -229,6 +235,15 @@ function completarCla(lido, id) {
         raio: Math.min(defNivel(nivel).raio, Math.max(1, Math.floor(numero(lido.base.raio, defNivel(nivel).raio)))),
       }
     : null;
+  const bandeira = ehPosicao(lido.bandeira)
+    ? {
+        x: Math.floor(lido.bandeira.x),
+        y: Math.floor(lido.bandeira.y),
+        z: Math.floor(lido.bandeira.z),
+        d: lido.bandeira.d,
+        marcada: numero(lido.bandeira.marcada, 0),
+      }
+    : null;
   const protecao = lido.protecao && typeof lido.protecao === "object" ? lido.protecao : {};
   const listaIds = (/** @type {unknown} */ v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string" && x !== id) : []);
   return {
@@ -261,6 +276,8 @@ function completarCla(lido, id) {
     base,
     mudancasBase: inteiro(lido.mudancasBase, base ? 1 : 0),
     baseMudou: numero(lido.baseMudou, base?.marcada ?? 0),
+    bandeira,
+    bandeiraMudou: numero(lido.bandeiraMudou, bandeira?.marcada ?? 0),
     protecao: {
       tnt: protecao.tnt !== false,
       creeper: protecao.creeper !== false,
@@ -419,6 +436,25 @@ export function tagPintada(cla) {
  */
 export function nomePintado(cla) {
   return pintar(cla.nome, cla.tema) ?? `§${cla.cor}${cla.nome}`;
+}
+
+/**
+ * Por que o pedestal (o marcado, ou a posição pedida) não vale como bandeira do clã, ou undefined se vale:
+ * precisa da base, ficar dentro dela (todas as alturas, só no Mundo normal) e a no máximo
+ * bandeiraDistanciaMax blocos do centro (a mesma régua da base: o maior entre |dx| e |dz|).
+ * @param {Cla} cla
+ * @param {{ x: number, z: number, d: string } | null} [pos]  sem passar, confere o pedestal marcado
+ * @returns {"sem" | "sem_base" | "fora" | "longe" | undefined}
+ */
+export function problemaBandeira(cla, pos) {
+  const alvo = pos === undefined ? cla.bandeira : pos;
+  if (!alvo) return "sem";
+  const base = cla.base;
+  if (!base) return "sem_base";
+  const d = Math.max(Math.abs(Math.floor(alvo.x) - base.x), Math.abs(Math.floor(alvo.z) - base.z));
+  if (alvo.d !== base.d || d > base.raio) return "fora";
+  if (d > Math.max(0, Math.floor(numero(config().bandeiraDistanciaMax, 64)))) return "longe";
+  return undefined;
 }
 
 /** Pedidos de entrada ainda válidos (3 dias). @param {Cla} cla */

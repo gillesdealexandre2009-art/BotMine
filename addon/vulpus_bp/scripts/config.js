@@ -64,6 +64,11 @@ export const PADROES = {
   guerraAntiFarmMin: 5,
   guerraBonusSequencia: 1,
   guerraBonusLider: 1,
+  bandeiraDistanciaMax: 64,
+  recargaBandeiraHoras: 1,
+  ctfCaptura: 10,
+  ctfDevolver: 2,
+  ctfMatarCarregador: 3,
 };
 
 /**
@@ -161,6 +166,7 @@ export const ICONES = {
   bypass: "textures/blocks/barrier",
   kitsune: "textures/items/blaze_powder",
   apelido: "textures/items/name_tag",
+  bandeira: "textures/vulpus/ui/bandeira",
 };
 
 export const SONS = {

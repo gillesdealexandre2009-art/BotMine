@@ -192,7 +192,7 @@ O clã é a turma de cada um na toca. Abre pelo botão **Clã** do menu ou por `
 - **Exceções:** pessoas de confiança (até 10, em Terreno) constroem; aliados com acesso abrem portas e baús (mas não constroem, não plantam e não põem placa, linha ou estandarte); a staff só passa com o **bypass** ligado (`/vulpus:clabypass`, fica no log).
 - **Ao entrar e sair** de uma base aparece "Território de [TAG]" na barra de baixo.
 - **Guerras:** quem tem permissão declara guerra a outro clã. Regras (a staff muda em Configurações > Clãs e guerras, inclusive os 5 min do anti-farm e os pontos extras; 0 desliga o extra):
-  - os dois clãs precisam de nível 2+ e de 3+ pessoas; um clã só tem uma guerra por vez; o mesmo par só guerreia de novo depois de 7 dias; aliados não guerreiam;
+  - os dois clãs precisam de nível 2+, de 3+ pessoas e da **bandeira marcada** na base (veja "Capture the Flag"); um clã só tem uma guerra por vez; o mesmo par só guerreia de novo depois de 7 dias; aliados não guerreiam;
   - declarar tira 1.000 Caudas do banco (vai para o **baú de guerra**); a guerra começa **1 hora depois** (todo mundo é avisado) e dura **24 horas**;
   - quando começa, o clã alvo põe a parte dele no baú (o que tiver no banco, até 1.000);
   - durante a guerra, a **base de cada lado fica aberta só para o clã inimigo**; as explosões continuam como o clã escolheu;
@@ -211,6 +211,25 @@ O clã é a turma de cada um na toca. Abre pelo botão **Clã** do menu ou por `
 - **Placar do lado:** mostra a tag e o nome do clã e, em guerra, o placar (dá para esconder a linha do clã em Ajustes).
 - **Staff:** Staff > Clãs (staff): ver qualquer clã, trocar a tag, encerrar uma guerra sem vencedor (cada lado recebe a sua parte), remover o clã (o banco volta para quem lidera) e o log.
 
+## Capture the Flag (bandeiras nas guerras)
+
+Toda base de clã tem uma **bandeira** num pedestal. Na guerra, além dos abates, vale roubar a bandeira do inimigo e levar para casa (como no CubeCraft).
+
+- **Marcar a bandeira:** em Clã > Terreno, quem tem a permissão de terreno (o Líder e, por padrão, o Vice) fica onde quer o pedestal e toca em "Marcar a bandeira aqui". Precisa ser **dentro da base** e a no máximo **64 blocos do centro**. Mover tem espera de **1 hora** (a primeira marcação não espera) e não dá com guerra marcada ou valendo. Se a base mudar e a bandeira ficar de fora, é preciso marcar de novo.
+- **Todo mundo sabe onde fica:** as coordenadas aparecem na ficha de cada clã (Procurar clãs), no Ranking, na lista de alvos ao declarar, no Terreno, na ficha da guerra e no Painel de Dono. A bandeira fica de pé no pedestal o tempo todo (com a tag do clã em cima).
+- **Sem bandeira não tem guerra:** para declarar, os **dois** clãs precisam ter a bandeira marcada (a mensagem diz quem falta). As guerras forçadas pelo Painel de Dono continuam funcionando: se um dos times não tiver bandeira, essa guerra fica **sem bandeiras** (só os abates contam) e o dono é avisado. A guerra usa as bandeiras de onde elas estavam quando começou.
+- **Como joga:**
+  1. Só durante a guerra **valendo** (no aviso, não). Quem já era do clã quando a guerra foi declarada (a mesma regra dos abates) **encosta** na bandeira inimiga e pega.
+  2. **Captura:** leve até a **sua** bandeira, que precisa estar no pedestal (se roubaram a sua, recupere primeiro). Ao encostar: **+10 pontos**, anúncio para os dois clãs e um aviso curto para o servidor, fogos e som. A bandeira capturada volta para o pedestal do dono e fica **2 minutos recarregando** (ninguém pega).
+  3. **Quem leva** fica um pouco mais lento, com chamas da cor da bandeira em volta e a **bandeira pequena acima da cabeça**. Não usa teleporte do addon (spawn, casas, voltar, TPA, casa do clã), pérola do End, fruta do coro nem fogos de artifício, e não plana: a elytra vai para o inventário (sem espaço no inventário, não pega a bandeira; se vestir de novo sem espaço, a bandeira cai).
+  4. **A bandeira cai** onde a pessoa estava se ela morrer, sair do jogo, trocar de dimensão ou for teleportada por fora do addon. Caída, quem é do clã dono encosta e **devolve (+2)**; o inimigo pode pegar de novo; se ninguém encostar, ela **volta sozinha em 30 s**. Se cair no vazio ou na lava, volta na hora.
+  5. **Derrubar quem leva a sua bandeira** vale **+3** (além do ponto normal do abate, que continua com o anti-farm de 5 min; os +3 valem a cada vez).
+  6. Fim da guerra (por tempo, rendição, staff ou dono): as bandeiras voltam para os pedestais e ninguém fica levando nada.
+- **Placar do lado:** durante a guerra mostra a sua bandeira (em casa, com quem está, caída ou recarregando) e a do inimigo com a distância e a direção (N, NE, L...). Quem leva a bandeira vê o caminho de casa.
+- **Visual:** mastro de 3 blocos com o pano na **cor do clã** e uma raposinha, tremulando; um **feixe** de partículas sobe da bandeira durante a guerra (fumaça enquanto recarrega); o pedestal vazio solta uma fumaça "fantasma"; a bandeira caída também tem feixe.
+- **Valores** (Staff > Configurações > Clãs e guerras): captura (10), devolver (2), derrubar quem leva (3), distância máxima do centro (64) e espera para mover (1 h). Os 2 min de recarga e os 30 s de volta sozinha são fixos (`sistemas/ctf.js`).
+- **Reiniciar o servidor:** bandeira roubada ou caída volta para o pedestal e quem levava perde a bandeira; o placar, as capturas e a recarga continuam.
+
 ## Painel de Dono
 
 Painel só do **dono do servidor**, separado do da staff (staff comum e operador não são dono). "Time" aqui é o clã.
@@ -218,9 +237,9 @@ Painel só do **dono do servidor**, separado do da staff (staff comum e operador
 - **Como virar dono:** a primeira vez, um **Operador** usa `/vulpus:dono reivindicar` (só funciona enquanto não existe nenhum dono). Depois disso, só um dono adiciona ou tira outros (Painel > Donos, ou `/vulpus:dono adddono <nome>` / `remdono <nome>`); o último dono não sai. Também dá para fixar donos pelo nome da conta em `DONOS`, no `vulpus_bp/scripts/config.js` (vazio por padrão; com um nome lá, o reivindicar fecha).
 - **Como abrir:** `/vulpus:dono`, ou Staff > Painel de Dono (o botão só aparece para dono). Dono que não é staff vê o botão **Dono** no canto do menu.
 - **Times:** criar sem cobrar Caudas (nome, tag e cor com as validações de sempre; com ou sem líder), definir ou trocar o líder (o anterior vira Vice), definir o nível de 1 a 8 (a base acompanha o raio do nível), adicionar e remover pessoas sem convite (também offline, pelo nome de quem já entrou no mundo), forçar alguém a mudar de time (sai do anterior: um time por pessoa) e consultar o time de alguém. Time **sem líder** funciona normal: ninguém tem os poderes de Líder até o dono definir um.
-- **Guerras:** começar agora entre dois times (sem aviso, sem custo, sem baú e sem exigir nível, pessoas ou trégua; fica marcada como forçada), somar ou definir pontos, finalizar na hora (vence quem tem mais pontos, ou o lado que o dono escolher), cancelar (sem vencedor; as apostas voltam), definir o vencedor e ver as guerras em andamento e as finalizadas. Finalizada é finalizada de verdade: a proteção volta, abates param de contar, sai do placar e dos menus, o baú é pago uma vez só, e finalizar ou cancelar de novo responde "Essa guerra já foi finalizada". Definir o vencedor de uma guerra já finalizada só corrige o histórico (e não vale se o baú já foi pago a outro lado).
+- **Guerras:** começar agora entre dois times (sem aviso, sem custo, sem baú e sem exigir nível, pessoas ou trégua; fica marcada como forçada). **Modo evento:** em "Iniciar guerra agora" escolha a duração em minutos (ex.: 15; 0 = a duração normal) ou use `/vulpus:dono guerra AZL VRM 15`. Com as duas bandeiras marcadas a guerra tem Capture the Flag; sem, só abates. Também dá para somar ou definir pontos, finalizar na hora (vence quem tem mais pontos, ou o lado que o dono escolher), cancelar (sem vencedor; as apostas voltam), definir o vencedor e ver as guerras em andamento e as finalizadas. Finalizada é finalizada de verdade: a proteção volta, abates param de contar, sai do placar e dos menus, o baú é pago uma vez só, e finalizar ou cancelar de novo responde "Essa guerra já foi finalizada". Definir o vencedor de uma guerra já finalizada só corrige o histórico (e não vale se o baú já foi pago a outro lado).
 - **Log do dono:** cada ação (e cada tentativa de quem não é dono) fica registrada com data, hora, alvo e ok/erro; as últimas 200 aparecem em Painel > Log do dono, e o Content Log mostra as linhas `[Vulpus][Dono]`.
-- **Atalhos:** `/vulpus:dono ajuda` lista todos (`criar "Time Azul" AZL azul`, `lider AZL Fulano`, `nivel AZL 3`, `add AZL Fulano`, `remover Fulano`, `mover Fulano AZL`, `time Fulano`, `guerra AZL VRM`, `pontos AZL 2` ou `pontos AZL 5 definir`, `finalizar AZL [VRM]`, `cancelar AZL`, `vencedor <id> AZL`, `guerras`, `log`). Nome com espaço vai entre aspas.
+- **Atalhos:** `/vulpus:dono ajuda` lista todos (`criar "Time Azul" AZL azul`, `lider AZL Fulano`, `nivel AZL 3`, `add AZL Fulano`, `remover Fulano`, `mover Fulano AZL`, `time Fulano`, `guerra AZL VRM [minutos]`, `pontos AZL 2` ou `pontos AZL 5 definir`, `finalizar AZL [VRM]`, `cancelar AZL`, `vencedor <id> AZL`, `guerras`, `log`). Nome com espaço vai entre aspas.
 
 ## Visual Kitsune
 
@@ -366,6 +385,7 @@ Num mundo com o BP e o RP ativos (o ideal é ter uma segunda pessoa para o TPA):
     - marque a base longe do spawn, veja os limites; com a conta de fora, tente quebrar, colocar, abrir um baú e uma porta (tudo barrado com aviso); na zona em volta, tente pôr um pistão (barrado) e um bloco comum (liberado);
     - crie um segundo clã, suba os dois para o nível 2 (a staff dá Caudas e põe "Clã: XP por minuto ativo" alto), declare guerra, espere começar e confira que o inimigo mexe na base e que o abate conta ponto; abater a mesma pessoa de novo antes de 5 min não conta; derrubar o líder dá ponto extra; no fim aparece o Caçador;
     - render-se, alianças, casa do clã, `/vulpus:c`, dissolver.
+    - **bandeiras:** marque a bandeira dos dois clãs (Terreno), comece uma guerra de 15 min pelo Painel de Dono e: pegue a bandeira inimiga (ela vai para cima da cabeça), tente `/vulpus:spawn` e uma pérola (barrados), leve até a sua (captura +10), morra levando (cai; quem te derrubou ganha +3), devolva a sua caída (+2), deixe uma cair e espere 30 s.
 12. **Visual Kitsune:** com `/vulpus:kitsune` em você, troque o apelido e a cor do nome em Ajustes; confira sobre a cabeça, no chat, no placar e no Perfil ("Conta:"). Escolha um tema para o clã, tire o selo com `/vulpus:kitsune` de novo: em até 10 s a tag do clã volta para a cor de antes.
 
 ## Checklist de teste no jogo
@@ -428,6 +448,12 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
     - barco na água dentro da zona: barrado;
     - "Território de [TAG]" aparece ao entrar e ao sair;
     - reiniciar o servidor no meio de uma guerra: ela continua com o mesmo placar e o mesmo horário de fim.
+15. **Bandeiras (Capture the Flag):**
+    - a bandeira aparece no pedestal com a cor do clã, o pano tremulando e a tag em cima; trocar a cor do clã muda a do pano em até 2 s;
+    - de noite ela continua bem visível; o feixe aparece de longe durante a guerra;
+    - a bandeira pequena acompanha a cabeça de quem leva sem ficar muito para trás (anotar se treme);
+    - de elytra: ela vai para o inventário ao pegar; vestir de novo volta para o inventário;
+    - no celular: a bandeira e o feixe não pesam (anotar o FPS perto de duas bandeiras).
 
 ## Limitações
 
@@ -440,6 +466,7 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 - **Servidor:** o addon guarda tudo no próprio mundo e ainda não fala com o Discord (os níveis já usam a mesma conta, para ligar no futuro).
 - **Sem loja:** as Caudas só compram no leilão, de outras pessoas, e pagam as coisas do clã.
 - **Proteção dos clãs:** a API estável não tem evento de pistão, de líquido escorrendo nem de fogo se espalhando. A zona de amortecimento impede que alguém de fora monte essas coisas perto da base, mas algo construído **antes** da base existir (ou um rio de lava vindo de longe) não é barrado. Endermen, wither e bichos que quebram blocos também não são barrados, e placa de pressão e fio de armadilha disparam com quem pisa (não há como impedir pela API). Funis ficam proibidos na zona inteira (não dá para saber para onde apontam antes de colocar).
+- **Bandeiras:** o Bedrock não tem o efeito "brilho" (glowing) na API estável: quem leva a bandeira fica marcado pelas chamas em volta e pela bandeira acima da cabeça. A API também não tem como cortar o planeio no ar: a elytra é tirada do peito (vai para o inventário). Tridente com Correnteza não é barrado (um salto muito grande derruba a bandeira, como um teleporte).
 - **Filtro de palavrões:** é simples (lista de palavras); a staff pode trocar a tag de um clã e tirar apelidos.
 
 ## Pastas
@@ -454,6 +481,7 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 | `tools/verificar_ui.py` | confere o visual do menu e do placar contra o jogo instalado |
 | `tools/gerar_texturas.py` | refaz as texturas provisórias |
 | `tools/gerar_glyphs.py` | refaz os glyphs, o título VULPUS e as texturas do tema Black |
+| `tools/gerar_bandeira.py` | refaz as texturas da bandeira (uma por cor de clã), o ícone do botão e a prévia `docs/previas/bandeiras.png` |
 | `tools/gerar_temas.py` | refaz os temas Sakura, Lunar e Espírito, as raposinhas da escolha de tema e a prévia `docs/previas/temas.png` |
 | `docs/` | especificações e pesquisa |
 | `dist/` | o pacote gerado; não vai para o git |

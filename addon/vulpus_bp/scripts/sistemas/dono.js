@@ -227,8 +227,9 @@ async function fluxoIniciar(player, voltar) {
   const r = await perguntar(player, textos.TITULO_INICIAR, [
     { tipo: "lista", rotulo: textos.ROTULO_TIME_A, opcoes },
     { tipo: "lista", rotulo: textos.ROTULO_TIME_B, opcoes, padrao: 1 },
+    { tipo: "numero", rotulo: textos.ROTULO_MINUTOS, padrao: 0, min: 0, max: 10080 },
   ]);
-  if (r && times[r[0]] && times[r[1]]) acoes.iniciarGuerra(player, times[r[0]].tag, times[r[1]].tag);
+  if (r && times[r[0]] && times[r[1]]) acoes.iniciarGuerra(player, times[r[0]].tag, times[r[1]].tag, r[2] || undefined);
   await voltar();
 }
 
@@ -355,7 +356,7 @@ const SUBCOMANDOS = {
   remover: [1, "remover <nome> [TAG]", (p, [a, b]) => acoes.removerMembro(p, a, b)],
   mover: [2, "mover <nome> <TAG>", (p, [a, b]) => acoes.moverJogador(p, a, b)],
   time: [1, "time <nome>", (p, [a]) => acoes.consultarTime(p, a)],
-  guerra: [2, "guerra <TAG> <TAG>", (p, [a, b]) => acoes.iniciarGuerra(p, a, b)],
+  guerra: [2, "guerra <TAG> <TAG> [minutos]", (p, [a, b, c]) => acoes.iniciarGuerra(p, a, b, c)],
   pontos: [2, "pontos <TAG> <valor> [definir]", (p, [a, b, c]) => acoes.alterarPontos(p, a, a, b, String(c ?? "").toLowerCase() === "definir")],
   finalizar: [1, "finalizar <TAG|id> [TAG vencedora]", (p, [a, b]) => acoes.finalizarGuerra(p, a, b)],
   cancelar: [1, "cancelar <TAG|id>", (p, [a]) => acoes.cancelarGuerra(p, a)],

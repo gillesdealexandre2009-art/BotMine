@@ -1,3 +1,4 @@
 pack.name=Vulpus
 pack.description=Vulpus visuals: menu, side scoreboard and glyphs
 item.vulpus:menu.name=§6Menu do Vulpus
+entity.vulpus:bandeira.name=Clan flag

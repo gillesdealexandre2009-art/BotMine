@@ -19,6 +19,7 @@ import "./sistemas/kitsune.js";
 import "./sistemas/cla_dados.js";
 import "./sistemas/cla_guerra.js";
 import "./sistemas/cla_terreno.js";
+import "./sistemas/ctf.js";
 import "./sistemas/clas.js";
 import "./sistemas/regras.js";
 import "./sistemas/staff.js";

@@ -40,8 +40,10 @@ import {
   custoMoverBase,
   desmarcarBase,
   expandirBase,
+  marcarBandeira,
   marcarBase,
   mostrarLimites,
+  recargaBandeira,
   recargaBase,
 } from "./cla_terreno.js";
 import { temSelo } from "./kitsune.js";
@@ -411,8 +413,17 @@ async function menuTerreno(player, voltar) {
   const aqui = () => menuTerreno(player, voltar);
   const gerir = pode(cla, player.id, "terreno");
   const custo = custoMoverBase(cla);
+  const cfg = config();
   const lista = new Lista(textos.TITULO_TERRENO).texto(
-    textos.TERRENO_CORPO({ cla, raioNivel: defNivel(cla.nivel).raio, zona: Math.max(0, config().zonaAmortecimento), custo, recarga: recargaBase(cla) }),
+    textos.TERRENO_CORPO({
+      cla,
+      raioNivel: defNivel(cla.nivel).raio,
+      zona: Math.max(0, cfg.zonaAmortecimento),
+      custo,
+      recarga: recargaBase(cla),
+      recargaBandeira: recargaBandeira(cla),
+      distanciaBandeira: Math.max(0, Math.floor(cfg.bandeiraDistanciaMax)),
+    }),
   );
   if (cla.base) lista.botao(textos.BOTAO_LIMITES, ICONES.terreno, (p) => mostrarLimites(p));
   if (gerir) {
@@ -436,6 +447,12 @@ async function menuTerreno(player, voltar) {
       if (await confirmar(p, { titulo: textos.TITULO_TERRENO, texto: textos.CONFIRMA_BASE(!!cla.base, custo) })) marcarBase(p);
       await aqui();
     });
+    if (cla.base) {
+      lista.botao(textos.BOTAO_MARCAR_BANDEIRA(!!cla.bandeira), ICONES.bandeira, async (p) => {
+        if (await confirmar(p, { titulo: textos.TITULO_TERRENO, texto: textos.CONFIRMA_BANDEIRA(!!cla.bandeira) })) marcarBandeira(p);
+        await aqui();
+      });
+    }
     for (const chave of /** @type {const} */ (["tnt", "creeper", "explosoes", "entidades"])) {
       lista.botao(textos.BOTAO_PROTECAO(chave, cla.protecao[chave]), cla.protecao[chave] ? ICONES.sim : ICONES.nao, async (p) => {
         alternarProtecao(p, chave);
@@ -533,7 +550,8 @@ async function menuGuerras(player, voltar) {
   const guerra = guerraDe(cla.id);
   const decide = pode(cla, player.id, "guerra");
   const cfg = config();
-  const lista = new Lista(textos.TITULO_GUERRAS).texto(guerra ? textos.GUERRA_CORPO(guerra, cla.id) : textos.SEM_GUERRA_CORPO(cfg));
+  const bandeiras = guerra ? { a: claPorId(guerra.a)?.bandeira ?? null, b: claPorId(guerra.b)?.bandeira ?? null } : { a: null, b: null };
+  const lista = new Lista(textos.TITULO_GUERRAS).texto(guerra ? textos.GUERRA_CORPO(guerra, cla.id, bandeiras) : textos.SEM_GUERRA_CORPO(cfg));
   if (decide && !guerra) lista.botao(textos.BOTAO_DECLARAR, ICONES.guerra, (p) => menuDeclarar(p, aqui));
   if (decide && guerra) {
     lista.botao(textos.BOTAO_RENDER, ICONES.nao, async (p) => {
