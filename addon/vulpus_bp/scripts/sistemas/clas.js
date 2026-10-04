@@ -8,7 +8,7 @@ import { config } from "../core/db.js";
 import { confirmar, Lista, perguntar } from "../core/forms.js";
 import { online, porId } from "../core/jogadores.js";
 import { ehStaff } from "../core/permissoes.js";
-import { erro, msg, rodarSeguro } from "../core/util.js";
+import { erro, msg, registrarErro, rodarSeguro } from "../core/util.js";
 import { pintar, TEMAS_COR } from "../cores.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/clas.js";
@@ -51,6 +51,8 @@ import { temSelo } from "./kitsune.js";
 /** @typedef {() => any} Volta */
 
 const TICKS_AVISO_ENTRADA = 80;
+/** De quanto em quanto tempo confere se quem escolheu o tema de um clã ainda é Kitsune (10 s). */
+const TICKS_CONFERIR_TEMA = 200;
 const TOP_RANKING = 10;
 /** Palavras extras do /vulpus:c (o jogo separa a mensagem por espaço e aceita no máximo 8 parâmetros; entre aspas vale uma frase). */
 const PALAVRAS_CHAT = 7;
@@ -872,12 +874,14 @@ async function menuClaStaff(player, claId, voltar) {
 
 world.afterEvents.worldLoad.subscribe(() => iniciarClas());
 
-// Ao entrar: o nome guardado no clã acompanha a conta, e quem decide vê o que está esperando.
+// Ao entrar: o nome guardado no clã acompanha a conta, quem perdeu o selo Kitsune longe daqui perde o tema
+// que escolheu para o clã, e quem decide vê o que está esperando.
 world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
   if (!initialSpawn) return;
   system.runTimeout(() => {
     if (!player.isValid) return;
     rodarSeguro(player, "Clã ao entrar", (p) => {
+      acoes.conferirTemaKitsune(p);
       const cla = claDe(p);
       if (!cla) return;
       const m = membroDe(cla, p.id);
@@ -895,6 +899,17 @@ world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
     });
   }, TICKS_AVISO_ENTRADA);
 });
+
+// O selo Kitsune pode sair com a pessoa online (staff, /tag, bot): o tema que ela escolheu para o clã sai junto.
+system.runInterval(() => {
+  try {
+    const donos = new Set(todosClas().map((c) => c.temaPor).filter((id) => id !== ""));
+    if (!donos.size) return;
+    for (const p of online()) if (donos.has(p.id)) acoes.conferirTemaKitsune(p);
+  } catch (e) {
+    registrarErro("Tema Kitsune do clã", e);
+  }
+}, TICKS_CONFERIR_TEMA);
 
 registrarComando({ nome: "cla", descricao: textos.DESC_CLA }, (p) => menuCla(p));
 

@@ -244,6 +244,8 @@ export function barra(fracao, segmentos = 10) {}
   - toda flag e todo token do JSON existe no JS, e vice-versa.
 
 ### 6.2 Tema Black (viável: variantes por instância)
+
+> **Substituído em 2026-10-04:** com 5 temas, o root passou a ter só `hub` e `lista`, e cada peça de tema virou um grupo de 5 imagens com gate pelo título (custo e motivo em `docs/ESTADO.md`, "Temas do painel"). O texto abaixo é o desenho original do Black.
 - As `$vars` são estáticas (resolvidas no load), então não dá para trocar textura por binding. Concatenar textura com `'' + #x` já crashou o cliente.
 - **Solução:** o `root` instancia 4 variantes do mesmo template:
   - `hub_laranja` e `lista_laranja` sem override, usando os `|default` atuais;

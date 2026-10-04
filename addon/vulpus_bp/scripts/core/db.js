@@ -6,7 +6,7 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {typeof PADROES} Config */
-/** @typedef {"laranja" | "black"} Tema */
+/** @typedef {"laranja" | "black" | "sakura" | "lunar" | "espirito"} Tema  tema do painel (core/forms.js) */
 
 /**
  * @typedef {object} Casa
@@ -36,6 +36,13 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {string} apelido  nome de exibição (só vale com o selo Kitsune; "" = o nome da conta)
  * @property {string} temaNome  tema de cor do nome (cores.js; só vale com o selo Kitsune; "" = sem tema)
  */
+
+/**
+ * Temas do painel, na ordem da escolha em Ajustes. Laranja e Black são de todos; os outros, do selo Kitsune
+ * (core/forms.js). Tema desconhecido no dado salvo vira laranja.
+ * @type {readonly Tema[]}
+ */
+export const TEMAS_MENU = Object.freeze(["laranja", "black", "sakura", "lunar", "espirito"]);
 
 /** Teto por propriedade (o jogo aceita até 32767 caracteres). */
 const LIMITE_JSON = 30000;
@@ -126,7 +133,7 @@ const ehPosicao = (valor) =>
 /**
  * Junta o que foi lido com os padrões. Campo que falta ou veio com tipo errado (JSON antigo ou
  * editado à mão) ganha o valor padrão; casa sem nome ou sem posição é descartada.
- * Dados da v1 (fase 1) saem como v2 com xp 0 e tema laranja.
+ * Dados da v1 (fase 1) saem como v2 com xp 0 e tema laranja ("laranja" e "black" salvos continuam valendo).
  * @param {any} lido
  * @returns {DadosJogador}
  */
@@ -156,7 +163,7 @@ function completar(lido) {
       hud: typeof ajustes.hud === "boolean" ? ajustes.hud : null,
       tpa: booleano(ajustes.tpa, base.ajustes.tpa),
       sons: booleano(ajustes.sons, base.ajustes.sons),
-      tema: ajustes.tema === "black" ? "black" : "laranja",
+      tema: TEMAS_MENU.includes(ajustes.tema) ? ajustes.tema : "laranja",
       cla: booleano(ajustes.cla, base.ajustes.cla),
     },
     recebeuItem: booleano(lido.recebeuItem, base.recebeuItem),

@@ -3,91 +3,27 @@
 
   "root": {
     "type": "panel",
-    "$vp_painel|default": "textures/vulpus/ui/painel",
-    "$vp_cabecalho|default": "textures/vulpus/ui/cabecalho",
-    "$vp_botao|default": "textures/vulpus/ui/botao",
-    "$vp_botao_hover|default": "textures/vulpus/ui/botao_hover",
-    "$vp_botao_press|default": "textures/vulpus/ui/botao_press",
-    "$vp_fechar|default": "textures/vulpus/ui/fechar",
-    "$vp_fechar_hover|default": "textures/vulpus/ui/fechar_hover",
-    "$vp_fechar_press|default": "textures/vulpus/ui/fechar_press",
-    "$vp_divisor|default": "textures/vulpus/ui/divisor",
-    "$vp_logo|default": "textures/vulpus/ui/logo",
-    "$vp_titulo|default": "textures/vulpus/ui/titulo",
     "$vp_creme|default": [ 1.0, 0.957, 0.902 ],
-    "$vp_laranja|default": [ 0.949, 0.549, 0.22 ],
     "controls": [
       {
-        "hub_laranja@vulpus_menu.hub": {
+        "hub@vulpus_menu.hub": {
           "bindings": [
             { "binding_name": "#title_text" },
             {
               "binding_type": "view",
-              "source_property_name": "((not ((#title_text - '§v§u§l§p§0§r') = #title_text)) and ((#title_text - '§v§b§r') = #title_text))",
+              "source_property_name": "(not ((#title_text - '§v§u§l§p§0§r') = #title_text))",
               "target_property_name": "#visible"
             }
           ]
         }
       },
       {
-        "hub_black@vulpus_menu.hub": {
-          "$vp_painel": "textures/vulpus/ui/black/painel",
-          "$vp_cabecalho": "textures/vulpus/ui/black/cabecalho",
-          "$vp_botao": "textures/vulpus/ui/black/botao",
-          "$vp_botao_hover": "textures/vulpus/ui/black/botao_hover",
-          "$vp_botao_press": "textures/vulpus/ui/black/botao_press",
-          "$vp_fechar": "textures/vulpus/ui/black/fechar",
-          "$vp_fechar_hover": "textures/vulpus/ui/black/fechar_hover",
-          "$vp_fechar_press": "textures/vulpus/ui/black/fechar_press",
-          "$vp_divisor": "textures/vulpus/ui/black/divisor",
-          "$foco_slot_0": "vulpus_black_slot_0",
-          "$foco_slot_1": "vulpus_black_slot_1",
-          "$foco_slot_2": "vulpus_black_slot_2",
-          "$foco_slot_3": "vulpus_black_slot_3",
-          "$foco_slot_4": "vulpus_black_slot_4",
-          "$foco_slot_5": "vulpus_black_slot_5",
-          "$foco_slot_6": "vulpus_black_slot_6",
-          "$foco_slot_7": "vulpus_black_slot_7",
-          "$foco_slot_8": "vulpus_black_slot_8",
-          "$foco_slot_9": "vulpus_black_slot_9",
+        "lista@vulpus_menu.lista": {
           "bindings": [
             { "binding_name": "#title_text" },
             {
               "binding_type": "view",
-              "source_property_name": "((not ((#title_text - '§v§u§l§p§0§r') = #title_text)) and (not ((#title_text - '§v§b§r') = #title_text)))",
-              "target_property_name": "#visible"
-            }
-          ]
-        }
-      },
-      {
-        "lista_laranja@vulpus_menu.lista": {
-          "bindings": [
-            { "binding_name": "#title_text" },
-            {
-              "binding_type": "view",
-              "source_property_name": "(((not ((#title_text - '§v§u§l§p') = #title_text)) and ((#title_text - '§v§u§l§p§0§r') = #title_text)) and ((#title_text - '§v§b§r') = #title_text))",
-              "target_property_name": "#visible"
-            }
-          ]
-        }
-      },
-      {
-        "lista_black@vulpus_menu.lista": {
-          "$vp_painel": "textures/vulpus/ui/black/painel",
-          "$vp_cabecalho": "textures/vulpus/ui/black/cabecalho",
-          "$vp_botao": "textures/vulpus/ui/black/botao",
-          "$vp_botao_hover": "textures/vulpus/ui/black/botao_hover",
-          "$vp_botao_press": "textures/vulpus/ui/black/botao_press",
-          "$vp_fechar": "textures/vulpus/ui/black/fechar",
-          "$vp_fechar_hover": "textures/vulpus/ui/black/fechar_hover",
-          "$vp_fechar_press": "textures/vulpus/ui/black/fechar_press",
-          "$vp_divisor": "textures/vulpus/ui/black/divisor",
-          "bindings": [
-            { "binding_name": "#title_text" },
-            {
-              "binding_type": "view",
-              "source_property_name": "(((not ((#title_text - '§v§u§l§p') = #title_text)) and ((#title_text - '§v§u§l§p§0§r') = #title_text)) and (not ((#title_text - '§v§b§r') = #title_text)))",
+              "source_property_name": "((not ((#title_text - '§v§u§l§p') = #title_text)) and ((#title_text - '§v§u§l§p§0§r') = #title_text))",
               "target_property_name": "#visible"
             }
           ]
@@ -193,7 +129,7 @@
           "type": "panel",
           "size": [ "100%", 60 ],
           "controls": [
-            { "imagem": { "type": "image", "texture": "$vp_logo", "size": [ 60, 60 ], "layer": 4 } }
+            { "imagem@vulpus_menu.tema_logo": { "size": [ 60, 60 ], "layer": 4 } }
           ]
         }
       },
@@ -338,7 +274,7 @@
         "header": "@vulpus_menu.cabecalho_lista",
         "divider": "@vulpus_menu.divisor_lista"
       },
-      "factory_variables": [ "$vp_botao", "$vp_botao_hover", "$vp_botao_press", "$vp_creme", "$vp_laranja", "$vp_divisor" ]
+      "factory_variables": [ "$vp_creme" ]
     },
     "collection_name": "form_buttons",
     "bindings": [
@@ -398,23 +334,90 @@
     "type": "panel",
     "size": [ "100%", "100%c + 8px" ],
     "controls": [
+      { "laranja@vulpus_menu.cabecalho_laranja": {} },
+      { "black@vulpus_menu.cabecalho_black": {} },
+      { "sakura@vulpus_menu.cabecalho_sakura": {} },
+      { "lunar@vulpus_menu.cabecalho_lunar": {} },
+      { "espirito@vulpus_menu.cabecalho_espirito": {} }
+    ]
+  },
+
+  "texto_cabecalho": {
+    "type": "label",
+    "text": "#form_button_text",
+    "size": [ "100% - 4px", "default" ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "offset": [ 2, 5 ],
+    "text_alignment": "left",
+    "font_type": "MinecraftTen",
+    "backup_font_type": "UIFont",
+    "shadow": true,
+    "property_bag": { "#visible": false },
+    "visible": "#visible"
+  },
+
+  "cabecalho_laranja@vulpus_menu.texto_cabecalho": {
+    "color": [ 0.949, 0.549, 0.22 ],
+    "bindings": [
+      { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      { "binding_name": "#title_text" },
       {
-        "texto": {
-          "type": "label",
-          "text": "#form_button_text",
-          "size": [ "100% - 4px", "default" ],
-          "anchor_from": "top_left",
-          "anchor_to": "top_left",
-          "offset": [ 2, 5 ],
-          "text_alignment": "left",
-          "font_type": "MinecraftTen",
-          "backup_font_type": "UIFont",
-          "color": "$vp_laranja",
-          "shadow": true,
-          "bindings": [
-            { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" }
-          ]
-        }
+        "binding_type": "view",
+        "source_property_name": "(((((#title_text - '§v§b§r') = #title_text) and ((#title_text - '§v§d§r') = #title_text)) and ((#title_text - '§v§9§r') = #title_text)) and ((#title_text - '§v§5§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "cabecalho_black@vulpus_menu.texto_cabecalho": {
+    "color": [ 0.949, 0.549, 0.22 ],
+    "bindings": [
+      { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§b§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "cabecalho_sakura@vulpus_menu.texto_cabecalho": {
+    "color": [ 1.0, 0.722, 0.839 ],
+    "bindings": [
+      { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§d§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "cabecalho_lunar@vulpus_menu.texto_cabecalho": {
+    "color": [ 0.784, 0.831, 0.922 ],
+    "bindings": [
+      { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§9§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "cabecalho_espirito@vulpus_menu.texto_cabecalho": {
+    "color": [ 0.361, 0.847, 1.0 ],
+    "bindings": [
+      { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" },
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§5§r') = #title_text))",
+        "target_property_name": "#visible"
       }
     ]
   },
@@ -423,7 +426,7 @@
     "type": "panel",
     "size": [ "100%", 9 ],
     "controls": [
-      { "linha": { "type": "image", "texture": "$vp_divisor", "size": [ "100% - 8px", 2 ] } }
+      { "linha@vulpus_menu.tema_divisor": { "size": [ "100% - 8px", 2 ] } }
     ]
   },
 
@@ -432,11 +435,9 @@
     "size": [ "100%", "100%" ],
     "$titulo_imagem|default": false,
     "controls": [
-      { "fundo": { "type": "image", "texture": "$vp_painel", "size": [ "100%", "100%" ], "layer": 1 } },
+      { "fundo@vulpus_menu.tema_painel": { "layer": 1 } },
       {
-        "faixa": {
-          "type": "image",
-          "texture": "$vp_cabecalho",
+        "faixa@vulpus_menu.tema_cabecalho": {
           "size": [ "100% - 4px", 24 ],
           "anchor_from": "top_middle",
           "anchor_to": "top_middle",
@@ -446,9 +447,7 @@
       },
       { "titulo@vulpus_menu.titulo": { "ignored": "$titulo_imagem" } },
       {
-        "titulo_imagem": {
-          "type": "image",
-          "texture": "$vp_titulo",
+        "titulo_imagem@vulpus_menu.tema_titulo": {
           "size": [ 97, 21 ],
           "anchor_from": "top_middle",
           "anchor_to": "top_middle",
@@ -479,7 +478,7 @@
       { "binding_name": "#title_text" },
       {
         "binding_type": "view",
-        "source_property_name": "((((#title_text - '§v§u§l§p§0§r') - '§v§u§l§p§1§r') - '§v§u§l§p') - '§v§b§r')",
+        "source_property_name": "(((((((#title_text - '§v§u§l§p§0§r') - '§v§u§l§p§1§r') - '§v§u§l§p') - '§v§b§r') - '§v§d§r') - '§v§9§r') - '§v§5§r')",
         "target_property_name": "#text"
       }
     ]
@@ -503,9 +502,9 @@
       { "from_button_id": "button.menu_ok", "to_button_id": "button.menu_exit", "mapping_type": "focused" }
     ],
     "controls": [
-      { "default": { "type": "image", "texture": "$vp_fechar", "size": [ "100%", "100%" ] } },
-      { "hover": { "type": "image", "texture": "$vp_fechar_hover", "size": [ "100%", "100%" ] } },
-      { "pressed": { "type": "image", "texture": "$vp_fechar_press", "size": [ "100%", "100%" ] } }
+      { "default@vulpus_menu.tema_fechar": {} },
+      { "hover@vulpus_menu.tema_fechar_hover": {} },
+      { "pressed@vulpus_menu.tema_fechar_press": {} }
     ]
   },
 
@@ -549,9 +548,9 @@
       { "from_button_id": "button.menu_ok", "to_button_id": "button.form_button_click", "mapping_type": "focused" }
     ],
     "controls": [
-      { "default": { "type": "image", "texture": "$vp_botao", "size": [ "100%", "100%" ] } },
-      { "hover": { "type": "image", "texture": "$vp_botao_hover", "size": [ "100%", "100%" ] } },
-      { "pressed": { "type": "image", "texture": "$vp_botao_press", "size": [ "100%", "100%" ] } }
+      { "default@vulpus_menu.tema_botao": {} },
+      { "hover@vulpus_menu.tema_botao_hover": {} },
+      { "pressed@vulpus_menu.tema_botao_press": {} }
     ]
   },
 
@@ -627,5 +626,185 @@
     "bindings": [
       { "binding_name": "#form_button_text", "binding_type": "collection", "binding_collection_name": "form_buttons" }
     ]
+  },
+
+  "tema_imagem": {
+    "type": "panel",
+    "size": [ "100%", "100%" ],
+    "controls": [
+      { "laranja@vulpus_menu.imagem_laranja": {} },
+      { "black@vulpus_menu.imagem_black": {} },
+      { "sakura@vulpus_menu.imagem_sakura": {} },
+      { "lunar@vulpus_menu.imagem_lunar": {} },
+      { "espirito@vulpus_menu.imagem_espirito": {} }
+    ]
+  },
+
+  "imagem_laranja": {
+    "type": "image",
+    "texture": "$tx_laranja",
+    "size": [ "100%", "100%" ],
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(((((#title_text - '§v§b§r') = #title_text) and ((#title_text - '§v§d§r') = #title_text)) and ((#title_text - '§v§9§r') = #title_text)) and ((#title_text - '§v§5§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "imagem_black": {
+    "type": "image",
+    "texture": "$tx_black",
+    "size": [ "100%", "100%" ],
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§b§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "imagem_sakura": {
+    "type": "image",
+    "texture": "$tx_sakura",
+    "size": [ "100%", "100%" ],
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§d§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "imagem_lunar": {
+    "type": "image",
+    "texture": "$tx_lunar",
+    "size": [ "100%", "100%" ],
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§9§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "imagem_espirito": {
+    "type": "image",
+    "texture": "$tx_espirito",
+    "size": [ "100%", "100%" ],
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      { "binding_name": "#title_text" },
+      {
+        "binding_type": "view",
+        "source_property_name": "(not ((#title_text - '§v§5§r') = #title_text))",
+        "target_property_name": "#visible"
+      }
+    ]
+  },
+
+  "tema_painel@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/painel",
+    "$tx_black": "textures/vulpus/ui/black/painel",
+    "$tx_sakura": "textures/vulpus/ui/sakura/painel",
+    "$tx_lunar": "textures/vulpus/ui/lunar/painel",
+    "$tx_espirito": "textures/vulpus/ui/espirito/painel"
+  },
+
+  "tema_cabecalho@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/cabecalho",
+    "$tx_black": "textures/vulpus/ui/black/cabecalho",
+    "$tx_sakura": "textures/vulpus/ui/sakura/cabecalho",
+    "$tx_lunar": "textures/vulpus/ui/lunar/cabecalho",
+    "$tx_espirito": "textures/vulpus/ui/espirito/cabecalho"
+  },
+
+  "tema_botao@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/botao",
+    "$tx_black": "textures/vulpus/ui/black/botao",
+    "$tx_sakura": "textures/vulpus/ui/sakura/botao",
+    "$tx_lunar": "textures/vulpus/ui/lunar/botao",
+    "$tx_espirito": "textures/vulpus/ui/espirito/botao"
+  },
+
+  "tema_botao_hover@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/botao_hover",
+    "$tx_black": "textures/vulpus/ui/black/botao_hover",
+    "$tx_sakura": "textures/vulpus/ui/sakura/botao_hover",
+    "$tx_lunar": "textures/vulpus/ui/lunar/botao_hover",
+    "$tx_espirito": "textures/vulpus/ui/espirito/botao_hover"
+  },
+
+  "tema_botao_press@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/botao_press",
+    "$tx_black": "textures/vulpus/ui/black/botao_press",
+    "$tx_sakura": "textures/vulpus/ui/sakura/botao_press",
+    "$tx_lunar": "textures/vulpus/ui/lunar/botao_press",
+    "$tx_espirito": "textures/vulpus/ui/espirito/botao_press"
+  },
+
+  "tema_fechar@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/fechar",
+    "$tx_black": "textures/vulpus/ui/black/fechar",
+    "$tx_sakura": "textures/vulpus/ui/sakura/fechar",
+    "$tx_lunar": "textures/vulpus/ui/lunar/fechar",
+    "$tx_espirito": "textures/vulpus/ui/espirito/fechar"
+  },
+
+  "tema_fechar_hover@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/fechar_hover",
+    "$tx_black": "textures/vulpus/ui/black/fechar_hover",
+    "$tx_sakura": "textures/vulpus/ui/sakura/fechar_hover",
+    "$tx_lunar": "textures/vulpus/ui/lunar/fechar_hover",
+    "$tx_espirito": "textures/vulpus/ui/espirito/fechar_hover"
+  },
+
+  "tema_fechar_press@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/fechar_press",
+    "$tx_black": "textures/vulpus/ui/black/fechar_press",
+    "$tx_sakura": "textures/vulpus/ui/sakura/fechar_press",
+    "$tx_lunar": "textures/vulpus/ui/lunar/fechar_press",
+    "$tx_espirito": "textures/vulpus/ui/espirito/fechar_press"
+  },
+
+  "tema_divisor@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/divisor",
+    "$tx_black": "textures/vulpus/ui/black/divisor",
+    "$tx_sakura": "textures/vulpus/ui/sakura/divisor",
+    "$tx_lunar": "textures/vulpus/ui/lunar/divisor",
+    "$tx_espirito": "textures/vulpus/ui/espirito/divisor"
+  },
+
+  "tema_logo@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/logo",
+    "$tx_black": "textures/vulpus/ui/logo",
+    "$tx_sakura": "textures/vulpus/ui/sakura/logo",
+    "$tx_lunar": "textures/vulpus/ui/lunar/logo",
+    "$tx_espirito": "textures/vulpus/ui/espirito/logo"
+  },
+
+  "tema_titulo@vulpus_menu.tema_imagem": {
+    "$tx_laranja": "textures/vulpus/ui/titulo",
+    "$tx_black": "textures/vulpus/ui/titulo",
+    "$tx_sakura": "textures/vulpus/ui/sakura/titulo",
+    "$tx_lunar": "textures/vulpus/ui/lunar/titulo",
+    "$tx_espirito": "textures/vulpus/ui/espirito/titulo"
   }
 }

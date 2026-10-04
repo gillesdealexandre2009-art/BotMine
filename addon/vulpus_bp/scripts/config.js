@@ -52,6 +52,9 @@ export const PADROES = {
   guerraAvisoMin: 60,
   duracaoGuerraHoras: 24,
   recargaGuerraDias: 7,
+  guerraAntiFarmMin: 5,
+  guerraBonusSequencia: 1,
+  guerraBonusLider: 1,
 };
 
 /**
@@ -117,6 +120,13 @@ export const ICONES = {
   ranks: "textures/items/nether_star",
   tema: "textures/items/blaze_powder",
   cargos: "textures/ui/permissions_member_star",
+  // Temas do painel (raposinha de cada tema; cadeado nos de Kitsune para quem não tem o selo)
+  temaLaranja: "textures/vulpus/ui/icone",
+  temaBlack: "textures/vulpus/ui/black/icone",
+  temaSakura: "textures/vulpus/ui/sakura/icone",
+  temaLunar: "textures/vulpus/ui/lunar/icone",
+  temaEspirito: "textures/vulpus/ui/espirito/icone",
+  cadeado: "textures/ui/icon_lock",
   // Categorias do leilão
   catTudo: "textures/ui/icon_recipe_item",
   catBlocos: "textures/blocks/grass_side_carried",

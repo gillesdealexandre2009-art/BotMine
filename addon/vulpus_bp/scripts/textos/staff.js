@@ -65,6 +65,9 @@ export const CAMPOS = {
   guerraAvisoMin: "Guerra: aviso antes de começar (min)",
   duracaoGuerraHoras: "Guerra: duração (h)",
   recargaGuerraDias: "Guerra: trégua entre o mesmo par (dias)",
+  guerraAntiFarmMin: "Guerra: a mesma vítima só vale ponto a cada (min)",
+  guerraBonusSequencia: "Guerra: pontos extras por 3, 5 e 10 abates seguidos",
+  guerraBonusLider: "Guerra: pontos extras pela cabeça do líder (1x por hora)",
 };
 export const DICA_LINK = "discord.gg/convite";
 /** @param {string[]} mudou */

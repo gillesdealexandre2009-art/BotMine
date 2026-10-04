@@ -21,8 +21,9 @@ O que é conferido:
     no próprio botão;
   * a factory da lista tem os mesmos tipos de entrada (button/label/header/divider) da vanilla;
   * foco: focus_identifier sem repetição e focus_change_* apontando para ids da mesma variante;
-  * temas: as 4 variantes do root (hub/lista × laranja/black) usam as peças da pasta certa, e os
-    gates avaliados com títulos de exemplo mostram uma variante só (ou o form vanilla);
+  * temas: o root tem o Hub e a Lista; toda peça de tema (painel, cabeçalho, botões, X, divisor, logo e
+    título) fica num grupo com uma variante por tema, e os gates avaliados com títulos de exemplo de cada
+    um dos 5 temas mostram um layout só (ou o form vanilla) e, em cada grupo, só a peça do tema certo;
   * sidebar: o protocolo do title (flag, "Preserve Title Texts") avaliado com textos de exemplo;
   * texturas: as do RP existem (e o .json de nineslice bate com o PNG), as vanilla existem no jogo
     (inclui os ícones de vulpus_bp/scripts/config.js e o item_texture.json);
@@ -81,22 +82,31 @@ HASHES_VANILLA = {
 VERSAO_REFERENCIA = "1.26.52"
 PREFIXO_TEXTURAS_RP = "textures/vulpus/"
 PASTA_LARANJA = "textures/vulpus/ui/"
-PASTA_BLACK = "textures/vulpus/ui/black/"
 TITULO_IMAGEM = "textures/vulpus/ui/titulo"
-# peças que mudam com o tema (variável $vp_<peça> e textura <pasta><peça>)
+# tema do painel -> (pasta das peças, nome do token em FLAG de core/forms.js; o Laranja não tem token)
+TEMAS = {
+    "laranja": (PASTA_LARANJA, None),
+    "black": ("textures/vulpus/ui/black/", "TEMA_BLACK"),
+    "sakura": ("textures/vulpus/ui/sakura/", "TEMA_SAKURA"),
+    "lunar": ("textures/vulpus/ui/lunar/", "TEMA_LUNAR"),
+    "espirito": ("textures/vulpus/ui/espirito/", "TEMA_ESPIRITO"),
+}
+# peças que mudam com o tema (textura <pasta><peça>)
 PECAS_TEMA = ("painel", "cabecalho", "botao", "botao_hover", "botao_press",
-              "fechar", "fechar_hover", "fechar_press", "divisor")
-# variantes do root: nome -> (flag de layout, tema Black)
-VARIANTES = {"hub_laranja": ("HUB", False), "hub_black": ("HUB", True),
-             "lista_laranja": ("LISTA", False), "lista_black": ("LISTA", True)}
+              "fechar", "fechar_hover", "fechar_press", "divisor", "logo", "titulo")
+# peças que um tema pega da pasta do Laranja (o Black usa a logo e o título originais)
+PECAS_EMPRESTADAS = {"black": ("logo", "titulo")}
+# layouts do root: nome -> flag que o título precisa ter
+VARIANTES = {"hub": "HUB", "lista": "LISTA"}
 SLOTS_HUB = 11
 EXTENSOES_TEXTURA = (".png", ".tga", ".jpg", ".jpeg")
 PACKS_VANILLA = ("vanilla", "vanilla_base")
 JOGO_PASTA = "XboxGames/Minecraft for Windows/Content/data"
 PARAR_FOCO = "FOCUS_OVERRIDE_STOP"
 DIRECOES_FOCO = ("focus_change_left", "focus_change_right", "focus_change_up", "focus_change_down")
-FLAGS_FORMS = ("BASE", "HUB", "LISTA", "TEMA_BLACK")
-TOKENS = ("TEMA_BLACK", "SIDEBAR")
+TOKENS_TEMA = tuple(token for _, token in TEMAS.values() if token)
+FLAGS_FORMS = ("BASE", "HUB", "LISTA") + TOKENS_TEMA
+TOKENS = TOKENS_TEMA + ("SIDEBAR",)
 # arquivo nosso -> família de flags que ele pode usar
 FAMILIA_FLAGS = {"server_form.json": "menu", "vulpus/vulpus_menu.json": "menu",
                  "hud_screen.json": "hud", "vulpus/vulpus_hud.json": "hud"}
@@ -138,6 +148,7 @@ class Relatorio:
     def __init__(self) -> None:
         self.erros: list[str] = []
         self.avisos: list[str] = []
+        self.contagem: dict[str, int] = {}  # controles montados por layout (custo dos temas)
 
     def erro(self, onde: str, texto: str) -> None:
         self.erros.append(f"{onde}: {texto}" if onde else texto)
@@ -1139,28 +1150,64 @@ def rotulos_de_titulo(arvore: Arvore, inst: Instancia) -> list[tuple[Instancia, 
     return achados
 
 
+def peca_de(textura) -> str | None:
+    """Nome da peça de tema da textura (de qualquer pasta de tema), ou None."""
+    for pasta, _ in TEMAS.values():
+        if isinstance(textura, str) and textura.startswith(pasta) and textura[len(pasta):] in PECAS_TEMA:
+            return textura[len(pasta):]
+    return None
+
+
+def textura_esperada(tema: str, peca: str) -> str:
+    pasta = PASTA_LARANJA if peca in PECAS_EMPRESTADAS.get(tema, ()) else TEMAS[tema][0]
+    return pasta + peca
+
+
+def grupos_de_tema(arvore: Arvore, inst: Instancia) -> list[Instancia]:
+    """Controles cujos filhos (2 ou mais) aparecem todos conforme o título: um filho por tema."""
+    grupos = []
+    for sub in inst.todas():
+        filhos = [f for f in sub.filhos if not f.ignorado]
+        if sub is not inst and len(filhos) >= 2 and all(
+                eh_gate_de_titulo(arvore.efetivo(f, "bindings")) for f in filhos):
+            grupos.append(sub)
+    return grupos
+
+
 def checar_variantes(arvore: Arvore, raiz: Instancia, indices: dict[str, set[int]], rel: Relatorio) -> None:
-    """As 4 variantes do root: peças do tema da pasta certa, Hub com 11 slots e título em imagem."""
+    """Hub e Lista: peças de tema só dentro de grupos completos, Hub com 11 slots e título em imagem."""
     onde_raiz = arvore.onde(raiz.caminho)
     nomes = [filho.nome for filho in raiz.filhos]
     if sorted(nomes) != sorted(VARIANTES):
-        rel.erro(onde_raiz, f"o root deve ter as variantes {', '.join(VARIANTES)} (tem {', '.join(nomes)})")
-    pecas: dict[str, set[str]] = {}
+        rel.erro(onde_raiz, f"o root deve ter os layouts {', '.join(VARIANTES)} (tem {', '.join(nomes)})")
     for inst in raiz.filhos:
         if inst.nome not in VARIANTES or inst.ignorado:
             continue
-        layout, black = VARIANTES[inst.nome]
+        layout = VARIANTES[inst.nome]
         onde = arvore.onde(inst.caminho)
-        pasta = PASTA_BLACK if black else PASTA_LARANJA
-        usadas: set[str] = set()
+        grupos = grupos_de_tema(arvore, inst)
+        membros = {id(filho) for grupo in grupos for filho in grupo.filhos}
         for sub in inst.todas():
-            textura = sub.props.get("texture")
-            for peca in PECAS_TEMA:
-                if textura in (PASTA_LARANJA + peca, PASTA_BLACK + peca):
-                    usadas.add(peca)
-                    if textura != pasta + peca:
-                        rel.erro(arvore.onde(sub.caminho), f"{inst.nome} usa {textura} (esperado {pasta + peca})")
-        pecas[inst.nome] = usadas
+            filhos = [f for f in sub.filhos if not f.ignorado]
+            gateados = [f for f in filhos if eh_gate_de_titulo(arvore.efetivo(f, "bindings"))]
+            if sub is not inst and gateados and len(gateados) != len(filhos):
+                rel.erro(arvore.onde(sub.caminho), "grupo de tema incompleto: nem todo filho aparece pelo título"
+                                                   f" (sem gate: {', '.join(f.nome for f in filhos if f not in gateados)})")
+            if peca_de(sub.props.get("texture")) and id(sub) not in membros:
+                rel.erro(arvore.onde(sub.caminho), f"peça de tema {sub.props['texture']} fora de um grupo de tema")
+        for grupo in grupos:
+            filhos = [f for f in grupo.filhos if not f.ignorado]
+            onde_grupo = arvore.onde(grupo.caminho)
+            if sorted(f.nome for f in filhos) != sorted(TEMAS):
+                rel.erro(onde_grupo, f"o grupo de tema deve ter um filho por tema ({', '.join(TEMAS)}),"
+                                     f" tem {', '.join(f.nome for f in filhos)}")
+            pecas = {peca_de(f.props.get("texture")) for f in filhos}
+            if len(pecas) > 1:
+                rel.erro(onde_grupo, f"o grupo de tema mistura peças: {sorted(map(str, pecas))}")
+        rel.contagem[inst.nome] = sum(1 for _ in inst.todas())
+        celula = next((sub for sub in inst.todas() if sub.fabrica and sub.nome == "button"), None)
+        if celula is not None:
+            rel.contagem["célula de botão da lista"] = sum(1 for _ in celula.todas())
         rotulos = rotulos_de_titulo(arvore, inst)
         if layout == "HUB":
             if indices.get(inst.nome) != set(range(SLOTS_HUB)):
@@ -1172,9 +1219,6 @@ def checar_variantes(arvore: Arvore, raiz: Instancia, indices: dict[str, set[int
                 rel.erro(onde, "o Hub ainda mostra o título em texto (o label deve ficar ignored)")
         elif len(rotulos) != 1:
             rel.erro(onde, f"a Lista deve ter um label de título (tem {len(rotulos)})")
-    for laranja, black in (("hub_laranja", "hub_black"), ("lista_laranja", "lista_black")):
-        if laranja in pecas and black in pecas and pecas[laranja] != pecas[black]:
-            rel.erro(onde_raiz, f"{laranja} e {black} usam peças diferentes: {sorted(pecas[laranja] ^ pecas[black])}")
 
 
 def gate_do_gancho(arquivos: list[ArquivoUI], nome_arquivo: str, elemento: str) -> str | None:
@@ -1198,24 +1242,22 @@ def visivel_com(arvore: Arvore, inst: Instancia, valores: dict) -> bool:
 
 def simular_menu(arvore: Arvore, raiz: Instancia, arquivos: list[ArquivoUI], flags: dict[str, str],
                  rel: Relatorio) -> None:
-    """Avalia os gates com títulos de exemplo: uma variante só (ou o form vanilla) e o título limpo."""
+    """Avalia os gates com títulos de exemplo em cada tema: um layout só (ou o form vanilla), o título limpo
+    e, em cada grupo de tema, só a peça do tema do título."""
     if any(nome not in flags for nome in FLAGS_FORMS):
         rel.aviso("gates", "FLAG de forms.js incompleta: gates do menu não simulados")
         return
-    base, hub, lista, black = (flags[nome] for nome in FLAGS_FORMS)
-    casos = [
-        (hub + "Menu", "hub_laranja", None),
-        (hub + black + "Menu", "hub_black", None),
-        (lista + "Casas", "lista_laranja", "Casas"),
-        (lista + black + "Casas", "lista_black", "Casas"),
-        (base + "Outro", "lista_laranja", "Outro"),
-        (base + black + "Outro", "lista_black", "Outro"),
-        ("Nova casa", None, None),
-        ("", None, None),
-    ]
+    base, hub, lista = flags["BASE"], flags["HUB"], flags["LISTA"]
+    casos = []
+    for tema, (_, token) in TEMAS.items():
+        marca = flags[token] if token else ""
+        casos += [(hub + marca + "Menu", "hub", None, tema), (lista + marca + "Casas", "lista", "Casas", tema),
+                  (base + marca + "Outro", "lista", "Outro", tema)]
+    casos += [("Nova casa", None, None, None), ("", None, None, None)]
     vanilla = gate_do_gancho(arquivos, "server_form.json", "long_form")
     variantes = [inst for inst in raiz.filhos if inst.nome in VARIANTES and not inst.ignorado]
-    for titulo, esperada, texto in casos:
+    grupos = {inst.nome: grupos_de_tema(arvore, inst) for inst in variantes}
+    for titulo, esperada, texto, tema in casos:
         valores = {"#title_text": titulo}
         exemplo = repr(titulo)
         try:
@@ -1224,12 +1266,23 @@ def simular_menu(arvore: Arvore, raiz: Instancia, arquivos: list[ArquivoUI], fla
                 rel.erro("gates", f"título {exemplo}: o form vanilla deveria {'aparecer' if esperada is None else 'sumir'}")
             if visiveis != ([esperada] if esperada else []):
                 rel.erro("gates", f"título {exemplo}: aparece {visiveis or 'nada'}, esperado {esperada or 'nada'}")
-            if esperada and texto is not None:
-                inst = next(i for i in variantes if i.nome == esperada)
-                for rotulo, expr in rotulos_de_titulo(arvore, inst):
-                    mostrado = avaliar(expr, valores)
-                    if mostrado != texto:
-                        rel.erro(arvore.onde(rotulo.caminho), f"título {exemplo} mostra {mostrado!r}, esperado {texto!r}")
+            if not esperada:
+                continue
+            inst = next(i for i in variantes if i.nome == esperada)
+            for rotulo, expr in rotulos_de_titulo(arvore, inst):
+                mostrado = avaliar(expr, valores)
+                if mostrado != texto:
+                    rel.erro(arvore.onde(rotulo.caminho), f"título {exemplo} mostra {mostrado!r}, esperado {texto!r}")
+            for grupo in grupos[esperada]:
+                acesos = [f for f in grupo.filhos if not f.ignorado and visivel_com(arvore, f, valores)]
+                onde_grupo = arvore.onde(grupo.caminho)
+                if [f.nome for f in acesos] != [tema]:
+                    rel.erro(onde_grupo, f"título {exemplo}: aparece {[f.nome for f in acesos] or 'nada'}, esperado {tema}")
+                    continue
+                textura = acesos[0].props.get("texture")
+                peca = peca_de(textura)
+                if peca and textura != textura_esperada(tema, peca):
+                    rel.erro(onde_grupo, f"título {exemplo}: mostra {textura}, esperado {textura_esperada(tema, peca)}")
         except ErroExpressao as falha:
             rel.erro("gates", f"título {exemplo}: {falha}")
 
@@ -1467,7 +1520,7 @@ def ler_js(caminho: Path, rel: Relatorio) -> str | None:
 
 
 def flags_do_script(rel: Relatorio) -> dict[str, str]:
-    """FLAG de core/forms.js (BASE, HUB, LISTA, TEMA_BLACK) e FLAG_SIDEBAR de sistemas/hud.js (como SIDEBAR)."""
+    """FLAG de core/forms.js (BASE, HUB, LISTA e os TEMA_*) e FLAG_SIDEBAR de sistemas/hud.js (como SIDEBAR)."""
     flags: dict[str, str] = {}
     texto = ler_js(FORMS_JS, rel)
     if texto is not None:
@@ -1605,6 +1658,8 @@ def main(argv: list[str] | None = None) -> int:
     for nome, igual in iguais.items():
         print(f"{nome} vanilla {'igual ao' if igual else 'DIFERENTE do'} da {VERSAO_REFERENCIA}")
     print(f"Conferidos: {len(arquivos)} arquivos, {len(nos)} controles, {len(referencias)} texturas")
+    if rel.contagem:
+        print("Controles montados: " + ", ".join(f"{nome} {total}" for nome, total in rel.contagem.items()))
     for texto in rel.avisos:
         print(f"  AVISO  {texto}")
     for texto in rel.erros:

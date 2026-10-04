@@ -6,7 +6,7 @@ Addon de Minecraft Bedrock do servidor **Vulpus**, com a Kiza (a raposa kitsune)
   - à esquerda: Spawn, Casas, TPA, Voltar e Perfil;
   - à direita: Caudas, Leilão, Clã, Ajustes e Regras;
   - um botão extra da Staff (a coroa), que só a staff vê.
-- **Novidades da versão 0.2.0:** níveis e ranks iguais aos do Discord, cargos e selos sobre a cabeça, um placar do lado da tela (scoreboard lateral), tema Black para o menu, símbolos próprios (glyphs), o leilão, um chat com selo e nível, **clãs** (tag, base protegida, banco, guerras e alianças) e o **visual Kitsune** (apelido e nome colorido).
+- **Novidades da versão 0.2.0:** níveis e ranks iguais aos do Discord, cargos e selos sobre a cabeça, um placar do lado da tela (scoreboard lateral), 5 temas para o menu (3 deles do selo Kitsune), símbolos próprios (glyphs), o leilão, um chat com selo e nível, **clãs** (tag, base protegida, banco, guerras e alianças) e o **visual Kitsune** (apelido e nome colorido).
 - **Versão do jogo:** Bedrock **1.26.52**.
 - **Peças:** três packs.
   - `vulpus_bp`: o pack de comportamento (os sistemas). Não precisa de experimento;
@@ -91,7 +91,26 @@ Ao importar uma versão nova com o mesmo número, o jogo pode manter a antiga. N
 ## Placar do lado e tema
 
 - **Scoreboard lateral (placar do lado):** uma caixinha no lado direito da tela com o rank, o nível, a barra de progresso, as Caudas, quem está online e as coordenadas. Liga e desliga em **Ajustes** ou com `/vulpus:hud`. A staff escolhe se começa ligada para quem nunca mexeu.
-- **Tema do menu:** em **Ajustes**, troque entre **Laranja** e **Black**. O menu reabre já no tema novo. Os formulários com campos continuam com o visual normal do jogo nos dois temas.
+- **Tema do menu:** em **Ajustes > Tema do menu** (veja "Temas do menu" logo abaixo).
+
+## Temas do menu
+
+São 5 temas. Cada um troca o painel, o cabeçalho, os botões (normal, mouse em cima e apertado), o X, o divisor, o título VULPUS e a raposa do meio. A prévia de todos está em `docs/previas/temas.png`.
+
+| Tema | Quem usa | Como é |
+|---|---|---|
+| **Laranja** | todos | o de sempre: marrom com laranja |
+| **Black** | todos | preto com brilho laranja (mesma raposa) |
+| **Sakura** | selo Kitsune | rosa-cerejeira, pétalas nos cantos, raposa rosa com flores na orelha |
+| **Lunar** | selo Kitsune | azul-noite e prata, estrelinhas, raposa prateada de olhos acesos com a lua entre as orelhas |
+| **Espírito** | selo Kitsune | roxo com fogo-fátuo azul, raposinha na frente de nove caudas em chama |
+
+- **Como trocar:** **Ajustes > Tema do menu** mostra os 5, com a raposinha de cada um. Toque num tema: o menu reabre já com ele.
+- **Sem o selo Kitsune**, Sakura, Lunar e Espírito aparecem com cadeado; tocar neles explica que é um mimo de quem apoia a toca no Discord. É só visual: não muda nada no jogo.
+- **Perdeu o selo?** Na próxima vez que abrir o menu, o tema volta para o Laranja sozinho (com um aviso no chat).
+- O placar do lado continua laranja em todos os temas. Formulários com campos continuam com o visual normal do jogo.
+- **Para mexer na arte:** as cores e os desenhos ficam em `tools/gerar_temas.py`. Rode `npm run temas` para refazer as texturas e a prévia. Imagem trocada à mão não é sobrescrita (só com `--forcar`).
+- **Custo:** em vez de montar o menu 5 vezes (um por tema), só as imagens do tema são repetidas. O Hub monta ~360 peças e cada botão de lista ~27; com 5 cópias do menu seriam ~790 e ~60.
 
 ## O chat (pack Vulpus Chat)
 
@@ -172,12 +191,16 @@ O clã é a turma de cada um na toca. Abre pelo botão **Clã** do menu ou por `
 - **Zona de amortecimento:** 12 blocos em volta da borda onde quem é de fora **não coloca redstone nem máquinas** (pistão, observador, dispenser, dropper, funil, TNT, trilhos, slime/mel, fogo, cristal do End, carga de vento) **nem usa balde** (lava, água, balde de peixe ou de neve, e o vazio, que pega líquido). Para pistão e redstone a zona tem 1 bloco a mais (um pistão empurra até 12 blocos). Com a proteção de entidades ligada, também não usa barco, carrinho, suporte e vara de pesca ali. Isso evita "invadir com redstone" de fora.
 - **Exceções:** pessoas de confiança (até 10, em Terreno) constroem; aliados com acesso abrem portas e baús (mas não constroem, não plantam e não põem placa, linha ou estandarte); a staff só passa com o **bypass** ligado (`/vulpus:clabypass`, fica no log).
 - **Ao entrar e sair** de uma base aparece "Território de [TAG]" na barra de baixo.
-- **Guerras:** quem tem permissão declara guerra a outro clã. Regras (a staff muda em Configurações > Clãs e guerras):
+- **Guerras:** quem tem permissão declara guerra a outro clã. Regras (a staff muda em Configurações > Clãs e guerras, inclusive os 5 min do anti-farm e os pontos extras; 0 desliga o extra):
   - os dois clãs precisam de nível 2+ e de 3+ pessoas; um clã só tem uma guerra por vez; o mesmo par só guerreia de novo depois de 7 dias; aliados não guerreiam;
   - declarar tira 1.000 Caudas do banco (vai para o **baú de guerra**); a guerra começa **1 hora depois** (todo mundo é avisado) e dura **24 horas**;
   - quando começa, o clã alvo põe a parte dele no baú (o que tiver no banco, até 1.000);
   - durante a guerra, a **base de cada lado fica aberta só para o clã inimigo**; as explosões continuam como o clã escolheu;
-  - cada **abate** entre os dois clãs vale 1 ponto, em qualquer lugar do mapa (a mesma pessoa abatida pelo mesmo jogador só conta de novo depois de 10 min, e só vale entre quem já era do clã quando a guerra foi declarada: conta reserva que entra no meio não vira ponto); o placar aparece no menu e no placar do lado;
+  - cada **abate** entre os dois clãs vale 1 ponto, em qualquer lugar do mapa; o placar aparece no menu e no placar do lado, ao vivo;
+  - **anti-farm:** cada pessoa abatida só rende ponto **uma vez a cada 5 min**, não importa quem do outro clã a derrubou; e só vale entre quem já era do clã quando a guerra foi declarada (conta reserva que entra no meio não vira ponto);
+  - **sequência:** 3, 5 e 10 abates seguidos sem morrer ("Em chamas", "Imparável", "Lenda da toca") são anunciados para os dois clãs e valem **+1 ponto** cada; qualquer morte zera a sequência (e o fim dela também é anunciado);
+  - **cabeça do líder:** derrubar quem lidera o clã inimigo vale **+1 ponto** extra (no máximo 1 vez por hora por líder);
+  - **Caçador:** no fim, quem mais abateu (no empate, quem chegou lá primeiro) é anunciado para todo mundo como o Caçador da guerra, ganha um título na tela e fica no histórico;
   - no fim, quem tiver mais pontos leva o baú inteiro; empate devolve a parte de cada um; **render-se** dá a vitória ao outro lado;
   - a guerra continua certinha depois de reiniciar o servidor.
 - **Fogo amigo:** quem é do mesmo clã não se fere (o clã pode ligar o fogo amigo nos Ajustes).
@@ -196,6 +219,7 @@ Mimo para quem tem o selo **Kitsune** (booster do Discord). **É só visual**, s
 - **Cor do nome:** 18 temas, entre cores sólidas e degradês letra a letra (Pôr do sol, Oceano, Sakura, Lava, Aurora, Floresta, Arco-íris, Gelo, Ouro, Ametista, Lunar, Brasa...). O chat mostra o mesmo apelido e o mesmo tema.
 - **Cor do clã:** quem tem o selo e pode editar o clã também escolhe um desses temas para a tag e o nome do clã. Os outros usam as cores normais, liberadas pelo nível.
 - Sem o selo, o apelido e a cor ficam guardados, mas não aparecem.
+- **Perdeu o selo:** o tema que a pessoa escolheu para o clã sai e a tag volta para a cor normal que o clã tinha antes (ou a primeira cor, se aquela não estiver liberada). Se ela estava offline quando o selo saiu, isso acontece assim que entrar (e a cada 10 s para quem está online). Se outro Kitsune trocou o tema do clã depois, o tema dele fica.
 - A staff tira o apelido e a cor de alguém em Staff > Cargos e Kitsune ou com `/vulpus:resetapelido <jogador>`.
 
 ## Comandos
@@ -251,7 +275,7 @@ Só para a staff:
 ## Como trocar a logo
 
 1. Faça a imagem **quadrada** em PNG. O tamanho 128x128 é o ideal; até 256x256 funciona bem.
-2. Salve por cima de `vulpus_rp/textures/vulpus/ui/logo.png`, com o mesmo nome.
+2. Salve por cima de `vulpus_rp/textures/vulpus/ui/logo.png`, com o mesmo nome (Laranja e Black usam essa). Os temas Kitsune têm a própria em `vulpus_rp/textures/vulpus/ui/sakura/logo.png`, `lunar/logo.png` e `espirito/logo.png`.
 3. Gere o pacote de novo (`npm run build`) ou rode `npm run dev`.
 
 O `npm run texturas` e o `npm run glyphs` refazem as texturas e os símbolos, mas **não apagam uma imagem trocada à mão**. Eles só sobrescrevem com `--forcar` (por exemplo, `python tools/gerar_glyphs.py --forcar`).
@@ -264,7 +288,7 @@ Os menus são montados com o "framework" que fica em `vulpus_bp/scripts/core/for
 - `confirmar`: uma pergunta de sim ou não;
 - `perguntar`: um formulário com campos.
 
-O tema (Laranja ou Black) é aplicado sozinho pelo framework.
+O tema do jogador (um dos 5) é aplicado sozinho pelo framework.
 
 Exemplo de um submenu novo, num arquivo `vulpus_bp/scripts/sistemas/exemplo.js`:
 
@@ -321,15 +345,15 @@ Num mundo com o BP e o RP ativos (o ideal é ter uma segunda pessoa para o TPA):
 5. **Voltar:** morra (não no vazio) e use Voltar; depois teleporte e use Voltar de novo.
 6. **Caudas e XP:** pegue a diária (+15 XP junto). Jogue se mexendo e veja o XP subir no placar do lado; parado, não sobe.
 7. **Nível:** abra Perfil > Nível e ranks, os Ranks, o Ranking e o Como ganhar XP. Para testar a troca de rank rápido, a staff pode pôr "XP por minuto ativo" em 100 nas Configurações (lembre de voltar para 3).
-8. **Perfil, Ajustes e Regras:** confira rank, nível e cargo no perfil; ligue e desligue o placar do lado; troque o tema para Black e de volta; abra todas as páginas de Regras.
+8. **Perfil, Ajustes e Regras:** confira rank, nível e cargo no perfil; ligue e desligue o placar do lado; troque o tema para Black e de volta (e, com a tag `vulpus:kitsune`, para Sakura, Lunar e Espírito); abra todas as páginas de Regras.
 9. **Leilão:** anuncie um item da mão, veja ele em Comprar e em Meus anúncios, cancele (volta para o inventário) e anuncie de novo. Com outra conta, compre; o vendedor recebe as Caudas na caixa de retirada.
 10. **Staff:** com operador ou com a tag, abra o painel, defina o spawn, mude uma configuração de cada grupo, dê e tire Caudas, mude um cargo em "Cargos e Kitsune", remova um anúncio em "Leilão (staff)" e pegue o item. Sem ser staff, o botão não aparece e `/vulpus:staff` recusa.
 11. **Clãs** (precisa de 2 ou 3 contas; para ir rápido, a staff baixa os custos e o "Guerra: aviso antes de começar" para 0 em Configurações > Clãs e guerras):
     - crie um clã, convide a outra conta e aceite; promova e rebaixe; deposite e saque;
     - marque a base longe do spawn, veja os limites; com a conta de fora, tente quebrar, colocar, abrir um baú e uma porta (tudo barrado com aviso); na zona em volta, tente pôr um pistão (barrado) e um bloco comum (liberado);
-    - crie um segundo clã, suba os dois para o nível 2 (a staff dá Caudas e põe "Clã: XP por minuto ativo" alto), declare guerra, espere começar e confira que o inimigo mexe na base e que o abate conta ponto;
+    - crie um segundo clã, suba os dois para o nível 2 (a staff dá Caudas e põe "Clã: XP por minuto ativo" alto), declare guerra, espere começar e confira que o inimigo mexe na base e que o abate conta ponto; abater a mesma pessoa de novo antes de 5 min não conta; derrubar o líder dá ponto extra; no fim aparece o Caçador;
     - render-se, alianças, casa do clã, `/vulpus:c`, dissolver.
-12. **Visual Kitsune:** com `/vulpus:kitsune` em você, troque o apelido e a cor do nome em Ajustes; confira sobre a cabeça, no chat, no placar e no Perfil ("Conta:").
+12. **Visual Kitsune:** com `/vulpus:kitsune` em você, troque o apelido e a cor do nome em Ajustes; confira sobre a cabeça, no chat, no placar e no Perfil ("Conta:"). Escolha um tema para o clã, tire o selo com `/vulpus:kitsune` de novo: em até 10 s a tag do clã volta para a cor de antes.
 
 ## Checklist de teste no jogo
 
@@ -340,7 +364,7 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
    - uma cor (`§7`) antes do glyph muda a cor dele? (anotar);
    - o "VULPUS" em glyph na mensagem de primeira entrada fica com vãos entre as letras? (se ficar, avise: troca por texto).
 2. **Menu principal:** botões alinhados, rótulos de 2 linhas sem cortar, imagem do título nítida, coroa no canto, foco andando pelas setas ou pelo controle.
-3. **Tema:** trocar em Ajustes reabre no Black; menu, listas, botões e X pretos com laranja; confirmar e formulários com campos continuam normais; abrir e fechar 10 vezes sem travar.
+3. **Temas:** em Ajustes > Tema do menu, escolher cada um dos 5 reabre já nele; conferir no Hub e numa lista (Casas, Regras > Comandos) o painel, o cabeçalho, os botões com o mouse em cima e apertados, o X, o divisor, a raposa do meio e a cor dos cabeçalhos de seção; sem a tag `vulpus:kitsune`, os 3 de Kitsune com cadeado; tirar a tag com Sakura escolhido volta ao Laranja; confirmar e formulários com campos continuam normais; abrir e fechar 10 vezes em cada tema sem travar (no celular também).
 4. **Placar do lado:**
    - liga e desliga em Ajustes e em `/vulpus:hud`;
    - um título normal (subir de rank, primeira entrada) aparece inteiro e o placar continua;
@@ -394,7 +418,7 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 
 ## Limitações
 
-- **Formulários com campos:** ficam com o visual normal do Minecraft nos dois temas, de propósito. Mexer neles quebra fácil a cada atualização.
+- **Formulários com campos:** ficam com o visual normal do Minecraft em todos os temas, de propósito. Mexer neles quebra fácil a cada atualização.
 - **Atualizações do jogo:** o visual do menu e do placar depende de arquivos internos do Minecraft.
   - A cada atualização, rode `npm run verificar` e refaça o checklist acima.
   - O verificador avisa quando um arquivo do jogo que o addon usa mudou.
@@ -417,5 +441,6 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 | `tools/verificar_ui.py` | confere o visual do menu e do placar contra o jogo instalado |
 | `tools/gerar_texturas.py` | refaz as texturas provisórias |
 | `tools/gerar_glyphs.py` | refaz os glyphs, o título VULPUS e as texturas do tema Black |
+| `tools/gerar_temas.py` | refaz os temas Sakura, Lunar e Espírito, as raposinhas da escolha de tema e a prévia `docs/previas/temas.png` |
 | `docs/` | especificações e pesquisa |
 | `dist/` | o pacote gerado; não vai para o git |

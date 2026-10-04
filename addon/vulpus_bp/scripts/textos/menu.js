@@ -33,7 +33,7 @@ export const DICAS = [
   "Sem o item? Use /vulpus:menu.",
   "Cada história vira uma Cauda!",
   "Ativo no jogo = mais XP.",
-  "Tema Black? Passa em Ajustes.",
+  "Troque o tema do menu em Ajustes.",
   "Venda e compre no Leilão!",
   "Junte a turma num clã!",
   "Clã forte tem base protegida.",

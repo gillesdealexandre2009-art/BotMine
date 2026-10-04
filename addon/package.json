@@ -8,6 +8,7 @@
     "check": "tsc -p jsconfig.json && tsc -p jsconfig.chat.json",
     "texturas": "python tools/gerar_texturas.py",
     "glyphs": "python tools/gerar_glyphs.py",
+    "temas": "python tools/gerar_temas.py",
     "verificar": "python tools/verificar_ui.py",
     "build": "python tools/build.py",
     "dev": "python tools/instalar_dev.py"

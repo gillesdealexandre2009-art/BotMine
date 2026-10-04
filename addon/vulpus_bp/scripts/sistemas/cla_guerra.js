@@ -1,5 +1,6 @@
 // @ts-check
-// Guerras entre clãs: declarar (com aviso prévio), começar, contar abates, terminar e pagar o baú de guerra.
+// Guerras entre clãs: declarar (com aviso prévio), começar, contar abates (anti-farm por vítima, sequências
+// de 3/5/10, cabeça do líder), terminar, anunciar o Caçador (quem mais abateu) e pagar o baú de guerra.
 // Também o PvP dos clãs: fogo amigo desligado entre membros. Os prazos usam Date.now() e ficam salvos no
 // mundo (vulpus:cla:guerras): uma guerra continua de onde parou depois de /reload ou de reiniciar.
 import { Player, system, world } from "@minecraft/server";
@@ -29,8 +30,10 @@ import { claDe, claPorId, editarCla, membroDe, moverBanco, pode } from "./cla_da
  * @property {boolean} lembrou  já avisou os dois clãs que falta pouco
  * @property {{ a: number, b: number }} aposta  Caudas de cada lado no baú
  * @property {{ a: number, b: number }} pontos
- * @property {Record<string, { n: number, nome: string, lado: Lado }>} abates  por jogador
- * @property {Record<string, number>} recentes  "matador|vítima" → ms do último abate que contou
+ * @property {Record<string, { n: number, nome: string, lado: Lado, t: number }>} abates  por jogador (t = ms do último)
+ * @property {Record<string, number>} recentes  id da vítima → ms da última vez que ela rendeu ponto
+ * @property {Record<string, number>} seq  abates seguidos de cada pessoa (zera quando ela morre)
+ * @property {Record<string, number>} cabecas  id do líder → ms da última recompensa pela cabeça dele
  */
 
 /**
@@ -43,19 +46,22 @@ import { claDe, claPorId, editarCla, membroDe, moverBanco, pode } from "./cla_da
  * @property {"tempo" | "rendicao" | "staff" | "dissolvido"} motivo
  * @property {number} premio
  * @property {number} fim
+ * @property {{ nome: string, n: number, lado: Lado } | null} cacador  quem mais abateu (o "Caçador" da guerra)
  */
 
 /** @typedef {{ guerras: Guerra[], historico: GuerraFim[], recargas: Record<string, number> }} EstadoGuerras */
 
 const CHAVE = "vulpus:cla:guerras";
 const HISTORICO_MAXIMO = 20;
-/** O mesmo matador só pontua com a mesma vítima uma vez a cada 10 min (sem farm de abate combinado). */
-const ANTI_FARM_MS = 10 * 60 * 1000;
+/** Abates seguidos (sem morrer) que viram anúncio e ponto extra. */
+export const MARCOS_SEQUENCIA = Object.freeze([3, 5, 10]);
 /** Aviso aos dois clãs quando faltar isto para começar. */
 const LEMBRETE_MS = 10 * 60 * 1000;
 const TICKS_CICLO = 100;
 const HORA_MS = 60 * 60 * 1000;
 const DIA_MS = 24 * HORA_MS;
+/** A cabeça do mesmo líder só vale recompensa uma vez por hora. */
+const CABECA_MS = HORA_MS;
 
 /** @type {EstadoGuerras | undefined} */
 let estado;
@@ -66,6 +72,20 @@ const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 const par = (v) => ({ a: num(v?.a), b: num(v?.b) });
 /** @param {any} v */
 const parTexto = (v) => ({ a: typeof v?.a === "string" ? v.a : "???", b: typeof v?.b === "string" ? v.b : "???" });
+/**
+ * Mapa id → número lido do mundo, sem as entradas quebradas.
+ * @param {any} v
+ * @returns {Record<string, number>}
+ */
+function lerNumeros(v) {
+  /** @type {Record<string, number>} */
+  const saida = {};
+  if (!v || typeof v !== "object") return saida;
+  for (const [id, n] of Object.entries(v)) if (typeof n === "number" && Number.isFinite(n)) saida[id] = n;
+  return saida;
+}
+/** Janela do anti-farm: a mesma vítima só rende ponto uma vez nesse tempo (para qualquer matador). */
+const antiFarmMs = () => Math.max(0, num(config().guerraAntiFarmMin)) * 60 * 1000;
 
 /**
  * Abates por jogador lidos do mundo, sem as entradas quebradas.
@@ -77,7 +97,7 @@ function lerAbates(v) {
   const saida = {};
   if (!v || typeof v !== "object") return saida;
   for (const [id, a] of Object.entries(v)) {
-    if (a && (a.lado === "a" || a.lado === "b")) saida[id] = { n: num(a.n), nome: typeof a.nome === "string" ? a.nome : "?", lado: a.lado };
+    if (a && (a.lado === "a" || a.lado === "b")) saida[id] = { n: num(a.n), nome: typeof a.nome === "string" ? a.nome : "?", lado: a.lado, t: num(a.t) };
   }
   return saida;
 }
@@ -107,7 +127,9 @@ function lerEstado() {
       aposta: par(g.aposta),
       pontos: par(g.pontos),
       abates: lerAbates(g.abates),
-      recentes: g.recentes && typeof g.recentes === "object" ? g.recentes : {},
+      recentes: lerNumeros(g.recentes),
+      seq: lerNumeros(g.seq),
+      cabecas: lerNumeros(g.cabecas),
     }));
   estado = {
     guerras,
@@ -122,6 +144,10 @@ function lerEstado() {
         motivo: ["tempo", "rendicao", "staff", "dissolvido"].includes(h.motivo) ? h.motivo : "tempo",
         premio: num(h.premio),
         fim: num(h.fim),
+        cacador:
+          h.cacador && typeof h.cacador.nome === "string" && (h.cacador.lado === "a" || h.cacador.lado === "b")
+            ? { nome: h.cacador.nome, n: num(h.cacador.n), lado: h.cacador.lado }
+            : null,
       }))
       .slice(0, HISTORICO_MAXIMO),
     recargas: bruto.recargas && typeof bruto.recargas === "object" ? bruto.recargas : {},
@@ -129,14 +155,16 @@ function lerEstado() {
   return estado;
 }
 
-/** Grava o estado; tira recargas vencidas e abates recentes velhos antes. */
+/** Grava o estado; tira recargas vencidas, vítimas e cabeças fora da janela antes. */
 function salvar() {
   const e = lerEstado();
   const agora = Date.now();
   const recarga = Math.max(0, config().recargaGuerraDias) * DIA_MS;
+  const janela = antiFarmMs();
   for (const [chave, quando] of Object.entries(e.recargas)) if (agora - num(quando) > recarga) delete e.recargas[chave];
   for (const g of e.guerras) {
-    for (const [chave, quando] of Object.entries(g.recentes)) if (agora - num(quando) > ANTI_FARM_MS) delete g.recentes[chave];
+    for (const [chave, quando] of Object.entries(g.recentes)) if (agora - num(quando) > janela) delete g.recentes[chave];
+    for (const [chave, quando] of Object.entries(g.cabecas)) if (agora - num(quando) > CABECA_MS) delete g.cabecas[chave];
   }
   try {
     salvarMundo(CHAVE, e);
@@ -278,6 +306,8 @@ export function declararGuerra(player, alvoId) {
     pontos: { a: 0, b: 0 },
     abates: {},
     recentes: {},
+    seq: {},
+    cabecas: {},
   };
   lerEstado().guerras.push(guerra);
   salvar();
@@ -342,11 +372,43 @@ function terminar(g, motivo, vencedor) {
     pagar("a", g.aposta.a, "devolucao");
     pagar("b", g.aposta.b, "devolucao");
   }
-  e.historico.unshift({ a: g.a, b: g.b, tags: g.tags, pontos: g.pontos, vencedor: lado, motivo, premio: lado ? total : 0, fim: Date.now() });
+  const cacador = cacadorDe(g);
+  e.historico.unshift({
+    a: g.a,
+    b: g.b,
+    tags: g.tags,
+    pontos: g.pontos,
+    vencedor: lado,
+    motivo,
+    premio: lado ? total : 0,
+    fim: Date.now(),
+    cacador: cacador ? { nome: cacador.nome, n: cacador.n, lado: cacador.lado } : null,
+  });
   e.historico = e.historico.slice(0, HISTORICO_MAXIMO);
   e.recargas[chavePar(g.a, g.b)] = Date.now();
   salvar();
   world.sendMessage(PREFIXO + textos.GUERRA_TERMINOU(g, lado, motivo, lado ? total : 0));
+  if (!cacador) return;
+  world.sendMessage(PREFIXO + textos.CACADOR(g, cacador.nome, cacador.lado, cacador.n));
+  const quem = online().find((p) => p.id === cacador.id);
+  if (quem) {
+    som(quem, SONS.nivel);
+    mostrarTitulo(quem, textos.TITULO_CACADOR, { subtitulo: textos.SUBTITULO_CACADOR(g, cacador.n) });
+  }
+}
+
+/**
+ * O "Caçador" da guerra: quem mais abateu (no empate, quem chegou lá primeiro). null sem abates.
+ * @param {Guerra} g
+ * @returns {{ id: string, nome: string, n: number, lado: Lado } | null}
+ */
+export function cacadorDe(g) {
+  /** @type {{ id: string, nome: string, n: number, lado: Lado, t: number } | null} */
+  let melhor = null;
+  for (const [id, x] of Object.entries(g.abates)) {
+    if (x.n > 0 && (!melhor || x.n > melhor.n || (x.n === melhor.n && x.t < melhor.t))) melhor = { id, ...x };
+  }
+  return melhor && { id: melhor.id, nome: melhor.nome, n: melhor.n, lado: melhor.lado };
 }
 
 /**
@@ -427,36 +489,77 @@ function ciclo() {
 }
 
 /**
- * Abate entre clãs em guerra: um ponto para o clã de quem abateu (com o anti-farm por par).
+ * Morte de alguém de um clã em guerra ativa: o abate (se foi o inimigo) e o fim da sequência de quem morreu.
  * @param {Player} vitima
- * @param {Player} matador
+ * @param {Player | undefined} matador
  */
-function contarAbate(vitima, matador) {
-  const claM = claDe(matador);
+function aoMorrer(vitima, matador) {
   const claV = claDe(vitima);
-  if (!claM || !claV || claM.id === claV.id) return;
-  const g = lerEstado().guerras.find((x) => x.estado === "ativa" && ladoDe(x, claM.id) && ladoDe(x, claV.id));
-  const lado = g && ladoDe(g, claM.id);
-  if (!g || !lado) return;
+  if (!claV) return;
+  const g = lerEstado().guerras.find((x) => x.estado === "ativa" && ladoDe(x, claV.id));
+  if (!g) return;
+  const claM = matador && matador.id !== vitima.id ? claDe(matador) : undefined;
+  const ladoM = claM && claM.id !== claV.id ? ladoDe(g, claM.id) : undefined;
+  let mudou = !!(matador && claM && ladoM && contarAbate(g, vitima, claV, matador, claM, ladoM));
+  // Qualquer morte (inimigo, monstro, queda) encerra a sequência de quem morreu.
+  const seq = g.seq[vitima.id] ?? 0;
+  if (seq > 0) {
+    delete g.seq[vitima.id];
+    mudou = true;
+    if (seq >= MARCOS_SEQUENCIA[0]) avisarClas([g.a, g.b], textos.SEQUENCIA_FIM(vitima.name, seq, ladoM && matador ? matador.name : undefined));
+  }
+  if (mudou) salvar();
+}
+
+/**
+ * Abate entre clãs em guerra: 1 ponto para o clã de quem abateu, mais os extras (sequência e cabeça do
+ * líder). Anti-farm: a mesma vítima só rende ponto uma vez por janela, seja quem for o matador do outro clã.
+ * @param {Guerra} g
+ * @param {Player} vitima
+ * @param {Cla} claV
+ * @param {Player} matador
+ * @param {Cla} claM
+ * @param {Lado} lado  do matador
+ * @returns {boolean} se o abate contou
+ */
+function contarAbate(g, vitima, claV, matador, claM, lado) {
   // Só vale entre quem já era do clã quando a guerra foi declarada: conta reserva que entra num clã
   // aberto no meio da guerra para morrer em loop não vira ponto.
   const desde = (/** @type {Cla} */ c, /** @type {Player} */ p) => membroDe(c, p.id)?.desde ?? Infinity;
   if (desde(claM, matador) > g.declarada || desde(claV, vitima) > g.declarada) {
     msg(matador, textos.ABATE_NOVATO);
-    return;
+    return false;
   }
   const agora = Date.now();
-  const chave = `${matador.id}|${vitima.id}`;
-  if (agora - num(g.recentes[chave]) < ANTI_FARM_MS) {
-    msg(matador, textos.ABATE_REPETIDO);
-    return;
+  const janela = antiFarmMs();
+  const passou = agora - num(g.recentes[vitima.id]);
+  if (passou < janela) {
+    msg(matador, textos.ABATE_REPETIDO(vitima.name, Math.max(1, Math.ceil((janela - passou) / 60000))));
+    return false;
   }
-  g.recentes[chave] = agora;
+  const cfg = config();
+  g.recentes[vitima.id] = agora;
   g.pontos[lado]++;
   const antes = g.abates[matador.id];
-  g.abates[matador.id] = { n: (antes?.n ?? 0) + 1, nome: matador.name, lado };
-  salvar();
+  g.abates[matador.id] = { n: (antes?.n ?? 0) + 1, nome: matador.name, lado, t: agora };
+  const seq = (g.seq[matador.id] ?? 0) + 1;
+  g.seq[matador.id] = seq;
+  /** @type {string[]} */
+  const extras = [];
+  if (MARCOS_SEQUENCIA.includes(seq)) {
+    const bonus = Math.max(0, Math.floor(num(cfg.guerraBonusSequencia)));
+    g.pontos[lado] += bonus;
+    extras.push(textos.SEQUENCIA(claM.tag, matador.name, seq, bonus));
+  }
+  if (claV.dono === vitima.id && agora - num(g.cabecas[vitima.id]) >= CABECA_MS) {
+    const bonus = Math.max(0, Math.floor(num(cfg.guerraBonusLider)));
+    g.cabecas[vitima.id] = agora;
+    g.pontos[lado] += bonus;
+    extras.push(textos.CABECA_LIDER(claM.tag, matador.name, vitima.name, bonus));
+  }
   avisarClas([g.a, g.b], textos.ABATE(g, claM.tag, matador.name, vitima.name));
+  for (const texto of extras) avisarClas([g.a, g.b], texto, SONS.guerra);
+  return true;
 }
 
 system.runInterval(() => {
@@ -470,7 +573,7 @@ system.runInterval(() => {
 world.afterEvents.entityDie.subscribe(({ deadEntity, damageSource }) => {
   try {
     const matador = damageSource.damagingEntity;
-    if (deadEntity instanceof Player && matador instanceof Player && matador.id !== deadEntity.id) contarAbate(deadEntity, matador);
+    if (deadEntity instanceof Player) aoMorrer(deadEntity, matador instanceof Player ? matador : undefined);
   } catch (e) {
     registrarErro("Abate de guerra", e);
   }

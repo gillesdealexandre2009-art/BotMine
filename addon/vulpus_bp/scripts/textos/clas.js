@@ -487,6 +487,9 @@ export const SEM_GUERRA_CORPO = (cfg) =>
     `§7Como funciona: a guerra começa ${cfg.guerraAvisoMin} min depois de declarada e dura ${cfg.duracaoGuerraHoras}h.`,
     "§7Durante ela, a base de cada lado fica aberta só para o outro clã.",
     "§7Cada abate entre os dois clãs vale 1 ponto. Quem tiver mais pontos leva o baú de guerra.",
+    `§7A mesma vítima só vale ponto de novo depois de ${cfg.guerraAntiFarmMin} min.`,
+    `§7Extras: 3, 5 e 10 abates seguidos sem morrer (§a+${cfg.guerraBonusSequencia}§7) e a cabeça do líder inimigo (§a+${cfg.guerraBonusLider}§7, 1x por hora).`,
+    "§7No fim, quem mais abateu vira o §6Caçador§7 da guerra.",
     `§7Baú: ${caudas(cfg.custoGuerra)} §7de cada banco (o alvo põe o que tiver, até isso).`,
   ].join("\n");
 /** @param {Guerra} g @param {string} claId */
@@ -518,7 +521,8 @@ const MOTIVOS_FIM = Object.freeze({ tempo: "fim do tempo", rendicao: "rendição
 export const LINHA_HISTORICO = (h, claId) => {
   const meu = h.a === claId ? "a" : "b";
   const resultado = h.vencedor === null ? "§7empate" : h.vencedor === meu ? "§avitória" : "§cderrota";
-  return `§8${formatarData(h.fim)} §f[${h.tags.a}] ${h.pontos.a} x ${h.pontos.b} [${h.tags.b}] ${resultado} §8(${MOTIVOS_FIM[h.motivo] ?? h.motivo})`;
+  const cacador = h.cacador ? ` §8• §6Caçador: §f${h.cacador.nome} §8(${h.cacador.n})` : "";
+  return `§8${formatarData(h.fim)} §f[${h.tags.a}] ${h.pontos.a} x ${h.pontos.b} [${h.tags.b}] ${resultado} §8(${MOTIVOS_FIM[h.motivo] ?? h.motivo})${cacador}`;
 };
 export const TITULO_DECLARAR = "Declarar guerra";
 /** @param {number} custo */
@@ -550,7 +554,7 @@ export const GUERRA_DECLARADA = (g, minutos) =>
   `${glyph(G.GUERRA)} ${TAG_GUERRA(g, "a")} declarou guerra a ${TAG_GUERRA(g, "b")}! Começa em §e${minutos} min§r.`;
 /** @param {number} aposta */
 export const GUERRA_REGRAS = (aposta) =>
-  `Guerra marcada! Quando começar, a base de cada lado abre só para o inimigo e cada abate vale 1 ponto. Baú: §6${formatarNumero(aposta)}§r de cada lado.`;
+  `Guerra marcada! Quando começar, a base de cada lado abre só para o inimigo e cada abate vale 1 ponto (sequências e a cabeça do líder valem extra). Baú: §6${formatarNumero(aposta)}§r de cada lado.`;
 /** @param {Guerra} g @param {number} minutos */
 export const GUERRA_LEMBRETE = (g, minutos) => `${glyph(G.GUERRA)} A guerra ${TAG_GUERRA(g, "a")} x ${TAG_GUERRA(g, "b")} começa em §e${minutos} min§r. Preparem-se!`;
 /** @param {Guerra} g */
@@ -566,7 +570,25 @@ export const GUERRA_TERMINOU = (g, vencedor, motivo, premio) =>
 /** @param {Guerra} g @param {string} tag @param {string} matador @param {string} vitima */
 export const ABATE = (g, tag, matador, vitima) =>
   `${glyph(G.GUERRA)} §f${matador} §8[${tag}] §7abateu §f${vitima}§7. Placar: §f[${g.tags.a}] ${g.pontos.a} x ${g.pontos.b} [${g.tags.b}]`;
-export const ABATE_REPETIDO = "§7Esse abate não conta: a mesma pessoa só vale ponto de novo depois de 10 min.";
+/** @param {string} vitima @param {number} minutos */
+export const ABATE_REPETIDO = (vitima, minutos) => `§7Esse abate não conta: §f${vitima}§7 já rendeu ponto há pouco. Vale de novo em §f${minutos} min§7.`;
+/** Nome de cada marco de sequência (MARCOS_SEQUENCIA). @type {Readonly<Record<number, string>>} */
+const NOMES_SEQUENCIA = Object.freeze({ 3: "§eEm chamas", 5: "§6Imparável", 10: "§cLenda da toca" });
+/** @param {string} tag @param {string} nome @param {number} n @param {number} bonus */
+export const SEQUENCIA = (tag, nome, n, bonus) =>
+  `${glyph(G.GUERRA)} ${NOMES_SEQUENCIA[n] ?? "§eEm sequência"}! §f${nome} §8[${tag}] §7tem §f${n} abates seguidos§7 sem morrer.${bonus > 0 ? ` §a+${bonus} ponto${bonus > 1 ? "s" : ""}!` : ""}`;
+/** @param {string} vitima @param {number} n @param {string} [matador] */
+export const SEQUENCIA_FIM = (vitima, n, matador) =>
+  `${glyph(G.GUERRA)} §7Acabou a sequência de §f${vitima}§7 (${n} abates)${matador ? ` §7pelas mãos de §f${matador}` : ""}§7.`;
+/** @param {string} tag @param {string} matador @param {string} lider @param {number} bonus */
+export const CABECA_LIDER = (tag, matador, lider, bonus) =>
+  `${glyph(G.GUERRA)} §6Cabeça do líder!§r §f${matador} §8[${tag}] §7derrubou §f${lider}§7, quem lidera o outro lado.${bonus > 0 ? ` §a+${bonus} ponto${bonus > 1 ? "s" : ""}!` : ""}`;
+/** @param {Guerra} g @param {string} nome @param {"a" | "b"} lado @param {number} n */
+export const CACADOR = (g, nome, lado, n) =>
+  `${glyph(G.GUERRA)} §6Caçador da guerra:§r §f${nome} ${TAG_GUERRA(g, lado)} §7com §f${n} abate${n > 1 ? "s" : ""}§7!`;
+export const TITULO_CACADOR = "§6CAÇADOR!";
+/** @param {Guerra} g @param {number} n */
+export const SUBTITULO_CACADOR = (g, n) => `§7${n} abate${n > 1 ? "s" : ""} na guerra [${g.tags.a}] x [${g.tags.b}]`;
 export const ABATE_NOVATO = "§7Esse abate não conta: só vale entre quem já era do clã quando a guerra foi declarada.";
 /** @param {Guerra} g @param {string} claId */
 export const GUERRA_AO_ENTRAR = (g, claId) =>
@@ -660,6 +682,9 @@ export const BOTAO_TEMA_CLA = (pintado, nome, atual) => `§8[${pintado}§8] §7$
 export const COR_OK = "Cor do clã trocada!";
 export const COR_BLOQUEADA = "Essa cor ainda não foi liberada pelo nível do clã.";
 export const TEMA_SO_KITSUNE = "Temas em degradê são mimo do selo Kitsune (só visual).";
+/** @param {string} nome @param {Cla} cla */
+export const TEMA_KITSUNE_VOLTOU = (nome, cla) =>
+  `§7${nome} não tem mais o selo Kitsune: o tema de ${TAG(cla)} §7voltou para a cor de sempre.`;
 export const TITULO_EMBLEMA = "Emblema do clã";
 export const EMBLEMA_CORPO = "§7Aparece antes da tag no menu, no placar e no território.";
 /** @param {string} codigo @param {number} i @param {boolean} atual */

@@ -2,6 +2,43 @@
 
 > **Fase 2 (0.2.0) pronta fora do jogo.** Especificação em [`docs/spec/03_spec_fase2.md`](spec/03_spec_fase2.md): glyphs, tema Black, níveis e ranks, scoreboard lateral, leilão e o pack "Vulpus Chat". A seção "Fase 2" logo abaixo é a situação atual; o resto do arquivo é da fase 1 e continua valendo.
 
+## Temas do painel: situação em 2026-10-04
+
+Pedido do dono: 5 temas para o menu; Laranja e Black para todos, **Sakura**, **Lunar** e **Espírito** só com o selo Kitsune (tag `vulpus:kitsune`), cada um com painel, cabeçalho, botões (3 estados), X (3 estados), divisor, título VULPUS e logo próprios. Explicação para o dono no `README.md` ("Temas do menu"); prévia em `docs/previas/temas.png`.
+
+| Frente | Arquivos | Situação |
+|---|---|---|
+| Texturas | `tools/gerar_temas.py` (novo; importa de `gerar_texturas.py` e `gerar_glyphs.py`), `textures/vulpus/ui/{sakura,lunar,espirito}/*`, `ui/icone.png`, `ui/black/icone.png`, `docs/previas/temas.png` | **pronto** |
+| JSON UI | `ui/vulpus/vulpus_menu.json` | **pronto** (0 erros no verificador) |
+| Scripts | `core/forms.js` (tokens, `TEMAS_PAINEL`, `podeUsarTema`, `temaDoPainel`), `core/db.js` (`TEMAS_MENU`), `sistemas/ajustes.js` (`menuTemas`), `textos/ajustes.js`, `textos/geral.js`, `textos/menu.js`, `config.js` (ícones) | **pronto** |
+| Verificador | `tools/verificar_ui.py` | **pronto** (grupos de tema, 5 temas simulados, contagem de controles) |
+| Teste no jogo (cliente) | checklist do README, item 3 | **pendente: o dono** |
+
+**Como funciona**
+- **Tokens** logo depois de HUB/LISTA no título: Black `§v§b§r`, Sakura `§v§d§r`, Lunar `§v§9§r`, Espírito `§v§5§r` (Laranja sem token). O label do título tira os 4.
+- **Antes:** o root montava 4 cópias inteiras (hub/lista × laranja/black) com `$vp_*` por cópia. **Agora:** o root tem só `hub` e `lista`; cada peça de tema virou um **grupo** (`tema_<peça>@vulpus_menu.tema_imagem`) com 5 imagens (`imagem_<tema>`), cada uma com o próprio gate pelo título e `property_bag {"#visible": false}`. As texturas vêm de `$tx_<tema>` fixos na definição do grupo, então as células da Lista não precisam de `factory_variables` para isso (só `$vp_creme`). O cabeçalho de seção da Lista tem 5 labels (cor por tema), também com gate.
+- **Custo** (contagem do verificador): Hub 358 controles, Lista 81 + 27 por botão. Cinco cópias do menu seriam ~790 no Hub e ~60 por botão, e todas as cópias escondidas teriam também os bindings de coleção. Os gates novos são bindings globais simples (`#title_text` + `-`/`=`/`not`/`and`).
+- **Selo perdido:** `temaDoPainel` (chamado ao montar todo título) troca um tema Kitsune sem a tag por Laranja, salva e avisa uma vez (`textos/geral.js`, `TEMA_VOLTOU`). Dados salvos: "laranja" e "black" continuam; tema desconhecido vira laranja (`completar`).
+- **Ajustes > Tema do menu:** Lista com os 5 (raposinha de cada tema; cadeado e "Selo Kitsune" para quem não tem); o travado abre "Tema Kitsune" com a explicação (cosmético, sem vantagem); escolher reabre a escolha já no tema novo.
+- O Black usa a logo e o título do Laranja (é "o atual"); a sidebar continua laranja.
+
+**Checagens (2026-10-04)**
+
+| Checagem | Resultado |
+|---|---|
+| `npm run check` (BP e chat) | 0 erros |
+| `node --check` nos `.js` do BP e do chat | 56 de 56 ok |
+| `python tools/verificar_ui.py` (jogo instalado e `--vanilla C:/Users/gille/vt/vanilla/ui`) | 4 arquivos, 144 controles, 116 texturas, 0 erros, 0 avisos |
+| Mutações no verificador | pega textura do tema errado, grupo sem um tema, gate com token trocado, peça solta fora de grupo, token novo só no JS e label de cabeçalho sem gate |
+| `gerar_texturas.py` / `gerar_glyphs.py` (sem `--forcar`) | nenhum PNG versionado alterado; `gerar_temas.py`: 39 PNGs |
+| `python tools/build.py` | 0 erros; `Vulpus.mcaddon` 243 KB (RP 66 KB) |
+| `mock/teste_fase2.mjs` (seção 6 reescrita; cópia anterior em `.antes_temas`) | 0 falhas: escolha com 5 + Voltar, cadeados, travado explica, Black no Hub e na Lista, Kitsune nos 3 temas (Hub e Lista), selo perdido volta ao Laranja com 1 aviso, migração de "black", "lunar" sem selo e lixo |
+| Demais testes (`mock/*.mjs`, `mock_leilao/teste*.mjs`) | 0 falhas |
+| BDS 1.26.52.3 (VulpusTeste) | sem erro de script (só o aviso conhecido do alias `hud`) |
+| `instalar_dev.py --mundo "Testes Claude" --chat` | copiado; packs já ativos |
+
+**O que só o cliente confirma:** que uma imagem com gate pelo título dentro de célula de factory e de botão funciona igual ao gate do hub (o modelo é o mesmo binding global `#title_text`), e se 5 imagens por estado de botão pesam no celular. Plano B se pesar: tirar os temas Kitsune do `TEMAS_MENU` e dos grupos (o Laranja e o Black continuam no mesmo esquema).
+
 ## Clãs e visual Kitsune: situação em 2026-10-04
 
 Pedido do dono (sistema de clãs de SMP, depois ampliado: 8 níveis, mover base pago, toggles de explosão/entidades, zona de amortecimento, apelido e temas de cor Kitsune). Desenho final em [`docs/spec/04_spec_clas.md`](spec/04_spec_clas.md); explicação para o dono no `README.md` ("Clãs" e "Visual Kitsune").
@@ -52,6 +89,14 @@ Pedido do dono (sistema de clãs de SMP, depois ampliado: 8 níveis, mover base 
 - **Guerra:** abate só conta entre quem já era do clã na declaração (conta reserva entrando em clã aberto no meio da guerra não vira ponto). Histórico e abates corrompidos no mundo derrubavam o menu (`null` no histórico): agora são saneados.
 - **Nomes:** nome de clã e apelido só com alfabeto latino (com acentos), contra o "а" cirílico; nome de clã compara só letras e números ("Raposas-da-Lua" = "Raposas da Lua"); apelido barra cargo/Kiza/pessoa com trocas de número ("K1za", "4dm1n", "K0pe") e "Porteiro"; glyphs somem de nome, descrição e casas; apelido salvo fora das regras não aparece (BP e chat).
 - `mock/mc_server.mjs`: `afterEvents.projectileHitEntity`, `Entity.isValid` e `Entity.remove()` (cópia anterior em `mc_server.mjs.antes_adv`).
+
+**Guerra divertida e selo Kitsune perdido (2026-10-04, pedido do dono)**
+- **Anti-farm por vítima:** cada pessoa abatida só rende ponto 1 vez a cada `guerraAntiFarmMin` (5 min), para qualquer matador do clã inimigo (antes era por par matador/vítima, 10 min). A regra "só quem era do clã na declaração" continua; nenhum tempo mínimo novo.
+- **Extras leves** (`cla_guerra.js`): sequência de 3, 5 e 10 abates sem morrer ("Em chamas", "Imparável", "Lenda da toca") anunciada aos dois clãs, +`guerraBonusSequencia` (1) por marco; fim da sequência anunciado; cabeça do líder inimigo +`guerraBonusLider` (1), 1 vez por hora por líder; **Caçador** (mais abates; empate: quem chegou antes) anunciado a todos no fim, com título na tela e no histórico. O placar ao vivo na sidebar já existia. As 3 chaves novas estão em Configurações > Clãs e guerras (0 desliga o extra).
+- **Selo Kitsune perdido:** o clã guarda `temaPor` (quem escolheu o tema). `conferirTemaKitsune` (`cla_acoes.js`) tira o tema e volta para a cor sólida de antes (ou a primeira, se ela estiver travada pelo nível) só se o tema atual foi escolhido por quem perdeu o selo (vale também para clã de onde a pessoa saiu). Roda ao entrar (o selo pode sumir entre sessões) e a cada 10 s para quem está online (`clas.js`). `kitsune.js` e `identidade.js` não foram mexidos.
+- `docs/spec/04_spec_clas.md` estava corrompido (um replace antigo com ``$` `` colou o começo do arquivo dentro da regra "Criar"): consertado.
+- Testes: `teste_clas_adv.mjs` agora tem 131 checagens, com as novas de anti-farm, sequência, cabeça, Caçador, tema Kitsune online/offline/outro Kitsune/quem saiu; `teste_clas.mjs` passou a esperar 3 x 2 (a cabeça das duas líderes vale +1). Cópias anteriores: `*.mjs.antes_guerra_divertida`.
+- Checagens: `npm run check` 0 erros; `node --check` 56 de 56; `python tools/build.py` 0 erros (`Vulpus.mcaddon` 241 KB, já com os temas novos do painel em obra); `teste.mjs`, `teste_clas.mjs`, `teste_clas_adv.mjs`, `teste_efeitos.mjs`, `teste_fase2.mjs`, `teste_fumaca.mjs`, `mock_leilao/teste*.mjs` e `chat_sim/teste.mjs`: 0 falhas.
 
 ## Fase 2 (0.2.0): situação em 2026-10-03
 
@@ -161,6 +206,7 @@ Addon de Minecraft Bedrock para o servidor Vulpus. O mascote é a Kiza Misuchi, 
 | `docs/spec/03_spec_fase2.md` | especificação da fase 2 (fonte da verdade da 0.2.0) |
 | `docs/spec/04_spec_clas.md` | desenho final dos clãs e do visual Kitsune |
 | `docs/previas/glyphs.png` | folha com os glyphs, o título VULPUS e as texturas do tema Black |
+| `docs/previas/temas.png` | o Hub e um pedaço da Lista em cada um dos 5 temas (gerado por `tools/gerar_temas.py`) |
 | `docs/workflow_fase2.js` | roteiro do workflow da fase 2 |
 
 Nos documentos, `<SCR>` era a pasta temporária do outro computador, e `<repo>` é a raiz deste repositório.

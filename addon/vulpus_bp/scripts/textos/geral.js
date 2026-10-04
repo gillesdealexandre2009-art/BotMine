@@ -15,6 +15,10 @@ export const SIM = "Sim";
 export const NAO = "Não";
 export const CONFIRMAR = "Confirmar";
 
+// Tema do painel de quem perdeu o selo Kitsune (core/forms.js)
+export const TEMA_VOLTOU =
+  "Seu painel voltou para o tema §6Laranja§r: os temas Sakura, Lunar e Espírito são mimo do selo Kitsune.";
+
 // Teleporte (os de erro já saem em §c; §e destaca e §c volta à cor)
 /**
  * Contagem na actionbar, com a barrinha que enche.

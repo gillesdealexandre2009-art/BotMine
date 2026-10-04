@@ -60,6 +60,9 @@ const FAIXAS = {
   guerraAvisoMin: [0, 1440],
   duracaoGuerraHoras: [1, 168],
   recargaGuerraDias: [0, 60],
+  guerraAntiFarmMin: [0, 120],
+  guerraBonusSequencia: [0, 10],
+  guerraBonusLider: [0, 10],
 };
 const LINK_MAXIMO = 100;
 /** Convite do Discord: discord.gg/xxx ou discord.com/invite/xxx (com ou sem https://). */
@@ -113,6 +116,9 @@ const GRUPOS = [
       "guerraAvisoMin",
       "duracaoGuerraHoras",
       "recargaGuerraDias",
+      "guerraAntiFarmMin",
+      "guerraBonusSequencia",
+      "guerraBonusLider",
     ],
   },
   { titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao"] },

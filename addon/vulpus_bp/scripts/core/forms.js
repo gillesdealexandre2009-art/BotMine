@@ -1,29 +1,45 @@
 // @ts-check
 // Framework de menus. O RP troca o visual quando o título começa com uma FLAG:
-// HUB = menu principal (11 slots fixos) e LISTA = submenus; TEMA_BLACK logo depois troca as texturas.
-// O ModalFormData fica vanilla nos dois temas.
+// HUB = menu principal (11 slots fixos) e LISTA = submenus; o token do tema logo depois troca as texturas.
+// O ModalFormData fica vanilla em todos os temas.
 import { system } from "@minecraft/server";
 import { ActionFormData, FormCancelationReason, ModalFormData } from "@minecraft/server-ui";
-import { ICONES, SONS } from "../config.js";
+import { ICONES, SONS, TAG_KITSUNE } from "../config.js";
 import * as textos from "../textos/geral.js";
-import { dadosJogador } from "./db.js";
-import { limitar, registrarErro, rodarSeguro, som } from "./util.js";
+import { dadosJogador, editarJogador } from "./db.js";
+import { limitar, msg, registrarErro, rodarSeguro, som } from "./util.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {import("@minecraft/server").RawMessage} RawMessage */
 /** @typedef {string | RawMessage} Texto  texto pronto ou RawMessage (traduzido pelo jogo) */
 /** @typedef {import("@minecraft/server-ui").ActionFormResponse} ActionFormResponse */
 /** @typedef {import("@minecraft/server-ui").ModalFormResponse} ModalFormResponse */
+/** @typedef {import("./db.js").Tema} Tema */
 
 /**
  * Flags de título: só códigos § válidos e idênticas às do JSON UI (tools/verificar_ui.py confere).
- * TEMA_BLACK é um token que vem logo depois de HUB ou LISTA.
+ * TEMA_* é um token que vem logo depois de HUB ou LISTA (o Laranja não tem token).
  */
 export const FLAG = Object.freeze({
   BASE: "§v§u§l§p",
   HUB: "§v§u§l§p§0§r",
   LISTA: "§v§u§l§p§1§r",
   TEMA_BLACK: "§v§b§r",
+  TEMA_SAKURA: "§v§d§r",
+  TEMA_LUNAR: "§v§9§r",
+  TEMA_ESPIRITO: "§v§5§r",
+});
+
+/**
+ * Token de cada tema do painel e se ele é do selo Kitsune (só cosmético; quem perde o selo volta ao Laranja).
+ * @type {Readonly<Record<Tema, Readonly<{ token: string, kitsune: boolean }>>>}
+ */
+export const TEMAS_PAINEL = Object.freeze({
+  laranja: Object.freeze({ token: "", kitsune: false }),
+  black: Object.freeze({ token: FLAG.TEMA_BLACK, kitsune: false }),
+  sakura: Object.freeze({ token: FLAG.TEMA_SAKURA, kitsune: true }),
+  lunar: Object.freeze({ token: FLAG.TEMA_LUNAR, kitsune: true }),
+  espirito: Object.freeze({ token: FLAG.TEMA_ESPIRITO, kitsune: true }),
 });
 
 /**
@@ -96,12 +112,41 @@ export async function mostrar(player, form) {
 }
 
 /**
+ * Pode usar o tema? Os de Kitsune pedem o selo (tag do booster).
+ * @param {Player} player
+ * @param {Tema} tema
+ */
+export function podeUsarTema(player, tema) {
+  if (!TEMAS_PAINEL[tema]?.kitsune) return true;
+  try {
+    return player.hasTag(TAG_KITSUNE);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Tema do painel em uso. Quem escolheu um tema de Kitsune e perdeu o selo volta ao Laranja (salvo e avisado).
+ * @param {Player} player
+ * @returns {Tema}
+ */
+export function temaDoPainel(player) {
+  const tema = dadosJogador(player).ajustes.tema;
+  if (podeUsarTema(player, tema)) return tema;
+  editarJogador(player, (d) => {
+    d.ajustes.tema = "laranja";
+  });
+  msg(player, textos.TEMA_VOLTOU);
+  return "laranja";
+}
+
+/**
  * Flag do layout + o token do tema do jogador.
  * @param {Player} player
  * @param {string} flag  FLAG.HUB ou FLAG.LISTA
  */
 function prefixoTitulo(player, flag) {
-  return dadosJogador(player).ajustes.tema === "black" ? flag + FLAG.TEMA_BLACK : flag;
+  return flag + TEMAS_PAINEL[temaDoPainel(player)].token;
 }
 
 /**

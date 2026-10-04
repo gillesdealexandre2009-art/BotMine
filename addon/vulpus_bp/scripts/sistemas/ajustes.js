@@ -1,16 +1,26 @@
 // @ts-check
-// Ajustes de cada jogador: scoreboard lateral (e a linha do clã nela), tema do menu, pedidos de TPA,
-// sons do menu e o visual Kitsune.
+// Ajustes de cada jogador: scoreboard lateral (e a linha do clã nela), tema do painel (5; 3 do selo
+// Kitsune), pedidos de TPA, sons do menu e o visual Kitsune.
 // Não importa hud.js: a sidebar percebe a troca sozinha no próximo ciclo.
 import { ICONES } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
-import { config, dadosJogador, editarJogador } from "../core/db.js";
-import { Lista } from "../core/forms.js";
+import { config, dadosJogador, editarJogador, TEMAS_MENU } from "../core/db.js";
+import { Lista, podeUsarTema, temaDoPainel } from "../core/forms.js";
 import { ok } from "../core/util.js";
 import * as textos from "../textos/ajustes.js";
 import { menuKitsune } from "./kitsune.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
+/** @typedef {import("../core/db.js").Tema} Tema */
+
+/** Raposinha de cada tema na escolha. @type {Readonly<Record<Tema, string>>} */
+const ICONE_TEMA = Object.freeze({
+  laranja: ICONES.temaLaranja,
+  black: ICONES.temaBlack,
+  sakura: ICONES.temaSakura,
+  lunar: ICONES.temaLunar,
+  espirito: ICONES.temaEspirito,
+});
 
 /**
  * Scoreboard lateral ligada para o jogador (sem escolha própria, vale o hudPadrao da staff).
@@ -37,13 +47,43 @@ function alternarHud(player) {
 const icone = (ligado) => (ligado ? ICONES.sim : ICONES.nao);
 
 /**
+ * Escolha do tema do painel: os 5, com os de Kitsune travados (cadeado) para quem não tem o selo.
+ * Escolher reabre a lista já no tema novo; o travado explica que é cosmético de quem apoia no Discord.
+ * @param {Player} player
+ * @param {() => any} [voltar]
+ */
+export async function menuTemas(player, voltar) {
+  const atual = temaDoPainel(player);
+  const aqui = (/** @type {Player} */ p) => menuTemas(p, voltar);
+  const lista = new Lista(textos.TITULO_TEMAS).texto(textos.CORPO_TEMAS(podeUsarTema(player, "sakura")));
+  for (const tema of TEMAS_MENU) {
+    const livre = podeUsarTema(player, tema);
+    lista.botao(textos.BOTAO_ESCOLHA_TEMA(tema, tema === atual, livre), livre ? ICONE_TEMA[tema] : ICONES.cadeado, async (p) => {
+      if (!podeUsarTema(p, tema)) {
+        await new Lista(textos.TITULO_TEMA_KITSUNE).texto(textos.TEMA_SO_KITSUNE).voltar(aqui).abrir(p);
+        return;
+      }
+      if (tema !== temaDoPainel(p)) {
+        editarJogador(p, (d) => {
+          d.ajustes.tema = tema;
+        });
+        ok(p, textos.TEMA_MUDOU(tema));
+      }
+      await aqui(p);
+    });
+  }
+  await lista.voltar(voltar).abrir(player);
+}
+
+/**
  * Lista de alternâncias; cada clique troca o valor e reabre o menu com o estado novo
- * (a troca de tema já reabre no tema novo).
+ * (o tema abre a escolha, que já reabre no tema novo).
  * @param {Player} player
  * @param {() => any} [voltar]
  */
 export async function menuAjustes(player, voltar) {
-  const { tpa, sons, tema, cla } = dadosJogador(player).ajustes;
+  const { tpa, sons, cla } = dadosJogador(player).ajustes;
+  const tema = temaDoPainel(player);
   const hud = hudLigada(player);
   /** @param {(p: Player) => void} trocar */
   const eReabrir = (trocar) => async (/** @type {Player} */ p) => {
@@ -53,17 +93,7 @@ export async function menuAjustes(player, voltar) {
   await new Lista(textos.TITULO)
     .texto(textos.CORPO)
     .botao(textos.BOTAO_HUD(hud), icone(hud), eReabrir(alternarHud))
-    .botao(
-      textos.BOTAO_TEMA(tema),
-      ICONES.tema,
-      eReabrir((p) => {
-        const novo = tema === "black" ? "laranja" : "black";
-        editarJogador(p, (d) => {
-          d.ajustes.tema = novo;
-        });
-        ok(p, textos.TEMA_MUDOU(novo));
-      }),
-    )
+    .botao(textos.BOTAO_TEMA(tema), ICONE_TEMA[tema], (p) => menuTemas(p, () => menuAjustes(p, voltar)))
     .botao(
       textos.BOTAO_TPA(tpa),
       icone(tpa),

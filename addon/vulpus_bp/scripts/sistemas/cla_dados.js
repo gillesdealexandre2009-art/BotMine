@@ -50,6 +50,7 @@ import { aoMinutoAtivo } from "./caudas.js";
  * @property {string} tag  3 caracteres A-Z/0-9
  * @property {string} cor  código § sem o § (um de CORES_CLA)
  * @property {string} tema  tema de cor da tag e do nome (cores.js); "" = só a cor. Só Kitsune escolhe
+ * @property {string} temaPor  id do Kitsune que escolheu o tema ("" sem tema): se ele perder o selo, volta a cor
  * @property {number} emblema  índice em EMBLEMAS
  * @property {string} desc
  * @property {number} criado  ms
@@ -235,6 +236,7 @@ function completarCla(lido, id) {
     tag: lido.tag.toUpperCase().slice(0, 3),
     cor: CORES_CLA.includes(lido.cor) ? lido.cor : CORES_CLA[0],
     tema: temaValido(lido.tema) ? lido.tema : "",
+    temaPor: temaValido(lido.tema) && typeof lido.temaPor === "string" ? lido.temaPor : "",
     emblema: Math.min(EMBLEMAS.length - 1, inteiro(lido.emblema, 0)),
     desc: texto(lido.desc, LIMITES.desc),
     criado: numero(lido.criado, 0),
