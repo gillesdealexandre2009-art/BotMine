@@ -46,6 +46,7 @@ COGS_PADRAO = [
     "configuracao",
     "entrada",
     "cargos",
+    "cargos_visual",
     "tickets",
     "logs",
     "moderacao",

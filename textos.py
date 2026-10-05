@@ -829,3 +829,12 @@ RANK_RECUSADO = (
     "🦊 Pedido recusado por {staff} por enquanto. Continue ajudando a toca e tente de novo mais tarde, {autor}!"
 )  # {staff} {autor}
 RANK_LOG = "🎖️ Pedido de rank {resultado}"  # {resultado}
+
+# ---------------------------------------------------------------- visual dos cargos
+CARGOS_VISUAL_TITULO = "🧹 Organizar cargos"
+CARGOS_VISUAL_RODAPE = "Nada é apagado. Só nomes e separadores mudam."
+CARGOS_VISUAL_NADA = "Tudo já está organizado. Nada a mudar. ✨"
+CARGOS_VISUAL_OUTRO_SERVIDOR = "Este servidor não tem estilo de cargos configurado."
+CARGOS_VISUAL_APLICANDO = "⏳ Aplicando, devagar para não sobrecarregar o Discord..."
+CARGOS_VISUAL_FEITO = "✅ Pronto! **{renomeados}** cargo(s) renomeado(s), **{ajustados}** membro(s) ajustado(s)."
+CARGOS_VISUAL_FALHAS = "⚠️ Falhou em: {lista}"  # {lista}
