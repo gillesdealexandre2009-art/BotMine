@@ -2,6 +2,91 @@
 
 > **Fase 2 (0.2.0) pronta fora do jogo.** Especificação em [`docs/spec/03_spec_fase2.md`](spec/03_spec_fase2.md): glyphs, tema Black, níveis e ranks, scoreboard lateral, leilão e o pack "Vulpus Chat". A seção "Fase 2" logo abaixo é a situação atual; o resto do arquivo é da fase 1 e continua valendo.
 
+## Spleef na torre: situação em 2026-10-04
+
+Pedido do dono (requisitos em [`docs/workflow_spleef.js`](workflow_spleef.js)): spleef na torre redonda da ilha de minigames (piso de 13 blocos, 4 camadas de `minecraft:snow`), tudo configurável no jogo. Explicação para o dono no `README.md` ("Spleef (minigame da torre)").
+
+| Frente | Arquivos | Situação |
+|---|---|---|
+| Arena (centro + raio, camadas, salvar, reset, ticking area) | `sistemas/spleef_arena.js` (novo) | **pronto** |
+| Fila, partida, eliminação, prêmios, ranking, placar, eventos | `sistemas/spleef.js`, `textos/spleef.js` (novos) | **pronto** |
+| Painel da staff e `/vulpus:spleef [ação]` | `sistemas/spleef_staff.js` (novo) | **pronto** |
+| Integração (mínima) | `main.js`, `config.js` (14 chaves `spleef*`, ícones, sons), `staff.js` + `textos/staff.js` (botão "Minigames (Spleef)"), `hud.js` + `textos/hud.js` (campo opcional `minigame`), `textos/regras.js`; seção "Minigames" no menu Caudas via `adicionarSecaoCaudas` | **pronto** |
+| Placar flutuante | `vulpus_bp/entities/texto.json`; RP `entity/texto.entity.json`, `models/entity/texto.geo.json` (sem cubos), `render_controllers/texto.render_controllers.json`, `texts/*.lang` | **pronto** (BDS conferiu) |
+| Teste | `C:/Users/gille/vt/mock/teste_spleef.mjs` (novo, 139 checagens) | **0 falhas** |
+| Teste no jogo (cliente) | README: "Teste rápido" item 14 e checklist item 17 | **pendente: o dono** |
+
+**Como funciona (resumo técnico)**
+- **Arena:** `vulpus:spleef:arena` (`d`, `cx`, `cz`, `cy`, `raio`, `tipos`, `camadas` de cima para baixo, `blocos`, `salvo` = assinatura, `lobby`, `saida`, `topo`, `placar`). Bloco conta como da camada com `dx²+dz² <= (raio+0,5)²` (raio 6 = 13 em linha reta e 9 na diagonal). "Marcar centro" mede a neve nas 4 direções na camada sob os pés (até 16 abaixo), recentra pelo meio e detecta as camadas (amostra 5 pontos em ±64 e conta o círculo onde achou; vale com ≥ 50% coberto; até 8). Zona protegida: raio + 2,5 e da camada mais baixa - 6 à mais alta + 6.
+- **Estado salvo:** uma estrutura do mundo por camada (`vulpus:spleef_c<i>`, quadrado 2r+1 x 1 x 2r+1). O reset lê `getBlockPermutation` de cada célula do círculo e só escreve onde o salvo é ar ou bloco de camada e o mundo está diferente (uma camada por tick; espera o chunk por até 60 s com a ticking area `vulpus_spleef`). Mudar centro/raio/camadas/blocos invalida a assinatura (o painel pede salvar de novo). Reset que falha deixa a arena "não pronta" até a staff repor.
+- **Fases:** livre → contagem → preparando (teleporte em círculo, 3-2-1) → jogando → fim (comemoração 3 s) → resetando → livre. O loop de 4 ticks só existe com fila ou partida; a área de espera é olhada a cada 20 ticks (uma consulta `getPlayers` com raio 2,5).
+- **Partida aberta** em `vulpus:spleef:partida` (`jogadores`, `vivos`); no `worldLoad`, se existir, encerra sem prêmios, tira quem está online, marca os offline em `vulpus:spleef:pendentes` e repõe a neve. Todo spawn/renascimento recolhe itens do Spleef (marca no lore) de quem não está jogando; pendente que volta dentro da zona vai para a saída.
+- **Eliminação:** dimensão, criativo/espectador, `y < camada mais baixa - 0,5`, distância > raio + 1,5, mais de 12 acima do topo, lava nos pés, ou **em pé (isOnGround) num bloco fora do círculo** (parede, parapeito); morte, saída, desistência. Caíram todos no mesmo passo = empate entre eles.
+- **Proteções:** `beforeEvents.playerBreakBlock` (neve da camada vira ar pelo script, sem drop; resto cancelado; staff no criativo fora da partida pode), `playerInteractWithBlock` (itens que constroem/mudam na zona; quem joga só bola e comida), `playerInteractWithEntity` (quem joga), `itemUse` (quem joga: só a bola do Spleef e comida), `entityHurt` (quem joga não leva dano; bola de outro jogador da partida = dano 0, empurra), `explosion` (tira os blocos da zona). `registrarBloqueioTeleporte` barra os teleportes do addon de quem joga; teleporte pendente é cancelado na largada. Invasor (sobrevivência/aventura) dentro do cilindro vai para a espera; antes do reset a arena é esvaziada.
+- **Prêmios:** "jogou de verdade" = 20 s em pé depois do VAI ou 3 blocos; a partida vale com ≥ 2 assim. Vitória/participação/XP só em partida que vale, para quem jogou de verdade e dentro de `spleefPremiosDia` (dia de Brasília). Estatísticas em `vulpus:spleef:j:<id>` (`v`, `p`, `s`, `m`, `b`, `dia`, `pd`); recordes em `vulpus:spleef:recordes`.
+
+**Decisões**
+- **Entrada no menu:** seção "Minigames" no menu de **Caudas** (o Hub tem os 10 slots ocupados e o prêmio é em Caudas; mesma solução da Caçada). Staff: botão "Minigames (Spleef)" no painel, com o submenu Minigames (outros minigames entram ali).
+- **Um comando só** (`/vulpus:spleef [ação]`, 1 parâmetro) para jogador e staff; as ações de staff conferem a permissão dentro.
+- **Configurações do Spleef** ficam no próprio painel do Spleef (não nos 6 grupos de Staff > Configurações), com faixas próprias; ferramenta numa lista de pás.
+- **Bolas de neve sem trava** de inventário (só a pá trava): não há certeza de que item travado ainda pode ser arremessado; bola perdida é só uma bola de neve comum com nome.
+- **Quebra por script** (bater com a pá: `afterEvents.entityHitBlock`; bola: `projectileHitBlock`), não pela quebra do jogo, para ser instantânea e não dropar bolas.
+- Sem glyph novo (usa o troféu `\uE234`).
+
+**Testes antigos mudados de propósito** (cópias em `*.mjs.antes_spleef`): `teste.mjs`, `teste_clas.mjs`, `teste_dono.mjs` e `teste_fumaca.mjs` esperavam 38 comandos; agora 39 (`/vulpus:spleef`). `mock/mc_server.mjs` ganhou `EntityDamageCause`, `EnchantmentType` e os sinais `afterEvents.entityHitBlock`/`projectileHitBlock` (cópia em `mc_server.mjs.antes_spleef`). O `teste_spleef.mjs` troca o `structureManager` do mock por um que guarda o quadrado inteiro.
+
+**Checagens (2026-10-04)**
+
+| Checagem | Resultado |
+|---|---|
+| `npm run check` (BP e chat) | 0 erros |
+| `node --check` nos `.js` do BP e do chat | 69 de 69 ok |
+| `python tools/gerar_glyphs.py` e `gerar_texturas.py` | nenhum PNG versionado mudou |
+| `python tools/verificar_ui.py` | 4 arquivos, 144 controles, 124 texturas, 0 erros, 0 avisos |
+| `python tools/build.py` | 0 erros; 45 JSON; `Vulpus.mcaddon` 401 KB |
+| `mock/teste_spleef.mjs` | 139 ok, 0 falhas |
+| `mock/teste.mjs`, `teste_clas.mjs`, `teste_clas_adv.mjs`, `teste_dono.mjs`, `teste_ctf.mjs`, `teste_cacada.mjs`, `teste_efeitos.mjs`, `teste_fase2.mjs`, `teste_fumaca.mjs`, `mock_leilao/teste*.mjs` | 0 falhas |
+| BDS 1.26.52.3 (VulpusTeste) | sem erro de script (só o aviso conhecido do alias `hud`); `help spleef` → `/spleef [acao: string]`; sonda temporária (só na cópia do BDS, já removida): ticking area carregou, raio 4 medido e recentrado, 2 camadas detectadas (69 blocos cada), estado salvo (`vulpus:spleef_c0/c1`), reset repôs os 2 blocos de neve quebrados e **não** refez a parede nem o canto do quadrado; pá com `minecraft:efficiency` 5, `lockMode` e `keepOnDeath` ok; `minecraft:is_food` no pão e no biscoito; `vulpus:texto` criado com nome de 2 linhas; `summon vulpus:texto` ok; tudo limpo depois; `reload` sem erro; servidor parado |
+| `instalar_dev.py --mundo "Testes Claude" --chat` | copiado; packs já ativos |
+
+**O que só o cliente confirma:** a batida da pá no modo aventura, o placar flutuante (várias linhas, sem caixa, sem modelo), a bola de neve empurrando sem dano, a sensação da quebra instantânea com lag no celular e se o raio detectado bate com a torre do dono (esperado 6; se a neve encostar na parede, ajustar à mão).
+
+## Caçada: o bug do "matou e não deu em nada" e os estilos Kitsune da bandeira (2026-10-04, noite)
+
+**Bug da Caçada (relato do dono: havia recompensa, mataram e nada aconteceu, sem mensagem visível).** Causas encontradas em `sistemas/cacada.js`:
+1. **Só valia o golpe final exato.** Morte por fogo (Aspecto Flamejante, flecha de fogo), queda ou lava depois de um empurrão, TNT ou lobo domesticado chegava sem jogador no `damageSource`, e a morte era tratada como "monstro/ambiente": **não pagava e não avisava ninguém**. Agora `matadorDe` usa `jogadorPor` (Player, dono do bicho domesticado via `tamedToPlayer`, dono do projétil) e, sem jogador no golpe final, o **último jogador que feriu a vítima nos últimos 10 s** (`afterEvents.entityHurt`), a não ser que um monstro tenha dado o golpe final.
+2. **Retorno invisível ou errado.** A recusa era só uma linha vermelha no chat de quem matou; a vítima e a staff não ficavam sabendo. E a mensagem da vida mínima prometia "volta a valer em X" contando da morte anterior, mas a morte recusada zera a conta: quem tentava de novo no tempo prometido levava outra recusa (o dono testando morre várias vezes e cai sempre nisso). Agora: motivo no chat **e** na actionbar para quem matou (com o tempo certo), "Sua cabeça continua valendo X: <motivo>. Nos próximos 5 min ela não paga." para a vítima **ao renascer** (também em morte sem PvP), e linha `negou` no Log da Caçada da staff (motivo, matador, vítima, valor; repetida em 1 min vira uma linha só).
+3. **Teste a dois nunca paga** (regra, não bug): quem pagou não caça; com duas pessoas, quem mata é sempre quem pagou. Agora o motivo aparece claro e o README explica (chame uma terceira conta; vida mínima 0 para testar sem esperar, já configurável).
+4. **Id/nome:** a chave da cabeça por nome de offline é o mesmo id de `vulpus:j:<id>` (`player.id`), conferido em teste. Endurecido: com dois registros do mesmo nome, `acharPessoa` escolhe o de `ultimaVez` mais recente, e `trazerCabecaAntiga` passa a cabeça do id velho para o novo quando a conta volta com outro id (mundo copiado, dados refeitos). `cla_guerra`/`ctf` assinam o mesmo `entityDie`, mas cada assinante é independente e nenhum mexe na Caçada.
+
+**Estilos Kitsune da bandeira.** 8 estilos (Nove Caudas, Sakura, Lunar, Espírito, Brasa, Aurora, Estelar, Sombra) para clãs em que alguém com o selo Kitsune e a permissão `editar` escolhe (Clã > Terreno e proteção > Estilo da bandeira; trancado com explicação para os outros). Mesma entidade `vulpus:bandeira` com a propriedade `vulpus:estilo` (0..8); textura própria 128x128 com o pano em 4 quadros (`uv_anim` num segundo render controller), orelhas, enfeite girando no topo, orbe (Espírito, Brasa, Estelar), caudas soltas (Nove Caudas), animação e aura de partículas (`cicloAura`, leve e com limite). Perdeu o selo: volta ao padrão (mesma regra do tema, `conferirTemaKitsune`). Detalhes em `docs/spec/04_spec_clas.md` §7; prévia `docs/previas/bandeiras.png`.
+
+| Frente | Arquivos |
+|---|---|
+| Caçada | `sistemas/cacada.js`, `textos/cacada.js` |
+| Estilos (dados, ação, menu) | `cla_dados.js` (`ESTILOS_BANDEIRA`, `estiloBandeira`, `estiloPor`), `cla_acoes.js` (`mudarEstiloBandeira`, `conferirTemaKitsune` limpa tema e estilo), `clas.js` (menu e checagem periódica), `textos/clas.js` |
+| Estilos (entidade e aura) | `ctf.js` (`estiloDe`, propriedade, `AURAS`, `cicloAura`), BP `entities/bandeira.json`, RP `entity/`, `models/entity/bandeira.geo.json`, `animations/`, `render_controllers/` (novo `bandeira_kitsune`), `textures/vulpus/entidades/bandeira_k_*.png`, `textures/vulpus/ui/bandeira_<estilo>.png`, `tools/gerar_bandeira.py` |
+| Build | `tools/build.py`: `animate` com `{nome: condição}` quebrava o `set` (erro de Python); agora aceita e também confere as propriedades lidas nas condições da client entity (2 mutações pegas: `Texture.k9` e `vulpus:estilo` sem `client_sync`) |
+| Testes | `mock/teste_cacada.mjs` (142 → 173), `mock/teste_ctf.mjs` (108 → 147; cópia anterior em `teste_ctf.mjs.antes_estilos`) |
+
+**Não mexi** em `main.js`, `config.js`, `staff.js` nem `hud.js` (spleef de outro agente em andamento). Os ícones dos estilos são caminhos de textura no próprio `clas.js` (`iconeEstilo`), sem entrada nova em `ICONES`.
+
+**Checagens (2026-10-04, noite)**
+
+| Checagem | Resultado |
+|---|---|
+| `npm run check` (BP e chat) | 0 erros |
+| `node --check` nos `.js` do BP e do chat | 69 de 69 ok (inclui os arquivos do spleef em andamento) |
+| `python tools/gerar_bandeira.py` | 30 PNGs (12 cores iguais; 8 estilos, 8 ícones, ícone e prévia) |
+| `python tools/verificar_ui.py` | 0 erros, 0 avisos |
+| `python tools/build.py` | 0 erros; 45 JSON; `Vulpus.mcaddon` 401 KB |
+| `mock/teste_cacada.mjs` / `teste_ctf.mjs` | 173 ok / 147 ok, 0 falhas |
+| `mock/teste.mjs`, `teste_clas.mjs`, `teste_clas_adv.mjs`, `teste_dono.mjs`, `teste_efeitos.mjs`, `teste_fase2.mjs`, `teste_fumaca.mjs`, `mock_leilao/teste*.mjs` | 0 falhas |
+| BDS 1.26.52.3 (VulpusTeste) | sem erro de script nem de entidade (só o aviso conhecido do alias `hud`); `summon vulpus:bandeira` → "Object successfully summoned"; `reload` sem erro; sonda temporária (só na cópia do BDS, já removida, com a área de carregamento): `vulpus:estilo` 0..8 aceito e valendo no tick seguinte, 9 recusado (`ArgumentOutOfBoundsError`), as 8 partículas novas da aura sem erro; servidor parado |
+| `instalar_dev.py --mundo "Testes Claude" --chat` | copiado; packs já ativos (levou junto o que havia do spleef no disco) |
+
+**O que só o cliente confirma:** o `uv_anim` trocando os quadros do pano (se não funcionar, o pano fica no primeiro quadro), o plano do enfeite visto dos dois lados, as orelhas e a orbe no lugar, o peso da aura no celular; na Caçada, que o `entityHurt` chega antes do `entityDie` com o mesmo atacante (o normal) e o `tamedToPlayer` do lobo.
+
 ## Caçada (recompensa por cabeças): situação em 2026-10-04
 
 Pedido do dono: pôr recompensa na cabeça de alguém, que só vale se quem matar for de fora do clã da vítima (aliados também não contam), no menu Caudas sem mexer no Hub. Desenho em [`docs/spec/05_spec_cacada.md`](spec/05_spec_cacada.md); explicação para o dono no `README.md` ("Caçada").

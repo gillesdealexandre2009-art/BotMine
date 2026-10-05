@@ -78,6 +78,21 @@ export const PADROES = {
   cacadaRecargaHoras: 24,
   cacadaDuracaoDias: 7,
   cacadaAnuncio: 500,
+  // Spleef (editados em Staff > Minigames > Spleef > Configurações, não nos grupos do painel)
+  spleefLigado: true,
+  spleefMinimo: 2,
+  spleefMaximo: 16,
+  spleefContagem: 10,
+  spleefContagemCheia: 5,
+  spleefDuracaoMin: 5,
+  spleefPremioVitoria: 30,
+  spleefPremioParticipar: 5,
+  spleefPremiosDia: 3,
+  spleefXp: 10,
+  spleefFerramenta: "minecraft:diamond_shovel",
+  spleefEficiencia: 5,
+  spleefBolas: true,
+  spleefRecargaBola: 3,
 };
 
 /**
@@ -180,6 +195,11 @@ export const ICONES = {
   cacada: "textures/items/crossbow_arrow",
   mural: "textures/items/paper",
   cabeca: "textures/ui/wither_effect",
+  // Minigames (Spleef)
+  minigames: "textures/items/snowball",
+  spleef: "textures/items/diamond_shovel",
+  neve: "textures/blocks/snow",
+  trofeu: "textures/ui/trophy",
 };
 
 export const SONS = {
@@ -191,4 +211,10 @@ export const SONS = {
   guerra: "horn.call.0",
   cacada: "block.bell.hit",
   cacou: "note.pling",
+  spleefConta: "note.pling",
+  spleefVai: "random.levelup",
+  spleefCaiu: "random.pop2",
+  spleefFogos: "firework.blast",
+  spleefFogosSobe: "firework.launch",
+  spleefBrilho: "firework.twinkle",
 };

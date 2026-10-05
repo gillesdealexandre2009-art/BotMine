@@ -18,6 +18,7 @@ export const BOTAO_CARGOS = "Cargos e Kitsune";
 export const BOTAO_LEILAO = "Leilão (staff)";
 export const BOTAO_CLAS = "Clãs (staff)";
 export const BOTAO_CACADA = "Caçada (staff)";
+export const BOTAO_MINIGAMES = "Minigames (Spleef)";
 export const BOTAO_ITEM = "Pegar item do menu";
 export const BOTAO_DONO = "Painel de Dono";
 

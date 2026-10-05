@@ -441,6 +441,50 @@ export const BANDEIRA_RECARGA = (segundos) => `A bandeira mudou há pouco. Dá p
 export const BANDEIRA_MARCADA = (coords) => `Bandeira do clã no pedestal em §f${coords}§r. Todo mundo sabe onde ela fica!`;
 /** @param {string} quem @param {string} coords */
 export const BANDEIRA_AVISO = (quem, coords) => `${glyph(G.BANDEIRA)} §f${quem}§r pôs a bandeira do clã em §f${coords}§r.`;
+
+// Estilo da bandeira (mimo do selo Kitsune; ids em ESTILOS_BANDEIRA)
+/** @type {Record<string, { nome: string, desc: string }>} */
+export const ESTILOS_BANDEIRA_INFO = {
+  caudas: { nome: "Nove Caudas", desc: "raposa branca com nove caudas e três caudas soltas na ponta" },
+  sakura: { nome: "Sakura", desc: "galho de cerejeira com pétalas caindo" },
+  lunar: { nome: "Lunar", desc: "lua crescente com brilho prateado e estrelas" },
+  espirito: { nome: "Espírito", desc: "fogo-fátuo azul dançando no pano" },
+  brasa: { nome: "Brasa", desc: "chamas laranja subindo e faíscas no ar" },
+  aurora: { nome: "Aurora", desc: "aurora em degradê que muda de cor" },
+  estelar: { nome: "Estelar", desc: "céu de estrelas cintilando e a constelação da raposa" },
+  sombra: { nome: "Sombra", desc: "fumaça roxa e olhos de raposa acesos" },
+};
+/** @param {string} estilo */
+const NOME_ESTILO = (estilo) => ESTILOS_BANDEIRA_INFO[estilo]?.nome ?? "Padrão";
+/** @param {string} estilo  "" = padrão @param {boolean} kitsune */
+export const BOTAO_ESTILO_BANDEIRA = (estilo, kitsune) =>
+  `Estilo da bandeira ${glyph(G.KITSUNE)}\n${kitsune ? "§7" : "§8"}${estilo ? NOME_ESTILO(estilo) : "Padrão (cor do clã)"}${kitsune ? "" : " • só Kitsune"}`;
+export const TITULO_ESTILO = "Estilo da bandeira";
+/**
+ * @param {{ cla: Cla, kitsune: boolean, quem: string }} e  quem = nome de quem escolheu o estilo atual ("" sem estilo)
+ */
+export const ESTILO_CORPO = ({ cla, kitsune, quem }) =>
+  [
+    `§7Hoje: §f${cla.estiloBandeira ? NOME_ESTILO(cla.estiloBandeira) : "Padrão, na cor do clã"}${quem ? ` §8(escolhido por ${quem})` : ""}`,
+    "",
+    `${glyph(G.KITSUNE)} §7Com o selo Kitsune dá para vestir a bandeira com um dos 8 estilos: pano próprio, orelhas e enfeite no mastro, aura em volta e animação. Só visual: no Capture the Flag tudo continua igual.`,
+    kitsune
+      ? "§7Se quem escolheu perder o selo, a bandeira volta para a padrão."
+      : "§c✖ Trancado: §7só quem tem o selo Kitsune (e pode editar o clã) escolhe. Sem isso, a bandeira fica na cor do clã.",
+    ...(cla.bandeira ? [] : ["", "§8A bandeira aparece no pedestal: marque-o em Terreno."]),
+  ].join("\n");
+/** @param {boolean} atual */
+export const BOTAO_ESTILO_PADRAO = (atual) => `Padrão (cor do clã)${atual ? " §a✔" : ""}\n§7a bandeira de sempre`;
+/** @param {string} estilo @param {boolean} atual */
+export const BOTAO_ESTILO_ITEM = (estilo, atual) => `${NOME_ESTILO(estilo)}${atual ? " §a✔" : ""}\n§7${ESTILOS_BANDEIRA_INFO[estilo]?.desc ?? ""}`;
+/** @param {string} estilo */
+export const ESTILO_TRANCADO = (estilo) => `§8✖ ${NOME_ESTILO(estilo)}: ${ESTILOS_BANDEIRA_INFO[estilo]?.desc ?? ""}`;
+export const ESTILO_SO_KITSUNE = "Estilos de bandeira são mimo do selo Kitsune (só visual).";
+/** @param {string} estilo */
+export const ESTILO_OK = (estilo) => (estilo ? `Bandeira com o estilo §f${NOME_ESTILO(estilo)}§r!` : "Bandeira de volta para a padrão, na cor do clã.");
+/** @param {string} nome @param {Cla} cla */
+export const ESTILO_KITSUNE_VOLTOU = (nome, cla) =>
+  `§7${nome} não tem mais o selo Kitsune: a bandeira de ${TAG(cla)} §7voltou para a padrão, na cor do clã.`;
 /** @param {number} segundos */
 export const BASE_RECARGA = (segundos) => `A base mudou há pouco. Dá para mover de novo em §e${duracao(segundos)}§c.`;
 /** @param {number} distancia */

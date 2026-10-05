@@ -22,6 +22,7 @@ import {
   defNivel,
   editarCla,
   EMBLEMAS,
+  ESTILOS_BANDEIRA,
   infoNivelCla,
   iniciarClas,
   logStaff,
@@ -56,6 +57,8 @@ const TICKS_AVISO_ENTRADA = 80;
 /** De quanto em quanto tempo confere se quem escolheu o tema de um clã ainda é Kitsune (10 s). */
 const TICKS_CONFERIR_TEMA = 200;
 const TOP_RANKING = 10;
+/** Ícone de cada estilo de bandeira (gerado pelo tools/gerar_bandeira.py); sem estilo, o da bandeira. @param {string} estilo */
+const iconeEstilo = (estilo) => (estilo ? `textures/vulpus/ui/bandeira_${estilo}` : ICONES.bandeira);
 /** Palavras extras do /vulpus:c (o jogo separa a mensagem por espaço e aceita no máximo 8 parâmetros; entre aspas vale uma frase). */
 const PALAVRAS_CHAT = 7;
 
@@ -426,6 +429,9 @@ async function menuTerreno(player, voltar) {
     }),
   );
   if (cla.base) lista.botao(textos.BOTAO_LIMITES, ICONES.terreno, (p) => mostrarLimites(p));
+  if (pode(cla, player.id, "editar")) {
+    lista.botao(textos.BOTAO_ESTILO_BANDEIRA(cla.estiloBandeira, temSelo(player)), iconeEstilo(cla.estiloBandeira), (p) => menuEstiloBandeira(p, aqui));
+  }
   if (gerir) {
     if (cla.base && cla.base.raio < defNivel(cla.nivel).raio) {
       const claId = cla.id;
@@ -686,6 +692,33 @@ async function menuAjustesCla(player, voltar) {
 }
 
 /**
+ * Estilo da bandeira: quem tem o selo Kitsune (e pode editar o clã) escolhe um dos 8; os outros veem os estilos
+ * trancados e a explicação.
+ * @param {Player} player
+ * @param {Volta} voltar
+ */
+async function menuEstiloBandeira(player, voltar) {
+  const cla = claDe(player);
+  if (!cla || !pode(cla, player.id, "editar")) return voltar();
+  const kitsune = temSelo(player);
+  const quem = cla.estiloPor ? (membroDe(cla, cla.estiloPor)?.nome ?? porId(cla.estiloPor)?.name ?? "") : "";
+  const lista = new Lista(textos.TITULO_ESTILO).texto(textos.ESTILO_CORPO({ cla, kitsune, quem }));
+  if (kitsune) {
+    lista.botao(textos.BOTAO_ESTILO_PADRAO(!cla.estiloBandeira), ICONES.bandeira, async (p) => {
+      acoes.mudarEstiloBandeira(p, "");
+      await voltar();
+    });
+    for (const estilo of ESTILOS_BANDEIRA) {
+      lista.botao(textos.BOTAO_ESTILO_ITEM(estilo, cla.estiloBandeira === estilo), iconeEstilo(estilo), async (p) => {
+        acoes.mudarEstiloBandeira(p, estilo);
+        await voltar();
+      });
+    }
+  } else for (const estilo of ESTILOS_BANDEIRA) lista.rotulo(textos.ESTILO_TRANCADO(estilo));
+  await lista.voltar(voltar).abrir(player);
+}
+
+/**
  * Cores liberadas pelo nível e, para quem tem o selo Kitsune, os temas de cor.
  * @param {Player} player
  * @param {Volta} voltar
@@ -918,10 +951,11 @@ world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
   }, TICKS_AVISO_ENTRADA);
 });
 
-// O selo Kitsune pode sair com a pessoa online (staff, /tag, bot): o tema que ela escolheu para o clã sai junto.
+// O selo Kitsune pode sair com a pessoa online (staff, /tag, bot): o tema e o estilo de bandeira que ela escolheu
+// para o clã saem junto.
 system.runInterval(() => {
   try {
-    const donos = new Set(todosClas().map((c) => c.temaPor).filter((id) => id !== ""));
+    const donos = new Set(todosClas().flatMap((c) => [c.temaPor, c.estiloPor]).filter((id) => id !== ""));
     if (!donos.size) return;
     for (const p of online()) if (donos.has(p.id)) acoes.conferirTemaKitsune(p);
   } catch (e) {

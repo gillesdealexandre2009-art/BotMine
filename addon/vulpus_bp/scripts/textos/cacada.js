@@ -148,14 +148,56 @@ export const SUB_CACOU = (valor) => `§f+${formatarNumero(valor)} Caudas`;
 export const MOTIVO_CACOU = "caçada";
 /** @param {string} vitima */
 export const PAGADOR_CACOU = (vitima) => `§7A cabeça de §f${vitima}§7 que você pagou foi caçada.`;
-// Por que não pagou (só para quem matou)
-export const NAO_MESMO_CLA = "Recompensa não vale para quem é do mesmo clã.";
-export const NAO_ALIADO = "Recompensa não vale entre clãs aliados.";
-export const NAO_PAGADOR = "Você pagou por essa cabeça: não dá para cobrar a própria recompensa.";
-/** @param {number} ms */
-export const NAO_RECENTE = (ms) => `Essa raposa acabou de renascer. A recompensa volta a valer em §e${prazo(ms)}§c.`;
-/** @param {number} ms */
-export const NAO_RECARGA = (ms) => `Você já caçou essa cabeça há pouco. Pode de novo em §e${prazo(ms)}§c.`;
+// Por que não pagou: quem matou (chat e actionbar), a vítima (ao renascer) e o log da staff
+/** @typedef {"cla" | "aliado" | "pagador" | "recente" | "recarga" | "pve" | "propria"} MotivoNegou */
+/** Rótulo curto (actionbar e log da staff). @type {Record<MotivoNegou, string>} */
+export const MOTIVO_CURTO = {
+  cla: "mesmo clã",
+  aliado: "clã aliado",
+  pagador: "quem matou pagou por ela",
+  recente: "renasceu há pouco",
+  recarga: "já caçou há pouco",
+  pve: "não foi PvP",
+  propria: "morreu sozinho",
+};
+/** @type {Record<MotivoNegou, string>} */
+const VISTO_DA_VITIMA = {
+  cla: "quem te derrubou é do seu clã",
+  aliado: "quem te derrubou é de clã aliado",
+  pagador: "quem te derrubou pagou por ela",
+  recente: "você tinha renascido há pouco",
+  recarga: "quem te derrubou já caçou ela há pouco",
+  pve: "não foi PvP (ninguém te derrubou)",
+  propria: "foi você mesmo",
+};
+/**
+ * Para quem matou, no chat.
+ * @param {{ motivo: MotivoNegou, vitima: string, total: number, ms: number, vidaMin: number }} n
+ *   ms: há quanto tempo a vítima tinha renascido (recente) ou quanto falta da recarga (recarga)
+ */
+export const NAO_PAGOU = ({ motivo, vitima, total, ms, vidaMin }) => {
+  /** @type {Partial<Record<MotivoNegou, string>>} */
+  const razoes = {
+    cla: "vocês são do mesmo clã.",
+    aliado: "os clãs de vocês são aliados.",
+    pagador: "você pagou por essa cabeça, e quem paga não caça.",
+    recente: `${vitima} acabou de renascer (tinha só §e${formatarTempo(ms / 1000)}§c de vida) e a cabeça só vale com §e${vidaMin} min§c de vida. Volta a valer em §e${vidaMin} min§c.`,
+    recarga: `você já caçou essa cabeça há pouco. Pode de novo em §e${prazo(ms)}§c.`,
+  };
+  return `${CAVEIRA} §cA cabeça de §e${vitima}§c (${CAUDAS(total)}§c) não pagou: ${razoes[motivo] ?? MOTIVO_CURTO[motivo]}`;
+};
+/** @param {MotivoNegou} motivo */
+export const BARRA_NAO_PAGOU = (motivo) => `§c${CAVEIRA} Recompensa não paga: §f${MOTIVO_CURTO[motivo]}`;
+/**
+ * Para a vítima, quando renasce. Toda morte zera a vida mínima, então avisa quanto tempo a cabeça fica sem pagar.
+ * @param {number} total
+ * @param {MotivoNegou} motivo
+ * @param {number} vidaMin
+ */
+export const VITIMA_CONTINUA = (total, motivo, vidaMin) =>
+  `${CAVEIRA} §7Sua cabeça continua valendo ${CAUDAS(total)}§7: ${VISTO_DA_VITIMA[motivo]}.` +
+  (vidaMin > 0 ? ` §8Nos próximos ${vidaMin} min ela não paga.` : "");
+export const MOTIVO_PROPRIA = "recompensa na própria cabeça";
 
 // Expiração e staff
 export const MOTIVO_EXPIROU = "recompensa sem caçador";
@@ -191,9 +233,10 @@ export const COMO = (cfg) =>
     `§fVárias pessoas somam na mesma cabeça. Até §e${cfg.cacadaLimite}§f cabeças pagas por você ao mesmo tempo. Na sua, não.`,
     "",
     `${CAVEIRA} §6Caçar`,
-    "§fQuem der o golpe final em PvP leva tudo (flecha conta para quem atirou).",
-    "§7Não vale: mesmo clã, clã aliado, quem pagou por aquela cabeça, monstro, queda ou lava.",
-    `§7A vítima precisa estar viva há §f${cfg.cacadaVidaMin} min§7, e cada pessoa caça a mesma cabeça 1 vez a cada §f${cfg.cacadaRecargaHoras} h§7.`,
+    "§fQuem der o golpe final em PvP leva tudo (flecha e tridente contam para quem atirou; lobo domesticado, para o dono).",
+    "§fFogo, queda, lava ou explosão até 10 s depois de um golpe seu também contam para você.",
+    "§7Não vale: mesmo clã, clã aliado, quem pagou por aquela cabeça, monstro, queda ou lava sem ninguém por perto.",
+    `§7A vítima precisa estar viva há §f${cfg.cacadaVidaMin} min§7 (toda morte zera a conta), e cada pessoa caça a mesma cabeça 1 vez a cada §f${cfg.cacadaRecargaHoras} h§7.`,
     "",
     `${CAVEIRA} §6Prazo`,
     `§fCada parte vale por §e${cfg.cacadaDuracaoDias} ${cfg.cacadaDuracaoDias === 1 ? "dia" : "dias"}§f. Sem caçador, volta para quem pagou (sem a taxa), até offline.`,
@@ -225,12 +268,16 @@ export const REMOVEU = (nome, total, n) =>
 export const TITULO_LOG = "Log da Caçada";
 export const LOG_VAZIO = "§7Nada no log ainda.";
 /**
- * @param {{ t: number, k: string, a: string, v: string, n: number }} r
+ * @param {{ t: number, k: string, a: string, v: string, n: number, m?: string }} r  m = motivo (só "negou")
  */
 export const LOG_LINHA = (r) => {
   const quando = `§8${formatarData(r.t)}`;
   const acoes = { colocou: "pôs", coletou: "caçou", expirou: "expirou", removeu: "tirou" };
   const acao = acoes[/** @type {keyof typeof acoes} */ (r.k)] ?? r.k;
+  if (r.k === "negou") {
+    const motivo = MOTIVO_CURTO[/** @type {MotivoNegou} */ (r.m)] ?? r.m ?? "?";
+    return `${quando} §f${r.a} §7matou §f${r.v}§7 e não levou §6${formatarNumero(r.n)} §8(${motivo})`;
+  }
   return r.k === "expirou"
     ? `${quando} §7${r.v}: ${formatarNumero(r.n)} devolvidas (${r.a})`
     : `${quando} §f${r.a} §7${acao} §f${r.v} §8» §6${formatarNumero(r.n)}`;

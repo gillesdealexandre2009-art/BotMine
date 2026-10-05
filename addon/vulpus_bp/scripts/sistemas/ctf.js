@@ -17,7 +17,7 @@ import { cancelarEspera, registrarBloqueioTeleporte } from "../core/teleporte.js
 import { direcao, erro, msg, registrarErro, som } from "../core/util.js";
 import * as textos from "../textos/ctf.js";
 import { PREFIXO } from "../textos/geral.js";
-import { aoMudarCla, claDe, claPorId, CORES_CLA, membroDe, problemaBandeira, tagPintada, todosClas } from "./cla_dados.js";
+import { aoMudarCla, claDe, claPorId, CORES_CLA, ESTILOS_BANDEIRA, membroDe, problemaBandeira, tagPintada, todosClas } from "./cla_dados.js";
 import { aoMudarGuerra, avisarClas, ladoDe, lerEstado, salvar } from "./cla_guerra.js";
 
 /** @typedef {import("@minecraft/server").Entity} Entity */
@@ -47,8 +47,12 @@ import { aoMudarGuerra, avisarClas, ladoDe, lerEstado, salvar } from "./cla_guer
 export const TIPO_BANDEIRA = "vulpus:bandeira";
 /** Tag de entidade com o id do clã dono da bandeira (vulpus:bandeira:<id>). */
 const TAG_CLA = "vulpus:bandeira:";
-/** Propriedades da entidade (BP entities/bandeira.json): cor (índice em CORES_CLA; o RP lê) e mini (quem leva). */
+/**
+ * Propriedades da entidade (BP entities/bandeira.json): cor (índice em CORES_CLA; o RP lê), estilo Kitsune
+ * (índice em ESTILOS_BANDEIRA + 1; 0 = padrão; o RP troca pano, enfeites e animação) e mini (quem leva).
+ */
 const PROP_COR = "vulpus:cor";
+const PROP_ESTILO = "vulpus:estilo";
 const PROP_MINI = "vulpus:mini";
 /** Eventos da entidade: encolhe (segue a cabeça de quem leva) e volta ao tamanho normal. */
 const EVENTO_MINI = "vulpus:mini";
@@ -64,6 +68,11 @@ const TICKS_TOQUE = 2;
 const TICKS_VISUAL = 10;
 const TICKS_CUIDADO = 20;
 const TICKS_SINCRONIA = 40;
+/** Aura das bandeiras Kitsune: a cada meio segundo (fora do tick do feixe), só com alguém a até RAIO_AURA blocos. */
+const TICKS_AURA = 10;
+const RAIO_AURA = 48;
+/** No máximo tantas bandeiras com aura por vez (cada uma solta de 2 a 4 partículas). */
+const MAX_AURAS = 12;
 /** Depois de capturada, a bandeira fica 2 min no pedestal sem poder ser pega. */
 export const RECARGA_CAPTURA_MS = 2 * 60 * 1000;
 /** Caída e sem ninguém encostar, volta sozinha em 30 s. */
@@ -87,6 +96,13 @@ const P = Object.freeze({
   FAISCA: "minecraft:endrod",
   FUMACA: "minecraft:white_smoke_particle",
   TOTEM: "minecraft:totem_particle",
+  SAKURA: "minecraft:cherry_leaves_particle",
+  ALMA: "minecraft:soul_particle",
+  CHAMA_AZUL: "minecraft:blue_flame_particle",
+  FOGO: "minecraft:basic_flame_particle",
+  LAVA: "minecraft:lava_particle",
+  DRAGAO: "minecraft:dragon_breath_trail",
+  PORTAL: "minecraft:basic_portal_particle",
 });
 const SOM = Object.freeze({
   pegou: "beacon.deactivate",
@@ -669,6 +685,8 @@ function ajustarEntidade(claId, alvo) {
     }
     const cor = Math.max(0, CORES_CLA.indexOf(cla.cor));
     if (e.getProperty(PROP_COR) !== cor) e.setProperty(PROP_COR, cor);
+    const estilo = estiloDe(cla);
+    if (e.getProperty(PROP_ESTILO) !== estilo) e.setProperty(PROP_ESTILO, estilo);
     if (e.getProperty(PROP_MINI) !== alvo.mini) {
       e.setProperty(PROP_MINI, alvo.mini);
       e.triggerEvent(alvo.mini ? EVENTO_MINI : EVENTO_NORMAL);
@@ -729,6 +747,120 @@ function rodar(contexto, fn) {
     fn();
   } catch (e) {
     avisarUmaVez(contexto, e);
+  }
+}
+
+// ---------------------------------------------------------------- aura das bandeiras Kitsune
+
+/** Valor da propriedade vulpus:estilo do clã (0 = bandeira padrão). @param {Cla} cla */
+export const estiloDe = (cla) => (cla.estiloBandeira ? ESTILOS_BANDEIRA.indexOf(cla.estiloBandeira) + 1 : 0);
+
+/** @param {number} r @param {number} g @param {number} b @returns {RGB} */
+const rgb = (r, g, b) => ({ red: r, green: g, blue: b });
+const COR_AURA = Object.freeze({
+  laranja: rgb(1, 0.55, 0.15),
+  creme: rgb(1, 0.92, 0.8),
+  rosa: rgb(1, 0.6, 0.75),
+  prata: rgb(0.78, 0.82, 1),
+  azul: rgb(0.35, 0.7, 1),
+  ouro: rgb(1, 0.82, 0.3),
+  branco: rgb(1, 1, 1),
+  violeta: rgb(0.45, 0.15, 0.7),
+});
+/**
+ * Ponto num círculo em volta do mastro.
+ * @param {Vector3} c
+ * @param {number} ang
+ * @param {number} raio
+ * @param {number} y
+ * @returns {Vector3}
+ */
+const roda = (c, ang, raio, y) => ({ x: c.x + Math.cos(ang) * raio, y: c.y + y, z: c.z + Math.sin(ang) * raio });
+/**
+ * Ponto ao acaso perto do mastro.
+ * @param {Vector3} c
+ * @param {number} raio
+ * @param {number} y0
+ * @param {number} alto
+ */
+const acaso = (c, raio, y0, alto) => roda(c, Math.random() * Math.PI * 2, Math.random() * raio, y0 + Math.random() * alto);
+
+/**
+ * Receita de cada estilo (n = número da rodada, sobe a cada TICKS_AURA). Leve: de 2 a 4 partículas por rodada.
+ * @type {Record<string, (dim: Dimension, c: Vector3, n: number) => void>}
+ */
+const AURAS = {
+  // Nove caudas de chama girando em volta (3 por rodada, revezando).
+  caudas: (dim, c, n) => {
+    for (let i = n % 3; i < 9; i += 3) {
+      const ang = n * 0.35 + (i * Math.PI * 2) / 9;
+      emitir(dim, P.CHAMA, roda(c, ang, 1.1, 2.2 + Math.sin(ang * 2) * 0.3), i % 2 ? COR_AURA.creme : COR_AURA.laranja);
+    }
+  },
+  // Pétalas caindo de cima e um brilho rosa.
+  sakura: (dim, c) => {
+    emitir(dim, P.SAKURA, acaso(c, 1.3, 3.2, 0.6));
+    emitir(dim, P.SAKURA, acaso(c, 1.3, 3.2, 0.6));
+    emitir(dim, P.CHAMA, acaso(c, 1, 1.6, 1.4), COR_AURA.rosa);
+  },
+  // Faíscas prateadas em órbita e uma no topo, perto da lua.
+  lunar: (dim, c, n) => {
+    emitir(dim, P.FAISCA, roda(c, n * 0.5, 1, 2.6));
+    emitir(dim, P.CHAMA, acaso(c, 1.2, 1.4, 1.8), COR_AURA.prata);
+    if (n % 2 === 0) emitir(dim, P.FAISCA, { x: c.x, y: c.y + 3.9, z: c.z });
+  },
+  // Fogo-fátuo azul: duas chamas azuis em órbita e uma alma subindo.
+  espirito: (dim, c, n) => {
+    emitir(dim, P.CHAMA_AZUL, roda(c, n * 0.6, 0.9, 1.4 + Math.sin(n * 0.4) * 0.6));
+    emitir(dim, P.CHAMA_AZUL, roda(c, n * 0.6 + Math.PI, 0.9, 2.2 + Math.cos(n * 0.4) * 0.6));
+    if (n % 2 === 0) emitir(dim, P.ALMA, acaso(c, 0.8, 0.6, 2), COR_AURA.azul);
+  },
+  // Chamas na base e, de vez em quando, uma brasa pulando.
+  brasa: (dim, c, n) => {
+    emitir(dim, P.FOGO, roda(c, n * 0.9, 0.45, 0.15));
+    emitir(dim, P.FOGO, roda(c, n * 0.9 + Math.PI, 0.45, 0.15));
+    if (n % 4 === 0) emitir(dim, P.LAVA, { x: c.x, y: c.y + 1.2, z: c.z });
+  },
+  // Faixa de luz no alto que muda de cor (verde, azul, violeta).
+  aurora: (dim, c, n) => {
+    for (let i = 0; i < 3; i++) {
+      const h = ((n * 0.03 + i * 0.08) % 1) * Math.PI * 2;
+      const cor = rgb(0.3 + 0.5 * Math.max(0, Math.sin(h + 2)), 0.6 + 0.4 * Math.sin(h), 0.7 + 0.3 * Math.cos(h));
+      emitir(dim, P.CHAMA, roda(c, n * 0.25 + i * 0.7, 1.2, 3.5 + Math.sin(n * 0.3 + i) * 0.2), cor);
+    }
+  },
+  // Estrelas piscando em volta e uma faísca no alto.
+  estelar: (dim, c, n) => {
+    emitir(dim, P.CHAMA, acaso(c, 1.5, 1.2, 2.4), COR_AURA.ouro);
+    emitir(dim, P.CHAMA, acaso(c, 1.5, 1.2, 2.4), COR_AURA.branco);
+    if (n % 3 === 0) emitir(dim, P.FAISCA, acaso(c, 0.6, 3.6, 0.4));
+  },
+  // Fumaça roxa escura rodando embaixo e um fiapo de portal.
+  sombra: (dim, c, n) => {
+    emitir(dim, P.CHAMA, roda(c, n * 0.4, 0.8, 0.4 + (n % 5) * 0.4), COR_AURA.violeta);
+    emitir(dim, P.DRAGAO, acaso(c, 0.9, 0.2, 0.6));
+    if (n % 2 === 0) emitir(dim, P.PORTAL, acaso(c, 0.9, 1, 2));
+  },
+};
+
+let rodadaAura = 0;
+
+/** Aura de cada bandeira Kitsune parada (no pedestal ou no chão) com alguém por perto. */
+function cicloAura() {
+  rodadaAura++;
+  const jogadores = online();
+  let feitas = 0;
+  for (const [claId, e] of entidades) {
+    if (feitas >= MAX_AURAS) return;
+    const cla = claPorId(claId);
+    const receita = cla?.estiloBandeira ? AURAS[cla.estiloBandeira] : undefined;
+    if (!receita || !e.isValid || e.getProperty(PROP_MINI) === true) continue;
+    const c = e.location;
+    const d = e.dimension.id;
+    const perto = jogadores.some((p) => p.dimension.id === d && Math.hypot(p.location.x - c.x, p.location.y - c.y, p.location.z - c.z) <= RAIO_AURA);
+    if (!perto) continue;
+    feitas++;
+    receita(e.dimension, c, rodadaAura);
   }
 }
 
@@ -803,6 +935,8 @@ system.runInterval(() => rodar("Bandeiras: toque", cicloToque), TICKS_TOQUE);
 system.runInterval(() => rodar("Bandeiras: visual", cicloVisual), TICKS_VISUAL);
 system.runInterval(() => rodar("Bandeiras: quem leva", cuidarDosCarregadores), TICKS_CUIDADO);
 system.runInterval(() => rodar("Bandeiras: entidades", sincronizar), TICKS_SINCRONIA);
+// Meio ciclo depois do feixe, para as duas coisas não disputarem o limite de partículas do mesmo tick.
+system.runTimeout(() => system.runInterval(() => rodar("Bandeiras: aura", cicloAura), TICKS_AURA), TICKS_AURA / 2);
 
 world.afterEvents.entityDie.subscribe(({ deadEntity, damageSource }) => {
   try {

@@ -413,7 +413,8 @@ def conferir_entidades(jsons: dict[Path, object], r: Relatorio) -> None:
         for nome, geo in desc.get("geometry", {}).items():
             if geo not in geometrias:
                 r.erro(f"{rel(arq)}: a geometria {nome} ({geo}) não existe em vulpus_rp/models")
-        usados_anim = set(desc.get("scripts", {}).get("animate", []) or [])
+        # Cada item é o nome da animação ou {nome: condição molang} (animação só quando a condição vale).
+        usados_anim = list(desc.get("scripts", {}).get("animate", []) or [])
         for nome, anim in desc.get("animations", {}).items():
             existe = anim in controles if anim.startswith("controller.") else anim in animacoes
             if not existe:
@@ -422,7 +423,8 @@ def conferir_entidades(jsons: dict[Path, object], r: Relatorio) -> None:
             chave = nome if isinstance(nome, str) else next(iter(nome), "")
             if chave not in desc.get("animations", {}):
                 r.erro(f"{rel(arq)}: scripts.animate usa {chave}, que não está em animations")
-        textos_molang: list[str] = []
+        # As condições da própria client entity (animate e render controllers com {nome: condição}) também leem propriedades.
+        textos_molang: list[str] = [json.dumps(desc.get("scripts", {})), json.dumps(desc.get("render_controllers", []))]
         for rc in desc.get("render_controllers", []):
             nome_rc = rc if isinstance(rc, str) else next(iter(rc), "")
             dados_rc = renders.get(nome_rc)

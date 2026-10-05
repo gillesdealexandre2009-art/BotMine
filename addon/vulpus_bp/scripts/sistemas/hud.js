@@ -16,6 +16,7 @@ import { infoSidebar } from "./ctf.js";
 import { CARGOS, cargoDe, ehKitsune } from "./identidade.js";
 import { apelidoDe, nomeExibido, temaNomeDe } from "./kitsune.js";
 import { infoNivel } from "./niveis.js";
+import { linhaSpleef } from "./spleef.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 
@@ -63,8 +64,8 @@ function mudancaRecente(player, caudas) {
 }
 
 /**
- * Texto completo do title (flag + 6 a 13 linhas: nome Kitsune, cargo, cabeça a prêmio, clã, guerra e bandeiras
- * são opcionais).
+ * Texto completo do title (flag + 6 a 14 linhas: nome Kitsune, cargo, cabeça a prêmio, Spleef, clã, guerra e
+ * bandeiras são opcionais).
  * Cargo, Kitsune e apelido vêm da mesma regra do nameTag.
  * @param {Player} player
  * @param {number} caudas
@@ -97,6 +98,7 @@ function montar(player, caudas, mudanca, quantosOnline) {
         : null,
     ctf: guerra && cla ? infoSidebar(player, cla.id, guerra) : null,
     cabeca: valorCabeca(player.id),
+    minigame: linhaSpleef(player),
     rank,
     cargo: cargo ? CARGOS[cargo] : null,
     kitsune: ehKitsune(player),

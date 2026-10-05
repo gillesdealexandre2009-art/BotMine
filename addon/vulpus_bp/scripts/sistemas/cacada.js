@@ -3,6 +3,9 @@
 // golpe final em PvP leva tudo, menos se for do mesmo clã da vítima, de clã aliado ou um dos pagadores.
 // Anti-farm: a vítima precisa estar viva há cacadaVidaMin e cada matador coleta da mesma vítima 1 vez a cada
 // cacadaRecargaHoras. Cada parte expira em cacadaDuracaoDias e volta para quem pagou (sem a taxa), até offline.
+// Quem matou: o jogador do golpe, o dono do projétil ou do bicho domesticado e, se a morte veio de fogo, queda,
+// lava ou explosão, quem feriu a vítima nos últimos CREDITO_MS. Morte com recompensa que não paga diz o motivo
+// a quem matou (chat e actionbar), à vítima (ao renascer) e fica no log da staff.
 // Paralela à guerra e ao CTF: só lê o clã e os aliados (cla_dados.js), não mexe em pontos.
 // Dados no mundo: vulpus:cacada:c:<id da vítima> (uma cabeça), vulpus:cacada (mortes e coletas recentes),
 // vulpus:cacada:rank (caçadores) e vulpus:cacada:log. Toda mudança confere tudo de novo e grava antes de
@@ -35,8 +38,13 @@ import { atualizarIdentidade, registrarMarcaNome } from "./identidade.js";
  */
 /** @typedef {{ mortes: Record<string, number>, coletas: Record<string, number> }} Meta  coletas: "matador|vítima" → ms */
 /** @typedef {Record<string, { nome: string, total: number, n: number }>} Ranking */
-/** @typedef {{ t: number, k: "colocou" | "coletou" | "expirou" | "removeu", a: string, v: string, n: number }} Registro */
+/**
+ * @typedef {{ t: number, k: "colocou" | "coletou" | "expirou" | "removeu" | "negou", a: string, v: string, n: number, m?: string }} Registro
+ *   m = motivo de não ter pago (só "negou")
+ */
 /** @typedef {{ id: string, nome: string }} Pessoa */
+/** @typedef {import("../textos/cacada.js").MotivoNegou} MotivoNegou */
+/** @typedef {import("@minecraft/server").Entity} Entity */
 
 const PREFIXO = "vulpus:cacada:c:";
 const CHAVE_META = "vulpus:cacada";
@@ -62,6 +70,20 @@ const DIA_MS = 24 * HORA_MS;
 /** Mortes mais velhas que isso não interessam (cacadaVidaMin vai até 120). */
 const MORTE_GUARDA_MS = 3 * HORA_MS;
 const TICKS_EXPIRAR = 600;
+/** Golpe de jogador que ainda conta como abate se a vítima morrer de fogo, queda, lava ou explosão. */
+const CREDITO_MS = 10 * 1000;
+/** Quem causa dano sem ser bicho (o abate fica com quem feriu antes); monstro de verdade leva o abate. */
+const SEM_DONO = new Set([
+  "minecraft:tnt",
+  "minecraft:tnt_minecart",
+  "minecraft:end_crystal",
+  "minecraft:lightning_bolt",
+  "minecraft:falling_block",
+  "minecraft:area_effect_cloud",
+  "minecraft:fireworks_rocket",
+]);
+/** Mesmo motivo, mesmo matador e mesma vítima dentro disso viram uma linha só no log. */
+const LOG_REPETIDO_MS = 60 * 1000;
 const P = Object.freeze({ CHAMA: "minecraft:colored_flame_particle", TOTEM: "minecraft:totem_particle", FAISCA: "minecraft:endrod" });
 const VERMELHO = { red: 0.85, green: 0.12, blue: 0.1 };
 const DOURADO = { red: 1, green: 0.78, blue: 0.22 };
@@ -74,6 +96,10 @@ let meta;
 /** @type {Map<string, number>} id → número do fluxo aberto (o formulário mais novo vale; o velho é recusado) */
 const fluxos = new Map();
 let proximoFluxo = 1;
+/** @type {Map<string, { id: string, t: number }>} id da vítima → último jogador que a feriu (e quando, ms) */
+const golpes = new Map();
+/** @type {Map<string, string>} id da vítima → aviso guardado para quando ela renascer */
+const avisosRenascer = new Map();
 
 // ---------------------------------------------------------------- leitura e validação
 
@@ -185,8 +211,13 @@ export function logCacada() {
   const lido = lerMundo(CHAVE_LOG, []);
   if (!Array.isArray(lido)) return [];
   return lido
-    .filter((r) => r && typeof r === "object" && ["colocou", "coletou", "expirou", "removeu"].includes(r.k))
-    .map((r) => ({ t: num(r.t), k: r.k, a: texto(r.a, LIMITES.nome), v: texto(r.v, LIMITES.nome), n: Math.floor(num(r.n)) }))
+    .filter((r) => r && typeof r === "object" && ["colocou", "coletou", "expirou", "removeu", "negou"].includes(r.k))
+    .map((r) => {
+      /** @type {Registro} */
+      const lido = { t: num(r.t), k: r.k, a: texto(r.a, LIMITES.nome), v: texto(r.v, LIMITES.nome), n: Math.floor(num(r.n)) };
+      if (r.k === "negou") lido.m = texto(r.m, 12);
+      return lido;
+    })
     .slice(0, LIMITES.log);
 }
 
@@ -195,10 +226,17 @@ export function logCacada() {
  * @param {string} autor
  * @param {string} vitima
  * @param {number} valor
+ * @param {MotivoNegou} [motivo]  só "negou"
  */
-function registrar(k, autor, vitima, valor) {
+function registrar(k, autor, vitima, valor, motivo) {
+  /** @type {Registro} */
   const novo = { t: Date.now(), k, a: autor.slice(0, LIMITES.nome), v: vitima.slice(0, LIMITES.nome), n: valor };
-  const log = [novo, ...logCacada()].slice(0, LIMITES.log);
+  if (motivo) novo.m = motivo;
+  const antigo = logCacada();
+  const topo = antigo[0];
+  // O dono testando mata a mesma pessoa várias vezes: a mesma recusa seguida vira uma linha só.
+  if (k === "negou" && topo?.k === "negou" && topo.a === novo.a && topo.v === novo.v && topo.m === novo.m && novo.t - topo.t < LOG_REPETIDO_MS) return;
+  const log = [novo, ...antigo].slice(0, LIMITES.log);
   while (log.length > 1 && JSON.stringify(log).length > LIMITES.logCaracteres) log.pop();
   salvarMundo(CHAVE_LOG, log);
 }
@@ -272,7 +310,11 @@ export function acharPessoa(bruto) {
   const conectado = porNome(nome);
   if (conectado) return { id: conectado.id, nome: conectado.name };
   const procurado = nome.toLowerCase();
-  const registrado = todosJogadores().find((j) => j.dados.primeira > 0 && j.dados.nome.toLowerCase() === procurado);
+  // Dois registros com o mesmo nome (a conta voltou com outro id: dados do mundo refeitos ou mundo copiado):
+  // vale o que entrou por último, que é o id que a pessoa usa hoje.
+  const registrado = todosJogadores()
+    .filter((j) => j.dados.primeira > 0 && j.dados.nome.toLowerCase() === procurado)
+    .sort((a, b) => b.dados.ultimaVez - a.dados.ultimaVez)[0];
   return registrado ? { id: registrado.id, nome: registrado.dados.nome } : undefined;
 }
 
@@ -431,45 +473,100 @@ function anunciarTodos(texto, idSom) {
 // ---------------------------------------------------------------- coletar
 
 /**
- * Quem deu o golpe final: o jogador, ou quem atirou o projétil.
- * @param {import("@minecraft/server").EntityDamageSource} fonte
+ * O jogador por trás de uma entidade: ela mesma, o dono do bicho domesticado (lobo) ou quem atirou o projétil
+ * (flecha, tridente, bola de fogo). Entidade que já sumiu não tem dono.
+ * @param {Entity | undefined} entidade
  * @returns {Player | undefined}
  */
-function matadorDe(fonte) {
-  if (fonte.damagingEntity instanceof Player) return fonte.damagingEntity;
+function jogadorPor(entidade) {
+  if (!entidade) return undefined;
+  if (entidade instanceof Player) return entidade;
   try {
-    const dono = fonte.damagingProjectile?.getComponent("minecraft:projectile")?.owner;
-    return dono instanceof Player ? dono : undefined;
+    const bicho = entidade.getComponent("minecraft:tameable");
+    if (bicho?.isTamed) {
+      const dono = bicho.tamedToPlayer ?? (bicho.tamedToPlayerId ? porId(bicho.tamedToPlayerId) : undefined);
+      if (dono instanceof Player) return dono;
+    }
+    const atirador = entidade.getComponent("minecraft:projectile")?.owner;
+    return atirador instanceof Player ? atirador : undefined;
   } catch {
     return undefined;
   }
 }
 
 /**
- * Por que a morte não paga a recompensa (texto para quem matou), ou undefined se paga.
+ * Quem deu o golpe final. Se a morte veio de fogo, queda, lava, explosão ou raio (sem bicho no golpe), quem
+ * feriu a vítima nos últimos CREDITO_MS leva o abate: empurrar da beira ou a espada de fogo também contam.
+ * @param {import("@minecraft/server").EntityDamageSource} fonte
+ * @param {Player} vitima
+ * @param {number} agora
+ * @returns {Player | undefined}
+ */
+function matadorDe(fonte, vitima, agora) {
+  const direto = jogadorPor(fonte.damagingEntity) ?? jogadorPor(fonte.damagingProjectile);
+  if (direto) return direto;
+  const golpe = golpes.get(vitima.id);
+  if (!golpe || agora - golpe.t > CREDITO_MS) return undefined;
+  try {
+    const quem = fonte.damagingEntity;
+    if (quem && !SEM_DONO.has(quem.typeId)) return undefined;
+  } catch {
+    // A entidade do golpe já sumiu (TNT que explodiu): conta como sem dono.
+  }
+  return porId(golpe.id);
+}
+
+/**
+ * Por que a morte não paga a recompensa, ou undefined se paga. ms: há quanto tempo a vítima tinha renascido
+ * (recente) ou quanto falta da recarga (recarga).
  * @param {Cabeca} c
  * @param {Player} vitima
  * @param {Player} matador
  * @param {number | undefined} morteAnterior  ms
  * @param {number} agora
+ * @returns {{ motivo: MotivoNegou, ms: number } | undefined}
  */
 function porQueNaoPaga(c, vitima, matador, morteAnterior, agora) {
   const claV = claDe(vitima.id);
   const claM = claDe(matador.id);
-  if (claV && claM && claV.id === claM.id) return textos.NAO_MESMO_CLA;
-  if (claV && claM && (claV.aliados.includes(claM.id) || claM.aliados.includes(claV.id))) return textos.NAO_ALIADO;
-  if (c.pagadores.some((p) => p.id === matador.id)) return textos.NAO_PAGADOR;
+  if (claV && claM && claV.id === claM.id) return { motivo: "cla", ms: 0 };
+  if (claV && claM && (claV.aliados.includes(claM.id) || claM.aliados.includes(claV.id))) return { motivo: "aliado", ms: 0 };
+  if (c.pagadores.some((p) => p.id === matador.id)) return { motivo: "pagador", ms: 0 };
   const cfg = config();
   const vida = Math.max(0, num(cfg.cacadaVidaMin)) * MIN_MS;
-  if (morteAnterior !== undefined && agora - morteAnterior < vida) return textos.NAO_RECENTE(vida - (agora - morteAnterior));
+  if (morteAnterior !== undefined && agora - morteAnterior < vida) return { motivo: "recente", ms: agora - morteAnterior };
   const recarga = Math.max(0, num(cfg.cacadaRecargaHoras)) * HORA_MS;
   const ultima = lerMeta().coletas[`${matador.id}|${vitima.id}`];
-  if (ultima !== undefined && agora - ultima < recarga) return textos.NAO_RECARGA(recarga - (agora - ultima));
+  if (ultima !== undefined && agora - ultima < recarga) return { motivo: "recarga", ms: recarga - (agora - ultima) };
   return undefined;
+}
+
+/** Minutos de vida mínima (a configuração). */
+const vidaMin = () => Math.max(0, num(config().cacadaVidaMin));
+
+/**
+ * A morte não pagou: o motivo para quem matou (chat e actionbar), o aviso para a vítima (ao renascer: na tela
+ * de morte o chat passa despercebido) e a linha no log da staff.
+ * @param {Cabeca} c
+ * @param {Player} vitima
+ * @param {Player} matador
+ * @param {{ motivo: MotivoNegou, ms: number }} negou
+ */
+function avisarNegou(c, vitima, matador, negou) {
+  const total = totalDe(c);
+  erro(matador, textos.NAO_PAGOU({ motivo: negou.motivo, vitima: vitima.name, total, ms: negou.ms, vidaMin: vidaMin() }));
+  try {
+    if (matador.isValid) matador.onScreenDisplay.setActionBar(textos.BARRA_NAO_PAGOU(negou.motivo));
+  } catch (e) {
+    registrarErro("Caçada: actionbar", e);
+  }
+  avisosRenascer.set(vitima.id, textos.VITIMA_CONTINUA(total, negou.motivo, vidaMin()));
+  registrar("negou", matador.name, vitima.name, total, negou.motivo);
 }
 
 /**
  * Morte de jogador: guarda a hora (vida mínima) e, se a cabeça tem recompensa e quem matou pode cobrar, paga tudo.
+ * Se não paga, quem matou e a vítima ficam sabendo por quê.
  * @param {Player} vitima
  * @param {Player | undefined} matador
  */
@@ -478,15 +575,21 @@ function aoMorrer(vitima, matador) {
   const m = lerMeta();
   const morteAnterior = m.mortes[vitima.id];
   m.mortes[vitima.id] = agora;
+  golpes.delete(vitima.id);
   const c = cabecaDe(vitima.id);
-  if (!c || !matador || matador.id === vitima.id) {
+  if (!c) {
     salvarMeta();
     return;
   }
-  const motivo = porQueNaoPaga(c, vitima, matador, morteAnterior, agora);
-  if (motivo) {
+  if (!matador || matador.id === vitima.id) {
     salvarMeta();
-    erro(matador, motivo);
+    avisosRenascer.set(vitima.id, textos.VITIMA_CONTINUA(totalDe(c), matador ? "propria" : "pve", vidaMin()));
+    return;
+  }
+  const negou = porQueNaoPaga(c, vitima, matador, morteAnterior, agora);
+  if (negou) {
+    salvarMeta();
+    avisarNegou(c, vitima, matador, negou);
     return;
   }
   const total = totalDe(c);
@@ -508,6 +611,31 @@ function aoMorrer(vitima, matador) {
     if (pagador) msg(pagador, textos.PAGADOR_CACOU(vitima.name));
   }
   efeitoCacada(vitima, matador);
+}
+
+/**
+ * A conta voltou com outro id (dados do mundo refeitos, mundo copiado para o servidor): a cabeça salva no id
+ * velho, com o mesmo nome, passa para o novo. Só quando o id velho não está online e o registro dele tem
+ * esse mesmo nome. Parte que a própria pessoa tinha posto nela volta para ela.
+ * @param {Player} player
+ * @returns {boolean} se trouxe
+ */
+export function trazerCabecaAntiga(player) {
+  if (cabecaDe(player.id)) return false;
+  const nome = player.name.toLowerCase();
+  const antiga = cabecasAtivas().find(
+    (c) => c.id !== player.id && c.nome.toLowerCase() === nome && !porId(c.id) && (dadosJogador(c.id).nome || c.nome).toLowerCase() === nome,
+  );
+  if (!antiga) return false;
+  const nova = copiar(antiga);
+  nova.id = player.id;
+  nova.nome = player.name.slice(0, LIMITES.nome);
+  const proprias = nova.pagadores.filter((p) => p.id === player.id);
+  nova.pagadores = nova.pagadores.filter((p) => p.id !== player.id);
+  if (nova.pagadores.length && !gravar(player.id, nova)) return false;
+  gravar(antiga.id, undefined);
+  for (const p of proprias) adicionarCaudas(p.id, p.v, textos.MOTIVO_PROPRIA);
+  return nova.pagadores.length > 0;
 }
 
 /**
@@ -804,14 +932,42 @@ registrarMarcaNome((player) => {
 
 world.afterEvents.entityDie.subscribe(({ deadEntity, damageSource }) => {
   try {
-    if (deadEntity instanceof Player) aoMorrer(deadEntity, matadorDe(damageSource));
+    if (deadEntity instanceof Player) aoMorrer(deadEntity, matadorDe(damageSource, deadEntity, Date.now()));
   } catch (e) {
     registrarErro("Caçada: morte", e);
   }
 });
 
+// Último jogador que feriu cada jogador (vale o abate de quem morre de fogo, queda ou lava logo depois).
+world.afterEvents.entityHurt.subscribe(
+  ({ hurtEntity, damageSource }) => {
+    try {
+      if (!(hurtEntity instanceof Player)) return;
+      const quem = jogadorPor(damageSource.damagingEntity) ?? jogadorPor(damageSource.damagingProjectile);
+      if (quem && quem.id !== hurtEntity.id) golpes.set(hurtEntity.id, { id: quem.id, t: Date.now() });
+    } catch (e) {
+      registrarErro("Caçada: golpe", e);
+    }
+  },
+  { entityTypes: ["minecraft:player"] },
+);
+
+// Renasceu: o aviso de por que a cabeça não pagou. Entrou: a cabeça do id velho (mesmo nome) vem junto.
+world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
+  try {
+    if (initialSpawn) trazerCabecaAntiga(player);
+    const aviso = avisosRenascer.get(player.id);
+    if (aviso === undefined) return;
+    avisosRenascer.delete(player.id);
+    msg(player, aviso);
+  } catch (e) {
+    registrarErro("Caçada: renascer", e);
+  }
+});
+
 world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   fluxos.delete(playerId);
+  golpes.delete(playerId);
 });
 
 system.runInterval(() => {

@@ -73,6 +73,8 @@ import { aoMinutoAtivo } from "./caudas.js";
  * @property {number} baseMudou  ms da última marcação (a espera para mover vale mesmo se a base foi tirada)
  * @property {Bandeira | null} bandeira  pedestal da bandeira (precisa para declarar guerra; só vale dentro da base)
  * @property {number} bandeiraMudou  ms da última marcação da bandeira (a primeira não espera)
+ * @property {string} estiloBandeira  estilo Kitsune da bandeira (um de ESTILOS_BANDEIRA); "" = a padrão na cor do clã
+ * @property {string} estiloPor  id do Kitsune que escolheu o estilo ("" sem estilo): se ele perder o selo, volta a padrão
  * @property {ProtecaoBase} protecao
  * @property {CasaCla[]} casas
  * @property {string[]} aliados  ids de clãs
@@ -96,6 +98,11 @@ export const PERMISSOES = /** @type {readonly Permissao[]} */ (
 );
 /** Cores da tag, na ordem em que os níveis liberam (NIVEIS_CLA[].cores). */
 export const CORES_CLA = Object.freeze(["6", "e", "a", "b", "c", "d", "9", "5", "3", "2", "f", "g"]);
+/**
+ * Estilos Kitsune da bandeira (só visual; só quem tem o selo escolhe). A ordem é a das texturas do RP:
+ * a propriedade vulpus:estilo da entidade é o índice + 1 (0 = a bandeira padrão na cor do clã).
+ */
+export const ESTILOS_BANDEIRA = Object.freeze(["caudas", "sakura", "lunar", "espirito", "brasa", "aurora", "estelar", "sombra"]);
 /** Emblemas do clã, na ordem em que os níveis liberam (NIVEIS_CLA[].emblemas). */
 export const EMBLEMAS = Object.freeze([G.ESCUDO, G.BANDEIRA, G.TORRE, G.PATA, G.TROFEU]);
 
@@ -278,6 +285,8 @@ function completarCla(lido, id) {
     baseMudou: numero(lido.baseMudou, base?.marcada ?? 0),
     bandeira,
     bandeiraMudou: numero(lido.bandeiraMudou, bandeira?.marcada ?? 0),
+    estiloBandeira: ESTILOS_BANDEIRA.includes(lido.estiloBandeira) ? lido.estiloBandeira : "",
+    estiloPor: ESTILOS_BANDEIRA.includes(lido.estiloBandeira) && typeof lido.estiloPor === "string" ? lido.estiloPor : "",
     protecao: {
       tnt: protecao.tnt !== false,
       creeper: protecao.creeper !== false,

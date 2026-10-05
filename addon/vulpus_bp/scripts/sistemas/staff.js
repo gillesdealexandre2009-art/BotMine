@@ -1,6 +1,6 @@
 // @ts-check
 // Painel da staff: definir spawn, configurações (em 6 grupos), dar Caudas, cargos e Kitsune,
-// leilão, clãs, Caçada e pegar o item do menu.
+// leilão, clãs, Caçada, minigames (Spleef) e pegar o item do menu.
 import { CHAVE_SPAWN, ICONES, VERSAO } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { config, lerMundo, salvarConfig, todosJogadores } from "../core/db.js";
@@ -19,6 +19,7 @@ import { menuDono } from "./dono.js";
 import { menuCargos } from "./identidade.js";
 import { menuLeilaoStaff } from "./leilao.js";
 import { definirSpawn } from "./spawn.js";
+import { menuMinigamesStaff } from "./spleef_staff.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {import("../core/db.js").Config} Config */
@@ -187,6 +188,7 @@ export async function menuStaff(player, voltar) {
     .botao(textos.BOTAO_LEILAO, ICONES.leilao, (p) => menuLeilaoStaff(p, aqui))
     .botao(textos.BOTAO_CLAS, ICONES.cla, (p) => menuClasStaff(p, aqui))
     .botao(textos.BOTAO_CACADA, ICONES.cacada, (p) => menuCacadaStaff(p, aqui))
+    .botao(textos.BOTAO_MINIGAMES, ICONES.minigames, (p) => menuMinigamesStaff(p, aqui))
     .botao(textos.BOTAO_ITEM, ICONES.nova, (p) => {
       if (garantirItem(p) === "tinha") msg(p, textos.ITEM_JA_TEM);
     });

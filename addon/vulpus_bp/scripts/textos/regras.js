@@ -51,6 +51,7 @@ export const COMANDOS = [
   ["/vulpus:diaria", "pega a recompensa diária"],
   ["/vulpus:cacada", "abre o mural da Caçada"],
   ["/vulpus:recompensa <jogador> <valor>", "põe Caudas na cabeça de alguém"],
+  ["/vulpus:spleef [entrar|sair|ranking]", "abre o Spleef (fila, ranking e recordes)"],
   ["/vulpus:leilao", "abre o leilão"],
   ["/vulpus:vender <preço>", "anuncia o item da mão no leilão"],
   ["/vulpus:caixa", "abre a caixa de retirada do leilão"],
@@ -77,6 +78,7 @@ export const COMANDOS_STAFF = [
   ["/vulpus:kitsune <jogador>", "liga/desliga o selo Kitsune"],
   ["/vulpus:resetapelido <jogador>", "tira o apelido e a cor do nome de alguém"],
   ["/vulpus:clabypass", "liga/desliga o bypass da proteção dos clãs"],
+  ["/vulpus:spleef staff", "configura a arena do Spleef (também: centro, camadas, salvar, resetar, espera, saida, topo, placar, comecar, parar)"],
 ];
 
 // A lenda de Kiza (mesma lore do Discord, sem emoji)

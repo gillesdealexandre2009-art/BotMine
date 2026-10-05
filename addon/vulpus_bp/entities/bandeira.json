@@ -9,6 +9,7 @@
       "spawn_category": "misc",
       "properties": {
         "vulpus:cor": { "type": "int", "range": [0, 11], "default": 0, "client_sync": true },
+        "vulpus:estilo": { "type": "int", "range": [0, 8], "default": 0, "client_sync": true },
         "vulpus:mini": { "type": "bool", "default": false }
       }
     },

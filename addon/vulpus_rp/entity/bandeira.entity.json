@@ -18,18 +18,30 @@
         "c8": "textures/vulpus/entidades/bandeira_3",
         "c9": "textures/vulpus/entidades/bandeira_2",
         "c10": "textures/vulpus/entidades/bandeira_f",
-        "c11": "textures/vulpus/entidades/bandeira_g"
+        "c11": "textures/vulpus/entidades/bandeira_g",
+        "k1": "textures/vulpus/entidades/bandeira_k_caudas",
+        "k2": "textures/vulpus/entidades/bandeira_k_sakura",
+        "k3": "textures/vulpus/entidades/bandeira_k_lunar",
+        "k4": "textures/vulpus/entidades/bandeira_k_espirito",
+        "k5": "textures/vulpus/entidades/bandeira_k_brasa",
+        "k6": "textures/vulpus/entidades/bandeira_k_aurora",
+        "k7": "textures/vulpus/entidades/bandeira_k_estelar",
+        "k8": "textures/vulpus/entidades/bandeira_k_sombra"
       },
       "geometry": {
         "default": "geometry.vulpus.bandeira"
       },
       "animations": {
-        "tremular": "animation.vulpus.bandeira.tremular"
+        "tremular": "animation.vulpus.bandeira.tremular",
+        "kitsune": "animation.vulpus.bandeira.kitsune"
       },
       "scripts": {
-        "animate": ["tremular"]
+        "animate": ["tremular", { "kitsune": "query.property('vulpus:estilo') > 0" }]
       },
-      "render_controllers": ["controller.render.vulpus.bandeira"]
+      "render_controllers": [
+        "controller.render.vulpus.bandeira",
+        { "controller.render.vulpus.bandeira_kitsune": "query.property('vulpus:estilo') > 0" }
+      ]
     }
   }
 }

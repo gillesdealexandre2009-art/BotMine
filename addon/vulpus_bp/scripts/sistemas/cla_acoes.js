@@ -25,6 +25,7 @@ import {
   defNivel,
   editarCla,
   EMBLEMAS,
+  ESTILOS_BANDEIRA,
   infoNivelCla,
   LIMITES,
   membroDe,
@@ -674,28 +675,60 @@ export function mudarTemaCla(player, tema) {
 }
 
 /**
- * Quem perdeu o selo Kitsune perde também o tema que escolheu para o clã: a tag e o nome voltam para a cor
- * sólida de antes (ou a primeira, se ela não estiver liberada). Só mexe no clã cujo tema atual foi escolhido
- * por essa pessoa (se outro Kitsune trocou depois, fica). Vale também para o clã de onde ela já saiu.
- * Chamado ao entrar e na checagem periódica (o selo só some com a pessoa online, mas pode sumir entre sessões).
+ * Estilo Kitsune da bandeira do clã (só visual): só quem tem o selo e pode editar o clã escolhe ("" volta para
+ * a bandeira padrão na cor do clã). A entidade troca na próxima conferência (aoMudarCla → ctf.js).
  * @param {Player} player
- * @returns {number} quantos clãs voltaram para a cor
+ * @param {string} estilo
+ * @returns {boolean}
+ */
+export function mudarEstiloBandeira(player, estilo) {
+  if (!temSelo(player)) return falhar(player, textos.ESTILO_SO_KITSUNE);
+  if (estilo !== "" && !ESTILOS_BANDEIRA.includes(estilo)) return false;
+  return ajustar(player, "editar", (c) => {
+    c.estiloBandeira = estilo;
+    c.estiloPor = estilo ? player.id : "";
+  }, textos.ESTILO_OK(estilo));
+}
+
+/**
+ * Quem perdeu o selo Kitsune perde também o tema e o estilo de bandeira que escolheu para o clã: a tag e o nome
+ * voltam para a cor sólida de antes (ou a primeira, se ela não estiver liberada) e a bandeira volta para a padrão
+ * na cor do clã. Só mexe no que essa pessoa escolheu (se outro Kitsune trocou depois, fica). Vale também para o
+ * clã de onde ela já saiu. Chamado ao entrar e na checagem periódica (o selo só some com a pessoa online, mas pode
+ * sumir entre sessões).
+ * @param {Player} player
+ * @returns {number} quantos clãs mudaram
  */
 export function conferirTemaKitsune(player) {
   if (!player.isValid || temSelo(player)) return 0;
   let voltaram = 0;
   for (const cla of todosClas()) {
-    if (!cla.tema || cla.temaPor !== player.id) continue;
+    const tema = !!cla.tema && cla.temaPor === player.id;
+    const estilo = !!cla.estiloBandeira && cla.estiloPor === player.id;
+    if (!tema && !estilo) continue;
+    /** @type {{ tema: boolean, estilo: boolean }} */
+    const saiu = { tema: false, estilo: false };
     const novo = editarCla(cla.id, (c) => {
-      if (!c.tema || c.temaPor !== player.id) return false;
-      c.tema = "";
-      c.temaPor = "";
-      if (!CORES_CLA.slice(0, defNivel(c.nivel).cores).includes(c.cor)) c.cor = CORES_CLA[0];
+      if (c.tema && c.temaPor === player.id) {
+        c.tema = "";
+        c.temaPor = "";
+        if (!CORES_CLA.slice(0, defNivel(c.nivel).cores).includes(c.cor)) c.cor = CORES_CLA[0];
+        saiu.tema = true;
+      }
+      if (c.estiloBandeira && c.estiloPor === player.id) {
+        c.estiloBandeira = "";
+        c.estiloPor = "";
+        saiu.estilo = true;
+      }
+      if (!saiu.tema && !saiu.estilo) return false;
     });
     if (!novo) continue;
     voltaram++;
-    avisarCla(novo.id, textos.TEMA_KITSUNE_VOLTOU(player.name, novo));
-    if (!membroDe(novo, player.id)) msg(player, textos.TEMA_KITSUNE_VOLTOU(player.name, novo));
+    for (const texto of [saiu.tema ? textos.TEMA_KITSUNE_VOLTOU(player.name, novo) : "", saiu.estilo ? textos.ESTILO_KITSUNE_VOLTOU(player.name, novo) : ""]) {
+      if (!texto) continue;
+      avisarCla(novo.id, texto);
+      if (!membroDe(novo, player.id)) msg(player, texto);
+    }
   }
   return voltaram;
 }

@@ -227,6 +227,18 @@ Toda base de clã tem uma **bandeira** num pedestal. Na guerra, além dos abates
   6. Fim da guerra (por tempo, rendição, staff ou dono): as bandeiras voltam para os pedestais e ninguém fica levando nada.
 - **Placar do lado:** durante a guerra mostra a sua bandeira (em casa, com quem está, caída ou recarregando) e a do inimigo com a distância e a direção (N, NE, L...). Quem leva a bandeira vê o caminho de casa.
 - **Visual:** mastro de 3 blocos com o pano na **cor do clã** e uma raposinha, tremulando; um **feixe** de partículas sobe da bandeira durante a guerra (fumaça enquanto recarrega); o pedestal vazio solta uma fumaça "fantasma"; a bandeira caída também tem feixe.
+- **Estilos Kitsune da bandeira:** em Clã > Terreno e proteção > **Estilo da bandeira**, quem tem o selo **Kitsune** e pode editar o clã veste a bandeira com um de 8 estilos (prévia em `docs/previas/bandeiras.png`). Cada um tem pano próprio animado (4 quadros), orelhas de raposa e um enfeite girando no topo do mastro, e uma aura leve de partículas em volta (só com alguém a até 48 blocos, no máximo 12 bandeiras por vez). **É só visual:** no Capture the Flag nada muda. Quem não tem o selo vê os estilos trancados com a explicação; clã sem Kitsune fica com a bandeira na cor do clã, como sempre. Se quem escolheu perder o selo, a bandeira volta para a padrão (a mesma regra do tema do clã: na hora, a cada 10 s, ou quando a pessoa entrar).
+
+  | Estilo | Pano | Enfeite e aura |
+  |---|---|---|
+  | Nove Caudas | raposa branca com nove caudas em leque e três caudas soltas na ponta, brilho passando | máscara de raposa; nove chamas laranja girando |
+  | Sakura | galho de cerejeira, pétalas caindo | flor de cerejeira; pétalas caindo e brilho rosa |
+  | Lunar | lua crescente com halo pulsando, estrelas e uma raposa olhando | lua crescente; faíscas prateadas |
+  | Espírito | fogo-fátuo azul dançando | chama azul e uma orbe azul em volta do mastro; chamas azuis e almas |
+  | Brasa | chamas laranja subindo, faíscas e a raposa na fumaça | chama e orbe de brasa; fogo na base e brasas pulando |
+  | Aurora | aurora em degradê que anda e muda de cor, raposa no morro | cristal em degradê; luz colorida em cima |
+  | Estelar | céu de estrelas cintilando, a constelação da raposa e uma estrela grande | estrela dourada e orbe; estrelas piscando |
+  | Sombra | fumaça roxa andando e olhos de raposa acesos | eclipse roxo; fumaça roxa e fiapos de portal |
 - **Valores** (Staff > Configurações > Clãs e guerras): captura (10), devolver (2), derrubar quem leva (3), distância máxima do centro (64) e espera para mover (1 h). Os 2 min de recarga e os 30 s de volta sozinha são fixos (`sistemas/ctf.js`).
 - **Reiniciar o servidor:** bandeira roubada ou caída volta para o pedestal e quem levava perde a bandeira; o placar, as capturas e a recarga continuam.
 
@@ -258,14 +270,42 @@ Ponha Caudas na cabeça de alguém: quem derrubar essa pessoa em PvP leva tudo. 
 
 - **Pôr recompensa:** no mural, "Pôr recompensa" mostra quem está online e tem "Procurar pelo nome" para quem está offline (precisa já ter entrado na toca). Ou `/vulpus:recompensa <jogador> <valor>` (nome com espaço vai entre aspas). Vale de **50 a 100.000** Caudas, que saem do saldo **na hora** (é a garantia), mais **10% de taxa** que some da economia (arredonda para cima). Antes de pagar aparece a conta (valor, taxa e total).
 - **Regras de quem põe:** na própria cabeça não dá. Várias pessoas somam na mesma cabeça; pôr de novo na mesma soma na sua parte. Cada pessoa tem parte em no máximo **5 cabeças** ao mesmo tempo. Quem pagou fica em segredo no mural (a staff vê); a vítima é avisada de que alguém pôs, sem saber quem.
-- **Quem leva:** quem der o **golpe final em PvP** (flecha, tridente e outros projéteis contam para quem atirou) leva **tudo** e a cabeça zera. **Não vale:** quem é do **mesmo clã** da vítima, de clã **aliado** do clã dela, quem **pagou** por aquela cabeça, a própria vítima, e morte por monstro, queda, lava ou qualquer coisa sem jogador. Quem matou e não levou recebe o motivo no chat.
-- **Anti-farm:** a vítima precisa estar **viva há 5 min** (desde a última morte, de qualquer jeito) e cada pessoa caça a **mesma** cabeça no máximo **1 vez a cada 24 h**. Fora isso, nada barra.
+- **Quem leva:** quem der o **golpe final em PvP** leva **tudo** e a cabeça zera. Flecha, tridente e outros projéteis contam para quem atirou; **lobo domesticado** conta para o dono; e se a vítima morrer de **fogo, queda, lava, explosão ou raio** até **10 s** depois de levar um golpe de alguém, conta para quem deu o golpe (espada de fogo, empurrar da beira, TNT). **Não vale:** quem é do **mesmo clã** da vítima, de clã **aliado** do clã dela, quem **pagou** por aquela cabeça, a própria vítima, e morte por monstro ou sem ninguém por perto.
+- **Quando não paga, todo mundo fica sabendo por quê:** quem matou recebe o motivo no chat (com o tempo que falta, quando é espera) e na barra de ação ("Recompensa não paga: ..."); a vítima, ao renascer, recebe "Sua cabeça continua valendo X: <motivo>. Nos próximos 5 min ela não paga."; e a recusa entra no Log da Caçada da staff (quem, quem morreu, quanto e o motivo; a mesma recusa repetida em 1 min vira uma linha só).
+- **Anti-farm:** a vítima precisa estar **viva há 5 min** (desde a última morte, de qualquer jeito: toda morte zera a conta, até a que não pagou) e cada pessoa caça a **mesma** cabeça no máximo **1 vez a cada 24 h**. Fora isso, nada barra. Para testar sem esperar, a staff põe a vida mínima em 0 (Staff > Configurações > Caçada).
+- **Teste a dois não paga:** quem pagou nunca caça aquela cabeça. Com só duas pessoas, quem matar é sempre quem pagou (ou a cabeça é a de quem matou): chame uma terceira conta para pôr a recompensa.
+- **Conta que voltou com outro id** (dados do mundo refeitos, mundo copiado para o servidor): a cabeça salva no nome dela passa para o id novo quando ela entra, e "Procurar pelo nome" acha o id que entrou por último.
 - **Prazo:** cada parte vale **7 dias** a partir da última vez que aquela pessoa pôs. Sem caçador, a parte volta para quem pagou **sem a taxa**, direto no saldo, até offline (aparece "+N Caudas (recompensa sem caçador)" para quem está online).
 - **Diversão:** o mural lista as cabeças da mais valiosa para a menor, com quem está online e quanto falta para a parte mais antiga voltar; cabeça que passa de **500** é anunciada para todos (uma vez); a caçada é anunciada para todos ("Fulano caçou a cabeça de Beltrano e levou X Caudas!") com som, título e chamas; quem tem a cabeça a prêmio ganha uma **caveira com o valor curto** (ex.: "1,2k") em cima do nome e a linha "Sua cabeça vale X" no placar do lado; tem o **Ranking de caçadores** (total levado) e as **Últimas caçadas**.
-- **Staff:** Staff > Caçada (staff) lista as cabeças com quem pagou; "Tirar e devolver" devolve a cada pagador (sem a taxa). Também `/vulpus:tirarrecompensa <jogador>`. O "Log da Caçada" mostra quem pôs, quem caçou, o que expirou e o que a staff tirou (as últimas 100).
+- **Staff:** Staff > Caçada (staff) lista as cabeças com quem pagou; "Tirar e devolver" devolve a cada pagador (sem a taxa). Também `/vulpus:tirarrecompensa <jogador>`. O "Log da Caçada" mostra quem pôs, quem caçou, quem matou e não levou (com o motivo), o que expirou e o que a staff tirou (as últimas 100).
 - **Valores** (Staff > Configurações > Caçada): aberta ou fechada (fechada = ninguém põe recompensa nova; as que existem continuam valendo e expirando), menor e maior recompensa, taxa (%), cabeças por pessoa, vida mínima (min), espera para caçar a mesma cabeça (h), prazo (dias) e o valor do anúncio (0 = não anuncia).
 - **Não mexe na guerra nem nas bandeiras:** a Caçada é paralela; um abate de guerra também pode render a recompensa, mas não muda pontos.
 - **Sem pay-to-win:** só Caudas do jogo; o selo Kitsune não dá nada aqui.
+
+## Spleef (minigame da torre)
+
+Na torre redonda da ilha de minigames: todo mundo começa na camada de neve mais alta, quebra a neve debaixo dos outros e quem ficar em pé por último vence. Fica em **Caudas > Minigames > Spleef** (o Hub não mudou: as Caudas são o prêmio, então o minigame mora ali, como a Caçada) ou `/vulpus:spleef`.
+
+**Como a staff monta a arena (uma vez só, pelo menu Staff > Minigames (Spleef) > Spleef, ou `/vulpus:spleef staff`):**
+
+1. Confira que as 4 camadas de neve estão **inteiras** (sem buracos).
+2. Suba na camada de cima, fique **no meio** da torre e clique em **Marcar centro aqui**. Eu meço até onde vai a neve (o raio; 13 blocos de largura = raio 6), acerto o centro se você ficou um pouco fora do meio e acho as camadas sozinha (ex.: "Achei 4 camadas: Y=80, 76, 72, 68"). Se precisar, **Ajustar raio** (3 a 32) e **Detectar camadas** refazem a conta. A camada pode ser de outro bloco: **Blocos das camadas** (padrão `minecraft:snow`).
+3. **Salvar estado da arena:** eu guardo cada camada como está (aparece quantos blocos cada uma tem; amarelo = tem buraco ou decoração). Depois de toda partida eu reponho a neve assim, **só neve e ar dentro do círculo**: parede, vidro e o resto da torre nunca são mexidos.
+4. **Marcar saída aqui** (fora da torre: para onde vai quem cai e quem termina) e **Marcar espera aqui** (perto da entrada: quem pisa ali recebe o convite para a fila).
+5. Opcional: **Marcar entrada no topo aqui** (onde a largada acontece; sem marcar, é o meio da camada de cima) e **Marcar placar flutuante aqui** (um texto no ar com o top 5 de vitórias, atualizado a cada partida).
+6. O painel mostra "Arena pronta para jogar." Mudou o raio, as camadas ou os blocos? Salve o estado de novo (o painel avisa).
+
+**Como jogar:**
+- Entre na fila pelo menu, por `/vulpus:spleef entrar` ou pisando na área de espera. Precisa estar no sobrevivência ou aventura, fora de briga, com **2 espaços livres** no inventário (pá e bolas de neve). Pode passear enquanto espera.
+- Com **2 pessoas** na fila, a contagem de **10 s** começa (5 s se encher, até **16**). Todo mundo é levado para a camada de cima, em círculo, e vê 3, 2, 1, VAI!
+- Recebe a **Pá do Spleef** (presa no inventário, não dropa) e **4 bolas de neve** (+1 a cada 3 s, até 16). Bater na neve com a pá quebra **na hora**; a bola quebra o bloco onde acerta. Só a neve das camadas quebra; ninguém leva dano na torre (nem de queda).
+- **Sai quem:** cai abaixo da última camada, encosta na lava, sai da torre (ou sobe na parede), sai do jogo, morre, troca de mundo ou de modo de jogo, ou desiste (`/vulpus:spleef sair`). Quem sai vai para a saída e eu pego a pá e as bolas de volta. **Os itens da pessoa nunca são mexidos.**
+- **Vence** o último em pé: título para todos da arena, fogos, anúncio no chat e ranking. Depois de **5 min**, quem sobrou empata. A neve volta sozinha e a próxima partida pode começar.
+- **Prêmios:** **30 Caudas** para quem vence e **5** para quem joga de verdade (ficar em pé 20 s depois do VAI ou quebrar 3 blocos), mais **10 XP**, em até **3 partidas por dia** por pessoa. A partida só vale com pelo menos 2 pessoas jogando de verdade (anti-farm com conta reserva: sem isso, ninguém ganha e a vitória não conta no ranking).
+- **Ranking e recordes** no menu do Spleef: vitórias, partidas e melhor sequência; vitória mais rápida, mais neve numa partida e maior sequência.
+- **Reinício ou /reload no meio:** a partida é encerrada sem prêmios, todo mundo sai da torre, a neve volta; quem estava offline vai para a saída ao entrar.
+
+**Staff:** **Configurações** do Spleef (aberto ou fechado, pessoas para começar e máximo, contagens, tempo máximo, prêmios, partidas com prêmio por dia, XP, ferramenta, Eficiência, bolas de neve e a recarga), **Resetar a neve agora**, **Começar já** e **Encerrar a partida** (sem prêmios). Staff no **criativo** pode mexer na torre fora da partida; durante a partida, ninguém.
 
 ## Comandos
 
@@ -288,6 +328,7 @@ Os comandos funcionam com o `vulpus:` na frente e, na maioria, também sem ele (
 | `/vulpus:diaria` | pega a recompensa diária |
 | `/vulpus:cacada` | abre o mural da Caçada |
 | `/vulpus:recompensa <jogador> <valor>` | põe Caudas na cabeça de alguém (online ou offline) |
+| `/vulpus:spleef [ação]` | abre o Spleef; `entrar`, `sair` (sai da fila ou desiste da partida), `ranking`, `como` |
 | `/vulpus:leilao` | abre o leilão |
 | `/vulpus:vender <preço>` | anuncia no leilão o item da mão por esse preço |
 | `/vulpus:caixa` | abre a caixa de retirada do leilão |
@@ -315,12 +356,13 @@ Só para a staff:
 | `/vulpus:resetapelido <jogador>` | tira o apelido e a cor do nome de alguém |
 | `/vulpus:clabypass` | liga ou desliga o bypass da proteção dos clãs (fica no log) |
 | `/vulpus:tirarrecompensa <jogador>` | tira a recompensa da cabeça de alguém e devolve a quem pagou (sem a taxa) |
+| `/vulpus:spleef staff` | abre o painel do Spleef; também `centro`, `camadas`, `salvar`, `resetar`, `espera`, `saida`, `topo`, `placar`, `comecar` e `parar` |
 
 Só para o dono: `/vulpus:dono [ação]` abre o Painel de Dono ou faz uma ação dele (veja "Painel de Dono"); `/vulpus:dono reivindicar` vale para o primeiro Operador enquanto não houver dono.
 
 **Quem é staff:** operador do mundo (ou quem tem nível de comando de operador), ou quem tiver a tag `vulpus:staff` ou `vulpus:admin`. Para dar a tag, use `/tag NOME add vulpus:staff` ou, pelo menu, Staff > Cargos e Kitsune.
 
-**Configurações da staff:** Staff > Configurações tem 6 grupos: "Teleporte e casas", "Caudas e XP", "Leilão", "Clãs e guerras", "Caçada" e "Geral".
+**Configurações da staff:** Staff > Configurações tem 6 grupos: "Teleporte e casas", "Caudas e XP", "Leilão", "Clãs e guerras", "Caçada" e "Geral". As do Spleef ficam em Staff > Minigames (Spleef) > Spleef > Configurações.
 
 ## Como trocar a logo
 
@@ -405,7 +447,8 @@ Num mundo com o BP e o RP ativos (o ideal é ter uma segunda pessoa para o TPA):
     - render-se, alianças, casa do clã, `/vulpus:c`, dissolver.
     - **bandeiras:** marque a bandeira dos dois clãs (Terreno), comece uma guerra de 15 min pelo Painel de Dono e: pegue a bandeira inimiga (ela vai para cima da cabeça), tente `/vulpus:spawn` e uma pérola (barrados), leve até a sua (captura +10), morra levando (cai; quem te derrubou ganha +3), devolva a sua caída (+2), deixe uma cair e espere 30 s.
 12. **Visual Kitsune:** com `/vulpus:kitsune` em você, troque o apelido e a cor do nome em Ajustes; confira sobre a cabeça, no chat, no placar e no Perfil ("Conta:"). Escolha um tema para o clã, tire o selo com `/vulpus:kitsune` de novo: em até 10 s a tag do clã volta para a cor de antes.
-13. **Caçada** (2 ou 3 contas): ponha uma recompensa pelo mural e por `/vulpus:recompensa` (confira a taxa na confirmação e no saldo); a caveira aparece em cima do nome da vítima e "Sua cabeça vale" no placar dela; mate a vítima com uma conta do mesmo clã (não paga, com o motivo) e com uma de fora (paga tudo, anúncio para todos); mate de novo logo depois (não paga: 5 min); a staff tira uma recompensa em Staff > Caçada (staff) e o valor volta.
+13. **Caçada** (2 ou 3 contas): ponha uma recompensa pelo mural e por `/vulpus:recompensa` (confira a taxa na confirmação e no saldo); a caveira aparece em cima do nome da vítima e "Sua cabeça vale" no placar dela; mate a vítima com uma conta do mesmo clã (não paga: o motivo aparece no chat e na barra de quem matou, a vítima recebe "continua valendo" ao renascer e a staff vê no Log da Caçada) e com uma de fora (paga tudo, anúncio para todos); mate de novo logo depois (não paga: 5 min); bata e empurre a vítima numa queda ou na lava (paga para quem bateu); a staff tira uma recompensa em Staff > Caçada (staff) e o valor volta.
+14. **Spleef** (2 contas; para ir rápido, a staff põe a contagem em 3 s nas Configurações do Spleef): monte a arena (passos em "Spleef"); entre na fila pelo convite da área de espera e pelo `/vulpus:spleef`; confira a largada em círculo, o 3-2-1, a pá quebrando na hora e a bola quebrando onde acerta; tente quebrar a parede, colocar um bloco, dropar a pá e jogar uma pérola (tudo barrado); caia da última camada (vai para a saída, sem a pá, com os seus itens); a outra conta vence (título, fogos, Caudas) e a neve volta sozinha; jogue de novo e saia do jogo no meio (ao voltar, vai para a saída sem a pá); use Encerrar a partida.
 
 ## Checklist de teste no jogo
 
@@ -472,9 +515,12 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
     - de noite ela continua bem visível; o feixe aparece de longe durante a guerra;
     - a bandeira pequena acompanha a cabeça de quem leva sem ficar muito para trás (anotar se treme);
     - de elytra: ela vai para o inventário ao pegar; vestir de novo volta para o inventário;
-    - no celular: a bandeira e o feixe não pesam (anotar o FPS perto de duas bandeiras).
+    - no celular: a bandeira e o feixe não pesam (anotar o FPS perto de duas bandeiras);
+    - **estilos Kitsune:** com o selo, troque o estilo em Terreno e proteção > Estilo da bandeira e confira os 8: o pano troca de quadro (pétalas caindo, chamas, aurora andando), as orelhas e o enfeite girando no topo, as caudas soltas da Nove Caudas tremulando, a orbe em volta (Espírito, Brasa, Estelar) e a aura de partículas; tire o selo e veja a bandeira voltar à cor do clã em até 10 s; sem o selo, o menu mostra os estilos trancados.
 
-16. **Caçada:** a caveira com o valor aparece em cima do nome (3 linhas) e some ao caçar; matar com arco conta para quem atirou; o anúncio e o som chegam para todos.
+16. **Caçada:** a caveira com o valor aparece em cima do nome (3 linhas) e some ao caçar; matar com arco, tridente ou lobo domesticado conta para quem atirou ou para o dono; espada com Aspecto Flamejante (a vítima morre queimando) e empurrar da beira contam; o anúncio e o som chegam para todos; quando não paga, a barra de ação de quem matou mostra o motivo.
+
+17. **Spleef:** a pá não sai do inventário (dropar, baú, moldura); bater na neve quebra na hora até no celular; a bola de neve quebra o bloco certo e empurra quem acerta, sem dano; quem está no modo **aventura** consegue quebrar com a pá (anotar); o placar flutuante aparece com várias linhas e sem caixa; ninguém leva dano de queda entre camadas; quem sobe na parede é eliminado; `/reload` no meio: todo mundo sai e a neve volta.
 
 ## Limitações
 
@@ -488,7 +534,8 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 - **Sem loja:** as Caudas só compram no leilão, de outras pessoas, e pagam as coisas do clã.
 - **Proteção dos clãs:** a API estável não tem evento de pistão, de líquido escorrendo nem de fogo se espalhando. A zona de amortecimento impede que alguém de fora monte essas coisas perto da base, mas algo construído **antes** da base existir (ou um rio de lava vindo de longe) não é barrado. Endermen, wither e bichos que quebram blocos também não são barrados, e placa de pressão e fio de armadilha disparam com quem pisa (não há como impedir pela API). Funis ficam proibidos na zona inteira (não dá para saber para onde apontam antes de colocar).
 - **Bandeiras:** o Bedrock não tem o efeito "brilho" (glowing) na API estável: quem leva a bandeira fica marcado pelas chamas em volta e pela bandeira acima da cabeça. A API também não tem como cortar o planeio no ar: a elytra é tirada do peito (vai para o inventário). Tridente com Correnteza não é barrado (um salto muito grande derruba a bandeira, como um teleporte).
-- **Caçada:** vale quem o jogo aponta como autor do golpe final. Morte por queda, lava ou fogo depois de levar um golpe pode chegar sem jogador, e aí não paga.
+- **Caçada:** vale quem o jogo aponta como autor do golpe final; sem ele (fogo, queda, lava, explosão), vale quem feriu a vítima nos últimos 10 s. Golpe mais velho que isso, ou um monstro dando o golpe final, não paga.
+- **Spleef:** quebrar a neve é por script (bater com a pá ou acertar a bola), então quem está no modo aventura depende de o jogo avisar a batida (confira no checklist). A torre é protegida contra quebrar, colocar, baldes e explosões; endermen e pistões não são barrados (como nos clãs). O reset precisa do chunk da torre: o addon mantém uma área carregada em volta dela.
 - **Filtro de palavrões:** é simples (lista de palavras); a staff pode trocar a tag de um clã e tirar apelidos.
 
 ## Pastas

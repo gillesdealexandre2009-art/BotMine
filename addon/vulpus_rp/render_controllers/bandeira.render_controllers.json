@@ -4,7 +4,11 @@
     "controller.render.vulpus.bandeira": {
       "arrays": {
         "textures": {
-          "Array.cores": ["Texture.c0", "Texture.c1", "Texture.c2", "Texture.c3", "Texture.c4", "Texture.c5", "Texture.c6", "Texture.c7", "Texture.c8", "Texture.c9", "Texture.c10", "Texture.c11"]
+          "Array.panos": [
+            "Texture.c0", "Texture.c1", "Texture.c2", "Texture.c3", "Texture.c4", "Texture.c5",
+            "Texture.c6", "Texture.c7", "Texture.c8", "Texture.c9", "Texture.c10", "Texture.c11",
+            "Texture.k1", "Texture.k2", "Texture.k3", "Texture.k4", "Texture.k5", "Texture.k6", "Texture.k7", "Texture.k8"
+          ]
         }
       },
       "geometry": "Geometry.default",
@@ -14,7 +18,49 @@
         }
       ],
       "textures": [
-        "Array.cores[query.property('vulpus:cor')]"
+        "Array.panos[query.property('vulpus:estilo') > 0 ? 11 + query.property('vulpus:estilo') : query.property('vulpus:cor')]"
+      ],
+      "part_visibility": [
+        { "*": true },
+        { "pano1": "query.property('vulpus:estilo') == 0" },
+        { "pano2": "query.property('vulpus:estilo') == 0" },
+        { "pano3": "query.property('vulpus:estilo') == 0" },
+        { "pano4": "query.property('vulpus:estilo') == 0" },
+        { "caudas": false },
+        { "orelha_e": "query.property('vulpus:estilo') > 0" },
+        { "orelha_d": "query.property('vulpus:estilo') > 0" },
+        { "topo": "query.property('vulpus:estilo') > 0" },
+        { "orbe": "query.property('vulpus:estilo') == 4 || query.property('vulpus:estilo') == 5 || query.property('vulpus:estilo') == 7" }
+      ],
+      "ignore_lighting": true
+    },
+    "controller.render.vulpus.bandeira_kitsune": {
+      "arrays": {
+        "textures": {
+          "Array.estilos": ["Texture.k1", "Texture.k2", "Texture.k3", "Texture.k4", "Texture.k5", "Texture.k6", "Texture.k7", "Texture.k8"]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.estilos[math.clamp(query.property('vulpus:estilo') - 1, 0, 7)]"
+      ],
+      "uv_anim": {
+        "offset": [0.0, "math.mod(math.floor(query.life_time * 4), 4) / 4"],
+        "scale": [1.0, 1.0]
+      },
+      "part_visibility": [
+        { "*": false },
+        { "raiz": true },
+        { "pano1": true },
+        { "pano2": true },
+        { "pano3": true },
+        { "pano4": true },
+        { "caudas": "query.property('vulpus:estilo') == 1" }
       ],
       "ignore_lighting": true
     }

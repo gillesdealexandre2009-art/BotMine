@@ -22,6 +22,7 @@ import "./sistemas/cla_terreno.js";
 import "./sistemas/ctf.js";
 import "./sistemas/clas.js";
 import "./sistemas/cacada.js";
+import "./sistemas/spleef_staff.js";
 import "./sistemas/regras.js";
 import "./sistemas/staff.js";
 import "./sistemas/dono.js";
