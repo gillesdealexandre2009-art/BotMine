@@ -24,6 +24,7 @@ from discord.ext import commands
 import config
 import textos
 from utils import rabisco
+from utils.views import DonoView
 from utils.helpers import TZ, canal_da_funcao, responder, sem_acento, truncar
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -379,11 +380,50 @@ class Cerebro(commands.Cog):
             return
         await responder(interaction, "Isso é o que eu lembro de você:\n" + "\n".join(f"• {f}" for f in fatos))
 
-    @memoria.command(name="esquecer", description="A Kiza apaga tudo o que lembra sobre você.")
-    @app_commands.checks.cooldown(1, 30.0)
+    @memoria.command(name="esquecer", description="A Kiza apaga tudo o que lembra sobre você (pede confirmação 2 vezes).")
+    @app_commands.checks.cooldown(1, 15.0)
     async def memoria_esquecer(self, interaction: discord.Interaction) -> None:
-        n = await self.bot.banco.esquecer_cerebro(interaction.guild_id, interaction.user.id)  # type: ignore[arg-type]
-        await responder(interaction, f"Pronto, esqueci tudo ({n} coisinha(s)). Quem é você mesmo? 👀" if n else "Já não lembrava de nada! 🦊")
+        fatos = await self.bot.banco.memorias_cerebro(interaction.guild_id, interaction.user.id)  # type: ignore[arg-type]
+        if not fatos:
+            await responder(interaction, "Já não lembrava de nada sobre você! 🦊")
+            return
+        view = ConfirmarEsquecer(self, interaction.user.id, len(fatos))
+        await interaction.response.send_message(
+            f"⚠️ Quer mesmo que eu esqueça tudo sobre você? Hoje eu lembro de **{len(fatos)}** coisinha(s) e **não dá para "
+            "desfazer**. Veja antes com `/memoria ver`.",
+            view=view,
+            ephemeral=True,
+        )
+
+
+class ConfirmarEsquecer(DonoView):
+    """Dupla confirmação para apagar a memória: o primeiro clique só pede a segunda confirmação."""
+
+    def __init__(self, cog: Cerebro, dono_id: int, total: int) -> None:
+        super().__init__(dono_id, timeout=60)
+        self.cog = cog
+        self.total = total
+        self.etapa = 1
+
+    @discord.ui.button(label="Esquecer tudo", emoji="🧹", style=discord.ButtonStyle.danger)
+    async def confirmar(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
+        if self.etapa == 1:
+            self.etapa = 2
+            botao.label = "Sim, tenho certeza"
+            await interaction.response.edit_message(
+                content=f"🥺 Tem certeza **mesmo**? Vou apagar as {self.total} coisinha(s) que sei sobre você, para sempre. "
+                "Clique de novo para confirmar.",
+                view=self,
+            )
+            return
+        self.stop()
+        n = await self.cog.bot.banco.esquecer_cerebro(interaction.guild_id, interaction.user.id)  # type: ignore[arg-type]
+        await interaction.response.edit_message(content=f"Pronto, esqueci tudo ({n} coisinha(s)). Quem é você mesmo? 👀", view=None)
+
+    @discord.ui.button(label="Cancelar", emoji="💛", style=discord.ButtonStyle.secondary)
+    async def cancelar(self, interaction: discord.Interaction, _botao: discord.ui.Button) -> None:
+        self.stop()
+        await interaction.response.edit_message(content="Ufa! Não apaguei nada. Continuo lembrando de você 🦊", view=None)
 
 
 async def setup(bot: "Kiza") -> None:
