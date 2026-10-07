@@ -1160,3 +1160,53 @@ class Banco:
 
     async def esquecer_cerebro(self, guild_id: int, user_id: int) -> int:
         return await self._exec("DELETE FROM cerebro_memorias WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
+
+    # ------------------------------------------------------------------ figurinhas
+    async def inventario_figurinhas(self, guild_id: int, user_id: int) -> dict[str, int]:
+        linhas = await self._todos(
+            "SELECT carta_id, quantidade FROM figurinhas WHERE guild_id = ? AND user_id = ?", (guild_id, user_id)
+        )
+        return {linha["carta_id"]: linha["quantidade"] for linha in linhas}
+
+    async def abrir_figurinha(
+        self, guild_id: int, user_id: int, carta_id: str, preco: int, hoje: str, gratis_ligado: bool
+    ) -> Optional[dict[str, Any]]:
+        """Cobra (ou usa o pacotinho grátis do dia) e entrega a carta, tudo numa transação.
+
+        Retorna None se não deu para pagar. Senão: {nova, quantidade, gratis, saldo}.
+        """
+        async with self._tx() as conn:
+            gratis = False
+            if gratis_ligado:
+                linha = await self._fetchone(
+                    conn, "SELECT dia FROM figurinhas_gratis WHERE guild_id = ? AND user_id = ?", (guild_id, user_id)
+                )
+                if linha is None or linha["dia"] != hoje:
+                    await conn.execute(
+                        "INSERT INTO figurinhas_gratis (guild_id, user_id, dia) VALUES (?, ?, ?) "
+                        "ON CONFLICT(guild_id, user_id) DO UPDATE SET dia = excluded.dia",
+                        (guild_id, user_id, hoje),
+                    )
+                    gratis = True
+            if gratis:
+                await self._garantir(conn, guild_id, user_id)
+                perfil = await self._fetchone(
+                    conn, "SELECT saldo FROM perfis WHERE guild_id = ? AND user_id = ?", (guild_id, user_id)
+                )
+                saldo = perfil["saldo"]
+            else:
+                saldo = await self._mov(conn, guild_id, user_id, -preco, "figurinha", carta_id)
+                if saldo is None:
+                    return None
+            atual = await self._fetchone(
+                conn,
+                "SELECT quantidade FROM figurinhas WHERE guild_id = ? AND user_id = ? AND carta_id = ?",
+                (guild_id, user_id, carta_id),
+            )
+            quantidade = (atual["quantidade"] if atual else 0) + 1
+            await conn.execute(
+                "INSERT INTO figurinhas (guild_id, user_id, carta_id, quantidade, primeira_em) VALUES (?, ?, ?, 1, ?) "
+                "ON CONFLICT(guild_id, user_id, carta_id) DO UPDATE SET quantidade = quantidade + 1",
+                (guild_id, user_id, carta_id, agora()),
+            )
+            return {"nova": atual is None, "quantidade": quantidade, "gratis": gratis, "saldo": saldo}

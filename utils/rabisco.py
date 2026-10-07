@@ -11,10 +11,12 @@ import math
 import random
 import re
 import unicodedata
+from pathlib import Path
 from typing import Any, Optional
 
 from PIL import Image, ImageDraw, ImageFont
 
+FONTE_KIZA = Path(__file__).resolve().parent.parent / "assets" / "fonts" / "Fredoka.ttf"
 LARGURA, ALTURA = 800, 600
 ESCALA = 2  # desenha em 2x e reduz: serrilhado some
 MAX_ITENS = 150
@@ -26,11 +28,17 @@ TRACO_PADRAO = "#3a3a4a"
 
 def _fonte(tam: int) -> tuple[ImageFont.FreeTypeFont | ImageFont.ImageFont, bool]:
     """(fonte, aceita_acentos). Tenta fontes comuns com acento; senão a padrão do Pillow (sem acento)."""
-    for nome in ("DejaVuSans.ttf", "arial.ttf", "LiberationSans-Regular.ttf"):
+    for nome in (str(FONTE_KIZA), "DejaVuSans.ttf", "arial.ttf", "LiberationSans-Regular.ttf"):
         try:
-            return ImageFont.truetype(nome, tam), True
+            fonte = ImageFont.truetype(nome, tam)
         except OSError:
             continue
+        if nome == str(FONTE_KIZA):
+            try:
+                fonte.set_variation_by_axes([500, 100])
+            except (OSError, AttributeError):
+                pass
+        return fonte, True
     try:
         return ImageFont.load_default(size=tam), False
     except TypeError:  # Pillow antigo: sem tamanho

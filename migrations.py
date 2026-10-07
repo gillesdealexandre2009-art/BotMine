@@ -241,3 +241,24 @@ CREATE TABLE cerebro_memorias (
 CREATE INDEX ix_cerebro_memorias_user ON cerebro_memorias (guild_id, user_id, id);
 """,
 ))
+
+MIGRACOES.append((
+    6,
+    """
+-- Figurinhas: inventário por pessoa e o controle do pacotinho grátis do dia.
+CREATE TABLE figurinhas (
+    guild_id    INTEGER NOT NULL,
+    user_id     INTEGER NOT NULL,
+    carta_id    TEXT    NOT NULL,
+    quantidade  INTEGER NOT NULL CHECK (quantidade > 0),
+    primeira_em INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, user_id, carta_id)
+);
+CREATE TABLE figurinhas_gratis (
+    guild_id INTEGER NOT NULL,
+    user_id  INTEGER NOT NULL,
+    dia      TEXT    NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+""",
+))

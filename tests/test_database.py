@@ -32,7 +32,7 @@ def test_migracoes_idempotentes(tmp_path):
         await b.fechar()
         return [linha["versao"] for linha in linhas]
 
-    assert rodar(cenario) == [1, 2, 3, 4, 5]
+    assert rodar(cenario) == [1, 2, 3, 4, 5, 6]
 
 
 def test_backup_consistente(tmp_path):

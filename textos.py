@@ -481,6 +481,16 @@ DUVIDAS_CAMPOS = [
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
     (
+        "1.7.0",
+        "Figurinhas da Kiza",
+        [
+            "🃏 `/figurinha abrir`: abra um pacotinho e ganhe uma figurinha (1 **grátis por dia**; depois é só com {moeda})",
+            "📒 `/figurinha album`: veja quais você já tem e quais faltam, e `/figurinha ver` para mostrar uma carta",
+            "✨ Raridades: ⚪ Comum e 🔵 Rara por enquanto. As Épicas e Lendárias estão vindo",
+            "🦊 **Kiza:** \"eu tô numa figurinha dormindo e vocês acharam fofo. eu só tava com sono mesmo.\"",
+        ],
+    ),
+    (
         "1.6.0",
         "A Kiza tem vida própria",
         [

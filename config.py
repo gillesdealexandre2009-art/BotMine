@@ -30,7 +30,7 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.6.0"
+VERSAO = "1.7.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -70,6 +70,7 @@ COGS_PADRAO = [
     "fidelidade",
     "cerebro",
     "presenca",
+    "figurinhas",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -216,6 +217,8 @@ AJUSTES = {
     "conversa": (1, 0, 1, "1 = Kiza responde menções e cumprimentos"),
     "cerebro": (1, 0, 1, "1 = cérebro (IA) ligado: a Kiza conversa de verdade quando chamada"),
     "cerebro_max_dia": (400, 0, 100000, "Respostas do cérebro por dia no servidor (controle de custo)"),
+    "figurinha_preco": (150, 0, 100000, "Caudas por pacotinho de figurinha"),
+    "figurinha_gratis": (1, 0, 1, "1 = 1 pacotinho de figurinha grátis por dia"),
     "provocar_h": (4, 0, 48, "Horas mínimas entre provocações de chat parado (0 = desliga)"),
     "chat_parado_min": (120, 15, 1440, "Minutos sem mensagem para o chat contar como parado"),
     "niver_premio": (200, 0, 100000, "Caudas de presente de aniversário"),
