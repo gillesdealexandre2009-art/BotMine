@@ -37,7 +37,7 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
 DATABASE_PATH = os.getenv("DATABASE_PATH", "kiza.db")
 # Cérebro (IA de conversa). Sem chave, a Kiza volta às frases fixas de textos.py.
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CEREBRO_MODELO = os.getenv("CEREBRO_MODELO", "claude-haiku-4-5-20251001")
+CEREBRO_MODELO = os.getenv("CEREBRO_MODELO", "claude-sonnet-5-5")
 BACKUP_DIR = os.getenv("BACKUP_DIR", str(Path(DATABASE_PATH).resolve().parent / "backups"))
 BACKUP_RETENCAO = _inteiro("BACKUP_RETENCAO", 7)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()

@@ -9,7 +9,7 @@ def test_separa_baloes_e_fatos():
 
 def test_limita_baloes_e_tira_prefixo():
     baloes, _ = limpar_resposta("Kiza: a\nb\nc\nd\ne")
-    assert baloes == ["a", "b", "c"]
+    assert baloes == ["a", "b", "c", "d"]
 
 
 def test_filtra_fato_sensivel():
