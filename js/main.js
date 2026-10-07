@@ -143,54 +143,6 @@ $$(".carta.holo").forEach(carta => {
   alvos.forEach(el => io.observe(el));
 })();
 
-/* ---- vagalumes (só no herói, desligados em celular fraco e com movimento reduzido) ---- */
-(function vagalumes() {
-  const canvas = $("#vagalumes");
-  if (!canvas || reduzMovimento || innerWidth < 700 || navigator.connection?.saveData) return;
-  const ctx = canvas.getContext("2d");
-  const hero = canvas.parentElement;
-  let w = 0, h = 0, rodando = false, visivel = true;
-  const N = 10;
-  const pts = Array.from({ length: N }, () => ({
-    x: Math.random(), y: Math.random() * .8, r: 1.2 + Math.random() * 1.8,
-    vx: (Math.random() - .5) * .00005, vy: -.00002 - Math.random() * .00005, f: Math.random() * 6.28, v: .6 + Math.random() * 1.2
-  }));
-  const medir = () => {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    w = hero.clientWidth; h = hero.clientHeight;
-    canvas.width = w * dpr; canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  };
-  medir();
-  new ResizeObserver(medir).observe(hero);
-  let ultimo = performance.now();
-  function quadro(t) {
-    if (!rodando) return;
-    const dt = Math.min(48, t - ultimo); ultimo = t;
-    ctx.clearRect(0, 0, w, h);
-    for (const p of pts) {
-      p.x += p.vx * dt * 6 + Math.sin(t / 1800 + p.f) * .00007 * dt;
-      p.y += p.vy * dt * 6;
-      if (p.y < -.05) { p.y = .9; p.x = Math.random(); }
-      const a = .35 + .65 * Math.abs(Math.sin(t / 1000 * p.v + p.f));
-      const x = p.x * w, y = p.y * h, g = ctx.createRadialGradient(x, y, 0, x, y, p.r * 4.5);
-      g.addColorStop(0, `rgba(255,200,120,${a * .7})`);
-      g.addColorStop(1, "rgba(255,200,120,0)");
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(x, y, p.r * 4.5, 0, 6.283); ctx.fill();
-    }
-    requestAnimationFrame(quadro);
-  }
-  const alternar = () => {
-    const deve = visivel && !document.hidden;
-    if (deve && !rodando) { rodando = true; ultimo = performance.now(); requestAnimationFrame(quadro); }
-    else if (!deve) rodando = false;
-  };
-  new IntersectionObserver(es => { visivel = es[0].isIntersecting; alternar(); }).observe(hero);
-  document.addEventListener("visibilitychange", alternar);
-  alternar();
-})();
-
 /* ---- conversa que "acontece" quando entra na tela ---- */
 (async function conversa() {
   const janela = $("#conversa");
@@ -217,7 +169,7 @@ CONFIG.videos.forEach(v => {
   const el = document.createElement("article");
   el.className = "video rev";
   const tela = document.createElement(v.id ? "button" : "div");
-  tela.className = "quadro" + (v.id ? "" : " vazio");
+  tela.className = "quadro escuro" + (v.id ? "" : " vazio");
   const poster = v.id ? `https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/hqdefault.jpg` : v.poster;
   if (v.id) {
     tela.type = "button";

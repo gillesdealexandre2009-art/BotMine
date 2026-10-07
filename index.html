@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vulpus — Minecraft Bedrock BR, sem pay-to-win</title>
 <meta name="description" content="A Vulpus está nascendo: servidor de Minecraft Bedrock BR com bot próprio (a Kiza), addons feitos à mão e zero pay-to-win. Entre cedo e ajude a construir a toca.">
-<meta name="theme-color" content="#0c0d10">
+<meta name="theme-color" content="#ececed">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="Vulpus — Minecraft Bedrock BR, sem pay-to-win">
@@ -58,6 +58,11 @@ document.documentElement.classList.add("js");
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
   <symbol id="i-clapper" viewBox="0 0 24 24"><rect x="3.500" y="9" width="17" height="11" rx="1.500"/><path d="M3.500 9l2-4.500 4 .8-2 4.500M9.500 9l2-4.500 4 .8-2 4.500M15.500 9l2-4.500 3 .6"/></symbol>
   <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8.500" y="8.500" width="11" height="11" rx="2"/><path d="M15.500 8.500V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.500a2 2 0 0 0 2 2h2.500"/></symbol>
+  <symbol id="d-estrela" viewBox="0 0 60 60"><path d="M30 6C32 16 34 22 37 24C41 27 49 27 55 28C49 33 44 36 42 40C40 44 42 51 44 56C38 52 34 49 30 49C26 49 21 52 15 56C17 51 20 44 18 40C16 36 11 33 5 28C11 27 19 27 23 24C26 22 28 16 30 6Z"/></symbol>
+  <symbol id="d-brilho" viewBox="0 0 60 60"><path d="M30 8C31 22 38 29 52 30C38 31 31 38 30 52C29 38 22 31 8 30C22 29 29 22 30 8Z"/></symbol>
+  <symbol id="d-espiral" viewBox="0 0 60 60"><path d="M30 30c3-3 8-1 8 4 0 7-9 10-15 5-8-7-4-20 8-23 14-3 25 8 22 21-3 12-18 17-29 11"/></symbol>
+  <symbol id="d-coracao" viewBox="0 0 60 60"><path d="M30 50C10 36 6 22 14 15C21 9 28 13 30 20C32 13 40 9 46 15C54 22 50 36 30 50Z"/></symbol>
+  <symbol id="d-gato" viewBox="0 0 60 60"><path d="M12 24L16 8L26 17C29 16 31 16 34 17L44 8L48 24C52 34 44 50 30 50C16 50 8 34 12 24Z"/><path d="M24 32v.01M36 32v.01M27 40c2 2 4 2 6 0"/></symbol>
 </svg>
 
 <div class="progresso" id="progresso"></div>
@@ -89,8 +94,6 @@ document.documentElement.classList.add("js");
 <main>
 <!-- ============ HERÓI ============ -->
 <header class="hero" id="topo">
-  <div class="estrelas" aria-hidden="true"></div>
-  <canvas id="vagalumes" aria-hidden="true"></canvas>
   <div class="wrap hero-grid">
     <div>
       <p class="pre"><i></i>Pré-lançamento · Minecraft Bedrock BR</p>
@@ -106,23 +109,31 @@ document.documentElement.classList.add("js");
         <li><svg class="icone" aria-hidden="true"><use href="#i-cubo"/></svg><div><strong>Addons próprios</strong><span>feitos à mão</span></div></li>
       </ul>
     </div>
+    <svg class="rabisco-deco" viewBox="0 0 60 60" aria-hidden="true" style="top:-4%;left:46%;width:46px;transform:rotate(-14deg)"><use href="#d-estrela"/></svg>
+    <svg class="rabisco-deco" viewBox="0 0 60 60" aria-hidden="true" style="bottom:20%;left:52%;width:30px;transform:rotate(10deg)"><use href="#d-brilho"/></svg>
     <div class="arte">
       <div class="arco"><img src="img/hero-kiza.webp" width="900" height="724" alt="Kiza, a mascote do Vulpus: uma menina de cabelo branco, orelhas e cauda de raposa, sentada na grama sob a lua" fetchpriority="high"></div>
-      <div class="balao" aria-hidden="true"><img src="img/avatar-kiza.webp" width="30" height="30" alt=""><div><b>Kiza</b>oi! que bom que você chegou cedo.</div></div>
+      <div class="balao vidro-escuro" aria-hidden="true"><img src="img/avatar-kiza.webp" width="30" height="30" alt=""><div><b>Kiza</b>oi! que bom que você chegou cedo.</div></div>
       <img class="carta-flutuante a" src="img/carta-comum.webp" width="543" height="724" alt="Figurinha comum: Kiza Sonolenta" loading="lazy">
       <img class="carta-flutuante b" src="img/carta-rara.webp" width="543" height="724" alt="Figurinha rara: Creeper Tímido" loading="lazy">
     </div>
   </div>
-  <svg class="floresta" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-<rect x="0" y="170" width="1440" height="60" fill="#17181d" opacity="0"/>
-<path fill="#262932" d="M11,190 L35,139 L60,190 Z M16,162 L35,111 L55,162 Z M22,133 L35,82 L49,133 Z M33,190 L33,204 L37,204 L37,190 Z M25,190 L49,133 L73,190 Z M31,158 L49,101 L67,158 Z M36,126 L49,69 L62,126 Z M47,190 L47,204 L51,204 L51,190 Z M40,190 L66,126 L91,190 Z M46,154 L66,90 L86,154 Z M52,118 L66,53 L80,118 Z M64,190 L64,204 L68,204 L68,190 Z M46,190 L68,142 L91,190 Z M51,163 L68,116 L86,163 Z M56,137 L68,89 L81,137 Z M66,190 L66,204 L70,204 L70,190 Z M56,190 L73,150 L90,190 Z M59,168 L73,128 L86,168 Z M63,146 L73,106 L83,146 Z M71,190 L71,204 L75,204 L75,190 Z M67,190 L83,154 L100,190 Z M70,170 L83,134 L96,170 Z M74,149 L83,113 L93,149 Z M81,190 L81,204 L85,204 L85,190 Z M61,190 L87,132 L113,190 Z M67,158 L87,100 L107,158 Z M73,125 L87,67 L102,125 Z M85,190 L85,204 L89,204 L89,190 Z M89,190 L114,129 L140,190 Z M94,156 L114,94 L134,156 Z M100,121 L114,60 L129,121 Z M112,190 L112,204 L116,204 L116,190 Z M129,190 L154,134 L180,190 Z M135,159 L154,103 L174,159 Z M140,127 L154,72 L168,127 Z M152,190 L152,204 L156,204 L156,190 Z M140,190 L163,138 L186,190 Z M145,161 L163,108 L181,161 Z M150,131 L163,79 L176,131 Z M161,190 L161,204 L165,204 L165,190 Z M164,190 L193,130 L223,190 Z M170,156 L193,96 L217,156 Z M177,123 L193,62 L210,123 Z M191,190 L191,204 L195,204 L195,190 Z M181,190 L203,141 L226,190 Z M186,162 L203,113 L221,162 Z M191,135 L203,86 L216,135 Z M201,190 L201,204 L205,204 L205,190 Z M230,190 L247,153 L265,190 Z M234,169 L247,133 L261,169 Z M238,149 L247,112 L257,149 Z M245,190 L245,204 L249,204 L249,190 Z M258,190 L285,136 L312,190 Z M264,160 L285,105 L306,160 Z M270,129 L285,75 L300,129 Z M283,190 L283,204 L287,204 L287,190 Z M286,190 L310,130 L335,190 Z M291,157 L310,97 L330,157 Z M297,123 L310,64 L324,123 Z M308,190 L308,204 L312,204 L312,190 Z M320,190 L341,143 L363,190 Z M325,164 L341,117 L358,164 Z M329,138 L341,91 L353,138 Z M339,190 L339,204 L343,204 L343,190 Z M393,190 L409,154 L424,190 Z M397,170 L409,134 L421,170 Z M400,150 L409,114 L417,150 Z M407,190 L407,204 L411,204 L411,190 Z M408,190 L424,150 L439,190 Z M411,168 L424,128 L436,168 Z M415,145 L424,105 L432,145 Z M422,190 L422,204 L426,204 L426,190 Z M419,190 L437,153 L454,190 Z M423,169 L437,133 L450,169 Z M427,149 L437,112 L446,149 Z M435,190 L435,204 L439,204 L439,190 Z M429,190 L445,151 L461,190 Z M433,168 L445,129 L457,168 Z M436,146 L445,108 L454,146 Z M443,190 L443,204 L447,204 L447,190 Z M437,190 L459,143 L482,190 Z M442,164 L459,117 L477,164 Z M447,138 L459,91 L472,138 Z M457,190 L457,204 L461,204 L461,190 Z M505,190 L521,153 L537,190 Z M509,169 L521,132 L534,169 Z M512,148 L521,111 L530,148 Z M519,190 L519,204 L523,204 L523,190 Z M506,190 L531,139 L556,190 Z M512,161 L531,110 L551,161 Z M517,132 L531,81 L545,132 Z M529,190 L529,204 L533,204 L533,190 Z M538,190 L567,130 L596,190 Z M545,157 L567,97 L590,157 Z M551,123 L567,64 L583,123 Z M565,190 L565,204 L569,204 L569,190 Z M590,190 L608,147 L627,190 Z M594,166 L608,122 L623,166 Z M598,141 L608,98 L619,141 Z M606,190 L606,204 L610,204 L610,190 Z M591,190 L613,144 L635,190 Z M595,164 L613,119 L630,164 Z M600,139 L613,93 L625,139 Z M611,190 L611,204 L615,204 L615,190 Z M596,190 L622,126 L647,190 Z M602,154 L622,91 L642,154 Z M608,119 L622,55 L636,119 Z M620,190 L620,204 L624,204 L624,190 Z M634,190 L651,150 L667,190 Z M638,167 L651,127 L664,167 Z M642,145 L651,105 L660,145 Z M649,190 L649,204 L653,204 L653,190 Z M713,190 L731,148 L749,190 Z M717,166 L731,124 L745,166 Z M721,143 L731,101 L741,143 Z M729,190 L729,204 L733,204 L733,190 Z M751,190 L773,137 L795,190 Z M756,161 L773,108 L790,161 Z M761,131 L773,78 L785,131 Z M771,190 L771,204 L775,204 L775,190 Z M776,190 L791,155 L806,190 Z M779,170 L791,135 L802,170 Z M782,151 L791,116 L799,151 Z M789,190 L789,204 L793,204 L793,190 Z M810,190 L830,144 L851,190 Z M814,164 L830,118 L846,164 Z M819,138 L830,92 L842,138 Z M828,190 L828,204 L832,204 L832,190 Z M805,190 L834,126 L864,190 Z M811,154 L834,91 L857,154 Z M818,119 L834,55 L851,119 Z M832,190 L832,204 L836,204 L836,190 Z M818,190 L841,140 L864,190 Z M823,162 L841,111 L859,162 Z M828,133 L841,83 L854,133 Z M839,190 L839,204 L843,204 L843,190 Z M825,190 L847,135 L868,190 Z M830,159 L847,104 L863,159 Z M835,128 L847,73 L859,128 Z M845,190 L845,204 L849,204 L849,190 Z M879,190 L909,128 L938,190 Z M886,155 L909,93 L931,155 Z M892,121 L909,59 L925,121 Z M907,190 L907,204 L911,204 L911,190 Z M896,190 L926,129 L955,190 Z M903,156 L926,94 L948,156 Z M909,121 L926,60 L942,121 Z M924,190 L924,204 L928,204 L928,190 Z M923,190 L943,143 L963,190 Z M928,164 L943,117 L959,164 Z M932,138 L943,91 L955,138 Z M941,190 L941,204 L945,204 L945,190 Z M970,190 L987,152 L1004,190 Z M973,169 L987,131 L1001,169 Z M977,147 L987,109 L997,147 Z M985,190 L985,204 L989,204 L989,190 Z M1000,190 L1015,153 L1029,190 Z M1003,169 L1015,132 L1026,169 Z M1006,149 L1015,112 L1023,149 Z M1013,190 L1013,204 L1017,204 L1017,190 Z M1139,190 L1156,149 L1172,190 Z M1143,167 L1156,126 L1169,167 Z M1146,144 L1156,103 L1165,144 Z M1154,190 L1154,204 L1158,204 L1158,190 Z M1170,190 L1188,145 L1205,190 Z M1174,165 L1188,119 L1201,165 Z M1178,139 L1188,94 L1198,139 Z M1186,190 L1186,204 L1190,204 L1190,190 Z M1190,190 L1204,155 L1218,190 Z M1193,170 L1204,135 L1215,170 Z M1196,151 L1204,116 L1212,151 Z M1202,190 L1202,204 L1206,204 L1206,190 Z M1234,190 L1251,152 L1267,190 Z M1238,169 L1251,131 L1263,169 Z M1242,147 L1251,109 L1260,147 Z M1249,190 L1249,204 L1253,204 L1253,190 Z M1365,190 L1383,154 L1400,190 Z M1369,170 L1383,134 L1396,170 Z M1373,150 L1383,114 L1392,150 Z M1381,190 L1381,204 L1385,204 L1385,190 Z M1404,190 L1425,137 L1446,190 Z M1408,160 L1425,107 L1441,160 Z M1413,130 L1425,77 L1437,130 Z M1423,190 L1423,204 L1427,204 L1427,190 Z"/>
-<path fill="#17181d" d="M-24,215 L14,136 L52,215 Z M-15,171 L14,92 L44,171 Z M-7,126 L14,47 L35,126 Z M12,215 L12,229 L16,229 L16,215 Z M-16,215 L20,137 L56,215 Z M-8,171 L20,94 L48,171 Z M-0,128 L20,50 L40,128 Z M18,215 L18,229 L22,229 L22,215 Z M83,215 L107,161 L131,215 Z M88,185 L107,131 L126,185 Z M94,154 L107,100 L120,154 Z M105,215 L105,229 L109,229 L109,215 Z M109,215 L131,156 L154,215 Z M114,182 L131,123 L149,182 Z M119,149 L131,89 L144,149 Z M129,215 L129,229 L133,229 L133,215 Z M143,215 L162,169 L181,215 Z M147,189 L162,143 L177,189 Z M151,163 L162,117 L172,163 Z M160,215 L160,229 L164,229 L164,215 Z M171,215 L197,160 L223,215 Z M177,184 L197,129 L217,184 Z M183,153 L197,98 L211,153 Z M195,215 L195,229 L199,229 L199,215 Z M183,215 L219,132 L255,215 Z M191,168 L219,85 L247,168 Z M199,122 L219,38 L239,122 Z M217,215 L217,229 L221,229 L221,215 Z M186,215 L227,133 L268,215 Z M195,169 L227,86 L259,169 Z M204,123 L227,40 L250,123 Z M225,215 L225,229 L229,229 L229,215 Z M275,215 L310,132 L345,215 Z M283,168 L310,85 L338,168 Z M290,122 L310,39 L330,122 Z M308,215 L308,229 L312,229 L312,215 Z M331,215 L353,161 L375,215 Z M336,185 L353,131 L370,185 Z M341,155 L353,101 L366,155 Z M351,215 L351,229 L355,229 L355,215 Z M345,215 L366,162 L388,215 Z M350,185 L366,133 L383,185 Z M354,156 L366,103 L378,156 Z M364,215 L364,229 L368,229 L368,215 Z M338,215 L372,145 L406,215 Z M345,176 L372,106 L398,176 Z M353,137 L372,67 L391,137 Z M370,215 L370,229 L374,229 L374,215 Z M434,215 L468,136 L502,215 Z M441,171 L468,92 L495,171 Z M449,127 L468,48 L487,127 Z M466,215 L466,229 L470,229 L470,215 Z M453,215 L487,144 L521,215 Z M461,175 L487,104 L514,175 Z M468,135 L487,64 L506,135 Z M485,215 L485,229 L489,229 L489,215 Z M472,215 L494,167 L516,215 Z M477,188 L494,140 L511,188 Z M482,161 L494,112 L507,161 Z M492,215 L492,229 L496,229 L496,215 Z M480,215 L519,134 L558,215 Z M489,169 L519,88 L549,169 Z M497,124 L519,42 L541,124 Z M517,215 L517,229 L521,229 L521,215 Z M490,215 L523,140 L556,215 Z M497,173 L523,98 L548,173 Z M504,131 L523,56 L541,131 Z M521,215 L521,229 L525,229 L525,215 Z M645,215 L670,163 L694,215 Z M650,186 L670,134 L689,186 Z M656,157 L670,104 L684,157 Z M668,215 L668,229 L672,229 L672,215 Z M668,215 L696,157 L724,215 Z M674,182 L696,124 L718,182 Z M681,150 L696,91 L712,150 Z M694,215 L694,229 L698,229 L698,215 Z M726,215 L762,131 L797,215 Z M734,168 L762,84 L790,168 Z M742,121 L762,37 L782,121 Z M760,215 L760,229 L764,229 L764,215 Z M732,215 L762,154 L792,215 Z M738,181 L762,120 L785,181 Z M745,147 L762,86 L779,147 Z M760,215 L760,229 L764,229 L764,215 Z M739,215 L768,141 L798,215 Z M745,174 L768,100 L791,174 Z M752,132 L768,58 L785,132 Z M766,215 L766,229 L770,229 L770,215 Z M764,215 L784,165 L804,215 Z M768,187 L784,137 L799,187 Z M773,159 L784,109 L795,159 Z M782,215 L782,229 L786,229 L786,215 Z M972,215 L1010,134 L1049,215 Z M980,170 L1010,88 L1041,170 Z M989,124 L1010,43 L1032,124 Z M1008,215 L1008,229 L1012,229 L1012,215 Z M1098,215 L1122,164 L1147,215 Z M1103,187 L1122,136 L1141,187 Z M1109,158 L1122,107 L1136,158 Z M1120,215 L1120,229 L1124,229 L1124,215 Z M1094,215 L1133,131 L1172,215 Z M1103,168 L1133,84 L1163,168 Z M1111,121 L1133,36 L1155,121 Z M1131,215 L1131,229 L1135,229 L1135,215 Z M1155,215 L1181,156 L1207,215 Z M1161,182 L1181,123 L1202,182 Z M1166,149 L1181,90 L1196,149 Z M1179,215 L1179,229 L1183,229 L1183,215 Z M1188,215 L1207,165 L1226,215 Z M1192,187 L1207,137 L1222,187 Z M1196,159 L1207,108 L1217,159 Z M1205,215 L1205,229 L1209,229 L1209,215 Z M1198,215 L1236,131 L1275,215 Z M1206,168 L1236,84 L1266,168 Z M1215,121 L1236,37 L1258,121 Z M1234,215 L1234,229 L1238,229 L1238,215 Z M1225,215 L1258,149 L1290,215 Z M1232,178 L1258,112 L1283,178 Z M1240,141 L1258,75 L1276,141 Z M1256,215 L1256,229 L1260,229 L1260,215 Z M1357,215 L1387,153 L1418,215 Z M1364,180 L1387,118 L1411,180 Z M1371,145 L1387,83 L1404,145 Z M1385,215 L1385,229 L1389,229 L1389,215 Z M1397,215 L1428,137 L1460,215 Z M1404,171 L1428,93 L1453,171 Z M1410,128 L1428,50 L1446,128 Z M1426,215 L1426,229 L1430,229 L1430,215 Z M1415,215 L1438,160 L1461,215 Z M1420,184 L1438,129 L1456,184 Z M1425,153 L1438,98 L1450,153 Z M1436,215 L1436,229 L1440,229 L1440,215 Z M1425,215 L1450,160 L1474,215 Z M1431,184 L1450,130 L1469,184 Z M1436,154 L1450,99 L1464,154 Z M1448,215 L1448,229 L1452,229 L1452,215 Z"/>
-<rect x="0" y="205" width="1440" height="30" fill="#17181d"/>
+  <svg class="montanhas" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+<defs><linearGradient id="nevoa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2f2f3" stop-opacity="0"/><stop offset="1" stop-color="#f2f2f3" stop-opacity=".62"/></linearGradient></defs>
+<path fill="#c9cacd" d="M-40,320 L-40,162 Q-40,162 -5,167 Q30,171 65,175 Q100,179 135,181 Q170,183 205,181 Q240,178 275,170 Q310,162 345,154 Q380,146 415,149 Q450,152 485,160 Q520,168 555,171 Q590,173 625,167 Q660,161 695,153 Q730,144 765,140 Q800,136 835,138 Q870,139 905,142 Q940,144 975,141 Q1010,139 1045,133 Q1080,126 1115,126 Q1150,126 1185,135 Q1220,144 1255,153 Q1290,162 1325,162 Q1360,162 1395,161 Q1430,159 1465,169 L1500,179 L1500,320 Z"/>
+<rect x="0" y="102" width="1440" height="218" fill="url(#nevoa)"/>
+<path fill="#acaeb3" d="M-40,320 L-40,142 Q-40,142 -10,150 Q20,158 50,158 Q80,157 110,159 Q140,161 170,167 Q200,173 230,174 Q260,174 290,179 Q320,184 350,195 Q380,206 410,208 Q440,211 470,208 Q500,204 530,205 Q560,205 590,203 Q620,202 650,197 Q680,192 710,192 Q740,192 770,199 Q800,207 830,214 Q860,222 890,223 Q920,225 950,218 Q980,211 1010,198 Q1040,185 1070,174 Q1100,163 1130,157 Q1160,150 1190,147 Q1220,143 1250,145 Q1280,147 1310,153 Q1340,160 1370,159 Q1400,157 1430,141 L1460,125 L1460,320 Z"/>
+<rect x="0" y="125" width="1440" height="195" fill="url(#nevoa)"/>
+<path fill="#7c7f87" d="M-40,320 L-40,234 Q-40,234 -14,224 Q12,214 38,213 Q64,213 90,216 Q116,220 142,218 Q168,216 194,213 Q220,210 246,211 Q272,212 298,212 Q324,213 350,213 Q376,212 402,212 Q428,213 454,214 Q480,215 506,218 Q532,221 558,221 Q584,221 610,217 Q636,213 662,213 Q688,213 714,213 Q740,213 766,207 Q792,201 818,192 Q844,183 870,181 Q896,180 922,189 Q948,197 974,206 Q1000,215 1026,219 Q1052,222 1078,228 Q1104,234 1130,241 Q1156,247 1182,243 Q1208,240 1234,230 Q1260,220 1286,215 Q1312,211 1338,213 Q1364,216 1390,212 Q1416,208 1442,191 L1468,174 L1468,320 Z"/>
+<rect x="0" y="163" width="1440" height="157" fill="url(#nevoa)"/>
+<path fill="#4a4d54" d="M-40,320 L-40,268 Q-40,268 -18,270 Q4,273 26,265 Q48,258 70,250 Q92,242 114,244 Q136,245 158,239 Q180,233 202,232 Q224,231 246,243 Q268,256 290,260 Q312,263 334,260 Q356,257 378,259 Q400,262 422,257 Q444,253 466,243 Q488,233 510,229 Q532,225 554,221 Q576,216 598,213 Q620,210 642,217 Q664,223 686,240 Q708,257 730,261 Q752,264 774,247 Q796,230 818,229 Q840,228 862,243 Q884,258 906,257 Q928,256 950,245 Q972,235 994,234 Q1016,233 1038,242 Q1060,251 1082,256 Q1104,261 1126,255 Q1148,249 1170,239 Q1192,230 1214,231 Q1236,232 1258,238 Q1280,243 1302,238 Q1324,233 1346,237 Q1368,242 1390,247 Q1412,252 1434,247 Q1456,241 1478,254 L1500,266 L1500,320 Z"/>
+<rect x="0" y="199" width="1440" height="121" fill="url(#nevoa)"/>
+<path fill="#131416" d="M-40,320 L-40,302 Q-40,302 -23,298 Q-6,293 11,289 Q28,285 45,281 Q62,277 79,276 Q96,274 113,276 Q130,278 147,279 Q164,281 181,282 Q198,282 215,284 Q232,286 249,290 Q266,294 283,296 Q300,298 317,296 Q334,295 351,291 Q368,288 385,287 Q402,285 419,285 Q436,285 453,283 Q470,282 487,279 Q504,277 521,275 Q538,274 555,274 Q572,275 589,278 Q606,282 623,288 Q640,293 657,295 Q674,296 691,293 Q708,290 725,286 Q742,282 759,278 Q776,275 793,273 Q810,272 827,275 Q844,277 861,282 Q878,287 895,288 Q912,290 929,289 Q946,288 963,289 Q980,290 997,291 Q1014,292 1031,292 Q1048,292 1065,291 Q1082,290 1099,289 Q1116,288 1133,286 Q1150,285 1167,283 Q1184,282 1201,281 Q1218,281 1235,282 Q1252,283 1269,285 Q1286,287 1303,287 Q1320,287 1337,287 Q1354,287 1371,288 Q1388,289 1405,289 Q1422,288 1439,283 Q1456,278 1473,269 L1490,261 L1490,320 Z"/>
 </svg>
 </header>
 
 <!-- ============ COMO ENTRAR ============ -->
-<section class="entrar" id="entrar">
+<section class="entrar escuro" id="entrar">
   <div class="wrap">
     <div class="cab rev">
       <span class="rotulo"><b>01</b>Como entrar</span>
@@ -164,7 +175,7 @@ document.documentElement.classList.add("js");
         <h3>Uma raposa que conversa de verdade</h3>
         <p>Entende o contexto, lembra de você, ajuda com Minecraft e rabisca o que você pedir. Sem frase pronta.</p>
         <div class="etiquetas"><span class="etiqueta">Memória própria</span><span class="etiqueta">Desenha</span><span class="etiqueta">Posta sozinha</span></div>
-        <div class="mini-chat"><small>Kiza</small>roxo! tipo, aquela cor de céu no final do dia, sabe?</div>
+        <div class="mini-chat vidro-escuro"><small>Kiza</small>roxo! tipo, aquela cor de céu no final do dia, sabe?</div>
       </article>
 
       <article class="tile t-ranks rev" style="--i:1">
@@ -183,7 +194,7 @@ document.documentElement.classList.add("js");
         <span class="rotulo">Caudas</span>
         <h3>A moeda da toca</h3>
         <p>Ganhe no /daily, na pergunta do dia, em bumps e em drops surpresa no chat.</p>
-        <div class="embed"><b>🎁 Caudas perdidas apareceram!</b>Quem for mais rápido leva <b style="display:inline">74 Caudas</b>.<br><span class="pegar">🦊 Pegar</span></div>
+        <div class="embed escuro"><b>🎁 Caudas perdidas apareceram!</b>Quem for mais rápido leva <b style="display:inline">74 Caudas</b>.<br><span class="pegar">🦊 Pegar</span></div>
       </article>
 
       <article class="tile t-figs rev" style="--i:3">
@@ -205,7 +216,7 @@ document.documentElement.classList.add("js");
         </div>
       </article>
 
-      <article class="tile t-lore rev">
+      <article class="tile t-lore escuro rev">
         <div class="fundo-img"><img src="img/hero-kiza.webp" width="900" height="724" alt="" loading="lazy"></div>
         <span class="rotulo">Lore</span>
         <p class="citacao">“Toda kitsune ganha uma cauda nova a cada grande história que vive. A Kiza nasceu com <em>uma só</em>.”</p>
@@ -227,7 +238,7 @@ document.documentElement.classList.add("js");
 </section>
 
 <!-- ============ FIGURINHAS ============ -->
-<section class="figs" id="figurinhas">
+<section class="figs escuro" id="figurinhas">
   <div class="wrap">
     <div class="rev">
       <span class="rotulo"><b>03</b>Figurinhas</span>
@@ -242,6 +253,8 @@ document.documentElement.classList.add("js");
         <li><svg class="icone" aria-hidden="true"><use href="#i-escudo"/></svg><span><b>Nada de dinheiro real.</b> Só Caudas, que você ganha jogando.</span></li>
       </ul>
     </div>
+    <svg class="rabisco-deco" viewBox="0 0 60 60" aria-hidden="true" style="top:12%;right:8%;width:40px;transform:rotate(8deg)"><use href="#d-brilho"/></svg>
+    <svg class="rabisco-deco" viewBox="0 0 60 60" aria-hidden="true" style="bottom:10%;left:52%;width:34px;transform:rotate(-10deg)"><use href="#d-estrela"/></svg>
     <div class="leque rev" style="--i:2" id="leque">
       <div class="carta c1 holo"><img src="img/carta-comum.webp" width="543" height="724" alt="Figurinha comum nº 1: Kiza Sonolenta" loading="lazy"></div>
       <div class="carta c2 holo"><img src="img/carta-rara.webp" width="543" height="724" alt="Figurinha rara nº 2: Creeper Tímido" loading="lazy"></div>
@@ -265,7 +278,8 @@ document.documentElement.classList.add("js");
         <li><svg class="icone" aria-hidden="true"><use href="#i-camera"/></svg><span><b>Posta sozinha.</b> Desenhos, convites e um capítulo novo da lore todo mês.</span></li>
       </ul>
     </div>
-    <div class="janela rev" style="--i:2" id="conversa" aria-label="Exemplo de conversa com a Kiza">
+    <svg class="rabisco-deco" viewBox="0 0 60 60" aria-hidden="true" style="top:-2%;right:-1%;width:50px;transform:rotate(10deg)"><use href="#d-gato"/></svg>
+    <div class="janela escuro rev" style="--i:2" id="conversa" aria-label="Exemplo de conversa com a Kiza">
       <div class="janela-topo"><i></i><i></i><i></i><span># chat</span></div>
       <div class="msgs">
         <div class="msg"><div class="av">L</div><div><b>luma</b><p>kiza, qual sua cor favorita?</p></div></div>
@@ -292,7 +306,7 @@ document.documentElement.classList.add("js");
 </section>
 
 <!-- ============ ROADMAP ============ -->
-<section class="rota-sec" id="chegando">
+<section class="rota-sec escuro" id="chegando">
   <div class="wrap">
     <figure class="mapa rev"><img src="img/kiza-mapa.webp" width="720" height="579" alt="Kiza apontando para um mapa do tesouro de Minecraft com um X vermelho" loading="lazy"><figcaption>O mapa da toca</figcaption></figure>
     <div>
@@ -340,12 +354,14 @@ document.documentElement.classList.add("js");
           <ul><li><svg class="icone" aria-hidden="true"><use href="#i-x"/></svg>Vantagem no jogo</li><li><svg class="icone" aria-hidden="true"><use href="#i-x"/></svg>Itens ou poder comprados</li><li><svg class="icone" aria-hidden="true"><use href="#i-x"/></svg>Caixa-surpresa paga</li></ul></div>
       </div>
     </div>
+    <svg class="rabisco-deco" viewBox="0 0 60 60" aria-hidden="true" style="top:6%;right:4%;width:38px;transform:rotate(12deg)"><use href="#d-coracao"/></svg>
+    <svg class="rabisco-deco" viewBox="0 0 60 60" aria-hidden="true" style="bottom:8%;left:46%;width:54px;transform:rotate(-8deg)"><use href="#d-espiral"/></svg>
     <figure class="polaroid rev" style="--i:2"><img src="img/kiza-kitsune.webp" width="720" height="579" alt="Kiza de coroa, segurando um coração dourado" loading="lazy"><figcaption>Kitsune VIP: só mimos</figcaption></figure>
   </div>
 </section>
 
 <!-- ============ CHAMADA FINAL ============ -->
-<section class="final">
+<section class="final escuro">
   <div class="wrap final-wrap">
     <div class="final-card rev">
       <div class="fundo-img"><img src="img/kiza-boasvindas.webp" width="720" height="579" alt="" loading="lazy"></div>
@@ -358,7 +374,7 @@ document.documentElement.classList.add("js");
 </section>
 </main>
 
-<footer>
+<footer class="escuro">
   <div class="wrap">
     <div>
       <a class="marca" href="#topo"><svg aria-hidden="true"><use href="#i-raposa"/></svg>VULPUS</a>
