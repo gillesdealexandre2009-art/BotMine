@@ -230,6 +230,7 @@ async def publicar_ou_editar(
     view: Optional[discord.ui.View] = None,
     content: Optional[str] = None,
     arquivos: Optional[list[discord.File]] = None,
+    mencoes: Optional[discord.AllowedMentions] = None,
 ) -> discord.Message:
     """Publica um painel; se já existir uma publicação anterior desse painel, edita em vez de duplicar."""
     msg_id = await bot.banco.get_config_int(guild.id, f"msg_{chave_msg}")
@@ -247,7 +248,7 @@ async def publicar_ou_editar(
         for arquivo in arquivos:
             arquivo.reset()  # a edição que falhou pode ter consumido o arquivo
         extra["files"] = arquivos
-    msg = await canal.send(content=content, embeds=embeds, allowed_mentions=discord.AllowedMentions.none(), **extra)
+    msg = await canal.send(content=content, embeds=embeds, allowed_mentions=mencoes or discord.AllowedMentions.none(), **extra)
     await bot.banco.set_config(guild.id, f"msg_{chave_msg}", str(msg.id))
     return msg
 

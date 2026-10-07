@@ -481,6 +481,17 @@ DUVIDAS_CAMPOS = [
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
     (
+        "1.5.0",
+        "A Kiza ganhou um cérebro",
+        [
+            "🧠 **Eu converso de verdade agora!** Me marca, responde uma mensagem minha ou fala meu nome no chat",
+            "💭 Eu lembro do que você me conta e entendo o contexto da conversa (sim, eu presto atenção. às vezes.)",
+            "🔎 `/memoria ver` mostra o que eu lembro de você e `/memoria esquecer` apaga tudo",
+            "😭 **Kiza:** \"GENTE EU CONSIGO FALAR!! sem frase pronta, sem nada, tô tão feliz que vou chorar. "
+            "pode me perguntar qualquer coisa... menos 1+1, que isso n é coisa de raposa kkk\"",
+        ],
+    ),
+    (
         "1.4.0",
         "Caminho até Helper",
         [

@@ -112,6 +112,10 @@ class Vitrine(commands.Cog):
         if canal is None:
             return False, textos.SETUP_SEM_CANAL
         valores = {"moeda": config.MOEDA_NOME}
+        membro_id = await self.bot.banco.get_config_int(guild.id, "cargo_membro")
+        cargo = guild.get_role(membro_id) if membro_id else None
+        aviso = f"|| {cargo.mention} ||" if cargo else None  # sempre marca os membros, escondido no spoiler
+        total = len(textos.CHANGELOG)
         for i, (versao, titulo, itens) in enumerate(reversed(textos.CHANGELOG)):
             e = embed(
                 textos.CHANGELOG_TITULO.format(versao=versao, titulo=titulo),
@@ -121,7 +125,9 @@ class Vitrine(commands.Cog):
             embeds, arquivos = com_banner("changelog", [e]) if i == 0 else ([e], [])
             try:
                 await publicar_ou_editar(
-                    self.bot, guild, canal, f"changelog_{versao}", embeds=embeds, arquivos=arquivos
+                    self.bot, guild, canal, f"changelog_{versao}", embeds=embeds, arquivos=arquivos, content=aviso,
+                    # só a versão mais nova (mensagem nova) notifica; as outras só mostram a marcação
+                    mencoes=discord.AllowedMentions(roles=[cargo]) if cargo and i == total - 1 else None,
                 )
             except discord.HTTPException:
                 log.warning("Falha ao publicar changelog %s", versao, exc_info=True)
