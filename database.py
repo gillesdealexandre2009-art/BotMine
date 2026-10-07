@@ -1128,3 +1128,35 @@ class Banco:
             (guild_id, user_id, limite),
         )
         return [(linha["canal_id"], linha["msg_id"], linha["criado_em"]) for linha in linhas]
+
+    # ------------------------------------------------------------------ cérebro (memória da Kiza)
+    async def memorias_cerebro(self, guild_id: int, user_id: int, limite: int = 20) -> list[str]:
+        linhas = await self._todos(
+            "SELECT fato FROM cerebro_memorias WHERE guild_id = ? AND user_id = ? ORDER BY id DESC LIMIT ?",
+            (guild_id, user_id, limite),
+        )
+        return [linha["fato"] for linha in reversed(linhas)]
+
+    async def lembrar_cerebro(self, guild_id: int, user_id: int, fato: str, maximo: int = 25) -> bool:
+        """Guarda um fato (sem duplicar); mantém só os `maximo` mais recentes. True se era novo."""
+        async with self._tx() as conn:
+            existe = await self._fetchall(
+                conn,
+                "SELECT 1 FROM cerebro_memorias WHERE guild_id = ? AND user_id = ? AND lower(fato) = lower(?)",
+                (guild_id, user_id, fato),
+            )
+            if existe:
+                return False
+            await conn.execute(
+                "INSERT INTO cerebro_memorias (guild_id, user_id, fato, criado_em) VALUES (?, ?, ?, ?)",
+                (guild_id, user_id, fato, agora()),
+            )
+            await conn.execute(
+                "DELETE FROM cerebro_memorias WHERE guild_id = ? AND user_id = ? AND id NOT IN "
+                "(SELECT id FROM cerebro_memorias WHERE guild_id = ? AND user_id = ? ORDER BY id DESC LIMIT ?)",
+                (guild_id, user_id, guild_id, user_id, maximo),
+            )
+            return True
+
+    async def esquecer_cerebro(self, guild_id: int, user_id: int) -> int:
+        return await self._exec("DELETE FROM cerebro_memorias WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))

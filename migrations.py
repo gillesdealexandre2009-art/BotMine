@@ -226,3 +226,18 @@ ALTER TABLE tickets ADD COLUMN avaliacao TEXT;
 ALTER TABLE tickets ADD COLUMN avaliado_por INTEGER;
 """,
 ))
+
+MIGRACOES.append((
+    5,
+    """
+-- Cérebro da Kiza: fatos duradouros que ela lembra sobre cada pessoa (curtos, ditos pela própria pessoa).
+CREATE TABLE cerebro_memorias (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id  INTEGER NOT NULL,
+    user_id   INTEGER NOT NULL,
+    fato      TEXT    NOT NULL,
+    criado_em INTEGER NOT NULL
+);
+CREATE INDEX ix_cerebro_memorias_user ON cerebro_memorias (guild_id, user_id, id);
+""",
+))

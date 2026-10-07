@@ -35,6 +35,9 @@ VERSAO = "1.4.0"
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
 DATABASE_PATH = os.getenv("DATABASE_PATH", "kiza.db")
+# Cérebro (IA de conversa). Sem chave, a Kiza volta às frases fixas de textos.py.
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+CEREBRO_MODELO = os.getenv("CEREBRO_MODELO", "claude-haiku-4-5-20251001")
 BACKUP_DIR = os.getenv("BACKUP_DIR", str(Path(DATABASE_PATH).resolve().parent / "backups"))
 BACKUP_RETENCAO = _inteiro("BACKUP_RETENCAO", 7)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -62,6 +65,7 @@ COGS_PADRAO = [
     "vida",
     "bump",
     "fidelidade",
+    "cerebro",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -206,6 +210,8 @@ AJUSTES = {
     "drop_min": (30, 1, 100000, "Valor mínimo de um drop"),
     "drop_max": (80, 1, 100000, "Valor máximo de um drop"),
     "conversa": (1, 0, 1, "1 = Kiza responde menções e cumprimentos"),
+    "cerebro": (1, 0, 1, "1 = cérebro (IA) ligado: a Kiza conversa de verdade quando chamada"),
+    "cerebro_max_dia": (400, 0, 100000, "Respostas do cérebro por dia no servidor (controle de custo)"),
     "provocar_h": (4, 0, 48, "Horas mínimas entre provocações de chat parado (0 = desliga)"),
     "chat_parado_min": (120, 15, 1440, "Minutos sem mensagem para o chat contar como parado"),
     "niver_premio": (200, 0, 100000, "Caudas de presente de aniversário"),

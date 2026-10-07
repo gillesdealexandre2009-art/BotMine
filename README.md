@@ -1,7 +1,6 @@
 # 🦊 Kiza — bot do servidor VULPUS
 
-Bot de comunidade (Python 3.11+, discord.py 2.x, SQLite). **Sem IA de chat e sem nenhuma dependência de LLM**:
-a personalidade da Kiza vive só nos textos fixos (`textos.py`). Independente do SONHE (token, banco e config próprios).
+Bot de comunidade (Python 3.11+, discord.py 2.x, SQLite). **Cérebro (IA de conversa, opcional):** com `ANTHROPIC_API_KEY` definida a Kiza conversa de verdade (cog `cerebro`, memória por pessoa, `/memoria ver|esquecer`); sem a chave ela usa só os textos fixos (`textos.py`). Independente do SONHE (token, banco e config próprios).
 
 **Módulos:** entrada (boas-vindas, adeus, autorole, regras, verificação) · painel de cargos · tickets · moderação e casos ·
 automod e modo raid · logs · regras por canal e sugestões · XP e níveis · economia · união de toca · Mines · fidelidade e pedido de rank (caminho até Helper) · `/ajuda` `/status` · backup.

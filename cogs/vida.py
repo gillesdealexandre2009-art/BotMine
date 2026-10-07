@@ -434,6 +434,9 @@ class Vida(commands.Cog):
         texto = sem_acento(mensagem.content)
         eu = self.bot.user
         if eu is not None and eu in mensagem.mentions and not mensagem.mention_everyone:
+            cerebro = self.bot.get_cog("Cerebro")
+            if cerebro is not None and await cerebro.ativo(mensagem.guild.id):
+                return  # o cérebro conversa de verdade; as frases fixas ficam de reserva dentro dele
             if not self._livre(("mencao", membro.id), COOLDOWN_MENCAO):
                 return
             frases = textos.CONVERSA_OBRIGADO if "obrigad" in texto or "valeu" in texto else textos.CONVERSA_MENCAO
