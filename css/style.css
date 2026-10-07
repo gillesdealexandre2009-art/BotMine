@@ -19,6 +19,8 @@
   --brasa:#f28c38; --brasa-2:#e66a2c; --brasa-grande:#f28c38; --brasa-tx:#f28c38;
   /* apoio neutro e estados */
   --lua:#a2a7b8; --gelo:#a3bcd9; --ok:#86b783; --aviso:#d9b45a; --erro:#d98277;
+  /* o azul da Kiza (olhos, ficha de personagem) */
+  --kiza-azul:#7f98f4; --kiza-azul-2:#4f67d8;
   /* forma */
   --r-sm:10px; --r-md:16px; --r-lg:24px; --r-xl:32px;
   --sombra-1:0 6px 20px rgba(0,0,0,.3); --sombra-2:0 26px 60px rgba(0,0,0,.5);
@@ -415,3 +417,40 @@ footer .legal{grid-column:1/-1;padding-top:26px;border-top:1px solid rgba(255,25
   :root{--borda:#8d9098;--borda-2:#5b5e66;--suave:#2c2e33;--mudo:#4f525a}
   .escuro{--borda:#5a5e69;--borda-2:#7a7f8c;--suave:#d6d8de;--mudo:#b0b3bd}
 }
+
+/* ---------- título com a cara da Kiza (azul da ficha, pixel art, chibi no "o") ---------- */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.hero em.destaque{color:var(--kiza-azul);text-shadow:0 0 34px rgba(127,152,244,.32)}
+.titulo-kiza{position:relative;margin:22px 0 14px;padding:6px 0 4px}
+.titulo-kiza h1{margin:0}
+/* cantos de "painel de personagem" (como na ficha da Kiza) */
+.titulo-kiza::before,.titulo-kiza::after{content:"";position:absolute;width:20px;height:20px;border:2px solid var(--kiza-azul);opacity:.75;pointer-events:none}
+.titulo-kiza::before{left:-14px;top:-8px;border-right:0;border-bottom:0}
+.titulo-kiza::after{right:-6px;bottom:-4px;border-left:0;border-top:0}
+.o-kiza{display:inline-grid;place-items:center;width:.84em;height:.84em;border-radius:50%;border:.12em solid var(--kiza-azul);vertical-align:-.05em;margin:0 .03em;overflow:hidden;background:radial-gradient(circle at 50% 38%,rgba(127,152,244,.34),rgba(79,103,216,.2));box-shadow:0 0 22px rgba(127,152,244,.35),inset 0 0 0 .02em rgba(255,255,255,.25);transition:transform .35s var(--ease)}
+.o-kiza .chibi-o{width:128%;height:128%;margin-top:6%;flex:none}
+.titulo-kiza:hover .o-kiza{transform:rotate(-8deg) scale(1.06)}
+.px{position:absolute;color:var(--kiza-azul);pointer-events:none;shape-rendering:crispEdges}
+.px-a{width:42px;height:35px;right:2%;top:-30px;opacity:.9}
+.px-b{width:14px;height:14px;right:-4%;top:6px;opacity:.9}
+.px-c{width:10px;height:10px;right:12%;top:-48px;opacity:.7}
+.rabisco-azul{position:absolute;width:30px;height:30px;left:-4px;top:-34px;fill:none;stroke:var(--kiza-azul);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transform:rotate(-14deg);opacity:.85;pointer-events:none}
+.assina{display:flex;align-items:center;gap:12px;margin:0 0 22px;font-family:var(--fonte-pixel);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--kiza-azul)}
+.assina .px{position:static;width:10px;height:10px}
+.assina i{width:4px;height:4px;background:var(--kiza-azul);opacity:.6;transform:rotate(45deg)}
+.assina::after{content:"";flex:1;max-width:160px;height:1px;background:linear-gradient(90deg,var(--kiza-azul),transparent)}
+
+/* os humores da Kiza (rostos da ficha) */
+.humores{margin-top:34px}
+.humores .rotulo{color:var(--kiza-azul);margin-bottom:12px}
+.humores ul{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:460px}
+.humores li{display:grid;gap:5px;text-align:center}
+.humores li img{width:100%;aspect-ratio:1;object-fit:cover;object-position:50% 30%;border:1.5px solid var(--kiza-azul-2);border-radius:10px;background:#0d1230;box-shadow:inset 0 0 0 1px rgba(127,152,244,.18);transition:transform .35s var(--ease),border-color .2s}
+.humores li span{font-family:var(--fonte-pixel);font-size:.5rem;letter-spacing:.06em;text-transform:uppercase;color:var(--kiza-azul)}
+.humores li:hover img{transform:translateY(-3px);border-color:var(--kiza-azul)}
+@media (max-width:640px){
+  .titulo-kiza::before{left:-6px}
+  .px-a{width:34px;height:28px;top:-26px}
+  .humores ul{grid-template-columns:repeat(4,1fr);gap:8px}
+}
+@media (prefers-reduced-motion:reduce){.o-kiza,.humores li img{transition:none!important}}

@@ -69,6 +69,8 @@ document.documentElement.classList.add("js");
     <path d="M29 49.500q3 3 6 0" fill="none" stroke="#2c2e3a" stroke-width="1.800" stroke-linecap="round"/>
     <path d="M43.500 22.500l6 6M49.500 22.500l-6 6" stroke="#2c2e3a" stroke-width="2.400" stroke-linecap="round"/>
   </symbol>
+  <symbol id="px-gato" viewBox="0 0 13 11" fill="currentColor" shape-rendering="crispEdges"><rect x="0" y="0" width="1" height="1"/><rect x="12" y="0" width="1" height="1"/><rect x="0" y="1" width="1" height="1"/><rect x="1" y="1" width="1" height="1"/><rect x="11" y="1" width="1" height="1"/><rect x="12" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="5" y="2" width="1" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="7" y="2" width="1" height="1"/><rect x="8" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="12" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="12" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="0" y="7" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="7" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="0" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="12" y="8" width="1" height="1"/><rect x="1" y="9" width="1" height="1"/><rect x="11" y="9" width="1" height="1"/><rect x="2" y="10" width="1" height="1"/><rect x="3" y="10" width="1" height="1"/><rect x="4" y="10" width="1" height="1"/><rect x="5" y="10" width="1" height="1"/><rect x="6" y="10" width="1" height="1"/><rect x="7" y="10" width="1" height="1"/><rect x="8" y="10" width="1" height="1"/><rect x="9" y="10" width="1" height="1"/><rect x="10" y="10" width="1" height="1"/></symbol>
+  <symbol id="px-mais" viewBox="0 0 5 5" fill="currentColor" shape-rendering="crispEdges"><rect x="2" y="0" width="1" height="5"/><rect x="0" y="2" width="5" height="1"/></symbol>
   <symbol id="d-estrela" viewBox="0 0 60 60"><path d="M30 6C32 16 34 22 37 24C41 27 49 27 55 28C49 33 44 36 42 40C40 44 42 51 44 56C38 52 34 49 30 49C26 49 21 52 15 56C17 51 20 44 18 40C16 36 11 33 5 28C11 27 19 27 23 24C26 22 28 16 30 6Z"/></symbol>
   <symbol id="d-brilho" viewBox="0 0 60 60"><path d="M30 8C31 22 38 29 52 30C38 31 31 38 30 52C29 38 22 31 8 30C22 29 29 22 30 8Z"/></symbol>
   <symbol id="d-espiral" viewBox="0 0 60 60"><path d="M30 30c3-3 8-1 8 4 0 7-9 10-15 5-8-7-4-20 8-23 14-3 25 8 22 21-3 12-18 17-29 11"/></symbol>
@@ -109,7 +111,13 @@ document.documentElement.classList.add("js");
   <div class="wrap hero-grid">
     <div>
       <p class="pre"><i></i>Pré-lançamento · Minecraft Bedrock BR</p>
-      <h1>Uma <em class="destaque">toca de raposa</em> dentro do Minecraft.</h1>
+      <div class="titulo-kiza">
+        <h1>Uma <em class="destaque">toca de raposa</em> dentro d<span class="sr">o</span><span class="o-kiza" aria-hidden="true"><svg class="chibi-o"><use href="#i-chibi"/></svg></span> Minecraft.</h1>
+        <svg class="px px-a" viewBox="0 0 13 11" aria-hidden="true"><use href="#px-gato"/></svg>
+        <svg class="px px-b" viewBox="0 0 5 5" aria-hidden="true"><use href="#px-mais"/></svg>
+        <svg class="px px-c" viewBox="0 0 5 5" aria-hidden="true"><use href="#px-mais"/></svg>
+      </div>
+      <p class="assina"><svg class="px" viewBox="0 0 5 5" aria-hidden="true"><use href="#px-mais"/></svg>Kiza <i></i> VTuber <i></i> Vulpus</p>
       <p class="lead">Um servidor novo, com bot e addons feitos à mão por uma comunidade que ainda cabe numa mesa. Quem chega agora ajuda a decidir como tudo vai ser, e a futura equipe nasce daqui.</p>
       <div class="acoes">
         <a class="btn btn-discord js-convite" href="#" target="_blank" rel="noopener"><svg class="chibi" aria-hidden="true"><use href="#i-chibi"/></svg>Entrar no Discord <svg class="icone" aria-hidden="true"><use href="#i-seta-dir"/></svg></a>
@@ -289,6 +297,10 @@ document.documentElement.classList.add("js");
         <li><svg class="icone" aria-hidden="true"><use href="#i-lapis"/></svg><span><b>Desenha.</b> Peça um esboço e ela rabisca na hora.</span></li>
         <li><svg class="icone" aria-hidden="true"><use href="#i-camera"/></svg><span><b>Posta sozinha.</b> Desenhos, convites e um capítulo novo da lore todo mês.</span></li>
       </ul>
+          <div class="humores rev" style="--i:2">
+        <p class="rotulo">Os humores da Kiza</p>
+        <ul><li><img src="img/humor-feliz.webp" width="130" height="144" alt="Kiza feliz" loading="lazy"><span>Feliz</span></li><li><img src="img/humor-normal.webp" width="130" height="144" alt="Kiza normal" loading="lazy"><span>Normal</span></li><li><img src="img/humor-bravo.webp" width="130" height="144" alt="Kiza brava" loading="lazy"><span>Brava</span></li><li><img src="img/humor-triste.webp" width="130" height="144" alt="Kiza triste" loading="lazy"><span>Triste</span></li><li><img src="img/humor-surpresa.webp" width="130" height="144" alt="Kiza surpresa" loading="lazy"><span>Surpresa</span></li><li><img src="img/humor-piscando.webp" width="130" height="144" alt="Kiza piscando" loading="lazy"><span>Piscando</span></li><li><img src="img/humor-envergonhada.webp" width="130" height="144" alt="Kiza envergonhada" loading="lazy"><span>Envergonhada</span></li><li><img src="img/humor-lado.webp" width="130" height="144" alt="Kiza de lado" loading="lazy"><span>De lado</span></li></ul>
+      </div>
     </div>
     <svg class="rabisco-deco" viewBox="0 0 60 60" aria-hidden="true" style="top:-2%;right:-1%;width:50px;transform:rotate(10deg)"><use href="#d-gato"/></svg>
     <div class="janela escuro rev" style="--i:2" id="conversa" aria-label="Exemplo de conversa com a Kiza">
