@@ -57,14 +57,14 @@ TEMAS_MIDIA = [
 ]
 
 GANCHOS_PUBLICACOES = [
-    "mostrar a construção favorita da semana",
-    "mandar o print do momento mais engraçado no servidor",
-    "mostrar um cantinho escondido do mapa que ninguém conhece",
-    "mostrar a maior gambiarra de redstone que já fizeram",
-    "mostrar um tour rápido pela própria base",
-    "mandar o pior fail que já aconteceu no Minecraft",
-    "mostrar o pôr do sol mais bonito que acharam no jogo",
-    "mostrar o item mais raro que já conseguiram",
+    "postar um vídeo curto sobre o servidor no TikTok ou no Reels e colar o link aqui",
+    "fazer um post sobre o servidor no Instagram, no X ou no Twitter e mandar o link",
+    "mostrar uma construção do servidor num vídeo ou post e colar o link aqui",
+    "postar um clipe engraçado de um momento no servidor nas redes e trazer o link",
+    "chamar os amigos para o servidor com um post nas redes e deixar o link aqui",
+    "fazer um vídeo mostrando a própria base ou a toca e postar o link aqui",
+    "divulgar o servidor no story ou no status e mandar o print ou o link",
+    "postar um fail épico do Minecraft do servidor nas redes e mandar o link",
 ]
 
 SISTEMA_TAREFA = (
@@ -213,10 +213,14 @@ class Presenca(commands.Cog):
         gancho = random.choice(GANCHOS_PUBLICACOES)
         bruto = await cerebro._chamar_api(
             SISTEMA_TAREFA,
-            "Tarefa: escreva UMA mensagem curta (2 a 4 linhas, no máximo ~350 caracteres no total) para o canal de publicações, "
-            f"animando o pessoal a postar aqui. Gancho de hoje: convidar a galera a {gancho}. "
-            "Seja carismática e específica, como uma amiga puxando assunto; pode comentar que adora ver o que fazem. "
-            "De vez em quando (não sempre) lembre que publicar aqui conta no `/fidelidade`. Sem marcar ninguém. "
+            "Tarefa: escreva UMA mensagem curta (2 a 4 linhas, no máximo ~350 caracteres no total) para o canal de publicações. "
+            "Como funciona o canal: a pessoa posta algo sobre o servidor VULPUS nas redes sociais (TikTok, Instagram, X etc.) e "
+            "cola o LINK aqui; cada link enviado (e não apagado depois) vale +1 ponto no score dela no `/fidelidade`, e esses pontos "
+            "ajudam a pessoa a virar Helper no futuro (não prometa nada, só diga que ajuda). Máximo de 2 por dia contam. "
+            f"Gancho de hoje: convidar a galera a {gancho}. "
+            "Seja carismática e específica, como uma amiga puxando assunto, sem soar como propaganda nem como obrigação. "
+            "Explique o mecanismo de um jeito diferente a cada vez, em poucas palavras (nem toda mensagem precisa explicar tudo). "
+            "Nunca peça dados pessoais, só o link do post. Sem marcar ninguém. "
             "Responda só com o texto da mensagem.",
             400, 30,
         )
