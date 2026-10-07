@@ -42,15 +42,23 @@ def _sem_acento(txt: str) -> str:
 
 
 def extrair_json(bruto: str) -> Optional[dict]:
-    """Pega o primeiro objeto JSON da resposta (o modelo às vezes embrulha em ```)."""
-    ini, fim = bruto.find("{"), bruto.rfind("}")
-    if ini < 0 or fim <= ini:
+    """Pega o objeto JSON da resposta (o modelo às vezes embrulha em ```). Se vier cortado, aproveita os itens completos."""
+    ini = bruto.find("{")
+    if ini < 0:
         return None
-    try:
-        dados = json.loads(bruto[ini : fim + 1])
-    except ValueError:
-        return None
-    return dados if isinstance(dados, dict) else None
+    fim = bruto.rfind("}")
+    candidatos = [bruto[ini : fim + 1]] if fim > ini else []
+    corte = bruto.rfind("},")  # resposta cortada no meio de um item: fecha depois do último item inteiro
+    if corte > ini:
+        candidatos.append(bruto[ini : corte + 1] + "]}")
+    for texto in candidatos:
+        try:
+            dados = json.loads(texto)
+        except ValueError:
+            continue
+        if isinstance(dados, dict):
+            return dados
+    return None
 
 
 def _num(v: Any, minimo: float, maximo: float, padrao: float) -> float:

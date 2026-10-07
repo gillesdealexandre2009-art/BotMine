@@ -25,3 +25,10 @@ def test_desenha_png_mesmo_com_lixo():
 
 def test_spec_vazia_nao_quebra():
     assert desenhar({}, semente=1)[:4] == b"\x89PNG"
+
+
+def test_json_cortado_aproveita_itens_completos():
+    cortado = '{"fundo": "#ffffff", "itens": [{"t": "ret", "x": 1, "y": 1, "w": 5, "h": 5}, {"t": "linha", "pts": [[1,'
+    spec = extrair_json(cortado)
+    assert spec is not None and len(spec["itens"]) == 1
+    assert desenhar(spec)[:4] == b"\x89PNG"

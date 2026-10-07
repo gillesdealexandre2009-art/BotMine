@@ -42,6 +42,7 @@ GATILHOS_SAUDACAO = ("bom dia", "boa tarde", "boa noite")  # quem cuida disso é
 RE_NOME = re.compile(r"\bkiza\b", re.IGNORECASE)
 RE_LEMBRAR = re.compile(r"^\s*#\s*lembrar\s*:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE)
 RE_DESENHO = re.compile(r"\b(desenh|rabisc|esbo[cç]|croqui|ilustr)", re.IGNORECASE)
+RE_REPETIR = re.compile(r"\b(tent[ae]|de novo|novamente|c[aá]de|onde (est|t)|n[aã]o (veio|apareceu|enviou|chegou))", re.IGNORECASE)
 RE_SENSIVEL = re.compile(r"\d{7,}|@\w+\.\w+|https?://|senha|cpf|endere[cç]o", re.IGNORECASE)
 
 PERSONA = """\
@@ -106,7 +107,7 @@ Canvas: 800 de largura x 600 de altura (origem no canto superior esquerdo). Iten
 - {"t":"ret","x":0,"y":0,"w":100,"h":60,"cor":"#3a3a4a","preench":"#ffd6a5","e":3}
 - {"t":"elipse","x":0,"y":0,"w":100,"h":60,"cor":"#3a3a4a","preench":"#caffbf","e":3}
 - {"t":"texto","x":0,"y":0,"txt":"legenda curta","cor":"#3a3a4a","tam":22}
-Regras: no máximo 100 itens; use poucas formas bem pensadas, proporções coerentes e cores pastel; comece pelas formas de fundo \
+Regras: no máximo 70 itens; use poucas formas bem pensadas, proporções coerentes e cores pastel; comece pelas formas de fundo \
 (céu, chão) e termine pelos detalhes; adicione 2 a 5 legendas curtas em português apontando as partes importantes; deixe margem \
 de 30px nas bordas. Para construções de Minecraft, pense em blocos quadrados, vista de frente ou lateral, e mostre a ideia de \
 forma clara. Desenhe o que a conversa pede.\
@@ -199,6 +200,8 @@ class Cerebro(commands.Cog):
                 log.warning("Falha de rede ao falar com a API", exc_info=True)
                 return None
         texto = "".join(b.get("text", "") for b in dados.get("content", []) if b.get("type") == "text")
+        if dados.get("stop_reason") == "max_tokens":
+            log.warning("Resposta cortada por max_tokens (%s)", max_tokens)
         return texto.strip() or None
 
     async def _historico(self, mensagem: discord.Message) -> list[str]:
@@ -291,7 +294,12 @@ class Cerebro(commands.Cog):
                 blocos.append("(Falaram seu nome no chat; entre na conversa naturalmente, sem se apresentar.)")
             blocos.append("Responda como a Kiza.")
             contexto = "\n\n".join(blocos)
-            quer_desenho = bool(RE_DESENHO.search(mensagem.content)) and self._livre(("desenho", autor.id), COOLDOWN_DESENHO)
+            # pede desenho de cara, ou repete ("tenta de novo", "cadê?") logo depois de um pedido nas últimas falas
+            recente = any(RE_DESENHO.search(linha) for linha in historico[-5:])
+            quer_desenho = (
+                bool(RE_DESENHO.search(mensagem.content) or (recente and RE_REPETIR.search(mensagem.content)))
+                and self._livre(("desenho", autor.id), COOLDOWN_DESENHO)
+            )
             if quer_desenho:
                 bruto, imagem = await asyncio.gather(self._chamar_api(PERSONA, contexto), self._rabiscar(contexto))
             else:
@@ -305,15 +313,19 @@ class Cerebro(commands.Cog):
         for fato in novos[:2]:
             if fato_aceitavel(fato):
                 await banco.lembrar_cerebro(mensagem.guild.id, autor.id, fato)
+        if quer_desenho and imagem is None:
+            # o texto foi escrito achando que o desenho sairia: não deixa ela mentir que mandou
+            baloes = [random.choice(textos.RABISCO_FALHOU)]
         if baloes:
             await self._falar(mensagem, baloes, imagem)
 
     async def _rabiscar(self, contexto: str) -> Optional[bytes]:
         """PNG do rabisco pedido, ou None se a IA ou o desenho falharem (a resposta de texto sai igual)."""
         pedido = contexto + "\n\nFaça o desenho pedido na última mensagem."
-        bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 3500, 60)
+        bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90)
         spec = rabisco.extrair_json(bruto) if bruto else None
         if spec is None:
+            log.warning("Rabisco sem JSON utilizável (resposta: %s)", truncar(bruto or "vazia", 200))
             return None
         try:
             return await asyncio.to_thread(rabisco.desenhar, spec)
@@ -328,8 +340,15 @@ class Cerebro(commands.Cog):
                 async with mensagem.channel.typing():
                     await asyncio.sleep(min(3.5, 0.5 + len(texto) / 25) * random.uniform(0.8, 1.2))
                 if i == 0:
-                    extra = {"file": discord.File(io.BytesIO(imagem), filename="rabisco-da-kiza.png")} if imagem else {}
-                    await mensagem.reply(texto, mention_author=False, allowed_mentions=sem_pings, **extra)
+                    try:
+                        extra = {"file": discord.File(io.BytesIO(imagem), filename="rabisco-da-kiza.png")} if imagem else {}
+                        await mensagem.reply(texto, mention_author=False, allowed_mentions=sem_pings, **extra)
+                    except discord.Forbidden:
+                        if not imagem:
+                            raise
+                        log.warning("Sem permissão de Anexar Arquivos em #%s", getattr(mensagem.channel, "name", "?"))
+                        await mensagem.reply(random.choice(textos.RABISCO_SEM_PERMISSAO), mention_author=False,
+                                             allowed_mentions=sem_pings)
                 else:
                     await mensagem.channel.send(texto, allowed_mentions=sem_pings)
         except discord.HTTPException:

@@ -713,6 +713,14 @@ CONVERSA_OBRIGADO = [
     "Imagina! Sou incrível, eu sei. 😌",
     "Por nada! Me paga em Caudas. Brincadeira. ...ou não. 😼",
 ]
+RABISCO_FALHOU = [
+    "ai, o rabisco empacou aqui 😭 me pede de novo?",
+    "eita, a caneta secou! tenta pedir o desenho de novo, prometo que dessa vez vai 🦊",
+    "não consegui rabiscar dessa vez kkk pede de novo pra mim?",
+]
+RABISCO_SEM_PERMISSAO = [
+    "rabisquei, mas não consigo anexar aqui 😭 alguém da staff me dá a permissão de Anexar Arquivos nesse canal?",
+]
 PROVOCACOES = [
     "Cadê todo mundo? 😒 A toca tá tão quieta que dá pra ouvir um creeper respirando.",
     "Oi? Alô? Tem alguém aí ou eu tô falando sozinha de novo? 🦊",
