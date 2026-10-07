@@ -5,7 +5,7 @@
 /* ===================== CONFIGURE AQUI ===================== */
 const CONFIG = {
   // Link de convite do Discord (https://discord.gg/...). Troca todos os botões "Entrar no Discord".
-  convite: "https://discord.gg/COLE_O_CONVITE_AQUI",
+  convite: "https://discord.com/invite/KrsuH6PJCc",
 
   // Quando o servidor de Minecraft abrir: preencha o endereço e a porta. O passo 04 vira um botão "copiar".
   ip: "",
