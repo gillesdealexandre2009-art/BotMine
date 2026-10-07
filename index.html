@@ -11,6 +11,14 @@
 <meta property="og:image" content="img/sobre.webp">
 <meta name="theme-color" content="#0e1124">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🦊%3C/text%3E%3C/svg%3E">
+<script>
+/* Detecta celular (tela estreita, aparelho touch ou user agent) e marca <html class="mobile"> antes de pintar a página. */
+(function(){
+  var ehMobile=function(){return matchMedia("(max-width: 820px)").matches||/Android|iPhone|iPad|iPod|Mobile|Opera Mini/i.test(navigator.userAgent)||(matchMedia("(pointer: coarse)").matches&&innerWidth<1100)};
+  var marcar=function(){document.documentElement.classList.toggle("mobile",ehMobile())};
+  marcar();addEventListener("resize",marcar);
+})();
+</script>
 <style>
 @font-face{font-family:"Fredoka";src:url("fonts/Fredoka.ttf") format("truetype");font-weight:300 700;font-display:swap}
 :root{
@@ -59,7 +67,7 @@ h1 em{font-style:normal;background:linear-gradient(120deg,var(--laranja2),var(--
 .chips{display:flex;flex-wrap:wrap;gap:10px}
 .chip{padding:7px 14px;border-radius:999px;background:var(--card);border:1px solid var(--linha);font-size:.9rem;color:var(--suave)}
 .hero-arte{position:relative;justify-self:center;width:min(380px,80%)}
-.hero-arte img{border-radius:28px;box-shadow:var(--sombra);border:2px solid var(--linha);aspect-ratio:5/6;object-fit:cover}
+.hero-arte img{width:100%;height:auto;border-radius:28px;box-shadow:var(--sombra);border:2px solid var(--linha);aspect-ratio:5/6;object-fit:cover}
 .hero-arte::before{content:"";position:absolute;inset:-18px;border-radius:40px;background:conic-gradient(from 200deg,var(--laranja),var(--lilas),var(--gelo),var(--laranja));filter:blur(34px);opacity:.35;z-index:-1}
 .selo{position:absolute;right:-14px;bottom:26px;background:var(--bg2);border:2px solid var(--laranja);border-radius:16px;padding:10px 14px;font-family:"Fredoka";font-weight:600;transform:rotate(4deg);box-shadow:var(--sombra)}
 @media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.hero-arte{order:-1;width:min(260px,70%)}}
@@ -142,6 +150,35 @@ h1 em{font-style:normal;background:linear-gradient(120deg,var(--laranja2),var(--
 .cta img{border-radius:var(--raio);margin:0 auto 34px;width:min(820px,100%);border:1px solid var(--linha);box-shadow:var(--sombra)}
 footer{padding:30px 0 50px;color:var(--suave);font-size:.9rem;text-align:center;border-top:1px solid rgba(255,255,255,.06)}
 
+
+/* ===== modo celular (html.mobile) ===== */
+.menu-btn,.menu-mobile,.barra-cta,.dica{display:none}
+.mobile section{padding:56px 0}
+.mobile .hero{padding:36px 0 56px}
+.mobile .links,.mobile nav .btn-sm{display:none}
+.mobile .menu-btn{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;border:1px solid var(--linha);background:var(--card);color:var(--texto);font-size:1.4rem;cursor:pointer}
+.mobile .menu-mobile{display:flex;flex-direction:column;position:fixed;inset:64px 0 0 0;z-index:19;padding:18px 22px 30px;background:var(--bg);transform:translateY(-8px);opacity:0;visibility:hidden;transition:opacity .2s,transform .2s,visibility .2s}
+.mobile .menu-mobile.aberto{transform:none;opacity:1;visibility:visible}
+.mobile .menu-mobile a:not(.btn){padding:17px 4px;font-family:"Fredoka";font-size:1.35rem;border-bottom:1px solid var(--linha)}
+.mobile .menu-mobile .btn{margin-top:22px;width:100%}
+.mobile .barra-cta{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:18;padding:22px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(14,17,36,.97) 40%);transform:translateY(120%);transition:transform .25s;pointer-events:none}
+.mobile .barra-cta.on{transform:none}
+.mobile .barra-cta .btn{width:100%;pointer-events:auto}
+.mobile body{padding-bottom:84px}
+.mobile h1{font-size:2.3rem}
+.mobile .hero-arte{width:min(230px,62%)}
+.mobile .hero .botoes .btn{width:100%}
+.mobile .btn{min-height:50px}
+.mobile .dica{display:block;color:var(--suave);font-size:.85rem;margin-top:14px}
+.mobile .grade,.mobile .banners{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;margin:18px -16px 0;padding:6px 16px 14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.mobile .grade::-webkit-scrollbar,.mobile .banners::-webkit-scrollbar{display:none}
+.mobile .grade .card{flex:0 0 78%;scroll-snap-align:center}
+.mobile .banners img{flex:0 0 90%;scroll-snap-align:center}
+.mobile .card:hover,.mobile .banners img:hover{transform:none}
+.mobile .cartas{min-height:310px}
+.mobile .chat{padding:14px}
+.mobile .videos{grid-template-columns:1fr}
+.mobile .etapa{padding:16px}
 .revelar{opacity:0;transform:translateY(18px);transition:opacity .6s,transform .6s}
 .revelar.on{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}.revelar{opacity:1;transform:none}}
@@ -160,8 +197,18 @@ footer{padding:30px 0 50px;color:var(--suave);font-size:.9rem;text-align:center;
       <a href="#chegando">Chegando</a>
     </div>
     <a class="btn btn-main btn-sm js-convite" href="#" target="_blank" rel="noopener">Entrar no servidor</a>
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">☰</button>
   </div>
 </nav>
+<div class="menu-mobile" id="menu" aria-hidden="true">
+  <a href="#features">✨ O que já tem</a>
+  <a href="#figurinhas">🃏 Figurinhas</a>
+  <a href="#kiza">🦊 Kiza</a>
+  <a href="#videos">🎬 Vídeos</a>
+  <a href="#chegando">⛏️ Chegando</a>
+  <a class="btn btn-main js-convite" href="#" target="_blank" rel="noopener">🦊 Entrar no servidor</a>
+</div>
+<div class="barra-cta" id="barra"><a class="btn btn-main js-convite" href="#" target="_blank" rel="noopener">🦊 Entrar no servidor</a></div>
 
 <header id="topo" class="hero fundo-estrelas">
   <div class="wrap">
@@ -202,6 +249,7 @@ footer{padding:30px 0 50px;color:var(--suave);font-size:.9rem;text-align:center;
       <div class="card revelar"><div class="ico">📖</div><h3>Lore viva</h3><p>A lenda da Kiza Misuchi ganha um capítulo novo todo mês, com os amigos que ela faz na toca.</p></div>
       <div class="card revelar"><div class="ico">🎫</div><h3>Tickets e segurança</h3><p>Fale direto com a staff, denuncie com tranquilidade e conte com moderação e proteção contra raids.</p></div>
     </div>
+    <p class="dica">Arraste para o lado →</p>
   </div>
 </section>
 
@@ -294,6 +342,7 @@ footer{padding:30px 0 50px;color:var(--suave);font-size:.9rem;text-align:center;
       <img class="revelar" src="img/comandos.webp" alt="Banner: Comandos" loading="lazy" width="1200" height="400">
       <img class="revelar" src="img/cores.webp" alt="Banner: Cores" loading="lazy" width="1200" height="400">
     </div>
+    <p class="dica">Arraste para o lado →</p>
   </div>
 </section>
 
@@ -350,6 +399,24 @@ CONFIG.videos.forEach(v => {
   const p = document.createElement("p"); p.textContent = v.desc; el.appendChild(p);
   lista.appendChild(el);
 });
+
+/* ---- celular: menu e barra fixa ---- */
+const menu = document.getElementById("menu"), menuBtn = document.getElementById("menuBtn"), barra = document.getElementById("barra");
+const fechar = () => { menu.classList.remove("aberto"); menuBtn.setAttribute("aria-expanded", "false"); menu.setAttribute("aria-hidden", "true"); menuBtn.textContent = "☰"; };
+menuBtn.addEventListener("click", () => {
+  const abrir = !menu.classList.contains("aberto");
+  menu.classList.toggle("aberto", abrir); menuBtn.setAttribute("aria-expanded", String(abrir));
+  menu.setAttribute("aria-hidden", String(!abrir)); menuBtn.textContent = abrir ? "✕" : "☰";
+});
+menu.querySelectorAll("a").forEach(a => a.addEventListener("click", fechar));
+addEventListener("keydown", e => { if (e.key === "Escape") fechar(); });
+let noFim = false;
+const atualizarBarra = () => barra.classList.toggle("on", scrollY > 420 && !noFim && !menu.classList.contains("aberto"));
+addEventListener("scroll", atualizarBarra, { passive: true });
+menuBtn.addEventListener("click", atualizarBarra);
+if ("IntersectionObserver" in window) {
+  new IntersectionObserver(es => { noFim = es[0].isIntersecting; atualizarBarra(); }).observe(document.querySelector(".cta .btn"));
+}
 
 const obs = "IntersectionObserver" in window
   ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("on"); obs.unobserve(e.target); } }), { threshold: .12 })
