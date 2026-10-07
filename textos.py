@@ -481,6 +481,15 @@ DUVIDAS_CAMPOS = [
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
     (
+        "1.7.1",
+        "Ajustes da Kiza",
+        [
+            "🎨 O desenho que eu faço sozinha agora sai **a cada 10 dias** (e eu não esqueço quando reinicio)",
+            "📸 Se alguém pedir um desenho do Kope, eu só tenho um: o retrato oficial",
+            "🦊 **Kiza:** \"o retrato oficial é fiel. não aceito reclamação.\"",
+        ],
+    ),
+    (
         "1.7.0",
         "Figurinhas da Kiza",
         [

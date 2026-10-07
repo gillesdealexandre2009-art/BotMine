@@ -68,3 +68,18 @@ def test_sem_gratis_sempre_cobra(tmp_path):
         await b.fechar()
 
     rodar(cenario)
+
+
+def test_reivindicar_config_so_uma_vez(tmp_path):
+    async def cenario():
+        b = await novo(tmp_path)
+        nunca = lambda atual: atual is None  # noqa: E731
+        assert await b.reivindicar_config(G, "presenca_x", "2026-10-07", nunca) == (True, None)
+        assert await b.reivindicar_config(G, "presenca_x", "2026-10-07", nunca) == (False, "2026-10-07")
+        assert await b.get_config(G, "presenca_x") == "2026-10-07"
+        # duas "cópias do bot" disputando: só uma ganha
+        resultados = await asyncio.gather(*(b.reivindicar_config(G, "presenca_y", "a", nunca) for _ in range(5)))
+        assert sum(1 for ok, _ in resultados if ok) == 1
+        await b.fechar()
+
+    rodar(cenario)

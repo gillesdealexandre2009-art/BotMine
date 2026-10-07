@@ -1210,3 +1210,24 @@ class Banco:
                 (guild_id, user_id, carta_id, agora()),
             )
             return {"nova": atual is None, "quantidade": quantidade, "gratis": gratis, "saldo": saldo}
+
+    async def reivindicar_config(self, guild_id: int, chave: str, novo: str, aceita) -> tuple[bool, Optional[str]]:
+        """Lê o valor da config direto do banco e, se `aceita(valor_atual)`, grava `novo` — tudo numa transação exclusiva.
+
+        Serve para duas cópias do bot (deploy novo subindo com o antigo ainda de pé) nunca fazerem a mesma coisa duas vezes.
+        Retorna (reivindicou, valor_anterior).
+        """
+        async with self._tx() as conn:
+            linha = await self._fetchone(
+                conn, "SELECT valor FROM config_guild WHERE guild_id = ? AND chave = ?", (guild_id, chave)
+            )
+            atual = linha["valor"] if linha else None
+            if not aceita(atual):
+                return False, atual
+            await conn.execute(
+                "INSERT INTO config_guild (guild_id, chave, valor) VALUES (?, ?, ?) "
+                "ON CONFLICT(guild_id, chave) DO UPDATE SET valor = excluded.valor",
+                (guild_id, chave, novo),
+            )
+        self._cfg.pop(guild_id, None)
+        return True, atual

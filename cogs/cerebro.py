@@ -14,6 +14,8 @@ import random
 import re
 import time
 from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import aiohttp
@@ -44,6 +46,9 @@ RE_NOME = re.compile(r"\bkiza\b", re.IGNORECASE)
 RE_LEMBRAR = re.compile(r"^\s*#\s*lembrar\s*:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE)
 RE_DESENHO = re.compile(r"\b(desenh|rabisc|esbo[cç]|croqui|ilustr)", re.IGNORECASE)
 RE_REPETIR = re.compile(r"\b(tent[ae]|de novo|novamente|c[aá]de|onde (est|t)|n[aã]o (veio|apareceu|enviou|chegou))", re.IGNORECASE)
+RE_KOPE = re.compile(r"\bk\W*o\W*p\W*e\b", re.IGNORECASE)  # "kope", "K O P E", "k-o-p-e"
+RE_EU = re.compile(r"\b(me|mim|eu)\b", re.IGNORECASE)
+CHADS = [Path(__file__).resolve().parent.parent / "assets" / "chad" / f"chad{n}.png" for n in (1, 2)]
 RE_SENSIVEL = re.compile(r"\d{7,}|@\w+\.\w+|https?://|senha|cpf|endere[cç]o", re.IGNORECASE)
 
 APARENCIA = (
@@ -127,6 +132,22 @@ Regras: no máximo 70 itens; use poucas formas bem pensadas, proporções coeren
 de 30px nas bordas. Para construções de Minecraft, pense em blocos quadrados, vista de frente ou lateral, e mostre a ideia de \
 forma clara. Se a Kiza aparecer no desenho, ela é uma menina (NÃO uma raposa de verdade) com orelhas e cauda de raposa: cabelo branco longo, olhos azuis, jaqueta branca grande sobre roupa preta, grampo de gatinho com X, mochila branca; a mãe dela é uma kitsune com nove caudas. Desenhe o que a conversa pede.\
 """
+
+
+ARQUIVO_RABISCO = "rabisco-da-kiza.png"
+
+
+@lru_cache(maxsize=1)
+def _chads() -> list[bytes]:
+    return [p.read_bytes() for p in CHADS if p.exists()]
+
+
+def pediu_kope(mensagem: discord.Message) -> bool:
+    """Pediram um desenho do Kope? Pelo nome no texto (ou marcação), ou o próprio Kope dizendo "me desenha"."""
+    texto = mensagem.clean_content
+    if RE_KOPE.search(texto):
+        return True
+    return bool(RE_KOPE.search(mensagem.author.display_name) and RE_EU.search(texto))
 
 
 def limpar_resposta(bruto: str) -> tuple[list[str], list[str]]:
@@ -315,7 +336,18 @@ class Cerebro(commands.Cog):
                 bool(RE_DESENHO.search(mensagem.content) or (recente and RE_REPETIR.search(mensagem.content)))
                 and self._livre(("desenho", autor.id), COOLDOWN_DESENHO)
             )
-            if quer_desenho:
+            kope = quer_desenho and pediu_kope(mensagem)
+            nome_arquivo = ARQUIVO_RABISCO
+            if kope:
+                # desenhar o Kope é piada fixa: sempre o mesmo retrato oficial, sem gastar chamada de desenho
+                chads = await asyncio.to_thread(_chads)
+                imagem, nome_arquivo = (random.choice(chads) if chads else None), "retrato-oficial-do-kope.png"
+                bruto = await self._chamar_api(
+                    PERSONA,
+                    contexto + "\n\n(Junto da sua resposta vai uma foto de um homem enorme, forte e barbudo, o 'retrato oficial' do "
+                    "Kope. Comente isso brincando, bem curto, como se fosse um desenho fiel dele.)",
+                )
+            elif quer_desenho:
                 bruto, imagem = await asyncio.gather(self._chamar_api(PERSONA, contexto), self._rabiscar(contexto))
             else:
                 bruto, imagem = await self._chamar_api(PERSONA, contexto), None
@@ -332,7 +364,7 @@ class Cerebro(commands.Cog):
             # o texto foi escrito achando que o desenho sairia: não deixa ela mentir que mandou
             baloes = [random.choice(textos.RABISCO_FALHOU)]
         if baloes:
-            await self._falar(mensagem, baloes, imagem)
+            await self._falar(mensagem, baloes, imagem, nome_arquivo)
 
     async def _rabiscar(self, contexto: str) -> Optional[bytes]:
         """PNG do rabisco pedido, ou None se a IA ou o desenho falharem (a resposta de texto sai igual)."""
@@ -354,7 +386,9 @@ class Cerebro(commands.Cog):
             log.warning("Falha ao renderizar o rabisco", exc_info=True)
             return None
 
-    async def _falar(self, mensagem: discord.Message, baloes: list[str], imagem: Optional[bytes] = None) -> None:
+    async def _falar(
+        self, mensagem: discord.Message, baloes: list[str], imagem: Optional[bytes] = None, nome_arquivo: str = "rabisco-da-kiza.png"
+    ) -> None:
         sem_pings = discord.AllowedMentions.none()
         try:
             for i, texto in enumerate(baloes):
@@ -362,7 +396,7 @@ class Cerebro(commands.Cog):
                     await asyncio.sleep(min(3.5, 0.5 + len(texto) / 25) * random.uniform(0.8, 1.2))
                 if i == 0:
                     try:
-                        extra = {"file": discord.File(io.BytesIO(imagem), filename="rabisco-da-kiza.png")} if imagem else {}
+                        extra = {"file": discord.File(io.BytesIO(imagem), filename=nome_arquivo)} if imagem else {}
                         await mensagem.reply(texto, mention_author=False, allowed_mentions=sem_pings, **extra)
                     except discord.Forbidden:
                         if not imagem:

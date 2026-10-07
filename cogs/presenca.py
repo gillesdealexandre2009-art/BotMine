@@ -1,6 +1,6 @@
 """Presença da Kiza: ela posta sozinha para dar vida à toca.
 
-* Mídias (1x por dia): um desenho fofo que ela "fez", com legenda de quem acabou de rabiscar.
+* Mídias (1x a cada 10 dias): um desenho fofo que ela "fez", com legenda de quem acabou de rabiscar.
 * Publicações (a cada 2 dias): um convite para o pessoal mostrar construções, prints e vídeos.
 * Lore (1x por mês): um capítulo novo da história da Kiza, citando amigos novos da toca.
 
@@ -13,7 +13,7 @@ from __future__ import annotations
 import io
 import logging
 import random
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
 import discord
@@ -33,10 +33,12 @@ if TYPE_CHECKING:  # pragma: no cover
 
 log = logging.getLogger("kiza.presenca")
 
-MIDIA_JANELA = (14, 21)  # hora (BRT) em que o desenho do dia pode sair: entre 14h e 21h
+MIDIA_JANELA = (14, 21)  # hora (BRT) em que o desenho pode sair: entre 14h e 21h
 PUBLICACOES_JANELA = (11, 19)
+MIDIA_A_CADA_DIAS = 10
 PUBLICACOES_A_CADA_DIAS = 2
 LORE_A_PARTIR_DA_HORA = 12
+ARQUIVO_DESENHO = "desenho-da-kiza.png"
 TENTATIVAS_POR_DIA = 3  # se a IA falhar, tenta de novo no próximo tique (até aqui)
 
 TEMAS_MIDIA = [
@@ -147,28 +149,78 @@ class Presenca(commands.Cog):
     async def _antes(self) -> None:
         await self.bot.wait_until_ready()
 
+    async def _dias_desde(self, guild_id: int, chave: str, hoje: date) -> Optional[int]:
+        valor = await self._cfg(guild_id, chave)
+        try:
+            return (hoje - date.fromisoformat(valor)).days if valor else None
+        except ValueError:
+            return None
+
+    async def _reivindicar(self, guild: discord.Guild, chave: str, novo: str, aceita) -> tuple[bool, Optional[str]]:
+        return await self.bot.banco.reivindicar_config(guild.id, f"presenca_{chave}", novo, aceita)
+
+    async def _desfazer(self, guild: discord.Guild, chave: str, anterior: Optional[str]) -> None:
+        await self.bot.banco.set_config(guild.id, f"presenca_{chave}", anterior)
+
+    async def _tentar(self, guild: discord.Guild, tipo: str, chave: str, novo: str, aceita, hoje: str, tarefa) -> None:
+        """Reivindica o período (atômico), tenta postar e, se não der, devolve o período para tentar de novo.
+
+        A reivindicação vem ANTES do post: assim um reinício, ou dois processos do bot ao mesmo tempo, nunca postam duas vezes.
+        """
+        ok, anterior = await self._reivindicar(guild, chave, novo, aceita)
+        if not ok:
+            return
+        if not await self._tentativa(guild.id, tipo, hoje) or not await tarefa(guild):
+            await self._desfazer(guild, chave, anterior)
+
     async def _tique(self, guild: discord.Guild, agora: datetime) -> None:
         cerebro = self._cerebro()
         if cerebro is None or not await cerebro.ativo(guild.id):
             return
-        hoje, minuto = agora.date().isoformat(), agora.hour * 60 + agora.minute
+        data = agora.date()
+        hoje, minuto = data.isoformat(), agora.hour * 60 + agora.minute
 
+        def a_cada(dias: int):
+            def aceita(atual: Optional[str]) -> bool:
+                try:
+                    return atual is None or (data - date.fromisoformat(atual)).days >= dias
+                except ValueError:
+                    return True
+            return aceita
+
+        # 1 desenho a cada MIDIA_A_CADA_DIAS dias. O "último" fica no banco e também é conferido no próprio canal.
         alvo = minuto_do_dia(guild.id, hoje, "midia", *MIDIA_JANELA)
-        if alvo <= minuto < 22 * 60 and await self._cfg(guild.id, "midia_data") != hoje and await self._tentativa(guild.id, "midia", hoje):
-            if await self.postar_midia(guild):
-                await self._set(guild.id, "midia_data", hoje)
+        if alvo <= minuto < 22 * 60:
+            if not await self._cfg(guild.id, "midia_ultimo") and await self._cfg(guild.id, "midia_data"):
+                await self._set(guild.id, "midia_ultimo", await self._cfg(guild.id, "midia_data"))  # nome antigo da config
+            dias = await self._dias_desde(guild.id, "midia_ultimo", data)
+            if dias is None or dias >= MIDIA_A_CADA_DIAS:
+                recente = await self._ultimo_desenho_no_canal(guild)
+                if recente is not None and (data - recente).days < MIDIA_A_CADA_DIAS:
+                    await self._set(guild.id, "midia_ultimo", recente.isoformat())  # já postou (banco novo, outra cópia...)
+                else:
+                    await self._tentar(guild, "midia", "midia_ultimo", hoje, a_cada(MIDIA_A_CADA_DIAS), hoje, self.postar_midia)
 
-        dias = agora.date().toordinal() // PUBLICACOES_A_CADA_DIAS
         alvo = minuto_do_dia(guild.id, hoje, "publicacoes", *PUBLICACOES_JANELA)
-        ciclo = f"{dias}"
-        if alvo <= minuto < 21 * 60 and await self._cfg(guild.id, "pub_ciclo") != ciclo and await self._tentativa(guild.id, "pub", hoje):
-            if await self.postar_publicacoes(guild):
-                await self._set(guild.id, "pub_ciclo", ciclo)
+        if alvo <= minuto < 21 * 60:
+            await self._tentar(guild, "pub", "pub_ultimo", hoje, a_cada(PUBLICACOES_A_CADA_DIAS), hoje, self.postar_publicacoes)
 
         mes = f"{agora:%Y-%m}"
-        if agora.hour >= LORE_A_PARTIR_DA_HORA and await self._cfg(guild.id, "lore_mes") != mes and await self._tentativa(guild.id, "lore", hoje):
-            if await self.postar_lore(guild, agora):
-                await self._set(guild.id, "lore_mes", mes)
+        if agora.hour >= LORE_A_PARTIR_DA_HORA:
+            await self._tentar(guild, "lore", "lore_mes", mes, lambda atual: atual != mes, hoje, self.postar_lore)
+
+    async def _ultimo_desenho_no_canal(self, guild: discord.Guild) -> Optional[date]:
+        """Data do último desenho diário que a Kiza postou no canal de mídias (None se não achar)."""
+        canal = await self._canal_midia(guild)
+        if canal is None:
+            return None
+        try:
+            async for m in canal.history(limit=60):
+                if m.author.id == self.bot.user.id and any(a.filename == ARQUIVO_DESENHO for a in m.attachments):  # type: ignore[union-attr]
+                    return m.created_at.astimezone(TZ).date()
+        except discord.HTTPException:
+            log.warning("Não consegui ler o histórico do canal de mídias", exc_info=True)
+        return None
 
     # ------------------------------------------------------------------ mídias: desenho do dia
     async def postar_midia(self, guild: discord.Guild) -> bool:
@@ -197,7 +249,7 @@ class Presenca(commands.Cog):
         try:
             await canal.send(
                 truncar(dados["legenda"].strip(), 600),
-                file=discord.File(io.BytesIO(png), filename="desenho-da-kiza.png"),
+                file=discord.File(io.BytesIO(png), filename=ARQUIVO_DESENHO),
                 allowed_mentions=discord.AllowedMentions.none(),
             )
         except discord.HTTPException:
