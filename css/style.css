@@ -72,6 +72,20 @@ em.destaque{font-style:normal;color:var(--brasa-grande)}
 .btn-main{background:linear-gradient(180deg,#f7a152,var(--brasa-2));color:#1d1208;box-shadow:var(--brilho-brasa)}
 .btn-main:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(230,106,44,.38),inset 0 1px 0 rgba(255,255,255,.45)}
 .btn:active{transform:scale(.97);transition-duration:90ms}
+/* botão do Discord: azul do Discord com detalhes de Kiza chibi (orelhas, rabinho e carinha) */
+.btn-discord{position:relative;isolation:isolate;background:linear-gradient(180deg,#6672f5,#4752c4);color:#fff;box-shadow:0 8px 22px rgba(71,82,196,.45),inset 0 1px 0 rgba(255,255,255,.35);text-shadow:0 1px 0 rgba(20,24,80,.35)}
+.btn-discord:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(71,82,196,.6),inset 0 1px 0 rgba(255,255,255,.4)}
+.btn-discord::before{content:"";position:absolute;left:50%;top:-17px;width:60px;height:20px;transform:translateX(-50%);background:url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2220%22 viewBox=%220 0 60 20%22%3E%3Cg stroke=%22%23cfd2ec%22 stroke-width=%221.4%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3 19.500L9 2L23 17Z%22 fill=%22%23fff%22/%3E%3Cpath d=%22M57 19.500L51 2L37 17Z%22 fill=%22%23fff%22/%3E%3C/g%3E%3Cpath d=%22M7.500 16.500L10.200 7.500L17.500 15.800Z%22 fill=%22%23ffb9cb%22/%3E%3Cpath d=%22M52.500 16.500L49.800 7.500L42.500 15.800Z%22 fill=%22%23ffb9cb%22/%3E%3C/svg%3E") center/contain no-repeat;z-index:-1;pointer-events:none;transform-origin:50% 100%}
+.btn-discord::after{content:"";position:absolute;right:-20px;bottom:-6px;width:38px;height:32px;background:url("data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2234%22 viewBox=%220 0 40 34%22%3E%3Cpath d=%22M3 29C0 14 10 3 24 4c10 1 15 9 11 17-3 6-3 5-8 3-3-1-5 1-6 4-2 5-8 7-18 1Z%22 fill=%22%23fff%22 stroke=%22%23cfd2ec%22 stroke-width=%221.4%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M26 4c10 1 15 9 11 17-3 6-3 5-8 3 4-6 3-13-3-20Z%22 fill=%22%233a3c4a%22/%3E%3C/svg%3E") center/contain no-repeat;z-index:-1;pointer-events:none;transform:rotate(14deg);transform-origin:12% 85%}
+.btn-discord:hover::before{animation:orelhas .7s ease-in-out}
+.btn-discord:hover::after{animation:abana .8s ease-in-out infinite}
+@keyframes orelhas{0%,100%{transform:translateX(-50%) rotate(0)}25%{transform:translateX(-50%) rotate(-5deg)}60%{transform:translateX(-50%) rotate(4deg)}}
+@keyframes abana{0%,100%{transform:rotate(14deg)}50%{transform:rotate(36deg)}}
+.btn-discord .chibi{width:34px;height:34px;margin:-6px -2px -6px -12px;flex:none;filter:drop-shadow(0 2px 3px rgba(20,24,80,.4));transition:transform .25s var(--ease)}
+.btn-discord:hover .chibi{transform:translateY(-2px) rotate(-6deg)}
+.btn-sm.btn-discord::before{top:-13px;width:48px;height:16px}
+.btn-sm.btn-discord::after{right:-15px;bottom:-4px;width:30px;height:25px}
+.menu-mobile .btn-discord,.barra-cta .btn-discord{overflow:visible}
 .btn-borda{border:1.5px solid var(--borda-2);color:var(--texto);background:rgba(var(--fg-rgb),.02)}
 .btn-borda:hover{background:rgba(var(--fg-rgb),.07);border-color:var(--texto)}
 .btn-sm{min-height:40px;padding:0 18px;font-size:.95rem}
@@ -377,6 +391,7 @@ footer .legal{grid-column:1/-1;padding-top:26px;border-top:1px solid rgba(255,25
   .hero{padding-top:36px}
   .hero .acoes{flex-direction:column;align-items:stretch;gap:16px}
   .hero .acoes .link-seta{justify-content:center}
+  .hero .acoes .btn-discord::after,.barra-cta .btn-discord::after,.menu-mobile .btn-discord::after{right:-2px;bottom:-11px;transform:rotate(30deg)}
   .balao{display:none}
   .carta-flutuante.a{left:-6%}.carta-flutuante.b{right:-5%}
   .passos{grid-template-columns:1fr}

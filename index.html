@@ -58,6 +58,17 @@ document.documentElement.classList.add("js");
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
   <symbol id="i-clapper" viewBox="0 0 24 24"><rect x="3.500" y="9" width="17" height="11" rx="1.500"/><path d="M3.500 9l2-4.500 4 .8-2 4.500M9.500 9l2-4.500 4 .8-2 4.500M15.500 9l2-4.500 3 .6"/></symbol>
   <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8.500" y="8.500" width="11" height="11" rx="2"/><path d="M15.500 8.500V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.500a2 2 0 0 0 2 2h2.500"/></symbol>
+  <symbol id="i-chibi" viewBox="0 0 64 64">
+    <path d="M9 30L12 4L30 17Z" fill="#fff" stroke="#2c2e3a" stroke-width="2" stroke-linejoin="round"/><path d="M55 30L52 4L34 17Z" fill="#fff" stroke="#2c2e3a" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M13 24L14.500 11L24 18Z" fill="#ffb9cb"/><path d="M51 24L49.500 11L40 18Z" fill="#ffb9cb"/>
+    <ellipse cx="32" cy="39" rx="23" ry="20" fill="#f7f7fc" stroke="#2c2e3a" stroke-width="2"/>
+    <path d="M10 36C12 20 22 16 32 22C42 16 52 20 54 36C48 29 42 29 38 31C34 27 30 27 26 31C22 29 16 29 10 36Z" fill="#e3e5f4" stroke="#2c2e3a" stroke-width="1.6" stroke-linejoin="round"/>
+    <ellipse cx="23" cy="41" rx="4.200" ry="5.600" fill="#5b7de8" stroke="#2c2e3a" stroke-width="1.2"/><ellipse cx="41" cy="41" rx="4.200" ry="5.600" fill="#5b7de8" stroke="#2c2e3a" stroke-width="1.2"/>
+    <circle cx="24.500" cy="39" r="1.600" fill="#fff"/><circle cx="42.500" cy="39" r="1.600" fill="#fff"/>
+    <ellipse cx="14.500" cy="48" rx="4.200" ry="2.600" fill="#ff9fb8" opacity=".75"/><ellipse cx="49.500" cy="48" rx="4.200" ry="2.600" fill="#ff9fb8" opacity=".75"/>
+    <path d="M29 49.500q3 3 6 0" fill="none" stroke="#2c2e3a" stroke-width="1.800" stroke-linecap="round"/>
+    <path d="M43.500 22.500l6 6M49.500 22.500l-6 6" stroke="#2c2e3a" stroke-width="2.400" stroke-linecap="round"/>
+  </symbol>
   <symbol id="d-estrela" viewBox="0 0 60 60"><path d="M30 6C32 16 34 22 37 24C41 27 49 27 55 28C49 33 44 36 42 40C40 44 42 51 44 56C38 52 34 49 30 49C26 49 21 52 15 56C17 51 20 44 18 40C16 36 11 33 5 28C11 27 19 27 23 24C26 22 28 16 30 6Z"/></symbol>
   <symbol id="d-brilho" viewBox="0 0 60 60"><path d="M30 8C31 22 38 29 52 30C38 31 31 38 30 52C29 38 22 31 8 30C22 29 29 22 30 8Z"/></symbol>
   <symbol id="d-espiral" viewBox="0 0 60 60"><path d="M30 30c3-3 8-1 8 4 0 7-9 10-15 5-8-7-4-20 8-23 14-3 25 8 22 21-3 12-18 17-29 11"/></symbol>
@@ -78,7 +89,7 @@ document.documentElement.classList.add("js");
       <a href="#kiza">Kiza</a>
       <a href="#chegando">Roadmap</a>
     </div>
-    <a class="btn btn-main btn-sm js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord</a>
+    <a class="btn btn-discord btn-sm js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord</a>
     <button class="menu-btn" id="menuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">☰</button>
   </div>
 </nav>
@@ -88,9 +99,9 @@ document.documentElement.classList.add("js");
   <a href="#figurinhas">Figurinhas</a>
   <a href="#kiza">Kiza</a>
   <a href="#chegando">Roadmap</a>
-  <a class="btn btn-main js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord</a>
+  <a class="btn btn-discord js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord</a>
 </div>
-<div class="barra-cta" id="barra"><a class="btn btn-main js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord</a></div>
+<div class="barra-cta" id="barra"><a class="btn btn-discord js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord</a></div>
 
 <main>
 <!-- ============ HERÓI ============ -->
@@ -101,7 +112,7 @@ document.documentElement.classList.add("js");
       <h1>Uma <em class="destaque">toca de raposa</em> dentro do Minecraft.</h1>
       <p class="lead">Um servidor novo, com bot e addons feitos à mão por uma comunidade que ainda cabe numa mesa. Quem chega agora ajuda a decidir como tudo vai ser, e a futura equipe nasce daqui.</p>
       <div class="acoes">
-        <a class="btn btn-main js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord <svg class="icone" aria-hidden="true"><use href="#i-seta-dir"/></svg></a>
+        <a class="btn btn-discord js-convite" href="#" target="_blank" rel="noopener"><svg class="chibi" aria-hidden="true"><use href="#i-chibi"/></svg>Entrar no Discord <svg class="icone" aria-hidden="true"><use href="#i-seta-dir"/></svg></a>
         <a class="link-seta" href="#entrar">Como funciona <svg class="icone" aria-hidden="true"><use href="#i-seta-baixo"/></svg></a>
       </div>
       <ul class="fatos">
@@ -369,7 +380,7 @@ document.documentElement.classList.add("js");
       <span class="rotulo">Falta só você</span>
       <h2>A toca está aberta para quem chega cedo.</h2>
       <p class="lead">Sem spam e sem pressão. Só uma comunidade nova, com uma raposa te esperando.</p>
-      <div><a class="btn btn-main js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord <svg class="icone" aria-hidden="true"><use href="#i-seta-dir"/></svg></a></div>
+      <div><a class="btn btn-discord js-convite" href="#" target="_blank" rel="noopener"><svg class="chibi" aria-hidden="true"><use href="#i-chibi"/></svg>Entrar no Discord <svg class="icone" aria-hidden="true"><use href="#i-seta-dir"/></svg></a></div>
     </div>
   </div>
 </section>
