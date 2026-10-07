@@ -96,33 +96,52 @@ if ("IntersectionObserver" in window && !reduzMovimento) {
   itensRev.forEach(el => el.classList.add("on", "revelado"));
 }
 
-/* ---- cartas holográficas ---- */
+/* ---- cartas holográficas: seguem o ponteiro 1:1 e voltam com mola criticamente amortecida ----
+   Sempre animam a partir do valor atual (nunca do alvo), então dá para "pegar" a carta no meio do retorno. */
 const BASE = { c1: "rotate(-9deg) translateY(16px)", c2: "rotate(-3deg) translateY(-6px)" };
 $$(".carta.holo").forEach(carta => {
   const base = BASE[carta.classList.contains("c1") ? "c1" : "c2"];
-  let quadro = 0;
+  const est = { rx: 0, ry: 0, s: 1, vx: 0, vy: 0, vs: 0, alvoX: 0, alvoY: 0, alvoS: 1, rodando: false, ultimo: 0 };
+  const K = 380, C = 2 * Math.sqrt(K); // mola com amortecimento 1.0 (sem quique)
+  function passo(t) {
+    const dt = Math.min(.032, (t - est.ultimo) / 1000 || .016); est.ultimo = t;
+    let parado = true;
+    for (const [v, vel, alvo] of [["rx", "vx", "alvoX"], ["ry", "vy", "alvoY"], ["s", "vs", "alvoS"]]) {
+      const a = -K * (est[v] - est[alvo]) - C * est[vel];
+      est[vel] += a * dt; est[v] += est[vel] * dt;
+      if (Math.abs(est[v] - est[alvo]) > .002 || Math.abs(est[vel]) > .01) parado = false;
+    }
+    carta.style.transform = `${base} perspective(900px) rotateX(${est.rx}deg) rotateY(${est.ry}deg) scale(${est.s})`;
+    if (parado) { est.rodando = false; carta.style.transform = ""; carta.style.zIndex = ""; return; }
+    requestAnimationFrame(passo);
+  }
+  const acordar = () => { if (!est.rodando) { est.rodando = true; est.ultimo = performance.now(); carta.style.transition = "filter .5s"; requestAnimationFrame(passo); } };
   carta.addEventListener("pointermove", e => {
     if (e.pointerType === "touch" || reduzMovimento) return;
-    cancelAnimationFrame(quadro);
-    quadro = requestAnimationFrame(() => {
-      const r = carta.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-      carta.style.setProperty("--mx", `${x * 100}%`);
-      carta.style.setProperty("--my", `${y * 100}%`);
-      carta.style.transition = "transform .08s linear, filter .5s";
-      carta.style.transform = `${base} perspective(900px) rotateX(${(.5 - y) * 16}deg) rotateY(${(x - .5) * 18}deg) scale(1.07)`;
-      carta.style.zIndex = 5;
-    });
+    const r = carta.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    carta.style.setProperty("--mx", `${x * 100}%`);
+    carta.style.setProperty("--my", `${y * 100}%`);
+    est.alvoX = (.5 - y) * 16; est.alvoY = (x - .5) * 18; est.alvoS = 1.07;
+    carta.style.zIndex = 5;
+    acordar();
   });
-  const soltar = () => {
-    cancelAnimationFrame(quadro);
-    carta.style.transition = "";
-    carta.style.transform = "";
-    carta.style.zIndex = "";
-  };
-  carta.addEventListener("pointerleave", soltar);
+  carta.addEventListener("pointerdown", () => { est.alvoS = 1.03; acordar(); }); // resposta imediata ao toque
+  carta.addEventListener("pointerleave", () => { est.alvoX = 0; est.alvoY = 0; est.alvoS = 1; acordar(); });
   carta.addEventListener("click", () => carta.classList.toggle("ativa")); // toque: liga o brilho
 });
+
+/* ---- onde estou: realça o link da seção visível ---- */
+(function orientacao() {
+  const links = $$(".links a");
+  const alvos = links.map(a => $(a.getAttribute("href"))).filter(Boolean);
+  if (!alvos.length || !("IntersectionObserver" in window)) return;
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    links.forEach(a => a.classList.toggle("atual", a.getAttribute("href") === "#" + e.target.id));
+  }), { rootMargin: "-45% 0px -50% 0px" });
+  alvos.forEach(el => io.observe(el));
+})();
 
 /* ---- vagalumes (só no herói, desligados em celular fraco e com movimento reduzido) ---- */
 (function vagalumes() {
@@ -131,7 +150,7 @@ $$(".carta.holo").forEach(carta => {
   const ctx = canvas.getContext("2d");
   const hero = canvas.parentElement;
   let w = 0, h = 0, rodando = false, visivel = true;
-  const N = 16;
+  const N = 10;
   const pts = Array.from({ length: N }, () => ({
     x: Math.random(), y: Math.random() * .8, r: 1.2 + Math.random() * 1.8,
     vx: (Math.random() - .5) * .00005, vy: -.00002 - Math.random() * .00005, f: Math.random() * 6.28, v: .6 + Math.random() * 1.2
