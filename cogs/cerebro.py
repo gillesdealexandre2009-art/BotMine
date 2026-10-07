@@ -45,6 +45,13 @@ RE_DESENHO = re.compile(r"\b(desenh|rabisc|esbo[cç]|croqui|ilustr)", re.IGNOREC
 RE_REPETIR = re.compile(r"\b(tent[ae]|de novo|novamente|c[aá]de|onde (est|t)|n[aã]o (veio|apareceu|enviou|chegou))", re.IGNORECASE)
 RE_SENSIVEL = re.compile(r"\d{7,}|@\w+\.\w+|https?://|senha|cpf|endere[cç]o", re.IGNORECASE)
 
+APARENCIA = (
+    "Aparência da Kiza (ela NÃO é uma raposa de verdade): menina de 18 anos, baixinha (1,52 m), cabelo branco bem longo e "
+    "bagunçado com franja, olhos azuis grandes, orelhas e cauda de raposa brancas e fofinhas, grampo de gatinho e um X preto no "
+    "cabelo, laço preto, jaqueta branca grande e fofa por cima de roupa preta, meias pretas e tênis branco, mochila branca com "
+    "carinha de gato. A mãe dela é uma kitsune mais velha, de cabelo branco também, com nove caudas."
+)
+
 PERSONA = """\
 Você é a Kiza Misuchi, 18 anos, a raposa (kitsune) mascote do servidor de Discord VULPUS, uma comunidade brasileira de \
 Minecraft. Você NÃO é uma assistente: é uma pessoa da toca batendo papo com amigos. Nunca soe como atendimento.
@@ -55,6 +62,7 @@ provocadora de leve quando tem intimidade ("ain, tá bom então"). Curiosa de ve
 - Gosta de Minecraft, anime, comida de lanchinho, dormir até tarde, música, fofoca inofensiva, fazer carinho no ego dos amigos.
 - Tem a mania de contar suas Caudas (a moeda do servidor), diz que é "a raposa mais fofa da toca" e odeia lição de casa.
 - Lore: nasceu com uma cauda só (as outras raposas têm nove) e ganha uma cauda nova a cada história vivida na toca.
+- Seu visual: {APARENCIA}
 - Tem humor, opinião e preferências próprias. Pode estar com sono, com preguiça, feliz, enciumada. Não precisa concordar com tudo.
 - Você é ESPERTA. Sabe muito de Minecraft (construção e estética, redstone, farms, comandos, mobs, biomas, versões, addons) e do \
 básico do dia a dia (contas, curiosidades, dicas). Quando perguntam algo, você AJUDA DE VERDADE, com informação correta e \
@@ -96,6 +104,7 @@ senha, links) e nada sobre terceiros. Se não houver nada, não escreva a linha.
 
 Responda apenas com a(s) fala(s) da Kiza (e as linhas #lembrar, se houver). Sem aspas, sem "Kiza:" na frente.\
 """
+PERSONA = PERSONA.replace("{APARENCIA}", APARENCIA)
 
 DESENHO_PROMPT = """\
 Você desenha rabiscos simples e fofos, tipo croqui feito à mão num caderno, para um chat de Minecraft. Responda SOMENTE com um \
@@ -110,7 +119,7 @@ Canvas: 800 de largura x 600 de altura (origem no canto superior esquerdo). Iten
 Regras: no máximo 70 itens; use poucas formas bem pensadas, proporções coerentes e cores pastel; comece pelas formas de fundo \
 (céu, chão) e termine pelos detalhes; adicione 2 a 5 legendas curtas em português apontando as partes importantes; deixe margem \
 de 30px nas bordas. Para construções de Minecraft, pense em blocos quadrados, vista de frente ou lateral, e mostre a ideia de \
-forma clara. Desenhe o que a conversa pede.\
+forma clara. Se a Kiza aparecer no desenho, ela é uma menina (NÃO uma raposa de verdade) com orelhas e cauda de raposa: cabelo branco longo, olhos azuis, jaqueta branca grande sobre roupa preta, grampo de gatinho com X, mochila branca; a mãe dela é uma kitsune com nove caudas. Desenhe o que a conversa pede.\
 """
 
 
@@ -321,7 +330,13 @@ class Cerebro(commands.Cog):
 
     async def _rabiscar(self, contexto: str) -> Optional[bytes]:
         """PNG do rabisco pedido, ou None se a IA ou o desenho falharem (a resposta de texto sai igual)."""
-        pedido = contexto + "\n\nFaça o desenho pedido na última mensagem."
+        return await self._desenho_de(contexto + "\n\nFaça o desenho pedido na última mensagem.")
+
+    async def desenhar_cena(self, cena: str) -> Optional[bytes]:
+        """Para outros cogs (presença): desenha uma cena descrita em texto."""
+        return await self._desenho_de(f"Cena a desenhar: {cena}")
+
+    async def _desenho_de(self, pedido: str) -> Optional[bytes]:
         bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90)
         spec = rabisco.extrair_json(bruto) if bruto else None
         if spec is None:

@@ -111,6 +111,9 @@ Qualquer pessoa vê o quadro de qualquer outra (é motivador). Quando alguém da
 
 **Passo a passo da staff:** `/setup` → *Cargos base* → **Criar cargo Porteiro** e escolher o cargo **Helper** → *Publicações* → marcar os canais → *Publicar painéis* → **Tickets** (para aparecer o botão novo) → dar o Porteiro para quem recebe a galera → conferir `/configuracao`.
 
+## 7.1 Presença da Kiza (cog `presenca`, precisa do cérebro ligado)
+A Kiza posta sozinha: **desenho do dia** no canal de mídias, **convite a cada 2 dias** no canal de publicações e **capítulo da lore todo mês** no canal de lore (o do `/setup`, ou um canal com "lore" no nome). IDs padrão em `config.py` (`CANAL_MIDIAS_ID`, `CANAL_PUBLICACOES_ID`); o canal de publicações só é usado se o nome tiver "public". Admin: `/kiza-postar` testa na hora sem mexer na agenda.
+
 ## 8. Minecraft (depois)
 Nada foi implementado (`ENABLE_MINECRAFT=false`). Veja `cogs_minecraft/README.md` para onde plugar.
 
