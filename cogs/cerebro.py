@@ -381,7 +381,7 @@ class Cerebro(commands.Cog):
 
         if not bruto:
             if tipo == "direta":
-                await self._falar(mensagem, [random.choice(textos.CONVERSA_MENCAO)])
+                await self._falar(mensagem, [textos.resposta_fixa(mensagem.clean_content)])
             return
         baloes, novos = limpar_resposta(bruto)
         for fato in novos[:2]:

@@ -439,8 +439,7 @@ class Vida(commands.Cog):
                 return  # o cérebro conversa de verdade; as frases fixas ficam de reserva dentro dele
             if not self._livre(("mencao", membro.id), COOLDOWN_MENCAO):
                 return
-            frases = textos.CONVERSA_OBRIGADO if "obrigad" in texto or "valeu" in texto else textos.CONVERSA_MENCAO
-            await self._responder(mensagem, random.choice(frases))
+            await self._responder(mensagem, textos.resposta_fixa(mensagem.clean_content))
             return
         chat = await canal_da_funcao(self.bot, mensagem.guild, "chat")
         if chat is None or mensagem.channel.id != chat.id:
