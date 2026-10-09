@@ -202,22 +202,26 @@ class Cerebro(commands.Cog):
         return True
 
     async def _chamar_api(
-        self, sistema: str, conversa: str, max_tokens: int = 500, timeout: int = 25
+        self, sistema: str, conversa: str, max_tokens: int = 500, timeout: int = 25, desenho: bool = False
     ) -> Optional[str]:
         if self._sessao is None:
             self._sessao = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=25))
-        gratis = bool(config.CEREBRO_API_KEY)  # formato OpenAI (Groq/Gemini); senão, Anthropic
+        # Desenhos podem ir para outro provedor (ex.: Gemini, que desenha melhor); sem chave própria usam o do chat.
+        if desenho and config.DESENHO_API_KEY:
+            chave, url, modelo = config.DESENHO_API_KEY, config.DESENHO_API_URL, config.DESENHO_MODELO
+        else:
+            chave, url, modelo = config.CEREBRO_API_KEY, config.CEREBRO_API_URL, config.CEREBRO_MODELO
+        gratis = bool(chave)  # formato OpenAI (Groq/Gemini); senão, Anthropic
         if gratis:
-            url = config.CEREBRO_API_URL
             corpo = {
-                "model": config.CEREBRO_MODELO,
+                "model": modelo,
                 "max_tokens": max_tokens,
                 "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": conversa}],
             }
-            if "gpt-oss" in config.CEREBRO_MODELO:  # modelo que raciocina: pouco, senão gasta o max_tokens pensando
+            if "gpt-oss" in modelo:  # modelo que raciocina: pouco, senão gasta o max_tokens pensando
                 corpo["reasoning_effort"] = "low"
             cabecalhos = {
-                "Authorization": f"Bearer {config.CEREBRO_API_KEY}",
+                "Authorization": f"Bearer {chave}",
                 "content-type": "application/json",
                 "User-Agent": "KizaBot/1.0",  # a Cloudflare da Groq pode barrar o User-Agent padrão do aiohttp (403)
             }
@@ -398,7 +402,9 @@ class Cerebro(commands.Cog):
         return await self._desenho_de(f"Cena a desenhar: {cena}")
 
     async def _desenho_de(self, pedido: str) -> Optional[bytes]:
-        bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90)
+        bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90, desenho=True)
+        if not bruto and config.DESENHO_API_KEY:  # provedor de desenho falhou (limite, rede): tenta o do chat
+            bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90)
         spec = rabisco.extrair_json(bruto) if bruto else None
         if spec is None:
             log.warning("Rabisco sem JSON utilizável (resposta: %s)", truncar(bruto or "vazia", 200))

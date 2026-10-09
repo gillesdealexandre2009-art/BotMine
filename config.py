@@ -44,6 +44,12 @@ CEREBRO_API_URL = os.getenv("CEREBRO_API_URL", "https://api.groq.com/openai/v1/c
 CEREBRO_MODELO = os.getenv("CEREBRO_MODELO") or (
     "openai/gpt-oss-120b" if CEREBRO_API_KEY else "claude-sonnet-5-5"
 )
+# Provedor só para desenhos (opcional). Gemini grátis: aistudio.google.com/apikey. Sem chave, desenha com o do chat.
+DESENHO_API_KEY = os.getenv("DESENHO_API_KEY", "")
+DESENHO_API_URL = os.getenv(
+    "DESENHO_API_URL", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+)
+DESENHO_MODELO = os.getenv("DESENHO_MODELO", "gemini-2.5-flash")
 # Onde a Kiza posta sozinha (cog presenca). Dá para trocar por servidor com a config presenca_canal_midia / presenca_canal_publicacoes.
 CANAL_MIDIAS_ID = _inteiro("CANAL_MIDIAS_ID", 1549291538138529852)
 CANAL_PUBLICACOES_ID = _inteiro("CANAL_PUBLICACOES_ID", 1555798080798851163)
