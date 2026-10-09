@@ -228,6 +228,7 @@ AJUSTES = {
     "drop_min": (30, 1, 100000, "Valor mínimo de um drop"),
     "drop_max": (80, 1, 100000, "Valor máximo de um drop"),
     "conversa": (1, 0, 1, "1 = Kiza responde menções e cumprimentos"),
+    "reacoes": (1, 0, 1, "1 = Kiza reage com emoji a mensagens do chat (sem responder)"),
     "cerebro": (1, 0, 1, "1 = cérebro (IA) ligado: a Kiza conversa de verdade quando chamada"),
     "cerebro_max_dia": (400, 0, 100000, "Respostas do cérebro por dia no servidor (controle de custo)"),
     "figurinha_preco": (150, 0, 100000, "Caudas por pacotinho de figurinha"),

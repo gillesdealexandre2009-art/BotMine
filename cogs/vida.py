@@ -19,6 +19,7 @@ from discord.ext import commands, tasks
 
 import config
 import textos
+from utils import humor
 from utils.helpers import TZ, canal_da_funcao, embed, formatar_moeda, responder, sem_acento, truncar
 from utils.permissoes import eh_membro, exigir_nivel
 from utils.views import BaseView
@@ -37,6 +38,8 @@ DROP_CHANCE_MINUTO = 1 / 30  # com chat ativo, ~1 drop a cada meia hora até bat
 CHAT_ATIVO_SEG = 600  # houve mensagem de gente nos últimos 10 min
 COOLDOWN_MENCAO = 30
 COOLDOWN_CUMPRIMENTO = 900
+CHANCE_REACAO = 0.06  # chance de reagir a uma mensagem que combina com algum assunto
+COOLDOWN_REACAO = 90  # segundos entre reações no mesmo canal
 
 CUMPRIMENTOS = (
     ("bom dia", textos.CONVERSA_BOM_DIA),
@@ -444,6 +447,12 @@ class Vida(commands.Cog):
         chat = await canal_da_funcao(self.bot, mensagem.guild, "chat")
         if chat is None or mensagem.channel.id != chat.id:
             return
+        emoji = humor.emoji_reacao(mensagem.content) if random.random() < CHANCE_REACAO else None
+        if emoji and await banco.ajuste(mensagem.guild.id, "reacoes") == 1 and self._livre(("reacao", chat.id), COOLDOWN_REACAO):
+            try:
+                await mensagem.add_reaction(emoji)  # reage sem responder, como uma pessoa no chat
+            except discord.HTTPException:
+                pass
         for gatilho, frases in CUMPRIMENTOS:
             if texto.startswith(gatilho) and self._livre(("cumprimento", chat.id, gatilho), COOLDOWN_CUMPRIMENTO):
                 await self._responder(mensagem, random.choice(frases))

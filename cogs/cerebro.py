@@ -13,7 +13,7 @@ import logging
 import random
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -25,7 +25,8 @@ from discord.ext import commands
 
 import config
 import textos
-from utils import rabisco
+from utils import humor, rabisco
+from utils.permissoes import exigir_nivel
 from utils.views import DonoView
 from utils.helpers import TZ, canal_da_funcao, responder, sem_acento, truncar
 
@@ -37,6 +38,9 @@ log = logging.getLogger("kiza.cerebro")
 API_URL = "https://api.anthropic.com/v1/messages"
 HISTORICO = 14  # mensagens anteriores do canal que ela "lembra" na conversa
 MAX_BALOES = 4
+CACHE_TTL = 3 * 3600  # respostas de FAQ reaproveitadas (poupa o plano grátis)
+CACHE_MAX = 200
+CHATEADA_S = 900  # quanto tempo ela fica emburrada com quem foi grosso
 COOLDOWN_DESENHO = 45.0  # rabisco custa mais: intervalo por pessoa
 COOLDOWN_USUARIO = 6.0  # segundos entre respostas à mesma pessoa
 COOLDOWN_NOME = 25.0  # chamada só pelo nome no chat (sem menção): por canal
@@ -115,7 +119,9 @@ senha, links) e nada sobre terceiros. Se não houver nada, não escreva a linha.
 
 Responda apenas com a(s) fala(s) da Kiza (e as linhas #lembrar, se houver). Sem aspas, sem "Kiza:" na frente.\
 """
-PERSONA = PERSONA.replace("{APARENCIA}", APARENCIA)
+PERSONA = PERSONA.replace("{APARENCIA}", APARENCIA).replace(
+    "Responda apenas com a(s) fala(s)", humor.FAQ_SERVIDOR + "\n\nResponda apenas com a(s) fala(s)"
+)
 
 DESENHO_PROMPT = """\
 Você desenha rabiscos simples e fofos, tipo croqui feito à mão num caderno, para um chat de Minecraft. Responda SOMENTE com um \
@@ -198,6 +204,9 @@ class Cerebro(commands.Cog):
         self._sessao: Optional[aiohttp.ClientSession] = None
         self._vaga = asyncio.Semaphore(SIMULTANEAS)
         self._cooldowns: dict[tuple, float] = {}
+        self._pausas: dict[str, float] = {}  # provedor -> até quando esperar (limite do plano grátis, erro 429)
+        self._chateadas: dict[tuple, float] = {}  # (servidor, pessoa) -> quando foi grosseira
+        self._cache: dict[str, tuple[float, str]] = {}  # pergunta de FAQ normalizada -> (quando, resposta)
         self._canal_ocupado: set[int] = set()
         self._uso: dict[int, tuple[str, int]] = {}  # guild -> (dia, respostas)
         self._chave_morta = False  # chave inválida: para de tentar até reiniciar (evita martelar a API)
@@ -210,6 +219,9 @@ class Cerebro(commands.Cog):
     async def ativo(self, guild_id: int) -> bool:
         """Cérebro ligado e com chave? A vida.py usa isso para não responder duas vezes."""
         return bool(config.CEREBRO_API_KEY or config.ANTHROPIC_API_KEY) and not self._chave_morta and await self.bot.banco.ajuste(guild_id, "cerebro") == 1
+
+    def _pausado(self, provedor: str = "chat") -> bool:
+        return time.monotonic() < self._pausas.get(provedor, 0.0)
 
     def _livre(self, chave: tuple, segundos: float) -> bool:
         agora = time.monotonic()
@@ -239,6 +251,9 @@ class Cerebro(commands.Cog):
         else:
             chave, url, modelo = config.CEREBRO_API_KEY, config.CEREBRO_API_URL, config.CEREBRO_MODELO
         gratis = bool(chave)  # formato OpenAI (Groq/Gemini); senão, Anthropic
+        provedor = "desenho" if (desenho and config.DESENHO_API_KEY) else "chat"
+        if self._pausado(provedor):  # estourou o limite há pouco: nem tenta, usa as frases prontas
+            return None
         if gratis:
             corpo = {
                 "model": modelo,
@@ -277,7 +292,15 @@ class Cerebro(commands.Cog):
                         self._chave_morta = True
                         log.error("Chave do cérebro recusada (%s): cérebro desligado até reiniciar", r.status)
                         return None
-                    if r.status != 200:  # 429 = limite do plano grátis: cai nas frases fixas e tenta de novo depois
+                    if r.status == 429:
+                        try:
+                            espera = float(r.headers.get("retry-after", 60))
+                        except ValueError:
+                            espera = 60.0
+                        self._pausas[provedor] = time.monotonic() + min(max(espera, 5.0), 900.0)
+                        log.warning("Limite do plano grátis (%s): pausando %s por %.0fs", r.status, provedor, espera)
+                        return None
+                    if r.status != 200:  # outros erros = limite do plano grátis: cai nas frases fixas e tenta de novo depois
                         log.warning("API respondeu %s: %s", r.status, truncar(str(dados), 300))
                         return None
             except (aiohttp.ClientError, asyncio.TimeoutError):
@@ -342,6 +365,10 @@ class Cerebro(commands.Cog):
         tipo = await self._foi_chamada(mensagem)
         if tipo is None:
             return
+        if humor.foi_grosso(mensagem.content):
+            self._chateadas[(gid, mensagem.author.id)] = time.monotonic()
+        if tipo == "nome" and self._pausado("chat"):
+            return  # sem limite sobrando: só responde quando chamam direto
         if not self._livre(("usuario", mensagem.author.id), COOLDOWN_USUARIO):
             return
         if tipo == "nome" and not self._livre(("nome", mensagem.channel.id), COOLDOWN_NOME):
@@ -376,6 +403,11 @@ class Cerebro(commands.Cog):
                 blocos.append(f"O que você já sabe sobre {nome} (ele(a) te contou):\n" + "\n".join(f"- {f}" for f in fatos))
             else:
                 blocos.append(f"Você ainda não sabe nada de especial sobre {nome}.")
+            chateada = time.monotonic() - self._chateadas.get((mensagem.guild.id, autor.id), -1e9) < CHATEADA_S
+            blocos.append(humor.humor_atual(agora, chateada))
+            if fatos and tipo == "direta" and not chateada and random.random() < 0.2:
+                blocos.append("(Se combinar com o assunto, puxe conversa sobre algo que você já sabe dessa pessoa, "
+                              "perguntando como está, tipo 'e o fulano, melhorou?'. Só uma vez, de leve.)")
             if historico:
                 blocos.append("Conversa recente no canal (mais antiga primeiro):\n" + "\n".join(historico))
             atual = truncar(mensagem.clean_content.replace("\n", " "), 600)
@@ -404,7 +436,7 @@ class Cerebro(commands.Cog):
             elif quer_desenho:
                 bruto, imagem = await asyncio.gather(self._chamar_api(PERSONA, contexto), self._rabiscar(contexto))
             else:
-                bruto, imagem = await self._chamar_api(PERSONA, contexto), None
+                bruto, imagem = await self._com_cache(mensagem, contexto), None
 
         if not bruto:
             if tipo == "direta":
@@ -419,6 +451,21 @@ class Cerebro(commands.Cog):
             baloes = [random.choice(textos.RABISCO_FALHOU)]
         if baloes:
             await self._falar(mensagem, baloes, imagem, nome_arquivo)
+
+    async def _com_cache(self, mensagem: discord.Message, contexto: str) -> Optional[str]:
+        """Pergunta de FAQ repetida: reaproveita a resposta por CACHE_TTL. Fora isso, chama a API normalmente."""
+        texto = mensagem.clean_content
+        chave = humor.chave_cache(texto) if humor.precisa_cache(texto) else None
+        if chave:
+            achada = self._cache.get(chave)
+            if achada and time.monotonic() - achada[0] < CACHE_TTL:
+                return achada[1]
+        bruto = await self._chamar_api(PERSONA, contexto)
+        if chave and bruto:
+            if len(self._cache) >= CACHE_MAX:
+                self._cache.pop(next(iter(self._cache)))
+            self._cache[chave] = (time.monotonic(), RE_LEMBRAR.sub("", bruto).strip())  # sem #lembrar de outra pessoa
+        return bruto
 
     async def _rabiscar(self, contexto: str) -> Optional[bytes]:
         """PNG do rabisco pedido, ou None se a IA ou o desenho falharem (a resposta de texto sai igual)."""
@@ -453,7 +500,12 @@ class Cerebro(commands.Cog):
                 if i == 0:
                     try:
                         extra = {"file": discord.File(io.BytesIO(imagem), filename=nome_arquivo)} if imagem else {}
-                        await mensagem.reply(texto, mention_author=False, allowed_mentions=sem_pings, **extra)
+                        enviada = await mensagem.reply(texto, mention_author=False, allowed_mentions=sem_pings, **extra)
+                        if imagem:
+                            try:
+                                await enviada.add_reaction("⭐")  # o pessoal vota clicando; /melhores-desenhos conta
+                            except discord.HTTPException:
+                                pass
                     except discord.Forbidden:
                         if not imagem:
                             raise
@@ -464,6 +516,67 @@ class Cerebro(commands.Cog):
                     await mensagem.channel.send(texto, allowed_mentions=sem_pings)
         except discord.HTTPException:
             pass
+
+    # ------------------------------------------------------------------ desenhos pedidos
+    @app_commands.command(name="rabisco-de-mim", description="A Kiza rabisca você, com base no que ela sabe sobre você.")
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 120.0)
+    async def rabisco_de_mim(self, interaction: discord.Interaction) -> None:
+        guild, membro = interaction.guild, interaction.user
+        assert guild is not None and isinstance(membro, discord.Member)
+        if not await self.ativo(guild.id) or self._pausado("desenho") and self._pausado("chat"):
+            await responder(interaction, "Minha caneta tá descansando agora 😴 tenta daqui a pouco?")
+            return
+        if not await self._dentro_do_limite(guild.id):
+            await responder(interaction, "Hoje já rabisquei demais, volto amanhã! 🦊")
+            return
+        await interaction.response.defer()
+        fatos = await self.bot.banco.memorias_cerebro(guild.id, membro.id)
+        nome = membro.display_name.replace("\n", " ")[:32]
+        sobre = "\n".join(f"- {f}" for f in fatos) if fatos else "(você ainda não sabe nada dela(e); desenhe uma figura simpática)"
+        imagem = await self._desenho_de(
+            f"Faça um retrato de {nome}, uma pessoa comum (SEM orelhas e cauda de raposa, e diferente da Kiza). "
+            f"Use o que você sabe sobre ela(e) para escolher objetos, bichinho ou cenário em volta:\n{sobre}\n"
+            f"Legende com o nome \"{nome}\"."
+        )
+        if imagem is None:
+            await interaction.followup.send(random.choice(textos.RABISCO_FALHOU))
+            return
+        await interaction.followup.send(
+            f"toma, rabisquei {nome} rapidinho kkk 🦊",
+            file=discord.File(io.BytesIO(imagem), filename="rabisco-de-voce.png"),
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+
+    @app_commands.command(name="melhores-desenhos", description="Os desenhos da Kiza com mais ⭐ nos últimos 30 dias (staff).")
+    @app_commands.guild_only()
+    @exigir_nivel(config.NIVEL_STAFF)
+    @app_commands.checks.cooldown(1, 60.0)
+    async def melhores_desenhos(self, interaction: discord.Interaction) -> None:
+        canal = interaction.channel
+        if not isinstance(canal, (discord.TextChannel, discord.Thread)):
+            await responder(interaction, "Use num canal de texto.")
+            return
+        await interaction.response.defer(ephemeral=True)
+        desde = discord.utils.utcnow() - timedelta(days=30)
+        achados: list[tuple[int, discord.Message]] = []
+        try:
+            async for m in canal.history(limit=1000, after=desde):
+                if m.author.id != self.bot.user.id or not m.attachments:  # type: ignore[union-attr]
+                    continue
+                if not any(a.filename.startswith(("rabisco", "retrato")) for a in m.attachments):
+                    continue
+                estrelas = next((r.count - (1 if r.me else 0) for r in m.reactions if str(r.emoji) == "⭐"), 0)
+                achados.append((estrelas, m))
+        except discord.HTTPException:
+            await responder(interaction, "Não consegui ler o histórico daqui.")
+            return
+        achados.sort(key=lambda x: x[0], reverse=True)
+        if not achados:
+            await responder(interaction, "Não achei desenhos meus nos últimos 30 dias neste canal.")
+            return
+        linhas = [f"⭐ **{n}**: {m.jump_url}" for n, m in achados[:5]]
+        await responder(interaction, "🏆 **Melhores desenhos (30 dias, neste canal)**\n" + "\n".join(linhas))
 
     # ------------------------------------------------------------------ privacidade
     @memoria.command(name="ver", description="Mostra o que a Kiza lembra sobre você.")
