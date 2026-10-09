@@ -862,6 +862,45 @@ class Banco:
             "UPDATE tickets SET avaliacao = NULL, avaliado_por = NULL WHERE canal_id = ? AND categoria = 'rank'", (canal_id,)
         )
 
+    # ------------------------------------------------------------------ resumo da semana (staff)
+    async def resumo_semana(self, guild_id: int, desde: int) -> dict[str, Any]:
+        """Números da semana para a staff: casos por tipo, quem mais moderou, tickets e recompensas por tipo."""
+        casos = await self._todos(
+            "SELECT tipo, COUNT(*) AS n FROM casos WHERE guild_id = ? AND criado_em >= ? GROUP BY tipo ORDER BY n DESC",
+            (guild_id, desde),
+        )
+        mods = await self._todos(
+            "SELECT mod_id, COUNT(*) AS n FROM casos WHERE guild_id = ? AND criado_em >= ? "
+            "GROUP BY mod_id ORDER BY n DESC LIMIT 3",
+            (guild_id, desde),
+        )
+        abertos = await self._um(
+            "SELECT COUNT(*) AS n FROM tickets WHERE guild_id = ? AND criado_em >= ?", (guild_id, desde)
+        )
+        fechados = await self._um(
+            "SELECT COUNT(*) AS n FROM tickets WHERE guild_id = ? AND fechado_em >= ?", (guild_id, desde)
+        )
+        pendentes = await self._um("SELECT COUNT(*) AS n FROM tickets WHERE guild_id = ? AND status = 'aberto'", (guild_id,))
+        ajudantes = await self._todos(
+            "SELECT assumido_por, COUNT(*) AS n FROM tickets WHERE guild_id = ? AND assumido_por IS NOT NULL "
+            "AND criado_em >= ? GROUP BY assumido_por ORDER BY n DESC LIMIT 3",
+            (guild_id, desde),
+        )
+        recompensas = await self._todos(
+            "SELECT substr(chave, 1, instr(chave || ':', ':') - 1) AS tipo, COUNT(*) AS n, SUM(valor) AS total "
+            "FROM recompensas_unicas WHERE guild_id = ? AND criado_em >= ? GROUP BY tipo ORDER BY n DESC",
+            (guild_id, desde),
+        )
+        return {
+            "casos": [(c["tipo"], c["n"]) for c in casos],
+            "mods": [(m["mod_id"], m["n"]) for m in mods],
+            "tickets_abertos": abertos["n"],
+            "tickets_fechados": fechados["n"],
+            "tickets_pendentes": pendentes["n"],
+            "ajudantes": [(a["assumido_por"], a["n"]) for a in ajudantes],
+            "recompensas": [(r["tipo"], r["n"], r["total"] or 0) for r in recompensas],
+        }
+
     # ------------------------------------------------------------------ pérolas (mural de destaques)
     async def obter_perola(self, guild_id: int, msg_id: int) -> Optional[int]:
         linha = await self._um("SELECT perola_msg_id FROM perolas WHERE guild_id = ? AND msg_id = ?", (guild_id, msg_id))

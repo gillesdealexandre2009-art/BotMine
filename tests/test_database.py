@@ -441,3 +441,29 @@ def test_ranking_de_bump(tmp_path):
         return top
 
     assert rodar(cenario) == [(A, 3), (B, 2)]
+
+
+# ------------------------------------------------------------------ resumo da semana
+def test_resumo_semana(tmp_path):
+    async def cenario():
+        b = await novo_banco(tmp_path)
+        await b.criar_caso(G, "warn", A, B, "x")
+        await b.criar_caso(G, "warn", C, B, "y")
+        await b.criar_caso(G, "ban", C, A, "z")
+        t = await b.criar_ticket(G, 11, A, "duvida")
+        await b.assumir_ticket(11, B)
+        await b.criar_ticket(G, 12, C, "duvida")
+        await b.fechar_ticket(11)
+        await b.recompensar_uma_vez(G, "drop:1", A, 50, "drop")
+        await b.recompensar_uma_vez(G, "quiz:2026-10-09:100:1", A, 15, "quiz")
+        r = await b.resumo_semana(G, agora() - 3600)
+        antigo = await b.resumo_semana(G, agora() + 3600)
+        await b.fechar()
+        return t, r, antigo
+
+    t, r, antigo = rodar(cenario)
+    assert r["casos"][0] == ("warn", 2) and r["mods"][0] == (B, 2)
+    assert (r["tickets_abertos"], r["tickets_fechados"], r["tickets_pendentes"]) == (2, 1, 1)
+    assert r["ajudantes"] == [(B, 1)]
+    assert {x[0] for x in r["recompensas"]} == {"drop", "quiz"}
+    assert antigo["casos"] == [] and antigo["tickets_abertos"] == 0
