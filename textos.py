@@ -276,8 +276,9 @@ AJUDA_CAMPOS = {
     ),
     "diversao": (
         "🎮 Diversão",
-        "`/mines jogar` — joguinho por diversão\n`/casamento pedir` — forme uma dupla de toca\n"
-        "`/aniversario definir` — ganhe parabéns e presente no seu dia",
+        "`/mines jogar` — joguinho por diversão\n`/quiz` `/forca` — jogos de Minecraft que dão Caudas\n"
+        "`/missoes` — 3 missões por dia\n`/rabisco-de-mim` — eu rabisco você\n"
+        "`/casamento pedir` — forme uma dupla de toca\n`/aniversario definir` — ganhe parabéns e presente no seu dia",
     ),
     "suporte": (
         "🎫 Suporte",
@@ -287,7 +288,8 @@ AJUDA_CAMPOS = {
     "staff": (
         "🔨 Staff",
         "`/timeout` `/remover-timeout` `/kick` `/limpar` `/remover-aviso` — moderação\nAtender tickets e ver logs\n"
-        "`/fidelidade-ranking` — quem está mais perto de Helper • aprovar denúncias e pedidos de rank nos tíquetes",
+        "`/fidelidade-ranking` — quem está mais perto de Helper • aprovar denúncias e pedidos de rank nos tíquetes\n"
+        "`/resumo-semana` — números da semana • `/melhores-desenhos` — os desenhos com mais ⭐",
     ),
     "admin": (
         "👑 Admin",
@@ -428,7 +430,12 @@ COMANDOS_CAMPOS = [
         "`/aniversario definir`: eu te dou parabéns (e um presente) no seu dia. Só dá para marcar uma vez!\n"
         "`/aniversario lista`: próximos aniversários",
     ),
-    ("🎮 Diversão", "`/mines jogar`: ache as casas seguras sem explodir\n`/casamento pedir`: forme uma dupla de toca"),
+    (
+        "🎮 Diversão",
+        "`/mines jogar`: ache as casas seguras sem explodir\n`/quiz` e `/forca`: acerte e ganhe Caudas (tem limite por dia)\n"
+        "`/missoes`: 3 missões por dia, com bônus se fizer todas\n`/rabisco-de-mim`: eu rabisco você com base no que sei de você\n"
+        "`/casamento pedir`: forme uma dupla de toca",
+    ),
     (
         "🚀 Bump",
         "`/bump` (o do DISBOARD): divulga a toca e te dá {moeda}\n`/bump` (o da Kiza): quando dá para o próximo e o ranking\n"
@@ -484,6 +491,20 @@ DUVIDAS_CAMPOS = [
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
+    (
+        "1.9.0",
+        "A Kiza tem humor (e jogos!)",
+        [
+            "😴 Meu **humor muda**: com sono de madrugada, animada no fim de semana, e emburrada com quem for grosso comigo",
+            "🧠 Eu **lembro de você** e às vezes puxo assunto sobre o que você me contou",
+            "💬 Também **reajo com emoji** nas suas mensagens, sem responder (parabéns, saudade, kkkk...)",
+            "🎮 `/quiz` e `/forca`: jogos de Minecraft que dão {moeda} (com limite por dia)",
+            "📋 `/missoes`: 3 missões por dia, com bônus de {moeda} se completar todas",
+            "🎨 `/rabisco-de-mim`: eu rabisco você! E nos meus desenhos dá pra votar com ⭐",
+            "📚 Agora eu sei explicar regras, {moeda}, ranks, cores e comandos sem inventar",
+            "🦊 **Kiza:** \"se eu tô emburrada, é só pedir desculpa. eu perdoo rápido. quase sempre.\"",
+        ],
+    ),
     (
         "1.8.0",
         "Kiza mais esperta e mais humana",

@@ -10,7 +10,7 @@ kiza/
 ├── main.py                  # entrada: Bot, árvore de comandos, tratamento global de erros
 ├── config.py                # env + constantes (moeda, cores, ajustes padrão, permissões)
 ├── textos.py                # TODOS os textos fixos (voz da Kiza)
-├── database.py              # ÚNICO módulo que acessa o SQLite
+├── database/                # ÚNICO pacote que acessa o SQLite (__init__ = infra; mixins por assunto)
 ├── migrations.py            # migrações versionadas
 ├── requirements.txt / requirements-dev.txt
 ├── .env.example / .gitignore / railway.json

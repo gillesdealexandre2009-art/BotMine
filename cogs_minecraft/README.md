@@ -14,7 +14,7 @@ Discord ↔ Minecraft quando o servidor do jogo existir.
 ## Onde plugar
 1. Crie um cog aqui (ex.: `cogs_minecraft/bridge.py` com `async def setup(bot)`), e carregue-o em `__init__.py`
    com `await bot.load_extension("cogs_minecraft.bridge")`.
-2. Métodos novos de banco vão em `database.py` (único módulo que acessa o SQLite) + uma migração nova em `migrations.py`.
+2. Métodos novos de banco vão em `database/` (único pacote que acessa o SQLite; escolha o mixin do assunto) + uma migração nova em `migrations.py`.
 3. Autenticação HTTP: compare segredos com `hmac.compare_digest`; nunca coloque segredos em código versionado.
 
 ## Lições do bot do SONHE (para não repetir)
