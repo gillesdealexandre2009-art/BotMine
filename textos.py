@@ -8,6 +8,7 @@ Para mudar a voz do bot, edite este arquivo. Os {campos} são preenchidos pelo c
 import random
 import re
 import unicodedata
+from collections import deque
 
 NOME_BOT = "Kiza"
 
@@ -947,6 +948,17 @@ CONVERSA_TEMAS = [
 ]
 
 
+_RECENTES: deque[str] = deque(maxlen=10)
+
+
+def _escolher(frases: list[str]) -> str:
+    """Sorteia sem repetir as últimas frases usadas (se der): a Kiza não diz a mesma coisa duas vezes seguidas."""
+    candidatas = [f for f in frases if f not in _RECENTES] or frases
+    escolhida = random.choice(candidatas)
+    _RECENTES.append(escolhida)
+    return escolhida
+
+
 def resposta_fixa(texto: str) -> str:
     """Resposta pronta da Kiza que combina com a mensagem (sem IA): por tema, ou uma frase genérica."""
     limpo = unicodedata.normalize("NFKD", texto.lower())
@@ -955,8 +967,8 @@ def resposta_fixa(texto: str) -> str:
     limpo = re.sub(r"\s+", " ", limpo).strip()
     for padrao, frases in CONVERSA_TEMAS:
         if padrao.search(limpo):
-            return random.choice(frases)
-    return random.choice(CONVERSA_DUVIDA if "?" in texto else CONVERSA_MENCAO)
+            return _escolher(frases)
+    return _escolher(CONVERSA_DUVIDA if "?" in texto else CONVERSA_MENCAO)
 
 RABISCO_FALHOU = [
     "ai, o rabisco empacou aqui 😭 me pede de novo?",

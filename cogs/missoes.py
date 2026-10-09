@@ -16,7 +16,7 @@ from discord.ext import commands
 
 import config
 from utils import missoes as ms
-from utils.helpers import TZ, barra_progresso, embed, formatar_moeda, hoje_e_ontem, responder
+from utils.helpers import TZ, barra_progresso, embed, formatar_moeda, hoje_e_ontem
 from utils.permissoes import checar_membro
 
 if TYPE_CHECKING:  # pragma: no cover

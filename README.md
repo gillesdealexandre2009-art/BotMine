@@ -1,9 +1,11 @@
 # 🦊 Kiza — bot do servidor VULPUS
 
-Bot de comunidade (Python 3.11+, discord.py 2.x, SQLite). **Cérebro (IA de conversa, opcional):** com `ANTHROPIC_API_KEY` definida a Kiza conversa de verdade (cog `cerebro`, memória por pessoa, `/memoria ver|esquecer`); sem a chave ela usa só os textos fixos (`textos.py`). Independente do SONHE (token, banco e config próprios).
+Bot de comunidade (Python 3.11+, discord.py 2.x, SQLite). **Cérebro (IA de conversa, opcional):** com `CEREBRO_API_KEY` (Groq, plano grátis, modelo `openai/gpt-oss-120b`) ou `ANTHROPIC_API_KEY` definida a Kiza conversa de verdade (cog `cerebro`: humor do dia, memória por pessoa, `/memoria ver|esquecer`, desenhos). Desenhos podem usar outro provedor com `DESENHO_API_KEY` (Gemini grátis). Se a IA estiver fora ou no limite, ela responde com frases prontas por assunto (`textos.py`). `/status` mostra a saúde do cérebro. Independente do SONHE (token, banco e config próprios).
+
+**Variáveis opcionais:** `CEREBRO_API_KEY`, `CEREBRO_API_URL`, `CEREBRO_MODELO`, `DESENHO_API_KEY`, `DESENHO_MODELO`, `BACKUP_ENVIAR_DISCORD=true` (copia o backup diário para o canal de logs da staff).
 
 **Módulos:** entrada (boas-vindas, adeus, autorole, regras, verificação) · painel de cargos · tickets · moderação e casos ·
-automod e modo raid · logs · regras por canal e sugestões · XP e níveis · economia · união de toca · Mines · fidelidade e pedido de rank (caminho até Helper) · `/ajuda` `/status` · backup.
+automod e modo raid · logs · regras por canal e sugestões · XP e níveis · economia · união de toca · Mines · fidelidade e pedido de rank (caminho até Helper) · quiz, forca e missões diárias · figurinhas · `/ajuda` `/status` · backup e resumo semanal da staff.
 
 ## 1. Discord Developer Portal (uma vez)
 1. Crie o aplicativo → **Bot** → *Reset Token* (guarde o token, ele vira `DISCORD_TOKEN`).

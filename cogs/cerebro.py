@@ -13,6 +13,7 @@ import logging
 import random
 import re
 import time
+from collections import Counter
 from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -183,12 +184,25 @@ def pediu_kope(mensagem: discord.Message) -> bool:
     return bool(RE_KOPE.search(mensagem.author.display_name) and RE_EU.search(texto))
 
 
+RE_ACAO = re.compile(r"(?<!\*)\*[^*\n]{1,60}\*(?!\*)")  # *abana a cauda*
+RE_CRINGE = re.compile(r"\b(uwu|owo|nya+|rawr)\b", re.IGNORECASE)
+RE_RAPOSINHA = re.compile(r",?\s*\braposinha\b", re.IGNORECASE)
+
+
+def sem_cringe(texto: str) -> str:
+    """Tira o que o modelo às vezes teima em escrever mesmo proibido: ações entre asteriscos, UwU e 'raposinha'."""
+    texto = RE_ACAO.sub("", texto)
+    texto = RE_CRINGE.sub("", texto)
+    texto = RE_RAPOSINHA.sub("", texto)
+    return re.sub(r"[ \t]{2,}", " ", texto).strip()
+
+
 def limpar_resposta(bruto: str) -> tuple[list[str], list[str]]:
     """Separa a resposta em (balões de fala, fatos a lembrar). Funções puras: fáceis de testar."""
     fatos = [f.strip().strip('"“”') for f in RE_LEMBRAR.findall(bruto)]
     fala = RE_LEMBRAR.sub("", bruto).strip()
     fala = re.sub(r"^\s*kiza\s*:\s*", "", fala, flags=re.IGNORECASE)
-    baloes = [b.strip() for b in fala.splitlines() if b.strip()]
+    baloes = [b for b in (sem_cringe(x) for x in fala.splitlines()) if b]
     return [truncar(b, 700) for b in baloes[:MAX_BALOES]], fatos
 
 
@@ -204,6 +218,7 @@ class Cerebro(commands.Cog):
         self._sessao: Optional[aiohttp.ClientSession] = None
         self._vaga = asyncio.Semaphore(SIMULTANEAS)
         self._cooldowns: dict[tuple, float] = {}
+        self.metricas: Counter[str] = Counter()  # ok, fallback, cache, limite, erro5xx, rede (aparece no /status)
         self._pausas: dict[str, float] = {}  # provedor -> até quando esperar (limite do plano grátis, erro 429)
         self._chateadas: dict[tuple, float] = {}  # (servidor, pessoa) -> quando foi grosseira
         self._cache: dict[str, tuple[float, str]] = {}  # pergunta de FAQ normalizada -> (quando, resposta)
@@ -219,6 +234,29 @@ class Cerebro(commands.Cog):
     async def ativo(self, guild_id: int) -> bool:
         """Cérebro ligado e com chave? A vida.py usa isso para não responder duas vezes."""
         return bool(config.CEREBRO_API_KEY or config.ANTHROPIC_API_KEY) and not self._chave_morta and await self.bot.banco.ajuste(guild_id, "cerebro") == 1
+
+    def resumo_status(self) -> str:
+        """Texto curto para o /status: provedor, modelo, contadores e pausas."""
+        if config.CEREBRO_API_KEY:
+            provedor = f"{config.CEREBRO_MODELO} (chat)"
+        elif config.ANTHROPIC_API_KEY:
+            provedor = f"{config.CEREBRO_MODELO} (Anthropic)"
+        else:
+            return "desligado (sem chave): só frases prontas"
+        m = self.metricas
+        linhas = [
+            provedor,
+            f"✅ {m['ok']} respostas • 💾 {m['cache']} do cache • 💬 {m['fallback']} frases prontas",
+            f"⚠️ {m['limite']} limites • {m['erro5xx']} erros 5xx • {m['rede']} falhas de rede",
+        ]
+        if config.DESENHO_API_KEY:
+            linhas.append(f"🎨 desenhos: {config.DESENHO_MODELO}")
+        pausas = [nome for nome in ("chat", "desenho") if self._pausado(nome)]
+        if pausas:
+            linhas.append("⏸️ em pausa por limite: " + ", ".join(pausas))
+        if self._chave_morta:
+            linhas.append("🔑 chave recusada: reinicie depois de corrigir")
+        return "\n".join(linhas)
 
     def _pausado(self, provedor: str = "chat") -> bool:
         return time.monotonic() < self._pausas.get(provedor, 0.0)
@@ -241,7 +279,8 @@ class Cerebro(commands.Cog):
         return True
 
     async def _chamar_api(
-        self, sistema: str, conversa: str, max_tokens: int = 500, timeout: int = 25, desenho: bool = False
+        self, sistema: str, conversa: str, max_tokens: int = 500, timeout: int = 25, desenho: bool = False,
+        temperatura: Optional[float] = None,
     ) -> Optional[str]:
         if self._sessao is None:
             self._sessao = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=25))
@@ -258,6 +297,7 @@ class Cerebro(commands.Cog):
             corpo = {
                 "model": modelo,
                 "max_tokens": max_tokens,
+                "temperature": 0.9 if temperatura is None else temperatura,  # chat: mais variada; desenho: mais firme
                 "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": conversa}],
             }
             if "gpt-oss" in modelo:  # modelo que raciocina: pouco, senão gasta o max_tokens pensando
@@ -283,29 +323,38 @@ class Cerebro(commands.Cog):
                 "content-type": "application/json",
             }
         async with self._vaga:
-            try:
-                async with self._sessao.post(
-                    url, json=corpo, headers=cabecalhos, timeout=aiohttp.ClientTimeout(total=timeout)
-                ) as r:
-                    dados = await r.json(content_type=None)
-                    if r.status in (401, 403):
-                        self._chave_morta = True
-                        log.error("Chave do cérebro recusada (%s): cérebro desligado até reiniciar", r.status)
-                        return None
-                    if r.status == 429:
-                        try:
-                            espera = float(r.headers.get("retry-after", 60))
-                        except ValueError:
-                            espera = 60.0
-                        self._pausas[provedor] = time.monotonic() + min(max(espera, 5.0), 900.0)
-                        log.warning("Limite do plano grátis (%s): pausando %s por %.0fs", r.status, provedor, espera)
-                        return None
-                    if r.status != 200:  # outros erros = limite do plano grátis: cai nas frases fixas e tenta de novo depois
-                        log.warning("API respondeu %s: %s", r.status, truncar(str(dados), 300))
-                        return None
-            except (aiohttp.ClientError, asyncio.TimeoutError):
-                log.warning("Falha de rede ao falar com a API", exc_info=True)
-                return None
+            for tentativa in range(2):
+                try:
+                    async with self._sessao.post(
+                        url, json=corpo, headers=cabecalhos, timeout=aiohttp.ClientTimeout(total=timeout)
+                    ) as r:
+                        dados = await r.json(content_type=None)
+                        status, retry_after = r.status, r.headers.get("retry-after", "60")
+                except (aiohttp.ClientError, asyncio.TimeoutError):
+                    self.metricas["rede"] += 1
+                    log.warning("Falha de rede ao falar com a API", exc_info=True)
+                    return None
+                if status in (401, 403):
+                    self._chave_morta = True
+                    log.error("Chave do cérebro recusada (%s): cérebro desligado até reiniciar", status)
+                    return None
+                if status == 429:
+                    try:
+                        espera = float(retry_after)
+                    except ValueError:
+                        espera = 60.0
+                    self._pausas[provedor] = time.monotonic() + min(max(espera, 5.0), 900.0)
+                    self.metricas["limite"] += 1
+                    log.warning("Limite do plano grátis (%s): pausando %s por %.0fs", status, provedor, espera)
+                    return None
+                if status >= 500 and tentativa == 0:  # pico de demanda do provedor: espera um pouco e tenta de novo
+                    self.metricas["erro5xx"] += 1
+                    await asyncio.sleep(1.5)
+                    continue
+                if status != 200:
+                    log.warning("API respondeu %s: %s", status, truncar(str(dados), 300))
+                    return None
+                break
         if gratis:
             escolha = (dados.get("choices") or [{}])[0]
             texto = (escolha.get("message") or {}).get("content") or ""
@@ -315,6 +364,8 @@ class Cerebro(commands.Cog):
             parou = dados.get("stop_reason") == "max_tokens"
         if parou:
             log.warning("Resposta cortada por max_tokens (%s)", max_tokens)
+        if texto.strip():
+            self.metricas["ok"] += 1
         return texto.strip() or None
 
     async def _historico(self, mensagem: discord.Message) -> list[str]:
@@ -439,6 +490,7 @@ class Cerebro(commands.Cog):
                 bruto, imagem = await self._com_cache(mensagem, contexto), None
 
         if not bruto:
+            self.metricas["fallback"] += 1
             if tipo == "direta":
                 await self._falar(mensagem, [textos.resposta_fixa(mensagem.clean_content)])
             return
@@ -459,6 +511,7 @@ class Cerebro(commands.Cog):
         if chave:
             achada = self._cache.get(chave)
             if achada and time.monotonic() - achada[0] < CACHE_TTL:
+                self.metricas["cache"] += 1
                 return achada[1]
         bruto = await self._chamar_api(PERSONA, contexto)
         if chave and bruto:
@@ -476,9 +529,9 @@ class Cerebro(commands.Cog):
         return await self._desenho_de(f"Cena a desenhar: {cena}")
 
     async def _desenho_de(self, pedido: str) -> Optional[bytes]:
-        bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90, desenho=True)
+        bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90, desenho=True, temperatura=0.6)
         if not bruto and config.DESENHO_API_KEY:  # provedor de desenho falhou (limite, rede): tenta o do chat
-            bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90)
+            bruto = await self._chamar_api(DESENHO_PROMPT, pedido, 8000, 90, temperatura=0.6)
         spec = rabisco.extrair_json(bruto) if bruto else None
         if spec is None:
             log.warning("Rabisco sem JSON utilizável (resposta: %s)", truncar(bruto or "vazia", 200))

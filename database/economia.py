@@ -193,25 +193,20 @@ class EconomiaMixin:
                 await self._somar_fidelidade(conn, guild_id, user_id, fidelidade, 1)
             return await self._mov(conn, guild_id, user_id, valor, tipo, chave)
 
-    @staticmethod
-    def _like_prefixo(prefixo: str) -> str:
-        """Padrão LIKE para 'começa com prefixo', escapando % e _ (usado com ESCAPE '\\')."""
-        return prefixo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
-
     async def contar_recompensas(self, guild_id: int, prefixo: str) -> int:
         """Quantas recompensas únicas começam com `prefixo` (ex.: 'drop:2026-10-01:')."""
         linha = await self._um(
-            "SELECT COUNT(*) AS n FROM recompensas_unicas WHERE guild_id = ? AND chave LIKE ? ESCAPE '\\'",
-            (guild_id, self._like_prefixo(prefixo)),
+            "SELECT COUNT(*) AS n FROM recompensas_unicas WHERE guild_id = ? AND chave >= ? AND chave < ?",
+            (guild_id, prefixo, prefixo + "\U0010ffff"),  # faixa: usa o índice da chave (LIKE não usava)
         )
         return linha["n"]
 
     async def top_recompensas(self, guild_id: int, prefixo: str, limite: int = 10) -> list[tuple[int, int]]:
         """(user_id, quantas) de quem mais levou recompensas com esse prefixo (ex.: 'bump:')."""
         linhas = await self._todos(
-            "SELECT user_id, COUNT(*) AS n FROM recompensas_unicas WHERE guild_id = ? AND chave LIKE ? ESCAPE '\\' "
+            "SELECT user_id, COUNT(*) AS n FROM recompensas_unicas WHERE guild_id = ? AND chave >= ? AND chave < ? "
             "GROUP BY user_id ORDER BY n DESC, MIN(criado_em) LIMIT ?",
-            (guild_id, self._like_prefixo(prefixo), limite),
+            (guild_id, prefixo, prefixo + "\U0010ffff", limite),
         )
         return [(linha["user_id"], linha["n"]) for linha in linhas]
 
