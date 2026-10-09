@@ -37,7 +37,13 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
 DATABASE_PATH = os.getenv("DATABASE_PATH", "kiza.db")
 # Cérebro (IA de conversa). Sem chave, a Kiza volta às frases fixas de textos.py.
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CEREBRO_MODELO = os.getenv("CEREBRO_MODELO", "claude-sonnet-5-5")
+# Provedor grátis compatível com OpenAI (padrão: Groq). Tem prioridade sobre a Anthropic quando a chave existe.
+# Gemini: CEREBRO_API_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+CEREBRO_API_KEY = os.getenv("CEREBRO_API_KEY", "")
+CEREBRO_API_URL = os.getenv("CEREBRO_API_URL", "https://api.groq.com/openai/v1/chat/completions")
+CEREBRO_MODELO = os.getenv("CEREBRO_MODELO") or (
+    "openai/gpt-oss-120b" if CEREBRO_API_KEY else "claude-sonnet-5-5"
+)
 # Onde a Kiza posta sozinha (cog presenca). Dá para trocar por servidor com a config presenca_canal_midia / presenca_canal_publicacoes.
 CANAL_MIDIAS_ID = _inteiro("CANAL_MIDIAS_ID", 1549291538138529852)
 CANAL_PUBLICACOES_ID = _inteiro("CANAL_PUBLICACOES_ID", 1555798080798851163)

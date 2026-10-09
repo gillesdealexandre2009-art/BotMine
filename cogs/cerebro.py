@@ -182,7 +182,7 @@ class Cerebro(commands.Cog):
     # ------------------------------------------------------------------ utilidades
     async def ativo(self, guild_id: int) -> bool:
         """Cérebro ligado e com chave? A vida.py usa isso para não responder duas vezes."""
-        return bool(config.ANTHROPIC_API_KEY) and not self._chave_morta and await self.bot.banco.ajuste(guild_id, "cerebro") == 1
+        return bool(config.CEREBRO_API_KEY or config.ANTHROPIC_API_KEY) and not self._chave_morta and await self.bot.banco.ajuste(guild_id, "cerebro") == 1
 
     def _livre(self, chave: tuple, segundos: float) -> bool:
         agora = time.monotonic()
@@ -206,37 +206,60 @@ class Cerebro(commands.Cog):
     ) -> Optional[str]:
         if self._sessao is None:
             self._sessao = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=25))
-        corpo = {
-            "model": config.CEREBRO_MODELO,
-            "max_tokens": max_tokens,
-            "system": sistema,
-            "messages": [{"role": "user", "content": conversa}],
-        }
-        if "haiku" not in config.CEREBRO_MODELO:  # modelos maiores pensam antes de responder; chat não precisa disso
-            corpo["thinking"] = {"type": "between_tools"}
-        cabecalhos = {
-            "x-api-key": config.ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        }
+        gratis = bool(config.CEREBRO_API_KEY)  # formato OpenAI (Groq/Gemini); senão, Anthropic
+        if gratis:
+            url = config.CEREBRO_API_URL
+            corpo = {
+                "model": config.CEREBRO_MODELO,
+                "max_tokens": max_tokens,
+                "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": conversa}],
+            }
+            if "gpt-oss" in config.CEREBRO_MODELO:  # modelo que raciocina: pouco, senão gasta o max_tokens pensando
+                corpo["reasoning_effort"] = "low"
+            cabecalhos = {
+                "Authorization": f"Bearer {config.CEREBRO_API_KEY}",
+                "content-type": "application/json",
+                "User-Agent": "KizaBot/1.0",  # a Cloudflare da Groq pode barrar o User-Agent padrão do aiohttp (403)
+            }
+        else:
+            url = API_URL
+            corpo = {
+                "model": config.CEREBRO_MODELO,
+                "max_tokens": max_tokens,
+                "system": sistema,
+                "messages": [{"role": "user", "content": conversa}],
+            }
+            if "haiku" not in config.CEREBRO_MODELO:  # modelos maiores pensam antes de responder; chat não precisa disso
+                corpo["thinking"] = {"type": "between_tools"}
+            cabecalhos = {
+                "x-api-key": config.ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            }
         async with self._vaga:
             try:
                 async with self._sessao.post(
-                    API_URL, json=corpo, headers=cabecalhos, timeout=aiohttp.ClientTimeout(total=timeout)
+                    url, json=corpo, headers=cabecalhos, timeout=aiohttp.ClientTimeout(total=timeout)
                 ) as r:
                     dados = await r.json(content_type=None)
                     if r.status in (401, 403):
                         self._chave_morta = True
-                        log.error("Chave da Anthropic recusada (%s): cérebro desligado até reiniciar", r.status)
+                        log.error("Chave do cérebro recusada (%s): cérebro desligado até reiniciar", r.status)
                         return None
-                    if r.status != 200:
+                    if r.status != 200:  # 429 = limite do plano grátis: cai nas frases fixas e tenta de novo depois
                         log.warning("API respondeu %s: %s", r.status, truncar(str(dados), 300))
                         return None
             except (aiohttp.ClientError, asyncio.TimeoutError):
                 log.warning("Falha de rede ao falar com a API", exc_info=True)
                 return None
-        texto = "".join(b.get("text", "") for b in dados.get("content", []) if b.get("type") == "text")
-        if dados.get("stop_reason") == "max_tokens":
+        if gratis:
+            escolha = (dados.get("choices") or [{}])[0]
+            texto = (escolha.get("message") or {}).get("content") or ""
+            parou = escolha.get("finish_reason") == "length"
+        else:
+            texto = "".join(b.get("text", "") for b in dados.get("content", []) if b.get("type") == "text")
+            parou = dados.get("stop_reason") == "max_tokens"
+        if parou:
             log.warning("Resposta cortada por max_tokens (%s)", max_tokens)
         return texto.strip() or None
 
