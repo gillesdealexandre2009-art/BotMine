@@ -134,8 +134,15 @@ forma clara. Se a Kiza aparecer no desenho, ela é uma menina (NÃO uma raposa d
 
 PESSOAS (importante): todo personagem tem cabeça, rosto (2 olhos e uma boca), corpo, braços e pernas bem ligados, nunca formas soltas \
 flutuando. Use o chão como referência e deixe cada personagem com uns 300px de altura.
-Receita da Kiza (menina, centro em x=400; para desenhar outra pessoa, troque as cores e os detalhes; se houver duas pessoas, \
-desloque os x e reduza o tamanho). Itens nesta ordem:
+POSIÇÃO E ESCALA: a receita abaixo está centrada em x=400. Para pôr o personagem em outro centro cx e escala k, calcule cada \
+coordenada: x_novo = cx + (x - 400) * k e y_novo = 490 + (y - 490) * k (os pés ficam sempre no chão, y=490). Com UM personagem: \
+cx=400, k=1. Com DOIS: cx=210 e cx=590, k=0.8. Com TRÊS: cx=150, 400 e 650, k=0.65. Os personagens NUNCA podem se sobrepor: \
+deixe pelo menos 80px livres entre eles (some a cauda, que sai para um lado).
+CADA PERSONAGEM TEM VISUAL PRÓPRIO: a receita é só da Kiza. Qualquer outra pessoa usa a mesma ESTRUTURA (cabeça, rosto, corpo, \
+braços, pernas), mas com roupa, cabelo e cores diferentes da Kiza e SEM orelhas e cauda de raposa (a não ser que seja uma kitsune). \
+Pai ou homem adulto: mais alto (k maior que o da Kiza), ombros largos, cabelo curto escuro, camiseta colorida, calça azul, sapatos \
+escuros, pode ter barba. Amigo ou colega: cabelo e roupa de cores diferentes. Nunca copie a Kiza para outra pessoa.
+Receita da Kiza, itens nesta ordem:
 cauda {"t":"elipse","x":455,"y":330,"w":120,"h":60,"cor":"#3a3a4a","preench":"#ffffff","e":3}
 cabelo longo atrás {"t":"elipse","x":325,"y":120,"w":150,"h":210,"cor":"#3a3a4a","preench":"#f4f4fb","e":3}
 orelha esq. {"t":"poli","pts":[[345,150],[355,85],[390,135]],"cor":"#3a3a4a","preench":"#ffffff","e":3} e interior {"t":"poli","pts":[[355,140],[360,105],[380,135]],"cor":"#ffb3c6","preench":"#ffb3c6","e":1}
