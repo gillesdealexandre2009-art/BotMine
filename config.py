@@ -45,7 +45,8 @@ CEREBRO_MODELO = os.getenv("CEREBRO_MODELO") or (
     "openai/gpt-oss-120b" if CEREBRO_API_KEY else "claude-sonnet-5-5"
 )
 # Provedor só para desenhos (opcional). Gemini grátis: aistudio.google.com/apikey. Sem chave, desenha com o do chat.
-DESENHO_API_KEY = os.getenv("DESENHO_API_KEY", "")
+# tolera espaço sobrando no nome ou no valor da variável (acontece ao colar no painel da Railway)
+DESENHO_API_KEY = next((v.strip() for k, v in os.environ.items() if k.strip() == "DESENHO_API_KEY"), "")
 DESENHO_API_URL = os.getenv(
     "DESENHO_API_URL", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 )

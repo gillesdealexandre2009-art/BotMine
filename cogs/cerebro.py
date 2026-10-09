@@ -130,7 +130,27 @@ Canvas: 800 de largura x 600 de altura (origem no canto superior esquerdo). Iten
 Regras: no máximo 70 itens; use poucas formas bem pensadas, proporções coerentes e cores pastel; comece pelas formas de fundo \
 (céu, chão) e termine pelos detalhes; adicione 2 a 5 legendas curtas em português apontando as partes importantes; deixe margem \
 de 30px nas bordas. Para construções de Minecraft, pense em blocos quadrados, vista de frente ou lateral, e mostre a ideia de \
-forma clara. Se a Kiza aparecer no desenho, ela é uma menina (NÃO uma raposa de verdade) com orelhas e cauda de raposa: cabelo branco longo, olhos azuis, jaqueta branca grande sobre roupa preta, grampo de gatinho com X, mochila branca; a mãe dela é uma kitsune com nove caudas. Desenhe o que a conversa pede.\
+forma clara. Se a Kiza aparecer no desenho, ela é uma menina (NÃO uma raposa de verdade) com orelhas e cauda de raposa: cabelo branco longo, olhos azuis, jaqueta branca grande sobre roupa preta, grampo de gatinho com X, mochila branca; a mãe dela é uma kitsune com nove caudas. Desenhe o que a conversa pede.
+
+PESSOAS (importante): todo personagem tem cabeça, rosto (2 olhos e uma boca), corpo, braços e pernas bem ligados, nunca formas soltas \
+flutuando. Use o chão como referência e deixe cada personagem com uns 300px de altura.
+Receita da Kiza (menina, centro em x=400; para desenhar outra pessoa, troque as cores e os detalhes; se houver duas pessoas, \
+desloque os x e reduza o tamanho). Itens nesta ordem:
+cauda {"t":"elipse","x":455,"y":330,"w":120,"h":60,"cor":"#3a3a4a","preench":"#ffffff","e":3}
+cabelo longo atrás {"t":"elipse","x":325,"y":120,"w":150,"h":210,"cor":"#3a3a4a","preench":"#f4f4fb","e":3}
+orelha esq. {"t":"poli","pts":[[345,150],[355,85],[390,135]],"cor":"#3a3a4a","preench":"#ffffff","e":3} e interior {"t":"poli","pts":[[355,140],[360,105],[380,135]],"cor":"#ffb3c6","preench":"#ffb3c6","e":1}
+orelha dir. espelhada: [[455,150],[445,85],[410,135]]
+roupa preta {"t":"ret","x":350,"y":290,"w":100,"h":120,"cor":"#3a3a4a","preench":"#3a3a4a","e":3}
+jaqueta branca grande {"t":"ret","x":335,"y":285,"w":130,"h":95,"cor":"#3a3a4a","preench":"#ffffff","e":3}
+pernas {"t":"ret","x":365,"y":410,"w":24,"h":80,"cor":"#3a3a4a","preench":"#3a3a4a","e":3} e outra em x=411
+tênis brancos {"t":"elipse","x":355,"y":485,"w":46,"h":22,"cor":"#3a3a4a","preench":"#ffffff","e":3} e outro em x=400
+cabeça {"t":"elipse","x":340,"y":140,"w":120,"h":125,"cor":"#3a3a4a","preench":"#ffe8d6","e":3}
+franja {"t":"poli","pts":[[345,190],[360,150],[400,140],[440,150],[455,190],[420,165],[385,172]],"cor":"#3a3a4a","preench":"#f4f4fb","e":3}
+olhos {"t":"elipse","x":370,"y":195,"w":18,"h":24,"cor":"#3a3a4a","preench":"#6ec6ff","e":2} e outro em x=412
+boca {"t":"linha","pts":[[388,235],[400,240],[412,235]],"cor":"#3a3a4a","e":3}
+grampo com X {"t":"linha","pts":[[425,150],[440,165]],"cor":"#000000","e":4} e {"t":"linha","pts":[[440,150],[425,165]],"cor":"#000000","e":4}
+Braços: duas linhas curtas saindo da jaqueta. A mãe é igual, só que maior, com 9 caudas em leque (várias elipses brancas atrás), \
+cabelo branco ainda mais longo e um vestido. Legende cada personagem com o nome embaixo dele.\
 """
 
 
