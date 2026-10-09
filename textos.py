@@ -485,6 +485,17 @@ DUVIDAS_CAMPOS = [
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
     (
+        "1.8.0",
+        "Kiza mais esperta e mais humana",
+        [
+            "🧠 Voltei a **conversar de verdade**, com um cérebro novo (e sem custo pra toca)",
+            "💬 Aprendi **mais de 150 frases novas**: quando eu não tiver a cabeça no lugar, respondo conforme o assunto (comida, sono, Minecraft, tchau, elogio...)",
+            "🎨 **Desenhos bem melhores**: agora tenho rosto, orelhas, cauda e jaqueta de verdade (aquela bolinha flutuando acabou)",
+            "👨‍👩‍👧 Dá pra pedir desenho com **várias pessoas**: ninguém mais fica em cima do outro, e cada um tem o seu visual",
+            "🦊 **Kiza:** \"minha mãe tem nove caudas. eu tenho uma. mas eu tenho estilo.\"",
+        ],
+    ),
+    (
         "1.7.1",
         "Ajustes da Kiza",
         [
