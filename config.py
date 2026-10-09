@@ -50,7 +50,7 @@ DESENHO_API_KEY = next((v.strip() for k, v in os.environ.items() if k.strip() ==
 DESENHO_API_URL = os.getenv(
     "DESENHO_API_URL", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 )
-DESENHO_MODELO = os.getenv("DESENHO_MODELO", "gemini-2.5-flash")
+DESENHO_MODELO = os.getenv("DESENHO_MODELO", "gemini-flash-latest")
 # Onde a Kiza posta sozinha (cog presenca). Dá para trocar por servidor com a config presenca_canal_midia / presenca_canal_publicacoes.
 CANAL_MIDIAS_ID = _inteiro("CANAL_MIDIAS_ID", 1549291538138529852)
 CANAL_PUBLICACOES_ID = _inteiro("CANAL_PUBLICACOES_ID", 1555798080798851163)
