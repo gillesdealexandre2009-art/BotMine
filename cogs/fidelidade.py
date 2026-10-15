@@ -23,6 +23,7 @@ import config
 import textos
 from utils.helpers import (
     barra_progresso,
+    canal_da_funcao,
     embed,
     enviar_log,
     nivel_por_xp,
@@ -82,6 +83,13 @@ def novatos_saudados(texto: Optional[str], alvos: set[int], novatos: Iterable[in
     if citados:
         return citados
     return novatos[-config.BOAS_VINDAS_GENERICA_MAX:] if eh_saudacao(texto) else []
+
+
+def nome_de_canal_de_conversa(nome: Optional[str]) -> bool:
+    """Canal onde o pessoal conversa de verdade (chat principal, geral): lá também vale dar boas-vindas, porque é onde a galera
+    saúda quem chegou. Compara por palavra, sem acento ("chat-geral" e "geral" sim; "chatbot-config" não)."""
+    palavras = re.findall(r"[a-z0-9]+", sem_acento(nome or ""))
+    return "geral" in palavras or "chat" in palavras
 
 
 def conta_nova(criada_em: datetime, agora: datetime) -> bool:
@@ -358,7 +366,17 @@ class Fidelidade(commands.Cog):
         if perderam:
             log.info("%s saiu logo depois de entrar: %d boa(s)-vinda(s) desfeita(s)", membro.id, len(perderam))
 
-    async def _talvez_boas_vindas(self, mensagem: discord.Message) -> None:
+    async def _canal_de_conversa(self, mensagem: discord.Message) -> bool:
+        """O canal é o chat principal configurado no /setup (ou um canal chamado chat/geral)?"""
+        guild = mensagem.guild
+        assert guild is not None
+        canal = await canal_da_funcao(self.bot, guild, "chat", (discord.TextChannel, discord.Thread))
+        if canal is not None and canal.id == mensagem.channel.id:
+            return True
+        return nome_de_canal_de_conversa(getattr(mensagem.channel, "name", None))
+
+    async def _talvez_boas_vindas(self, mensagem: discord.Message, so_alvo: bool = False) -> None:
+        """`so_alvo`: só vale quem foi marcado ou respondido (qualquer canal); sem isso, um "bem-vindo" solto também vale."""
         guild, autor = mensagem.guild, mensagem.author
         assert guild is not None and isinstance(autor, discord.Member)
         novatos = await self.bot.banco.novatos_recentes(guild.id, int(time.time()) - config.BOAS_VINDAS_JANELA)
@@ -368,11 +386,16 @@ class Fidelidade(commands.Cog):
             return
         alvos = {usuario.id for usuario in mensagem.mentions}
         ref = mensagem.reference.resolved if mensagem.reference else None
+        if ref is None and mensagem.reference and mensagem.reference.message_id:
+            try:  # o Discord nem sempre manda a mensagem respondida junto
+                ref = await mensagem.channel.fetch_message(mensagem.reference.message_id)
+            except discord.HTTPException:
+                ref = None
         if isinstance(ref, discord.Message):
             alvos.add(ref.author.id)
             if self.bot.user is not None and ref.author.id == self.bot.user.id:
                 alvos.update(usuario.id for usuario in ref.mentions)  # respondeu às boas-vindas da Kiza
-        saudados = novatos_saudados(mensagem.content, alvos, novatos)
+        saudados = [n for n in novatos if n in alvos] if so_alvo else novatos_saudados(mensagem.content, alvos, novatos)
         if saudados:
             await self.bot.banco.registrar_boas_vindas(guild.id, autor.id, saudados)
 
@@ -384,9 +407,16 @@ class Fidelidade(commands.Cog):
         if mensagem.type not in (discord.MessageType.default, discord.MessageType.reply):
             return
         cfg = await self.bot.banco.cfg(mensagem.guild.id)
-        if cfg.get("canal_boas_vindas") == str(mensagem.channel.id):
+        no_canal_de_boas_vindas = cfg.get("canal_boas_vindas") == str(mensagem.channel.id)
+        if no_canal_de_boas_vindas:
             await self._talvez_boas_vindas(mensagem)
-        elif mensagem.channel.id in ids_canais(cfg.get("canais_publicacao")) and conta_como_publicacao(mensagem):
+        elif eh_saudacao(mensagem.content) and await self._canal_de_conversa(mensagem):
+            # no chat geral um "bem-vindo" solto também vale para os últimos que chegaram
+            await self._talvez_boas_vindas(mensagem)
+        elif mensagem.mentions or mensagem.reference:
+            # em qualquer canal: responder à mensagem do novato ou marcá-lo conta como boas-vindas, mesmo sem a palavra
+            await self._talvez_boas_vindas(mensagem, so_alvo=True)
+        if not no_canal_de_boas_vindas and mensagem.channel.id in ids_canais(cfg.get("canais_publicacao")) and conta_como_publicacao(mensagem):
             if await eh_membro(self.bot, mensagem.author):
                 await self.bot.banco.registrar_publicacao(
                     mensagem.guild.id, mensagem.author.id, mensagem.channel.id, mensagem.id
