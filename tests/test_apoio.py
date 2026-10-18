@@ -844,3 +844,123 @@ def test_previa_sem_imagem_nao_manda_arquivo(tmp_path):
             await banco.fechar()
 
     assert rodar(cenario) == (True, True, None, [])
+
+
+# ------------------------------------------------------------------ caixinhas
+class InteracaoFalsa:
+    def __init__(self, guild, user_id=USER_A):
+        self.guild, self.user = guild, SimpleNamespace(id=user_id)
+        self.enviadas: list[dict] = []
+        self.response = SimpleNamespace(is_done=lambda: False, send_message=self._enviar)
+        self.followup = SimpleNamespace(send=self._enviar)
+
+    async def _enviar(self, content=None, **kwargs):
+        self.enviadas.append({"content": content, **kwargs})
+
+
+def test_caixinhas_somam_entradas_e_gastos(tmp_path):
+    async def cenario():
+        banco = Banco(str(tmp_path / "t.db"))
+        await banco.conectar()
+        try:
+            host = await banco.meta_criar(G, "Host", 20000)
+            velha = await banco.meta_criar(G, "Velha", 5000)
+            for i, (tipo, meta, valor) in enumerate([("kitsune", None, 3000), ("doacao", None, 1000), ("doacao", host, 2000), ("doacao", velha, 500)]):
+                pid = await banco.pg_criar(G, USER_A, tipo, valor, f"C{i}", int(time.time()) + 600, meses=2 if tipo == "kitsune" else 0, meta_id=meta)
+                await banco.pg_marcar_pago(pid, 30, 0)
+            await banco.pg_criar(G, USER_A, "doacao", 9999, "PEND", int(time.time()) + 600, meta_id=host)  # pendente não conta
+            await banco.meta_encerrar(G, velha, "encerrada")
+            g1 = await banco.gasto_registrar(G, USER_A, "geral", 400, "domínio")
+            await banco.gasto_registrar(G, USER_A, f"meta:{host}", 700, "host de novembro")
+            antes = {c["chave"]: c for c in await banco.caixinhas(G)}
+            apagou = await banco.gasto_apagar(G, g1)
+            depois = {c["chave"]: c for c in await banco.caixinhas(G)}
+            return host, velha, antes, depois, apagou, await banco.gasto_apagar(G, 999), await banco.gastos_recentes(G)
+        finally:
+            await banco.fechar()
+
+    host, velha, antes, depois, apagou, apagou_de_novo, recentes = rodar(cenario)
+    assert (antes["kitsune"]["entrou"], antes["kitsune"]["saldo"]) == (3000, 3000)
+    assert (antes["geral"]["entrou"], antes["geral"]["saiu"], antes["geral"]["saldo"]) == (1000, 400, 600)
+    assert (antes[f"meta:{host}"]["entrou"], antes[f"meta:{host}"]["saiu"], antes[f"meta:{host}"]["saldo"]) == (2000, 700, 1300)
+    assert antes[f"meta:{velha}"]["entrou"] == 500 and antes[f"meta:{velha}"]["ativa"] is False
+    assert sum(c["entrou"] for c in antes.values()) == 6500  # o pendente não entra na conta
+    assert apagou and not apagou_de_novo and depois["geral"]["saldo"] == 1000 and len(recentes) == 1
+
+
+def test_doacao_pode_ir_para_a_caixinha_geral(tmp_path):
+    async def cenario():
+        banco, apoio, prov, mural, guild, cargo, registro = await montar(tmp_path)
+        try:
+            semmeta = await apoio.meta_destino(G, None)  # sem metas: geral
+            m1 = await banco.meta_criar(G, "A", 1000)
+            m2 = await banco.meta_criar(G, "B", 1000)
+            await banco.meta_encerrar(G, m2, "encerrada")
+            padrao = await apoio.meta_destino(G, None)  # em branco: a primeira meta ativa
+            geral = await apoio.meta_destino(G, 0)  # escolheu a caixinha geral de propósito
+            escolhida = await apoio.meta_destino(G, m1)
+            encerrada = await apoio.meta_destino(G, m2)  # meta encerrada não recebe: cai na primeira ativa
+            interacao = InteracaoFalsa(guild)
+            opcoes = await apoio._meta_autocompletar.__func__(apoio, interacao, "") if hasattr(apoio._meta_autocompletar, "__func__") else await apoio._meta_autocompletar(interacao, "")
+            return semmeta, m1, padrao, geral, escolhida, encerrada, [(o.name, o.value) for o in opcoes]
+        finally:
+            await banco.fechar()
+
+    semmeta, m1, padrao, geral, escolhida, encerrada, opcoes = rodar(cenario)
+    assert semmeta is None and padrao == m1 and geral is None and escolhida == m1 and encerrada == m1
+    assert opcoes[0] == ("A", m1) and opcoes[-1] == (textos.CAIXA_GERAL_SEM_META, 0)
+
+
+def test_comandos_de_gasto_e_caixinhas(tmp_path):
+    async def cenario():
+        banco, apoio, prov, mural, guild, cargo, registro = await montar(tmp_path)
+        try:
+            pid = await banco.pg_criar(G, USER_A, "doacao", 2000, "G1", int(time.time()) + 600)
+            await banco.pg_marcar_pago(pid, 30, 0)
+            i1, i2, i3, i4, i5 = (InteracaoFalsa(guild) for _ in range(5))
+            await apoio.apoio_gasto.callback(apoio, i1, "5,00", "domínio", "geral")
+            await apoio.apoio_gasto.callback(apoio, i2, "abc", "x", "geral")
+            await apoio.apoio_gasto.callback(apoio, i3, "10", "x", "meta:999")
+            await apoio.apoio_gasto.callback(apoio, i4, "100", "host", "kitsune")  # gasta mais do que tem: avisa, mas registra
+            await apoio.apoio_caixinhas.callback(apoio, i5)
+            apagar = InteracaoFalsa(guild)
+            await apoio.apoio_gasto_apagar.callback(apoio, apagar, 1)
+            return i1, i2, i3, i4, i5, apagar
+        finally:
+            await banco.fechar()
+
+    i1, i2, i3, i4, i5, apagar = rodar(cenario)
+    assert "R$ 5,00" in i1.enviadas[0]["content"] and "R$ 15,00" in i1.enviadas[0]["content"]  # saldo depois: 20 - 5
+    assert "positivo" in i2.enviadas[0]["content"] and "Não achei essa caixinha" in i3.enviadas[0]["content"]
+    assert "negativo" in i4.enviadas[0]["content"]
+    painel = i5.enviadas[0]["embed"]
+    assert "Doações gerais" in painel.description and "R$ 20,00" in painel.description and "saldo R$ 15,00" in painel.description
+    assert "Kitsune" in painel.description and "domínio" in painel.fields[0].value
+    assert "apagado" in apagar.enviadas[0]["content"]
+
+
+def test_painel_do_kitsune_formata_com_todos_os_valores(tmp_path):
+    import string
+
+    from cogs.vitrine import Vitrine
+
+    async def cenario():
+        banco, apoio, prov, mural, guild, cargo, registro = await montar(tmp_path)
+        try:
+            bot = apoio.bot
+            vitrine = Vitrine(bot)
+            guild.get_channel = lambda _cid: None
+            guild.channels = []
+            valores = await vitrine._mencoes(guild)
+            e = vitrine._montar(textos.KITSUNE_TITULO, textos.KITSUNE_DESC, textos.KITSUNE_CAMPOS, textos.KITSUNE_RODAPE, valores)
+            return valores, e
+        finally:
+            await banco.fechar()
+
+    valores, e = rodar(cenario)
+    pedidos = {nome for trecho in [textos.KITSUNE_DESC, *[v for _n, v in textos.KITSUNE_CAMPOS]] for _l, nome, _f, _c in string.Formatter().parse(trecho) if nome}
+    assert pedidos <= set(valores), pedidos - set(valores)
+    texto = e.description + "\n".join(f.name + f.value for f in e.fields)
+    assert "R$ 15,00" in texto and "R$ 45,00" in texto and "R$ 90,00" in texto and "R$ 180,00" in texto  # 1, 3, 6 e 12 meses
+    assert "2x" in texto and "PIX" in texto and "/kitsune" in texto and "/doar" in texto and "boost" not in e.description.lower()
+    assert all(len(f.value) <= 1024 for f in e.fields) and len(e.fields) <= 25

@@ -281,3 +281,54 @@ class ApoioMixin:
             "SELECT * FROM pagamentos WHERE guild_id = ? AND tipo = 'doacao' AND status = 'pago' ORDER BY id DESC LIMIT ?",
             (guild_id, limite),
         )
+
+    # ------------------------------------------------------------------ caixinhas (contabilidade)
+    async def gasto_registrar(self, guild_id: int, user_id: int, caixinha: str, valor_centavos: int, motivo: str) -> int:
+        async with self._tx() as conn:  # type: ignore[attr-defined]
+            cur = await conn.execute(
+                "INSERT INTO gastos (guild_id, user_id, caixinha, valor_centavos, motivo, criado_em) VALUES (?, ?, ?, ?, ?, ?)",
+                (guild_id, user_id, caixinha, valor_centavos, motivo[:150], agora()),
+            )
+            novo = cur.lastrowid
+            await cur.close()
+            return int(novo or 0)
+
+    async def gasto_apagar(self, guild_id: int, gasto_id: int) -> bool:
+        return await self._exec("DELETE FROM gastos WHERE id = ? AND guild_id = ?", (gasto_id, guild_id)) > 0  # type: ignore[attr-defined]
+
+    async def gastos_recentes(self, guild_id: int, limite: int = 8):
+        return await self._todos(  # type: ignore[attr-defined]
+            "SELECT * FROM gastos WHERE guild_id = ? ORDER BY id DESC LIMIT ?", (guild_id, limite)
+        )
+
+    async def caixinhas(self, guild_id: int) -> list[dict[str, Any]]:
+        """O que entrou, o que saiu e o saldo de cada caixinha: Kitsune, doações gerais (sem meta) e uma por meta (ativa ou não)."""
+        entradas = await self._todos(  # type: ignore[attr-defined]
+            "SELECT tipo, meta_id, COALESCE(SUM(valor_centavos), 0) AS total FROM pagamentos WHERE guild_id = ? AND status = 'pago' "
+            "GROUP BY tipo, meta_id",
+            (guild_id,),
+        )
+        saidas = {
+            linha["caixinha"]: int(linha["total"])
+            for linha in await self._todos(  # type: ignore[attr-defined]
+                "SELECT caixinha, SUM(valor_centavos) AS total FROM gastos WHERE guild_id = ? GROUP BY caixinha", (guild_id,)
+            )
+        }
+        kitsune = sum(int(e["total"]) for e in entradas if e["tipo"] == "kitsune")
+        geral = sum(int(e["total"]) for e in entradas if e["tipo"] == "doacao" and e["meta_id"] is None)
+        por_meta = {int(e["meta_id"]): int(e["total"]) for e in entradas if e["tipo"] == "doacao" and e["meta_id"] is not None}
+        resultado: list[dict[str, Any]] = [
+            {"chave": "kitsune", "nome": "Kitsune", "entrou": kitsune, "saiu": saidas.get("kitsune", 0), "ativa": True, "tipo": "kitsune"},
+            {"chave": "geral", "nome": "Doações gerais", "entrou": geral, "saiu": saidas.get("geral", 0), "ativa": True, "tipo": "geral"},
+        ]
+        for m in await self._todos(  # type: ignore[attr-defined]
+            "SELECT id, titulo, encerrada_em FROM metas WHERE guild_id = ? ORDER BY id", (guild_id,)
+        ):
+            chave = f"meta:{m['id']}"
+            resultado.append({
+                "chave": chave, "nome": m["titulo"], "entrou": por_meta.get(int(m["id"]), 0), "saiu": saidas.get(chave, 0),
+                "ativa": not m["encerrada_em"], "tipo": "meta",
+            })
+        for c in resultado:
+            c["saldo"] = c["entrou"] - c["saiu"]
+        return resultado

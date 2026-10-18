@@ -41,6 +41,11 @@ class Vitrine(commands.Cog):
         # preços do apoio por PIX (os ajustes do servidor, em reais)
         valores["kitsune_preco"] = reais(await self.bot.banco.ajuste(guild.id, "kitsune_preco") * 100)
         valores["doacao_min"] = reais(await self.bot.banco.ajuste(guild.id, "doacao_min") * 100)
+        preco = await self.bot.banco.ajuste(guild.id, "kitsune_preco")
+        for n in config.KITSUNE_MESES:
+            valores[f"kitsune_{n}m"] = reais(n * preco * 100)
+        pct = await self.bot.banco.ajuste(guild.id, "kitsune_xp_pct")
+        valores["kitsune_xp"] = f"{(100 + pct) / 100:g}x".replace(".", ",")
         for campo, (chave, generico) in nomes.items():
             canal = await canal_da_funcao(self.bot, guild, chave, TEXTO_OU_FORUM)
             valores[campo] = canal.mention if canal else f"**{generico}**"
@@ -48,6 +53,8 @@ class Vitrine(commands.Cog):
         for campo, chave in (("login", "mc_login"), ("ip", "mc_ip")):
             canal_id = await self.bot.banco.get_config_int(guild.id, f"canal_{chave}") or config.MC_CANAIS_PADRAO.get(chave)
             valores[campo] = f"<#{canal_id}>" if canal_id else f"**{campo}**"
+        canal_doacoes = await canal_da_funcao(self.bot, guild, "doacoes")
+        valores["doacoes"] = canal_doacoes.mention if canal_doacoes else "**o canal de doações**"
         return valores
 
     @staticmethod

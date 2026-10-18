@@ -114,7 +114,7 @@ class PainelApoioView(discord.ui.View):
     @discord.ui.button(label=textos.APOIO_BOTAO_DOAR, emoji="💖", style=discord.ButtonStyle.success, custom_id="apoio:doar")
     async def doar(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
         if await self.cog.pode_apoiar(interaction):
-            await interaction.response.send_modal(DoacaoModal(self.cog))
+            await self.cog.escolher_destino(interaction)
 
     @discord.ui.button(label=textos.APOIO_BOTAO_METAS, emoji="📊", style=discord.ButtonStyle.secondary, custom_id="apoio:metas")
     async def metas(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
@@ -123,6 +123,21 @@ class PainelApoioView(discord.ui.View):
             return
         embeds, arquivos = await self.cog.montar_painel(guild)
         await interaction.response.send_message(embeds=embeds, files=arquivos, ephemeral=True)
+
+
+class DestinoView(discord.ui.View):
+    """Escolhe para onde vai a doação (uma meta ou a caixinha geral) antes de pedir o valor."""
+
+    def __init__(self, cog: "Apoio", opcoes: list[discord.SelectOption]) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        seletor = discord.ui.Select(placeholder=textos.DOAR_ONDE_PLACEHOLDER, options=opcoes)
+        seletor.callback = self._escolheu  # type: ignore[method-assign]
+        self.seletor = seletor
+        self.add_item(seletor)
+
+    async def _escolheu(self, interaction: discord.Interaction) -> None:
+        await interaction.response.send_modal(DoacaoModal(self.cog, int(self.seletor.values[0])))
 
 
 class MesesView(discord.ui.View):
@@ -373,6 +388,8 @@ class Apoio(commands.Cog):
 
     async def meta_destino(self, guild_id: int, meta_id: Optional[int]) -> Optional[int]:
         """A meta que recebe a doação: a escolhida (se estiver ativa) ou a mais antiga ativa. None = doação geral."""
+        if meta_id == 0:  # escolheu a caixinha geral de propósito
+            return None
         if meta_id:
             meta = await self.bot.banco.meta_por_id(guild_id, meta_id)
             if meta is not None and not meta["encerrada_em"]:
@@ -452,6 +469,19 @@ class Apoio(commands.Cog):
             await self._dizer(interaction, textos.APOIO_MUITOS_PENDENTES.format(n=dado))
         else:
             await self._dizer(interaction, textos.APOIO_ERRO_PIX)
+
+    async def escolher_destino(self, interaction: discord.Interaction) -> None:
+        """Com metas ativas, deixa escolher para onde vai a doação; sem metas, vai direto para o valor."""
+        guild = interaction.guild
+        assert guild is not None
+        metas = await self.bot.banco.metas_ativas(guild.id)
+        if not metas:
+            await interaction.response.send_modal(DoacaoModal(self, 0))
+            return
+        opcoes = [discord.SelectOption(label=m["titulo"][:100], value=str(m["id"]), emoji="🎯") for m in metas[:24]]
+        opcoes.append(discord.SelectOption(label=textos.CAIXA_GERAL_SEM_META[2:].strip()[:100], value="0", emoji="💖"))
+        e = embed(textos.DOAR_ONDE_TITULO, textos.DOAR_ONDE_DESC)
+        await interaction.response.send_message(embed=e, view=DestinoView(self, opcoes), ephemeral=True)
 
     async def mostrar_meses(self, interaction: discord.Interaction) -> None:
         if not await self.pode_apoiar(interaction):
@@ -875,12 +905,15 @@ class Apoio(commands.Cog):
         if interaction.guild is None:
             return []
         metas = await self.bot.banco.metas_ativas(interaction.guild.id)
-        return [app_commands.Choice(name=m["titulo"][:100], value=int(m["id"])) for m in metas if atual.lower() in m["titulo"].lower()][:25]
+        opcoes = [app_commands.Choice(name=m["titulo"][:100], value=int(m["id"])) for m in metas if atual.lower() in m["titulo"].lower()]
+        if not atual or "geral" in atual.lower():
+            opcoes.append(app_commands.Choice(name=textos.CAIXA_GERAL_SEM_META, value=0))
+        return opcoes[:25]
 
     @app_commands.command(name="doar", description="Ajude a pagar a hospedagem do servidor por PIX.")
     @app_commands.describe(
         valor="Quanto, em reais (ex.: 10 ou 7,50)", mensagem="Recado para o mural (opcional)",
-        anonimo="Aparecer como anônimo no mural", meta="Para qual meta (se deixar em branco, vai para a primeira)",
+        anonimo="Aparecer como anônimo no mural", meta="Para qual meta ou para a caixinha geral (em branco: a primeira meta)",
     )
     @app_commands.autocomplete(meta=_meta_autocompletar)
     @app_commands.guild_only()
@@ -1027,6 +1060,72 @@ class Apoio(commands.Cog):
         linhas = await self.configurar(guild)
         e = embed(textos.APOIO_CFG_TITULO, "\n".join(linhas))
         await interaction.followup.send(embed=e, ephemeral=True)
+
+    async def _caixinha_autocompletar(self, interaction: discord.Interaction, atual: str) -> list[app_commands.Choice[str]]:
+        if interaction.guild is None:
+            return []
+        todas = await self.bot.banco.caixinhas(interaction.guild.id)
+        return [
+            app_commands.Choice(name=f"{textos.CAIXA_ICONE[c['tipo']]} {c['nome']}"[:100], value=c["chave"])
+            for c in todas if atual.lower() in c["nome"].lower()
+        ][:25]
+
+    @apoio.command(name="caixinhas", description="(Admin) Mostra quanto entrou, saiu e sobrou em cada caixinha (Kitsune, doações gerais e cada meta).")
+    @exigir_nivel(config.NIVEL_ADMIN)
+    async def apoio_caixinhas(self, interaction: discord.Interaction) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        banco = self.bot.banco
+        todas = await banco.caixinhas(guild.id)
+        linhas = []
+        for c in todas:
+            if c["tipo"] == "meta" and not c["ativa"] and c["entrou"] == 0 and c["saiu"] == 0:
+                continue
+            linha = textos.CAIXA_LINHA.format(
+                icone=textos.CAIXA_ICONE[c["tipo"]], nome=discord.utils.escape_markdown(c["nome"]),
+                entrou=reais(c["entrou"]), saiu=reais(c["saiu"]), saldo=reais(c["saldo"]))
+            linhas.append(linha + (textos.CAIXA_ENCERRADA if c["tipo"] == "meta" and not c["ativa"] else ""))
+        e = embed(textos.CAIXA_TITULO, "\n".join(linhas) + "\n\n" + textos.CAIXA_TOTAL.format(
+            entrou=reais(sum(c["entrou"] for c in todas)), saiu=reais(sum(c["saiu"] for c in todas)), saldo=reais(sum(c["saldo"] for c in todas))))
+        gastos = await banco.gastos_recentes(guild.id, 6)
+        if gastos:
+            nomes = {c["chave"]: c["nome"] for c in todas}
+            e.add_field(name=textos.CAIXA_GASTOS, value="\n".join(
+                textos.CAIXA_GASTO_LINHA.format(id=g["id"], valor=reais(g["valor_centavos"]), caixinha=nomes.get(g["caixinha"], g["caixinha"]),
+                                                 motivo=discord.utils.escape_markdown(g["motivo"]), quando=g["criado_em"]) for g in gastos), inline=False)
+        e.set_footer(text=textos.CAIXA_AVISO)
+        await interaction.response.send_message(embed=e, ephemeral=True)
+
+    @apoio.command(name="gasto", description="(Admin) Registra um gasto (ex.: a host) tirando de uma caixinha.")
+    @app_commands.describe(valor="Quanto foi, em reais (ex.: 59,63)", motivo="Com o que foi", caixinha="De qual caixinha sai (em branco: doações gerais)")
+    @app_commands.autocomplete(caixinha=_caixinha_autocompletar)
+    @exigir_nivel(config.NIVEL_ADMIN)
+    async def apoio_gasto(self, interaction: discord.Interaction, valor: str, motivo: str, caixinha: str = "geral") -> None:
+        guild = interaction.guild
+        assert guild is not None
+        centavos = parse_valor(valor)
+        if centavos is None:
+            await responder_ephemeral(interaction, textos.CAIXA_VALOR_INVALIDO)
+            return
+        todas = {c["chave"]: c for c in await self.bot.banco.caixinhas(guild.id)}
+        if caixinha not in todas:
+            await responder_ephemeral(interaction, textos.CAIXA_NAO_ACHADA)
+            return
+        gasto_id = await self.bot.banco.gasto_registrar(guild.id, interaction.user.id, caixinha, centavos, motivo.strip())
+        saldo = todas[caixinha]["saldo"] - centavos
+        texto = textos.CAIXA_GASTO_REGISTRADO.format(id=gasto_id, valor=reais(centavos), caixinha=todas[caixinha]["nome"], motivo=discord.utils.escape_markdown(motivo.strip()), saldo=reais(saldo))
+        if saldo < 0:
+            texto += "\n" + textos.CAIXA_SEM_SALDO.format(caixinha=todas[caixinha]["nome"], saldo=reais(saldo))
+        await responder_ephemeral(interaction, texto)
+
+    @apoio.command(name="gasto-apagar", description="(Admin) Apaga um gasto registrado por engano (o número aparece em /apoio caixinhas).")
+    @app_commands.describe(id="O número do gasto")
+    @exigir_nivel(config.NIVEL_ADMIN)
+    async def apoio_gasto_apagar(self, interaction: discord.Interaction, id: int) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        feito = await self.bot.banco.gasto_apagar(guild.id, id)
+        await responder_ephemeral(interaction, textos.CAIXA_GASTO_APAGADO.format(id=id) if feito else textos.CAIXA_GASTO_NAO_ACHADO.format(id=id))
 
     @apoio.command(name="pagamentos", description="(Admin) Mostra os últimos pagamentos confirmados e os totais.")
     @exigir_nivel(config.NIVEL_ADMIN)

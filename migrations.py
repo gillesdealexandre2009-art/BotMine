@@ -404,3 +404,22 @@ ALTER TABLE metas ADD COLUMN imagem_tipo TEXT NOT NULL DEFAULT '';
 ALTER TABLE metas ADD COLUMN cor INTEGER NOT NULL DEFAULT 0;
 """,
 ))
+
+
+# Caixinhas: contabilidade do que entrou (pagamentos) e do que saiu (gastos que a staff registra) em cada "caixinha".
+# O dinheiro de verdade fica na conta do Mercado Pago; isto só organiza a conta para o dono saber quanto é de quê.
+MIGRACOES.append((
+    11,
+    """
+CREATE TABLE gastos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id        INTEGER NOT NULL,
+    user_id         INTEGER NOT NULL,                 -- quem registrou
+    caixinha        TEXT    NOT NULL,                 -- kitsune, geral ou meta:<id>
+    valor_centavos  INTEGER NOT NULL CHECK (valor_centavos > 0),
+    motivo          TEXT    NOT NULL,
+    criado_em       INTEGER NOT NULL
+);
+CREATE INDEX ix_gastos_guild ON gastos (guild_id, caixinha);
+""",
+))

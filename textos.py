@@ -371,20 +371,49 @@ INFOS_RODAPE = "Kiza Misuchi • guardiã da toca"
 
 KITSUNE_TITULO = "🦊 Seja um Kitsune"
 KITSUNE_DESC = (
-    "Os **Kitsunes** são as raposas que ajudam a manter a toca de pé. Sem eles, eu estaria "
-    "dormindo num servidor desligado. 😿\n\n"
-    "**Como virar Kitsune:** pague por **PIX** aqui mesmo, direto pelo botão abaixo ou com `/kitsune`. "
-    "Cada mês custa **{kitsune_preco}** e o selo vale pelo tempo que você comprou. "
-    "Pagou, eu libero na hora, no Discord e no jogo (basta ter ligado sua conta com `/minecraft vincular`)."
+    "Os **Kitsunes** são as raposas que ajudam a manter a toca de pé: a hospedagem do servidor é paga todo mês do bolso do dono, "
+    "e cada Kitsune acende uma luz a mais. Em troca, você ganha um cantinho só seu, no Discord e no jogo. 😼\n\n"
+    "Aperte **Virar Kitsune** aqui embaixo (ou use `/kitsune`), escolha o tempo e pague por **PIX**. "
+    "Pagou, eu libero **na hora**."
 )
 KITSUNE_CAMPOS = [
-    ("⚡ XP em dobro", "Kitsune ganha **2x XP** em toda mensagem. Sobe de rank e desbloqueia cores mais rápido."),
-    ("✨ Vantagens decorativas", "Cargo e cor exclusivos de Kitsune e destaque na lista de membros."),
-    ("📢 Prioridade", "Fica sabendo primeiro dos anúncios e tem prioridade nas vagas de eventos."),
+    (
+        "💳 Quanto custa",
+        "**{kitsune_preco} por mês**, o tempo que você quiser:\n"
+        "• 1 mês: {kitsune_1m}\n• 3 meses: {kitsune_3m}\n• 6 meses: {kitsune_6m}\n• 12 meses: {kitsune_12m}\n"
+        "Renovou antes de acabar? O tempo novo **soma** ao que você ainda tem.",
+    ),
+    (
+        "💬 No Discord",
+        "• Cargo **Kitsune** e destaque na lista de membros\n"
+        "• **{kitsune_xp} de XP** em toda mensagem (o XP é o mesmo do jogo)\n"
+        "• Sua foto do Discord aparece quando você fala no chat do Minecraft",
+    ),
+    (
+        "⛏️ No Minecraft (só visual e comodidade)",
+        "• **Apelido e cor do nome**, inclusive os animados por nível\n"
+        "• Temas do painel: **Sakura**, **Lunar** e **Espírito**\n"
+        "• **Efeito de abate** à sua escolha\n"
+        "• Clã: **tema e estilo da bandeira**\n"
+        "• Abrir **várias cápsulas de pet de uma vez** e esconder os pets sem perder os bônus",
+    ),
+    (
+        "🔗 Para o selo aparecer no jogo",
+        "Ligue sua conta com `/minecraft vincular` (ou o botão em {login}). Se você comprar antes de ligar, o cargo vem agora e o selo chega "
+        "quando você ligar.",
+    ),
+    (
+        "⏳ E quando acaba?",
+        "No fim do prazo o cargo e o selo saem sozinhos. Tudo o que você ganhou jogando continua com você, e dá para voltar quando quiser.",
+    ),
+    (
+        "💖 Só quer ajudar?",
+        "Doe qualquer valor com `/doar` e acompanhe as **metas** em {doacoes}. Doação não dá vantagem nenhuma: é só um obrigada.",
+    ),
     (
         "⚖️ E pay-to-win?",
-        "**Nunca no jogo.** O XP em dobro só acelera o que todo mundo conquista conversando: "
-        "nada fica exclusivo de quem paga, e nada vale dentro do Minecraft.",
+        "**Nunca no jogo.** Kitsune no Minecraft é só visual e comodidade: nada de dano, Caudas, itens ou vantagem em guerra, e nada fica "
+        "exclusivo de quem paga além do enfeite. Boost do servidor não dá Kitsune.",
     ),
 ]
 KITSUNE_RODAPE = "Obrigada, de verdade, a cada Kitsune. 🧡"
@@ -1511,3 +1540,24 @@ META_COR_INVALIDA = "Cor inválida. Use 6 dígitos hexadecimais, como #F28C38."
 META_PRAZO_CAMPO_INVALIDO = "O prazo precisa ser um número de dias entre 0 e 3650."
 META_VALOR_CAMPO_INVALIDO = "O valor da meta precisa ser um número inteiro de reais, de 1 a 1.000.000."
 META_IMAGEM_REMOVIDA = "Imagem da meta `{id}` removida."
+
+
+# ---- caixinhas
+CAIXA_TITULO = "🐷 Caixinhas"
+CAIXA_AVISO = "O dinheiro de verdade fica todo na conta do Mercado Pago; aqui é só a conta de quanto é de quê."
+CAIXA_LINHA = "{icone} **{nome}**: entrou {entrou} · saiu {saiu} · **saldo {saldo}**"
+CAIXA_ICONE = {"kitsune": "🦊", "geral": "💖", "meta": "🎯"}
+CAIXA_ENCERRADA = " (meta encerrada)"
+CAIXA_TOTAL = "Total: entrou **{entrou}** · saiu **{saiu}** · saldo **{saldo}**"
+CAIXA_GASTOS = "Últimos gastos"
+CAIXA_GASTO_LINHA = "`{id}` · {valor} · {caixinha} · {motivo} · <t:{quando}:d>"
+CAIXA_GASTO_REGISTRADO = "Gasto `{id}` registrado: {valor} da caixinha **{caixinha}** ({motivo}). Saldo agora: {saldo}."
+CAIXA_GASTO_APAGADO = "Gasto `{id}` apagado."
+CAIXA_GASTO_NAO_ACHADO = "Não achei o gasto `{id}`."
+CAIXA_NAO_ACHADA = "Não achei essa caixinha. Use uma das opções que aparecem ao digitar."
+CAIXA_VALOR_INVALIDO = "O valor do gasto precisa ser um número positivo em reais (ex.: 59,63)."
+CAIXA_SEM_SALDO = "Atenção: a caixinha **{caixinha}** ficou com saldo negativo ({saldo}). Registrei mesmo assim."
+CAIXA_GERAL_SEM_META = "💖 Doação geral (sem meta)"
+DOAR_ONDE_TITULO = "💖 Para onde vai a doação?"
+DOAR_ONDE_DESC = "Escolha a meta que você quer ajudar, ou a **caixinha geral**."
+DOAR_ONDE_PLACEHOLDER = "Escolha para onde vai"
