@@ -591,8 +591,19 @@ def test_painel_do_ip_tem_o_link_de_entrada_rapida_e_a_imagem():
     assert embeds.link_servidor("alternativo") == "minecraft://?addExternalServer=VULPUS-ALT|vulpus.bedrock.net.br:27151"
     e = embeds.montar_painel_ip({"online": ["Ana"], "max": 8, "ts": 1000.0}, 1000.0, "<#1>", "ip.webp")
     rapido = [c for c in e.fields if c.name == "⚡ Entrada rápida"][0].value
-    assert "(minecraft://?addExternalServer=VULPUS|plus-01.bedhosting.com.br:27151)" in rapido  # link clicável
-    assert "```\nminecraft://?addExternalServer=VULPUS|plus-01.bedhosting.com.br:27151\n```" in rapido  # e para copiar
+    assert "](minecraft://" not in rapido  # o Discord não deixa clicar em minecraft://: nada de link em markdown quebrado
+    assert "```\nminecraft://?addExternalServer=VULPUS|plus-01.bedhosting.com.br:27151\n```" in rapido  # só para copiar
+    # o que se clica são botões https que levam à página /entrar do site, que abre o Minecraft
+    botoes = embeds.botoes_ip()
+    assert botoes[0] == ("Abrir no Minecraft", "https://site-production-f47b.up.railway.app/entrar/")
+    assert botoes[1] == ("Servidor alternativo", "https://site-production-f47b.up.railway.app/entrar/?s=alt")
+    from cogs_minecraft.ponte import PainelIpView
+
+    async def montar_view():
+        return PainelIpView()
+
+    view = rodar(montar_view)
+    assert [(b.label, b.url) for b in view.children] == botoes and all(b.style == discord.ButtonStyle.link for b in view.children)
     assert e.image.url == "attachment://ip.webp"
     sem = embeds.montar_painel_ip(None, 0.0)
     assert sem.image.url is None  # sem arquivo de banner o painel sai sem imagem, sem erro

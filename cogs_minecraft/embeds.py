@@ -290,6 +290,16 @@ def link_servidor(chave: str) -> str:
     return ""
 
 
+def botoes_ip() -> list[tuple[str, str]]:
+    """(texto, endereço) dos botões do painel de IP. O Discord só deixa clicar em https: o endereço é a página /entrar do site,
+    que abre o minecraft://?addExternalServer=... no aparelho."""
+    base = config.MC_SITE_URL.rstrip("/")
+    botoes = [(textos.MC_BOTAO_ABRIR, f"{base}/entrar/")]
+    if link_servidor("alternativo"):
+        botoes.append((textos.MC_BOTAO_ABRIR_ALT, f"{base}/entrar/?s=alt"))
+    return botoes
+
+
 def nome_canal_online(status: Optional[dict[str, Any]], agora: float) -> str:
     """Nome do canal contador: '🟢 Online | (2) 🦊', ou o de fora do ar quando o servidor não dá notícias."""
     if status_online(status, agora) and status is not None:
@@ -312,8 +322,6 @@ def montar_painel_ip(
     for chave, ip, porta in config.MC_SERVIDORES:
         e.add_field(name=nomes.get(chave, chave), value=textos.MC_IP_VALOR.format(ip=ip, porta=porta), inline=True)
     rapido = textos.MC_IP_RAPIDO.format(link=link_servidor("principal"))
-    if link_servidor("alternativo"):
-        rapido += "\n" + textos.MC_IP_RAPIDO_ALT.format(link=link_servidor("alternativo"))
     e.add_field(name=textos.MC_IP_CAMPO_RAPIDO, value=_corta(rapido, LIMITE_CAMPO), inline=False)
     e.add_field(name=textos.MC_IP_CAMPO_COMO, value=_corta(textos.MC_IP_COMO.format(login=mencao_login), LIMITE_CAMPO), inline=False)
     if online and status is not None:

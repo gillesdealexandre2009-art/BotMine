@@ -105,6 +105,8 @@ MC_SERVIDORES = (
     ("principal", "plus-01.bedhosting.com.br", 27151),
     ("alternativo", "vulpus.bedrock.net.br", 27151),
 )
+# Site da Vulpus (Railway): a página /entrar abre o Minecraft já com o servidor (o Discord só deixa clicar em https).
+MC_SITE_URL = os.getenv("MC_SITE_URL", "https://site-production-f47b.up.railway.app")
 MC_MAX_JOGADORES = _inteiro("MC_MAX_JOGADORES", 8)
 # Cargo dado a quem sugeriu algo útil que o dono aprovou ou usou.
 CARGO_SUGESTOR_ID = 1561367707914604594

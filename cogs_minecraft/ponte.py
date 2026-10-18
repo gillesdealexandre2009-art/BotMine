@@ -165,6 +165,15 @@ class PainelLoginView(discord.ui.View):
         return await checar_membro(interaction)
 
 
+class PainelIpView(discord.ui.View):
+    """Botões de link do painel do ip-e-porta (abrem a página /entrar do site, que abre o Minecraft)."""
+
+    def __init__(self) -> None:
+        super().__init__(timeout=None)
+        for texto, url in embeds.botoes_ip():
+            self.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=texto, url=url, emoji="🎮"))
+
+
 class VincularModal(discord.ui.Modal):
     def __init__(self, ponte: "Ponte") -> None:
         super().__init__(title=textos.MC_MODAL_TITULO)
@@ -571,7 +580,9 @@ class Ponte(commands.Cog):
             assinatura = json.dumps(e.to_dict(), sort_keys=True)
             if forcar or assinatura != self._ip_publicado:
                 try:
-                    await publicar_ou_editar(self.bot, guild, canal_ip, "mc_ip", embeds=[e], arquivos=[arquivo] if arquivo else None)
+                    await publicar_ou_editar(
+                        self.bot, guild, canal_ip, "mc_ip", embeds=[e], arquivos=[arquivo] if arquivo else None, view=PainelIpView()
+                    )
                     self._ip_publicado = assinatura
                 except discord.HTTPException:
                     log.warning("Falha ao publicar o painel do ip-e-porta", exc_info=True)
