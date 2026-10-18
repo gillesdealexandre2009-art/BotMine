@@ -6,7 +6,7 @@
 // guerras começam e terminam com iniciar/terminar (cla_guerra), os mesmos do jogo normal.
 import { Player } from "@minecraft/server";
 import { DONOS, NIVEIS_CLA, SONS } from "../config.js";
-import { config, todosJogadores } from "../core/db.js";
+import { config, dadosJogador, editarJogador, todosJogadores } from "../core/db.js";
 import { adicionarDono, donosRegistrados, ehDono, logDono, registrarLogDono, reivindicarDono, removerDono } from "../core/dono.js";
 import { temPalavrao } from "../core/filtro.js";
 import { porId, porNome } from "../core/jogadores.js";
@@ -444,6 +444,63 @@ export function definirApelidoDe(autor, alvo, apelidoBruto) {
     const p = porId(pessoa.id);
     if (p && p.id !== autor.id) msg(p, textos.APELIDO_MUDADO_AVISO(nome));
     return textos.APELIDO_DEFINIDO(pessoa.nome, nome);
+  });
+}
+
+// ---------------------------------------------------------------- editar jogador
+
+/** Teto dos números editáveis (evita valores absurdos por engano de digitação). */
+export const LIMITE_EDICAO = 999_999_999;
+
+/** @typedef {{ caudas: number, xp: number, mortes: number, tempoMin: number }} Edicao */
+
+/** Valores atuais de uma pessoa (para pré-preencher o formulário). @param {string} id @returns {Edicao} */
+export function valoresDe(id) {
+  const d = dadosJogador(id);
+  return { caudas: d.caudas, xp: d.xp, mortes: d.mortes, tempoMin: Math.floor(d.tempo / 60) };
+}
+
+/**
+ * Define Caudas, XP, mortes e tempo jogado de alguém (online ou não). Só dono. Quem já ligou a conta do Discord tem a
+ * mudança levada para lá na próxima soma (o jogo manda a diferença). Não mexe em casas, clã, inventário nem em nada além disso.
+ * @param {Player} autor
+ * @param {string | Player} alvo
+ * @param {Edicao} novo
+ */
+export function editarDadosDe(autor, alvo, novo) {
+  return executar(autor, "editar jogador", textoDe(alvo instanceof Player ? alvo.name : alvo), () => {
+    const pessoa = acharPessoa(alvo);
+    if (!pessoa) return { erro: textos.PESSOA_NAO_ACHADA(textoDe(alvo instanceof Player ? alvo.name : alvo)) };
+    const limpar = (/** @type {unknown} */ n) => Math.min(LIMITE_EDICAO, Math.max(0, Math.floor(Number(n)) || 0));
+    const antes = valoresDe(pessoa.id);
+    const depois = {
+      caudas: limpar(novo.caudas),
+      xp: limpar(novo.xp),
+      mortes: limpar(novo.mortes),
+      tempoMin: limpar(novo.tempoMin),
+    };
+    /** @type {string[]} */
+    const mudancas = [];
+    /** @type {[keyof Edicao, string][]} */
+    const campos = [
+      ["caudas", textos.ROTULO_CAUDAS],
+      ["xp", "XP"],
+      ["mortes", textos.ROTULO_MORTES],
+      ["tempoMin", "tempo (min)"],
+    ];
+    for (const [chave, rotulo] of campos) {
+      if (antes[chave] !== depois[chave]) mudancas.push(`${rotulo} ${antes[chave]} → ${depois[chave]}`);
+    }
+    if (mudancas.length === 0) return { erro: textos.NADA_MUDOU };
+    editarJogador(pessoa.id, (d) => {
+      d.caudas = depois.caudas;
+      d.xp = depois.xp;
+      d.mortes = depois.mortes;
+      d.tempo = depois.tempoMin * 60 + (d.tempo % 60);
+    });
+    const p = porId(pessoa.id);
+    if (p && p.id !== autor.id) msg(p, textos.EDITADO_AVISO(mudancas));
+    return textos.EDITADO(pessoa.nome, mudancas);
   });
 }
 

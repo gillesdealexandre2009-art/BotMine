@@ -315,3 +315,22 @@ export const ACAO_DESCONHECIDA = (acao) => `Não conheço "${acao}". Veja §e/vu
 /** @param {string} uso */
 export const USO = (uso) => `Faltou coisa. Uso: /vulpus:dono ${uso}`;
 export const LOG_FALTOU = "faltou parâmetro";
+
+// ---------------------------------------------------------------- editar jogador (caudas, xp...)
+export const BOTAO_EDITAR_JOGADOR = "Editar jogador (Caudas, XP...)";
+export const TITULO_EDITAR_QUEM = "Editar jogador";
+export const ROTULO_EDITAR_QUEM = "Quem? (nome da conta)";
+/** @param {string} nome */
+export const TITULO_EDITAR = (nome) => `Editar ${nome}`;
+export const ROTULO_CAUDAS = "Caudas";
+export const ROTULO_XP = "XP total";
+export const ROTULO_MORTES = "Mortes";
+export const ROTULO_TEMPO = "Tempo jogado (minutos)";
+export const NADA_MUDOU = "Nada mudou: os valores ficaram iguais.";
+/**
+ * @param {string} nome
+ * @param {string[]} mudancas  ex.: "Caudas 100 → 500"
+ */
+export const EDITADO = (nome, mudancas) => `Dados de ${nome} editados: ${mudancas.join(", ")}.`;
+/** @param {string[]} mudancas */
+export const EDITADO_AVISO = (mudancas) => `§6Dono §8» §7Seus dados foram ajustados: §f${mudancas.join("§7, §f")}§7.`;

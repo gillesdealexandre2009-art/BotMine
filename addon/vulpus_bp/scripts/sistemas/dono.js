@@ -67,6 +67,11 @@ export async function menuDono(player, voltar) {
       if (r && r[0]) acoes.definirApelidoDe(p, r[0], r[1] ?? "");
       await aqui();
     })
+    .botao(textos.BOTAO_EDITAR_JOGADOR, ICONES.caudas, async (p) => {
+      if (!podeAbrir(p, "editar jogador")) return;
+      await fluxoEditarJogador(p);
+      await aqui();
+    })
     .botao(textosKT.BOTAO_PAINEL, ICONES.apelido, (p) => menuKitsuneTempo(p, aqui))
     .botao(textosPegadinhas.BOTAO_PAINEL, ICONES.spawn, (p) => menuPegadinhas(p, aqui))
     .botao(textosArg.BOTAO_PAINEL, ICONES.spawn, (p) => menuArg(p, aqui))
@@ -75,6 +80,32 @@ export async function menuDono(player, voltar) {
     .botao(textos.BOTAO_LOG, ICONES.historico, (p) => menuLog(p, aqui))
     .voltar(voltar)
     .abrir(player);
+}
+
+// ---------------------------------------------------------------- editar jogador
+
+/**
+ * Pergunta quem e, em seguida, mostra os valores atuais para o dono ajustar (Caudas, XP, mortes, tempo jogado).
+ * @param {Player} player
+ */
+async function fluxoEditarJogador(player) {
+  const quem = await perguntar(player, textos.TITULO_EDITAR_QUEM, [{ tipo: "texto", rotulo: textos.ROTULO_EDITAR_QUEM }]);
+  if (!quem || !quem[0]) return;
+  if (!podeAbrir(player, "editar jogador")) return;
+  const pessoa = acoes.acharPessoa(quem[0]);
+  if (!pessoa) {
+    erro(player, textos.PESSOA_NAO_ACHADA(quem[0]));
+    return;
+  }
+  const v = acoes.valoresDe(pessoa.id);
+  const max = acoes.LIMITE_EDICAO;
+  const r = await perguntar(player, textos.TITULO_EDITAR(pessoa.nome), [
+    { tipo: "numero", rotulo: textos.ROTULO_CAUDAS, padrao: v.caudas, min: 0, max },
+    { tipo: "numero", rotulo: textos.ROTULO_XP, padrao: v.xp, min: 0, max },
+    { tipo: "numero", rotulo: textos.ROTULO_MORTES, padrao: v.mortes, min: 0, max },
+    { tipo: "numero", rotulo: textos.ROTULO_TEMPO, padrao: v.tempoMin, min: 0, max },
+  ]);
+  if (r) acoes.editarDadosDe(player, pessoa.nome, { caudas: r[0], xp: r[1], mortes: r[2], tempoMin: r[3] });
 }
 
 // ---------------------------------------------------------------- kitsune com prazo
