@@ -2,9 +2,9 @@
 
 O Discord não deixa um bot mexer no volume de cada pessoa, então a proximidade é por GRUPOS: o jogo manda a posição de cada jogador
 ligado (POST /mc/prox, de 3 em 3 s), o bot junta quem está a até `prox_entrar` blocos (e só desfaz o grupo além de `prox_sair`, para
-ninguém ficar trocando de sala) e move cada pessoa para uma sala de voz temporária da categoria "Proximidade". Quem fica sozinho vai
-para a sala de entrada. Fora do Mundo normal, em minigames, no Intervalo e nas regiões do mistério o jogo marca `livre = false` e a
-pessoa volta para a entrada.
+ninguém ficar trocando de sala) e move cada pessoa para uma sala de voz temporária da categoria "Proximidade". Quem fica sozinho
+ganha uma sala só dele (a entrada é compartilhada). Fora do Mundo normal, em minigames, no Intervalo e nas regiões do mistério o jogo marca `livre = false` e a
+pessoa fica sozinha na sala dela.
 
 Quem participa: quem está numa sala de voz da categoria (entrada ou temporárias) e tem a conta ligada (`/minecraft vincular`). Entrar
 na sala de entrada é o "sim"; sair para qualquer outra call, ou `/proximidade pausar`, é o "não". O bot nunca puxa ninguém de fora
@@ -89,7 +89,7 @@ def planejar(grupos: list[set[int]], atual: dict[int, int], temporarias: set[int
     """Para cada pessoa, o destino: ("entrada", 0), ("sala", id da sala que já existe) ou ("nova", n) (n identifica o grupo novo).
 
     Cada grupo de 2 ou mais fica na sala temporária onde mais gente dele já está (cada sala serve a um grupo só); sem nenhuma, ganha uma
-    nova (até max_salas salas; passando disso o grupo fica na entrada). Quem está sozinho vai para a entrada."""
+    nova (até max_salas salas; passando disso o grupo fica na entrada). Quem está sozinho ganha uma sala só dele; sem vaga, vai para a entrada."""
     alvos: dict[int, tuple[str, int]] = {}
     usadas: set[int] = set()
     novas = 0
@@ -112,9 +112,17 @@ def planejar(grupos: list[set[int]], atual: dict[int, int], temporarias: set[int
         else:
             for u in grupo:
                 alvos[u] = ("entrada", entrada)
-    for g in grupos:
-        if len(g) < 2:
-            for u in g:
+    # quem está sozinho também ganha a sua sala (a entrada é compartilhada: todo mundo lá se ouviria, mesmo longe)
+    for g in sorted((g for g in grupos if len(g) < 2), key=min):
+        for u in g:
+            cid = atual.get(u)
+            if cid in temporarias and cid not in usadas:
+                usadas.add(cid)
+                alvos[u] = ("sala", cid)
+            elif total_salas + novas < max_salas:
+                novas += 1
+                alvos[u] = ("nova", novas)
+            else:
                 alvos[u] = ("entrada", entrada)
     return alvos
 

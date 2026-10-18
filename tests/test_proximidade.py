@@ -33,10 +33,15 @@ def test_dimensao_diferente_e_ambiente_especial_ficam_sozinhos():
     assert conjuntos(g) == [[1], [2], [3], [4]]
 
 
-def test_planejar_sozinho_vai_para_entrada_e_grupo_ganha_sala_nova():
-    alvos = planejar([{1, 2}, {3}], {1: 100, 2: 100, 3: 100}, set(), 100, 10)
-    assert alvos[3] == ("entrada", 100)
+def test_planejar_cada_um_sozinho_ganha_a_propria_sala_e_grupo_ganha_sala_nova():
+    alvos = planejar([{1, 2}, {3}, {4}], {1: 100, 2: 100, 3: 100, 4: 100}, set(), 100, 10)
     assert alvos[1][0] == "nova" and alvos[1] == alvos[2]
+    assert alvos[3][0] == "nova" and alvos[4][0] == "nova" and len({alvos[1], alvos[3], alvos[4]}) == 3
+
+
+def test_planejar_sozinho_que_ja_esta_numa_sala_propria_fica_e_o_resto_vai_para_a_entrada_sem_vaga():
+    alvos = planejar([{1}, {2}], {1: 201, 2: 100}, {201}, 100, 1)
+    assert alvos == {1: ("sala", 201), 2: ("entrada", 100)}
 
 
 def test_planejar_reaproveita_a_sala_onde_a_maioria_ja_esta():
