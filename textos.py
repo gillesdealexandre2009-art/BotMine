@@ -698,8 +698,8 @@ CHANGELOG_MC = [
         "mc_2026_10_18_proximidade",
         "🎮 Minecraft · 18/10/2026: Chat de voz por proximidade",
         "Olá, pessoal! 🎧 Agora dá para conversar com quem está perto de você, direto na call do Discord:\n\n"
-        "• **Entre na sala \"🎧 Entrada\"** do Discord e jogue normalmente: quem estiver a até **24 blocos** de você cai na mesma sala de voz, "
-        "e quando vocês se afastam (uns **32 blocos**) cada um volta para a sua.\n"
+        "• **Entre na sala \"🎧 Entrada\"** do Discord e jogue normalmente: quem estiver a até **48 blocos** de você cai na mesma sala de voz, "
+        "e quando vocês se afastam (uns **64 blocos**) cada um volta para a sua.\n"
         "• Precisa estar com a **conta ligada** (`/minecraft vincular`). Não quer ser movido? Use `/proximidade pausar`.\n"
         "• **Lugares especiais têm chamada própria**: todos os minigames ficam juntos numa sala, o Intervalo em outra, a dimensão secreta em outra, e assim por diante (sem olhar a distância). Nether e End funcionam por proximidade, igual ao mundo normal.\n"
         "• Não muda o volume de cada pessoa (o Discord não permite): é por **grupos de sala**.",

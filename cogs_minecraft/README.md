@@ -63,5 +63,5 @@ O jogo manda `POST /mc/prox` (`{pos:[{id,nome,d,x,y,z,livre}]}`) a cada ~3 s qua
 
 - O Discord **não** deixa um bot mudar o volume de ninguém: a proximidade é por grupos de sala, não por distância.
 - Só move quem já está numa sala da categoria (entrar na sala de entrada é o "sim"); nunca puxa gente de outras calls.
-- `/proximidade configurar` (admin) cria a categoria e a entrada; `/proximidade pausar|retomar` (qualquer um); `/proximidade status` (staff). Ajustes em `/ajustes`: `prox_ligada`, `prox_entrar` (24), `prox_sair` (32), `prox_espera_seg` (6), `prox_max_salas` (15). O bot precisa de **Gerenciar canais** e **Mover membros**.
+- `/proximidade configurar` (admin) cria a categoria e a entrada; `/proximidade pausar|retomar` (qualquer um); `/proximidade status` (staff). Ajustes em `/ajustes`: `prox_ligada`, `prox_entrar` (48), `prox_sair` (64), `prox_espera_seg` (6), `prox_max_salas` (15). O bot precisa de **Gerenciar canais** e **Mover membros**.
 - No jogo: `proximidadeLigada` (painel da staff, grupo do vínculo). O pack da ponte (0.1.1) passou a aceitar o caminho `/mc/prox`.

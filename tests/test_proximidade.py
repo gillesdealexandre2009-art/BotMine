@@ -97,7 +97,7 @@ def test_validar_pontos_aceita_o_bom_e_ignora_o_estranho():
 
 def test_ajustes_da_proximidade_existem():
     a = config.AJUSTES
-    assert a["prox_entrar"][0] == 24 and a["prox_sair"][0] == 32 and a["prox_ligada"][0] == 1
+    assert a["prox_entrar"][0] == 48 and a["prox_sair"][0] == 64 and a["prox_ligada"][0] == 1
     assert a["prox_sair"][0] > a["prox_entrar"][0]
 
 
