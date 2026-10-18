@@ -43,6 +43,7 @@ class Contexto:
     discord_nome: str = ""
     nivel: Optional[int] = None
     saldo: Optional[int] = None
+    kitsune: bool = False  # tem o selo Kitsune valendo agora (só o jogo dá)
 
 
 Saida = tuple[str, Optional[str], Optional[discord.Embed]]  # (chave do canal, texto, embed)

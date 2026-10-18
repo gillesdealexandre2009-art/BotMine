@@ -121,7 +121,7 @@ A Kiza conversa com o servidor por uma porta HTTP própria (`cogs_minecraft/pont
 
 | Canal (chave do `/setup`) | O que aparece |
 |---|---|
-| 💬 chat-bridge (`mc_chat`) | mensagens, quem entra e sai, mortes e sequências de abates do jogo; o que se escreve ali vai para o jogo |
+| 💬 chat-bridge (`mc_chat`) | mensagens do jogo **como se o jogador tivesse falado** (um webhook "Vulpus Chat" com o nome do jogador; foto do Discord só para Kitsune, os outros ganham uma cara cinza), quem entra e sai, mortes e sequências de abates; o que se escreve ali vai para o jogo. Sem permissão de webhook, a Kiza posta a linha normal |
 | 🚪 ip-e-porta (`mc_ip`) | painel com os dois endereços, o passo a passo e quem está jogando agora (atualizado sozinho) |
 | 📖 histórico (`mc_historico`) | clãs que nascem e se despedem; guerras que começam e como terminam |
 | ✅ log-in (`mc_login`) | só o painel com botões (**Vincular conta**, **Minha conta**, **Como funciona**): nada de registro neste canal. Logins, logouts, vínculos, desvínculos e códigos recusados vão para os **logs gerais** da staff (`/setup`); sem esse canal configurado, não registra |

@@ -6,7 +6,7 @@
   dá para testar tudo.
 
 ## O que a ponte faz
-- **Chat** (`mc_chat`, 💬・chat-bridge): mensagens, entradas, saídas, mortes, sequências de abates, níveis e conquistas do jogo
+- **Chat** (`mc_chat`, 💬・chat-bridge): as mensagens do jogo saem por um webhook ("Vulpus Chat", criado sozinho) com o nome do jogador e a foto do Discord só se ele é Kitsune (senão `config.MC_AVATAR_PADRAO`, a cara cinza do site); sem webhook a Kiza posta `**nome** » texto`. Mensagens, entradas, saídas, mortes, sequências de abates, níveis e conquistas do jogo
   (minigames ficam de fora); o que se escreve nesse canal aparece no jogo.
 - **Histórico** (`mc_historico`, 📖・histórico): clãs que nascem e se despedem; guerras que começam e como terminam.
 - **IP e porta** (`mc_ip`, 🚪・ip-e-porta): painel com os dois endereços, o passo a passo e o status (quem está jogando). O servidor

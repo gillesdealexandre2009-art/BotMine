@@ -107,6 +107,8 @@ MC_SERVIDORES = (
 )
 # Site da Vulpus (Railway): a página /entrar abre o Minecraft já com o servidor (o Discord só deixa clicar em https).
 MC_SITE_URL = os.getenv("MC_SITE_URL", "https://site-production-f47b.up.railway.app")
+# Foto de quem fala no chat do jogo e não é Kitsune (uma cara cinza, hospedada no site); Kitsune usa a foto do Discord.
+MC_AVATAR_PADRAO = os.getenv("MC_AVATAR_PADRAO", MC_SITE_URL.rstrip("/") + "/img/jogador-cinza.png")
 MC_MAX_JOGADORES = _inteiro("MC_MAX_JOGADORES", 8)
 # Cargo Kitsune do Discord (o /setup pode trocar): quem manda é o selo dentro do jogo, o cargo só espelha.
 CARGO_KITSUNE_PADRAO = 1550348302065860649

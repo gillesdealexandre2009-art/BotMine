@@ -517,7 +517,7 @@ CHANGELOG = [
         [
             "🔗 `/minecraft vincular` e `/minecraft conta`: ligue sua conta do jogo à do Discord (ou use o botão do canal de login)",
             "🔐 Painel de **login** com botões para ligar sua conta (o canal fica só com o painel)",
-            "💬 **Ponte de chat**: o que acontece no servidor (mensagens, quem entra e sai, mortes e sequências de abates) aparece aqui, e o que você escreve no canal vai para o jogo",
+            "💬 **Ponte de chat**: o que acontece no servidor (mensagens, quem entra e sai, mortes e sequências de abates) aparece aqui (as mensagens saem como se o jogador estivesse falando, com a foto do Discord para os Kitsunes), e o que você escreve no canal vai para o jogo",
             "📖 **Histórico**: clãs que nascem e se despedem, guerras que começam e como terminam",
             "🚪 Painel de **IP e porta** sempre atualizado, com quem está jogando agora",
             "🦊 {moeda} e XP viram **um só** nos dois lugares. Subir de nível ficou mais difícil: cada mensagem rende menos XP",
@@ -1142,7 +1142,8 @@ RANK_LOG = "🎖️ Pedido de rank {resultado}"  # {resultado}
 
 
 # --------------------------------------------------------------------------- ponte com o Minecraft
-MC_PONTE_MSG = "**{nome}** » {texto}"
+MC_PONTE_MSG = "**{nome}** » {texto}"  # plano B quando o webhook não está disponível
+MC_WEBHOOK_NOME = "Vulpus Chat"
 MC_VINCULO_OK = (
     "🦊 Pronto! Sua conta do Discord agora está ligada a **{nome}**. Volte ao jogo: a tela preta some sozinha em alguns segundos. "
     "Suas Caudas e seu XP do jogo e do Discord foram somados."

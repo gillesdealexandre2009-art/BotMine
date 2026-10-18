@@ -200,6 +200,7 @@ class Ponte(commands.Cog):
         self.status: Optional[dict[str, Any]] = None  # último status do servidor (online, max, ts)
         self._ip_publicado: Optional[str] = None  # o que está no painel do ip-e-porta agora (para só editar se mudar)
         self._trocas_contador: list[float] = []  # quando o nome do canal contador foi trocado (monotonic), só as da janela
+        self._webhooks: dict[int, discord.Webhook] = {}  # webhook do chat-bridge por servidor (falar como o jogador)
         self._mexendo: dict[int, float] = {}  # pessoas cujo cargo Kitsune o próprio bot está mudando agora (monotonic até quando)
         self._tarefas: set[asyncio.Task] = set()  # tarefas soltas (atualizar painel e contador depois de um status)
 
@@ -290,6 +291,8 @@ class Ponte(commands.Cog):
         guild = self.bot.get_guild(guild_id)
         membro = guild.get_member(vinculo["user_id"]) if guild else None
         ctx = Contexto(mencao=f"<@{vinculo['user_id']}>")
+        selo = await self.bot.banco.mc_kitsune_de(guild_id, vinculo["user_id"])
+        ctx.kitsune = selo is not None and self.kitsune_vale(bool(selo["ativo"]), int(selo["ate"]), int(time.time() * 1000))
         if membro is not None:
             ctx.discord_nome = membro.display_name
             ctx.avatar_url = membro.display_avatar.url
@@ -297,6 +300,59 @@ class Ponte(commands.Cog):
             perfil = await self.bot.banco.obter_perfil(guild_id, vinculo["user_id"])
             ctx.nivel, ctx.saldo = nivel_por_xp(perfil["xp"])[0], perfil["saldo"]
         return ctx
+
+    async def _webhook_do_chat(self, guild_id: int) -> Optional[discord.Webhook]:
+        """Webhook do chat-bridge (cria na primeira vez): é ele que deixa a mensagem aparecer com o nome e a foto do jogador."""
+        if guild_id in self._webhooks:
+            return self._webhooks[guild_id]
+        canal = await self.canal_mc(guild_id, "mc_chat")
+        if not isinstance(canal, discord.TextChannel) or self.bot.user is None:
+            return None
+        try:
+            for existente in await canal.webhooks():
+                if existente.name == textos.MC_WEBHOOK_NOME and existente.user is not None and existente.user.id == self.bot.user.id and existente.token:
+                    self._webhooks[guild_id] = existente
+                    return existente
+            criado = await canal.create_webhook(name=textos.MC_WEBHOOK_NOME, reason="Chat do Minecraft: mensagens com o nome e a foto do jogador")
+        except discord.HTTPException:
+            log.warning("Não consegui criar o webhook do chat-bridge (falta Gerenciar Webhooks?)", exc_info=True)
+            return None
+        self._webhooks[guild_id] = criado
+        return criado
+
+    @staticmethod
+    def nome_de_exibicao(nome: str) -> str:
+        """O Discord recusa nomes de webhook com "discord" ou "clyde" e exige de 1 a 80 letras: um espaço sem largura quebra a palavra."""
+        limpo = nome.strip()[:80] or "?"
+        for proibida in ("discord", "clyde", "everyone", "here"):
+            achou = re.search(proibida, limpo, flags=re.IGNORECASE)
+            while achou:
+                i = achou.start() + 1
+                limpo = limpo[:i] + "\u200b" + limpo[i:]
+                achou = re.search(proibida, limpo, flags=re.IGNORECASE)
+        return limpo if len(limpo) >= 2 else limpo + "\u200b"
+
+    async def _falar_como_jogador(self, guild_id: int, ev: dict[str, Any], ctx: Contexto) -> bool:
+        """Posta a mensagem do jogo como se a pessoa tivesse falado: nome do jogador e, se é Kitsune, a foto do Discord dela
+        (os outros ganham uma cara cinza). Sem webhook ou se o Discord recusar, devolve False e a Kiza posta a linha normal."""
+        webhook = await self._webhook_do_chat(guild_id)
+        if webhook is None:
+            return False
+        avatar = ctx.avatar_url if ctx.kitsune and ctx.avatar_url else config.MC_AVATAR_PADRAO
+        try:
+            await webhook.send(
+                content=discord.utils.escape_mentions(ev["texto"]),
+                username=self.nome_de_exibicao(ev["nome"]),
+                avatar_url=avatar,
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+            return True
+        except discord.NotFound:
+            self._webhooks.pop(guild_id, None)  # apagaram o webhook: na próxima mensagem cria de novo
+            return False
+        except discord.HTTPException:
+            log.warning("O webhook do chat-bridge recusou a mensagem de %s", ev["nome"], exc_info=True)
+            return False
 
     @web.middleware
     async def _autenticar(self, request: web.Request, handler):  # type: ignore[no-untyped-def]
@@ -388,6 +444,9 @@ class Ponte(commands.Cog):
             if ev is None:
                 continue
             ctx = await self.contexto_de(gid, ev["nome"], com_perfil=ev["t"] == "entrada") if "nome" in ev else Contexto()
+            if ev["t"] == "msg" and await self._falar_como_jogador(gid, ev, ctx):
+                enviados += 1
+                continue
             for chave, texto, embed in embeds.montar_evento(ev, ctx):
                 if await self._enviar(gid, chave, texto, embed):
                     enviados += 1
