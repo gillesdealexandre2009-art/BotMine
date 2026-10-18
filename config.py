@@ -288,6 +288,7 @@ AJUSTES = {
     "helper_boas_vindas": (15, 0, 10000, "Boas-vindas dadas para poder pedir Helper"),
     "helper_denuncias": (2, 0, 10000, "Denúncias aprovadas para poder pedir Helper"),
     "helper_publicacoes": (5, 0, 10000, "Publicações para poder pedir Helper"),
+    "helper_call_min": (2880, 0, 600000, "Minutos na call de voz para poder pedir Helper (2880 = 48 h)"),
     "helper_nivel": (5, 0, 500, "Nível mínimo de XP para poder pedir Helper"),
     "helper_dias": (30, 0, 3650, "Dias mínimos no servidor para poder pedir Helper"),
 }
@@ -299,7 +300,13 @@ FIDELIDADE_TIPOS = {
     "boas_vindas": ("👋", "Boas-vindas", "helper_boas_vindas"),
     "denuncias": ("🚨", "Denúncias aprovadas", "helper_denuncias"),
     "publicacoes": ("📸", "Publicações", "helper_publicacoes"),
+    # guardado em MINUTOS (a meta também); o quadro mostra em horas. Conta o tempo na call FIDELIDADE_CALL_ID (veja cogs/fidelidade.py).
+    "call_min": ("🎙️", "Tempo em call", "helper_call_min"),
 }
+# Call de voz que conta para a fidelidade (o /setup não escolhe canal de voz, então fica aqui). Só conta com pelo menos
+# FIDELIDADE_CALL_MIN_PESSOAS pessoas ligadas e sem estar ensurdecidas (sozinho na call não rende).
+FIDELIDADE_CALL_ID = _inteiro("FIDELIDADE_CALL_ID", 1559733386543759400)
+FIDELIDADE_CALL_MIN_PESSOAS = 2
 FIDELIDADE_NIVEL = ("⭐", "Nível de XP", "helper_nivel")  # requisito que vem do XP, não de um contador
 FIDELIDADE_DIAS = ("📅", "Dias no servidor", "helper_dias")  # requisito que vem da data de entrada
 BOAS_VINDAS_JANELA = 15 * 60  # segundos depois de uma entrada em que uma boa-vinda conta

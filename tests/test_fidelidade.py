@@ -324,3 +324,32 @@ def test_xp_de_varias_pessoas(tmp_path):
         return xp, vazio
 
     assert rodar(cenario) == ({A: 40, B: 7}, {})
+
+
+# ---------------------------------------------------------------------- tempo em call
+def test_tempo_em_call_formata_horas():
+    from cogs.fidelidade import formatar_valor, tempo_em_call
+
+    assert tempo_em_call(2880) == "48h" and tempo_em_call(750) == "12h30" and tempo_em_call(45) == "45min"
+    assert formatar_valor("call_min", 120) == "2h" and formatar_valor("bumps", 3) == "3"
+
+
+def test_so_conta_call_com_gente_ligada_e_sem_ensurdecer():
+    from types import SimpleNamespace as N
+
+    from cogs.fidelidade import membros_que_contam_na_call
+
+    def m(surdo=False, bot=False):
+        return N(bot=bot, voice=N(self_deaf=surdo, deaf=False))
+
+    assert membros_que_contam_na_call([m()]) == []  # sozinho não rende
+    assert membros_que_contam_na_call([m(), m(bot=True)]) == []  # bot não conta como companhia
+    assert membros_que_contam_na_call([m(), m(surdo=True)]) == []  # ensurdecido não conta
+    a, b = m(), m()
+    assert membros_que_contam_na_call([a, b]) == [a, b]
+
+
+def test_meta_padrao_da_call_e_48_horas():
+    import config
+
+    assert config.AJUSTES["helper_call_min"][0] == 48 * 60 and "call_min" in config.FIDELIDADE_TIPOS

@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Iterable, Optional
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import config
 import textos
@@ -48,6 +48,32 @@ EXTENSOES_MIDIA = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "mp4", "mov", "we
 def itens_fidelidade() -> list[tuple[str, tuple[str, str, str]]]:
     """(chave, (emoji, rótulo, ajuste da meta)) na ordem do quadro: os contadores, o nível de XP e os dias no servidor."""
     return [*config.FIDELIDADE_TIPOS.items(), ("nivel", config.FIDELIDADE_NIVEL), ("dias", config.FIDELIDADE_DIAS)]
+
+
+def tempo_em_call(minutos: int) -> str:
+    """Minutos em 'Xh' ou 'XhYY' ('48h', '12h30', '45min')."""
+    minutos = max(0, int(minutos))
+    horas, resto = divmod(minutos, 60)
+    if horas == 0:
+        return f"{resto}min"
+    return f"{horas}h" if resto == 0 else f"{horas}h{resto:02d}"
+
+
+def formatar_valor(chave: str, n: int) -> str:
+    """Número do quadro: o tempo em call aparece em horas, o resto como número."""
+    return tempo_em_call(n) if chave == "call_min" else str(n)
+
+
+def membros_que_contam_na_call(membros) -> list:
+    """Quem está de fato na call: gente (não bot) ligada e sem estar ensurdecida. Só conta se tiver pessoas suficientes
+    (FIDELIDADE_CALL_MIN_PESSOAS): sozinho na call não rende tempo."""
+    quem = []
+    for m in membros:
+        voz = getattr(m, "voice", None)
+        if getattr(m, "bot", False) or voz is None or getattr(voz, "self_deaf", False) or getattr(voz, "deaf", False):
+            continue
+        quem.append(m)
+    return quem if len(quem) >= config.FIDELIDADE_CALL_MIN_PESSOAS else []
 
 
 def dias_no_servidor(membro: Optional[discord.Member]) -> int:
@@ -167,6 +193,30 @@ class Fidelidade(commands.Cog):
     def views_persistentes(self) -> list[discord.ui.View]:
         return [AvaliarDenunciaView(), PedidoRankView()]
 
+    # ------------------------------------------------------------------ tempo em call
+    async def cog_load(self) -> None:
+        self.contar_call.start()
+
+    async def cog_unload(self) -> None:
+        self.contar_call.cancel()
+
+    @tasks.loop(seconds=60)
+    async def contar_call(self) -> None:
+        """A cada minuto, quem está na call FIDELIDADE_CALL_ID (com gente suficiente e sem estar ensurdecido) ganha 1 minuto."""
+        try:
+            for guild in self.bot.guilds:
+                canal = guild.get_channel(config.FIDELIDADE_CALL_ID)
+                if not isinstance(canal, (discord.VoiceChannel, discord.StageChannel)):
+                    continue
+                for membro in membros_que_contam_na_call(canal.members):
+                    await self.bot.banco.somar_fidelidade(guild.id, membro.id, "call_min", 1)
+        except Exception:
+            log.exception("Erro ao contar o tempo em call")
+
+    @contar_call.before_loop
+    async def _antes_de_contar(self) -> None:
+        await self.bot.wait_until_ready()
+
     # ------------------------------------------------------------------ quadro
     async def metas(self, guild_id: int) -> dict[str, int]:
         return {chave: await self.bot.banco.ajuste(guild_id, ajuste) for chave, (_, _, ajuste) in itens_fidelidade()}
@@ -195,6 +245,8 @@ class Fidelidade(commands.Cog):
                 partes.append(f"{emoji} {textos.FIDELIDADE_FALTA_NIVEL.format(nivel=metas['nivel'])}")
             elif chave == "dias":
                 partes.append(f"{emoji} {textos.FIDELIDADE_FALTA_DIAS.format(dias=falta[chave])}")
+            elif chave == "call_min":
+                partes.append(f"{emoji} {textos.FIDELIDADE_FALTA_CALL.format(tempo=tempo_em_call(falta[chave]))}")
             else:
                 partes.append(f"{emoji} +{falta[chave]}")
         return " · ".join(partes)
@@ -208,7 +260,7 @@ class Fidelidade(commands.Cog):
             barra = barra_progresso(min(atual, meta), meta, 8) if meta > 0 else barra_progresso(1, 1, 8)
             linhas.append(
                 textos.FIDELIDADE_LINHA.format(
-                    marca="✅" if atual >= meta else "❌", emoji=emoji, rotulo=rotulo, atual=atual, meta=meta, barra=barra
+                    marca="✅" if atual >= meta else "❌", emoji=emoji, rotulo=rotulo, atual=formatar_valor(chave, atual), meta=formatar_valor(chave, meta), barra=barra
                 )
             )
         falta = faltando(valores, metas)
@@ -286,7 +338,7 @@ class Fidelidade(commands.Cog):
             if membro is None or membro.bot or await self.eh_equipe(membro):
                 continue  # quem já é da equipe não ocupa vaga de candidato
             valores = {**contadores, "nivel": nivel_por_xp(xp.get(user_id, 0))[0], "dias": dias_no_servidor(membro)}
-            total = sum(contadores.values())  # desempate: só o que a pessoa fez (sem nível e dias)
+            total = sum(v for k, v in contadores.items() if k != "call_min") + contadores.get("call_min", 0) // 60  # desempate: só o que a pessoa fez (a call em horas)
             lista.append((progresso(valores, metas), total, membro, valores))
         if not lista:
             await responder(interaction, textos.FIDELIDADE_RANKING_VAZIO)
@@ -295,7 +347,7 @@ class Fidelidade(commands.Cog):
         linhas = []
         for i, (pct, _, membro, valores) in enumerate(lista[:10]):
             marca = "" if faltando(valores, metas) else " ✅"
-            partes = " · ".join(f"{emoji} {valores[chave]}" for chave, (emoji, _, _) in itens_fidelidade())
+            partes = " · ".join(f"{emoji} {formatar_valor(chave, valores.get(chave, 0))}" for chave, (emoji, _, _) in itens_fidelidade())
             linhas.append(f"`{i + 1}.` **{membro.display_name}** — **{pct}%**{marca}\n{partes}")
         e = embed(textos.FIDELIDADE_RANKING_TITULO, "\n".join(linhas))
         e.set_footer(text=textos.FIDELIDADE_RANKING_RODAPE)

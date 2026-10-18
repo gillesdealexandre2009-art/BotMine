@@ -556,7 +556,8 @@ async function menuGuerras(player, voltar) {
   const guerra = guerraDe(cla.id);
   const decide = pode(cla, player.id, "guerra");
   const cfg = config();
-  const bandeiras = guerra ? { a: claPorId(guerra.a)?.bandeira ?? null, b: claPorId(guerra.b)?.bandeira ?? null } : { a: null, b: null };
+  // as bandeiras só se revelam numa guerra ativa (g.ctf); antes disso, nem os dados vão para o texto
+  const bandeiras = { a: null, b: null };
   const lista = new Lista(textos.TITULO_GUERRAS).texto(guerra ? textos.GUERRA_CORPO(guerra, cla.id, bandeiras) : textos.SEM_GUERRA_CORPO(cfg));
   if (decide && !guerra) lista.botao(textos.BOTAO_DECLARAR, ICONES.guerra, (p) => menuDeclarar(p, aqui));
   if (decide && guerra) {

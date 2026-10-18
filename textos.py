@@ -524,6 +524,7 @@ CHANGELOG = [
             "🟢 Um canal mostra quantas pessoas estão jogando agora, atualizado na hora",
             "🦊 O **Kitsune** passa a ser controlado de dentro do jogo: o selo (com ou sem prazo) vira o cargo no Discord sozinho, e o cargo volta ao que o jogo manda se mexerem nele na mão. Staff: `/minecraft kitsune` mostra quem é quem",
             "🌟 Cargo novo: {sugestor}, para quem sugeriu algo útil que foi aprovado ou usado pelo dono",
+            "🎙️ **Fidelidade** agora conta o **tempo em call**: para pedir Helper são precisos 48 h (só rende com 2 pessoas ou mais ligadas e sem estar ensurdecido)",
         ],
     ),
     (
@@ -1076,6 +1077,7 @@ FIDELIDADE_PRONTO = "✅ Tudo certo! Já dá para pedir **Helper**: abra um tíq
 FIDELIDADE_FALTA = "Falta: {itens}. Bora, que a toca precisa de você! 🦊"  # {itens}
 FIDELIDADE_FALTA_NIVEL = "nível {nivel}"  # {nivel}
 FIDELIDADE_FALTA_DIAS = "mais {dias} dia(s) na toca"  # {dias}
+FIDELIDADE_FALTA_CALL = "mais {tempo} na call"  # {tempo}
 FIDELIDADE_JA_EQUIPE = "🛡️ Já faz parte da equipe (Helper ou acima). Obrigada por cuidar da toca! 🧡"
 FIDELIDADE_SITUACAO = "Situação"
 FIDELIDADE_COMO_TITULO = "Como conta"
@@ -1085,6 +1087,7 @@ FIDELIDADE_COMO = (
     "conta nova no Discord e quem está voltando não contam\n"
     "🚨 denúncia por tíquete aprovada pela staff\n"
     "📸 post com imagem, vídeo ou link nos canais de publicação (até 2 por dia)\n"
+    "🎙️ tempo na call de voz (conta com 2 pessoas ou mais ligadas, sem estar ensurdecido)\n"
     "⭐ nível de XP, conversando"
 )
 FIDELIDADE_RODAPE = "Algum número errado? A staff corrige com /fidelidade-ajustar."

@@ -28,7 +28,8 @@ const TAG_GUERRA = (g, lado) => `§8[§${g.cores[lado]}${g.tags[lado]}§8]§r`;
 const caudas = (n) => `${glyph(G.CAUDAS)} §6${formatarNumero(n)}§r`;
 
 /**
- * Linha da bandeira (todo mundo sabe onde fica a bandeira de cada clã): coordenadas, ou por que não vale.
+ * Linha da bandeira DO PRÓPRIO CLÃ (só quem é do clã vê onde fica): coordenadas, ou por que não vale. Base e bandeira dos outros
+ * clãs ficam escondidas: só aparecem para quem está numa guerra ativa contra eles (GUERRA_CORPO e CTF_LIGADO).
  * @param {Cla} cla
  */
 export const LINHA_BANDEIRA = (cla) => {
@@ -36,8 +37,6 @@ export const LINHA_BANDEIRA = (cla) => {
   if (!problema && cla.bandeira) return `${glyph(G.BANDEIRA)} §7Bandeira: §f${formatarCoords(cla.bandeira)}`;
   return `${glyph(G.BANDEIRA)} §7Bandeira: §8${problema === "sem" ? "não marcada" : "fora da base (marque de novo)"}`;
 };
-/** Coordenadas curtas da bandeira para listas (" • ⚑ x z"), ou "" sem bandeira válida. @param {Cla} cla */
-const BANDEIRA_CURTA = (cla) => (cla.bandeira && !problemaBandeira(cla) ? ` §8• ${glyph(G.BANDEIRA)} §7${cla.bandeira.x} ${cla.bandeira.z}` : "");
 
 /**
  * "3d 4h", "5h 12min" ou "40s".
@@ -171,7 +170,7 @@ export const FICHA = (cla, lider, max) =>
     `§7Nível: §f${cla.nivel} §8• §7Membros: §f${cla.membros.length}/${max}`,
     `§7Fundado em §f${formatarData(cla.criado)}`,
     `§7Entrada: ${cla.aberto ? "§aaberta" : "§7por pedido"}`,
-    LINHA_BANDEIRA(cla),
+    `${glyph(G.LOCAL)} §8Base e bandeira escondidas: só aparecem numa guerra`,
   ].join("\n");
 /** No lugar do nome do líder, quando o time está sem líder (Painel de Dono). */
 export const SEM_LIDER = "§8sem líder";
@@ -604,14 +603,8 @@ const LINHAS_BANDEIRAS = (g, bandeiras) => {
     ];
   }
   if (g.estado === "ativa") return ["", `${glyph(G.BANDEIRA)} §7Sem bandeiras nesta guerra: só abates.`];
-  return [
-    "",
-    `${glyph(G.BANDEIRA)} §7Bandeiras:`,
-    ...lados.map((l) => {
-      const pos = bandeiras[l];
-      return `§7  ${TAG_GUERRA(g, l)} ${pos ? `§f${formatarCoords(pos)}` : "§8não marcada"}`;
-    }),
-  ];
+  // guerra marcada, ainda não começou: as bandeiras continuam escondidas (só se revelam quando ela começa)
+  return ["", `${glyph(G.BANDEIRA)} §7Bandeiras: §8escondidas até a guerra começar`];
 };
 /** @param {Guerra} g @param {string} claId @param {BandeirasGuerra} bandeiras */
 export const GUERRA_CORPO = (g, claId, bandeiras) => {
@@ -659,7 +652,7 @@ export const TITULO_DECLARAR = "Declarar guerra";
 /** @param {number} custo */
 export const DECLARAR_CORPO = (custo) => `§7Declarar custa ${caudas(custo)}§7 do banco (vai para o baú de guerra). Escolha o alvo:`;
 /** @param {Cla} alvo */
-export const BOTAO_ALVO = (alvo) => `${TAG(alvo)} ${nomePintado(alvo)}\n§7Nv ${alvo.nivel} §8• §7${alvo.membros.length} pessoas${BANDEIRA_CURTA(alvo)}`;
+export const BOTAO_ALVO = (alvo) => `${TAG(alvo)} ${nomePintado(alvo)}\n§7Nv ${alvo.nivel} §8• §7${alvo.membros.length} pessoas`;
 /** @param {Cla} alvo @param {string} motivo */
 export const ALVO_BLOQUEADO = (alvo, motivo) => `§8[${alvo.tag}] ${alvo.nome}: §7${motivo}`;
 /** @param {Cla} alvo @param {Config} cfg */
@@ -853,7 +846,7 @@ export const PERMS_OK = (cargo) => `Permissões de ${NOME_CARGO[cargo]} salvas.`
 export const TITULO_RANKING = "Ranking de clãs";
 /** @param {number} pos @param {Cla} cla @param {boolean} meu */
 export const RANKING_LINHA = (pos, cla, meu) =>
-  `§6${pos}. ${TAG(cla)} §f${cla.nome} §7Nv ${cla.nivel} §8• §7${formatarNumero(cla.xp)} XP §8• §7${cla.membros.length} pessoas${BANDEIRA_CURTA(cla)}${meu ? " §a«" : ""}`;
+  `§6${pos}. ${TAG(cla)} §f${cla.nome} §7Nv ${cla.nivel} §8• §7${formatarNumero(cla.xp)} XP §8• §7${cla.membros.length} pessoas${meu ? " §a«" : ""}`;
 /** @param {number} pos */
 export const RANKING_POSICAO = (pos) => `§7Seu clã está em §f${pos}º§7.`;
 /** @param {Cla} cla */
