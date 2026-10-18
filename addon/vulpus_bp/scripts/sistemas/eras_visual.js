@@ -1,7 +1,7 @@
 // @ts-check
 // Visual das Eras (VisualController): neblina própria, partículas, sons e fade de transição, só para quem está jogando.
 // - A neblina é empurrada por jogador com o id "vulpus_era" (um só id: remove antes de pôr, então nunca acumula, nem depois de
-//   /reload ou de reconexão). Ambientes especiais vencem a Era: fora do Mundo normal, no lobby, no Intervalo, nas regiões do ARG
+//   /reload ou de reconexão). Ambientes especiais vencem a Era: fora do Mundo normal, no Intervalo, nas regiões do ARG
 //   e nos minigames a neblina da Era sai (para o ambiente usar a dele) e volta quando a pessoa sai de lá.
 // - Prévia: um jogador pode ver outra Era só para si por 10 minutos, sem mexer em calendário nem histórico.
 // - Nada aqui mexe em blocos, entidades, inventário ou terreno.
@@ -14,7 +14,6 @@ import { ANUNCIO_ERA, ENTRADA_ERA, PREVIA_FIM } from "../textos/eras.js";
 import { situacao } from "./eras_calendario.js";
 import { eraDe, TOTAL_ERAS } from "./eras_catalogo.js";
 import { eventoAtivo } from "./eras_eventos.js";
-import { dentro as dentroDoLobby } from "./lobby.js";
 import { emMinigame } from "./mg_estado.js";
 import { estaSumido } from "./sumico.js";
 
@@ -60,7 +59,6 @@ export function emAmbienteEspecial(p) {
     if (p.dimension.id !== OVERWORLD) return true;
     const { x, y, z } = p.location;
     if (pontoEmZona({ x, y, z, d: p.dimension.id })) return true;
-    if (dentroDoLobby(p.dimension.id, { x, z })) return true;
     return emMinigame(p);
   } catch {
     return false;

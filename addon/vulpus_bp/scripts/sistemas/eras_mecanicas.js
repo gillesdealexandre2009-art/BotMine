@@ -3,7 +3,7 @@
 // regra de script, temporária e reversível: efeitos de poção curtos (5 s) que expiram sozinhos, multiplicadores consultados na hora
 // (XP, Caudas do tempo online, bônus de venda no leilão) e prêmios com chance e teto por dia. Nada mexe em blocos, terreno,
 // entidades, inventário ou construções, e nada que a pessoa já ganhou é tirado quando a Era acaba. Fora do Mundo normal, em
-// ambientes especiais (lobby, Intervalo, ARG, minigames), em criativo/espectador e em combate, as Eras não mexem em nada.
+// ambientes especiais (Intervalo, ARG, minigames), em criativo/espectador e em combate, as Eras não mexem em nada.
 // A prévia de uma Era é só visual: aqui só vale a Era oficial.
 import { GameMode, ItemStack, Player, system, world } from "@minecraft/server";
 import { lerMundo, salvarMundo } from "../core/db.js";
