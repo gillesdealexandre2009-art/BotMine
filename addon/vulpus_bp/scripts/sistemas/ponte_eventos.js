@@ -3,7 +3,7 @@
 // Minigames ficam de fora: lá a morte faz parte da partida (e tem placar próprio). Mortes e abates que contam são os do mundo.
 import { EntityDamageCause, Player, system, world } from "@minecraft/server";
 import { aoEvento, emitir } from "../core/eventos.js";
-import { online } from "../core/jogadores.js";
+import { visiveis } from "../core/jogadores.js";
 import { chamar, ponteViva } from "../core/ponte_cliente.js";
 import { travados } from "../core/ponte_estado.js";
 import { nomeDimensao, registrarErro } from "../core/util.js";
@@ -121,7 +121,7 @@ async function enviarStatus() {
   if (statusEmVoo || !ponteViva() || !config().ponteChatLigada) return;
   statusEmVoo = true;
   try {
-    const nomes = online()
+    const nomes = visiveis()
       .filter((p) => !travados.has(p.id))
       .map((p) => p.name);
     // os selos Kitsune com prazo vão junto (também de quem está offline): o cargo do Discord segue o jogo

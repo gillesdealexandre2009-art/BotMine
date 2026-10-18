@@ -658,6 +658,28 @@ class Ponte(commands.Cog):
     async def vincular(self, interaction: discord.Interaction, codigo: str) -> None:
         await self.responder_vinculo(interaction, codigo)
 
+    @app_commands.command(name="online", description="Mostra quem está jogando Minecraft agora.")
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 10.0)
+    async def online(self, interaction: discord.Interaction) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        if self.status is None:
+            bruto = await self.bot.banco.get_config(guild.id, "mc_status")
+            try:
+                self.status = json.loads(bruto) if bruto else None
+            except ValueError:
+                self.status = None
+        mencoes: dict[str, str] = {}
+        if embeds.status_online(self.status, time.time()) and self.status is not None:
+            for nome in self.status.get("online", []):
+                vinculo = await self.bot.banco.mc_vinculo_por_nome(guild.id, nome)
+                if vinculo is not None:
+                    mencoes[nome] = f"<@{vinculo['user_id']}>"
+        await interaction.response.send_message(
+            embed=embeds.montar_online(self.status, time.time(), mencoes), allowed_mentions=discord.AllowedMentions.none()
+        )
+
     @grupo.command(name="conta", description="Mostra a conta do Minecraft ligada à sua (ou à de outra pessoa).")
     @app_commands.describe(membro="Quem (deixe em branco para ver a sua)")
     async def conta(self, interaction: discord.Interaction, membro: Optional[discord.Member] = None) -> None:

@@ -481,6 +481,8 @@ COMANDOS_CAMPOS = [
         "⛏️ Servidor de Minecraft",
         "`/minecraft vincular`: liga sua conta do jogo com o código da tela (também pelo botão em {login})\n"
         "`/minecraft conta`: mostra a conta ligada, seu nível e suas {moeda}\n"
+        "`/online`: quem está jogando agora
+"
         "IP e porta em {ip}",
     ),
     (
@@ -1651,3 +1653,10 @@ CONVITE_DM_CONVIDANTE_TETO = "🦊 Seu amigo **{amigo}** completou o caminho, ma
 CONVITE_DM_NOVATO = "🦊 Você completou o caminho de boas-vindas e ganhou **{premio}**! Obrigada por vir, {convidante} te trouxe."
 CONVITE_LOG_TITULO = "Convite premiado"
 CONVITE_LOG_DESC = "{convidante} convidou {amigo}: convidante {premio}, novato {premio_novato}."
+
+# --- /online ---
+MC_ONLINE_TITULO = "🟢 Quem está jogando"
+MC_ONLINE_CONTAGEM = "**{n}/{max}** jogando agora"
+MC_ONLINE_LINHA = "• {nome} ({discord})"
+MC_ONLINE_VAZIO = "Ninguém por aqui agora (0/{max}). Seja o primeiro!"
+MC_ONLINE_OFF = "🔴 O servidor está **fora do ar** ou sem resposta agora."

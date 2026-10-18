@@ -341,6 +341,23 @@ def montar_painel_ip(
     return e
 
 
+def montar_online(status: Optional[dict[str, Any]], agora: float, mencoes: Optional[dict[str, str]] = None) -> discord.Embed:
+    """Quem está jogando agora (comando /online). `mencoes`: nome no jogo -> menção do Discord, para quem tem a conta ligada."""
+    if not status_online(status, agora) or status is None:
+        return discord.Embed(title=textos.MC_ONLINE_TITULO, description=textos.MC_ONLINE_OFF, color=COR_OFFLINE)
+    nomes = [str(n) for n in status.get("online", [])]
+    maximo = status.get("max") or config.MC_MAX_JOGADORES
+    if not nomes:
+        return discord.Embed(title=textos.MC_ONLINE_TITULO, description=textos.MC_ONLINE_VAZIO.format(max=maximo), color=COR_ONLINE)
+    mencoes = mencoes or {}
+    linhas = [textos.MC_ONLINE_LINHA.format(nome=esc(n), discord=mencoes[n]) if n in mencoes else f"• {esc(n)}" for n in nomes]
+    return discord.Embed(
+        title=textos.MC_ONLINE_TITULO,
+        description=textos.MC_ONLINE_CONTAGEM.format(n=len(nomes), max=maximo) + "\n\n" + _corta("\n".join(linhas), 3500),
+        color=COR_ONLINE,
+    )
+
+
 def montar_painel_login(mencao_chat: str = "#chat-bridge") -> discord.Embed:
     e = discord.Embed(title=textos.MC_LOGINP_TITULO, description=textos.MC_LOGINP_DESC, color=config.COR_PRINCIPAL)
     ip = config.MC_SERVIDORES[0][1] if config.MC_SERVIDORES else ""
