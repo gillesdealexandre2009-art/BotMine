@@ -170,11 +170,23 @@ class ApoioMixin:
         return int(linha["t"])
 
     # ------------------------------------------------------------------ metas
-    async def meta_criar(self, guild_id: int, titulo: str, alvo_centavos: int, descricao: str = "", prazo: int = 0) -> int:
+    async def meta_criar(
+        self,
+        guild_id: int,
+        titulo: str,
+        alvo_centavos: int,
+        descricao: str = "",
+        prazo: int = 0,
+        *,
+        imagem: Optional[bytes] = None,
+        imagem_tipo: str = "",
+        cor: int = 0,
+    ) -> int:
         async with self._tx() as conn:  # type: ignore[attr-defined]
             cur = await conn.execute(
-                "INSERT INTO metas (guild_id, titulo, descricao, alvo_centavos, criada_em, prazo) VALUES (?, ?, ?, ?, ?, ?)",
-                (guild_id, titulo[:80], descricao[:300], alvo_centavos, agora(), prazo),
+                "INSERT INTO metas (guild_id, titulo, descricao, alvo_centavos, criada_em, prazo, imagem, imagem_tipo, cor) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (guild_id, titulo[:80], descricao[:300], alvo_centavos, agora(), prazo, imagem, imagem_tipo if imagem else "", cor),
             )
             novo = cur.lastrowid
             await cur.close()
@@ -217,6 +229,10 @@ class ApoioMixin:
         alvo_centavos: Optional[int] = None,
         descricao: Optional[str] = None,
         prazo: Optional[int] = None,
+        imagem: Optional[bytes] = None,
+        imagem_tipo: str = "",
+        limpar_imagem: bool = False,
+        cor: Optional[int] = None,
     ) -> bool:
         campos: list[str] = []
         params: list[Any] = []
@@ -225,10 +241,16 @@ class ApoioMixin:
             ("alvo_centavos", alvo_centavos),
             ("descricao", descricao[:300] if descricao is not None else None),
             ("prazo", prazo),
+            ("cor", cor),
         ):
             if valor is not None:
                 campos.append(f"{coluna} = ?")
                 params.append(valor)
+        if limpar_imagem:
+            campos += ["imagem = NULL", "imagem_tipo = ''"]
+        elif imagem is not None:
+            campos += ["imagem = ?", "imagem_tipo = ?"]
+            params += [imagem, imagem_tipo]
         if not campos:
             return False
         params += [meta_id, guild_id]

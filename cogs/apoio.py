@@ -64,6 +64,35 @@ def inicio_do_mes() -> int:
     return int(agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0).timestamp())
 
 
+IMAGENS = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif"}
+MAX_IMAGEM = 1_500_000
+
+
+def parse_cor(texto: str) -> Optional[int]:
+    """'#F28C38' ou 'F28C38' -> inteiro; vazio -> 0 (cor padrão); inválido -> None."""
+    limpo = str(texto).strip().lstrip("#")
+    if not limpo:
+        return 0
+    if len(limpo) != 6:
+        return None
+    try:
+        return int(limpo, 16)
+    except ValueError:
+        return None
+
+
+async def ler_imagem(anexo: Optional[discord.Attachment]) -> tuple[Optional[tuple[bytes, str]], Optional[str]]:
+    """Baixa a imagem enviada no comando. Devolve ((bytes, tipo), None), (None, None) se não veio, ou (None, erro)."""
+    if anexo is None:
+        return None, None
+    tipo = (anexo.content_type or "").split(";")[0].strip().lower()
+    if tipo not in IMAGENS:
+        return None, textos.META_IMAGEM_INVALIDA
+    if anexo.size > MAX_IMAGEM:
+        return None, textos.META_IMAGEM_GRANDE.format(tamanho=f"{anexo.size / 1_000_000:.1f} MB", maximo=f"{MAX_IMAGEM / 1_000_000:.1f} MB")
+    return (await anexo.read(), tipo), None
+
+
 def nome_publico(membro: Optional[discord.abc.User], anonimo: bool) -> str:
     if anonimo or membro is None:
         return textos.APOIO_ANONIMO
@@ -92,8 +121,8 @@ class PainelApoioView(discord.ui.View):
         guild = interaction.guild
         if guild is None:
             return
-        e = await self.cog.montar_painel(guild)
-        await interaction.response.send_message(embed=e, ephemeral=True)
+        embeds, arquivos = await self.cog.montar_painel(guild)
+        await interaction.response.send_message(embeds=embeds, files=arquivos, ephemeral=True)
 
 
 class MesesView(discord.ui.View):
@@ -159,6 +188,131 @@ class PixView(discord.ui.View):
         await interaction.response.send_message(textos.PIX_CANCELADO if feito else textos.PIX_JA_PAGO, ephemeral=True)
         if feito:
             self.stop()
+
+
+class EditarMetaModal(discord.ui.Modal):
+    def __init__(self, previa: "PrevisaoMetaView") -> None:
+        super().__init__(title=textos.META_EDITAR_MODAL, timeout=600)
+        self.previa = previa
+        e = previa.estado
+        self.titulo = discord.ui.TextInput(label=textos.META_EDITAR_TITULO, default=e["titulo"], max_length=80)
+        self.descricao = discord.ui.TextInput(
+            label=textos.META_EDITAR_DESCRICAO, default=e["descricao"], required=False, max_length=300, style=discord.TextStyle.paragraph
+        )
+        self.valor = discord.ui.TextInput(label=textos.META_EDITAR_VALOR, default=str(e["valor"]), max_length=8)
+        self.prazo = discord.ui.TextInput(label=textos.META_EDITAR_PRAZO, default=str(e["prazo_dias"]), max_length=4)
+        self.cor = discord.ui.TextInput(label=textos.META_EDITAR_COR, default=f"#{e['cor']:06X}" if e["cor"] else "", required=False, max_length=7)
+        for campo in (self.titulo, self.descricao, self.valor, self.prazo, self.cor):
+            self.add_item(campo)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        erro = self.previa.aplicar_edicao(str(self.titulo.value), str(self.descricao.value), str(self.valor.value), str(self.prazo.value), str(self.cor.value))
+        if erro:
+            await interaction.response.send_message(erro, ephemeral=True)
+            return
+        content, embeds, arquivos = self.previa.render()
+        await interaction.response.edit_message(content=content, embeds=embeds, attachments=arquivos, view=self.previa)
+
+
+class PrevisaoMetaView(discord.ui.View):
+    """Prévia da meta antes de criar: mostra o cartão exatamente como vai aparecer no painel. Só quem pediu mexe."""
+
+    def __init__(self, cog: "Apoio", autor_id: int, guild_id: int, estado: dict[str, Any]) -> None:
+        super().__init__(timeout=600)
+        self.cog, self.autor_id, self.guild_id, self.estado = cog, autor_id, guild_id, estado
+        self.criada = False
+        self.interacao: Optional[discord.Interaction] = None
+        self.tirar.disabled = estado["imagem"] is None
+
+    def meta_de_mentira(self) -> dict[str, Any]:
+        e = self.estado
+        dados = e["imagem"]
+        prazo = int(time.time()) + e["prazo_dias"] * DIA_S if e["prazo_dias"] else 0
+        return {
+            "id": 0, "titulo": e["titulo"], "descricao": e["descricao"], "alvo_centavos": e["valor"] * 100, "prazo": prazo,
+            "imagem": dados[0] if dados else None, "imagem_tipo": dados[1] if dados else "", "cor": e["cor"],
+        }
+
+    def render(self) -> tuple[str, list[discord.Embed], list[discord.File]]:
+        cartao, arquivo = self.cog.embed_meta(self.meta_de_mentira(), 0, 0)
+        self.tirar.disabled = self.estado["imagem"] is None
+        return textos.META_PREVIA, [cartao], [arquivo] if arquivo is not None else []
+
+    def aplicar_edicao(self, titulo: str, descricao: str, valor: str, prazo: str, cor: str) -> Optional[str]:
+        """Valida o que veio do formulário e guarda. Devolve a mensagem de erro, ou None se deu certo."""
+        if not titulo.strip():
+            return textos.META_EDITAR_TITULO
+        try:
+            valor_i, prazo_i = int(valor.strip()), int(prazo.strip())
+        except ValueError:
+            return textos.META_VALOR_CAMPO_INVALIDO
+        if not 1 <= valor_i <= 1_000_000:
+            return textos.META_VALOR_CAMPO_INVALIDO
+        if not 0 <= prazo_i <= 3650:
+            return textos.META_PRAZO_CAMPO_INVALIDO
+        cor_i = parse_cor(cor)
+        if cor_i is None:
+            return textos.META_COR_INVALIDA
+        self.estado.update(titulo=titulo.strip(), descricao=descricao.strip(), valor=valor_i, prazo_dias=prazo_i, cor=cor_i)
+        return None
+
+    async def confirmar(self) -> int:
+        """Grava a meta (uma vez só) e devolve o id."""
+        if self.criada:
+            return 0
+        self.criada = True
+        e = self.estado
+        dados = e["imagem"]
+        prazo = int(time.time()) + e["prazo_dias"] * DIA_S if e["prazo_dias"] else 0
+        return await self.cog.bot.banco.meta_criar(
+            self.guild_id, e["titulo"], e["valor"] * 100, e["descricao"], prazo,
+            imagem=dados[0] if dados else None, imagem_tipo=dados[1] if dados else "", cor=e["cor"],
+        )
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.autor_id:
+            await interaction.response.send_message(textos.META_PREVIA_NAO_E_SUA, ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self) -> None:
+        if self.interacao is not None and not self.criada:
+            try:
+                await self.interacao.edit_original_response(content=textos.META_PREVIA_EXPIROU, embeds=[], attachments=[], view=None)
+            except discord.HTTPException:
+                pass
+
+    @discord.ui.button(label=textos.META_PREVIA_BOTAO_CRIAR, emoji="✅", style=discord.ButtonStyle.success)
+    async def criar(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
+        if self.criada:
+            await interaction.response.send_message(textos.META_PREVIA_JA_CRIADA, ephemeral=True)
+            return
+        meta_id = await self.confirmar()
+        e = self.estado
+        await interaction.response.edit_message(
+            content=textos.META_CRIADA.format(titulo=discord.utils.escape_markdown(e["titulo"]), id=meta_id, alvo=reais(e["valor"] * 100)),
+            embeds=[], attachments=[], view=None,
+        )
+        self.stop()
+        guild = interaction.guild
+        if guild is not None:
+            await self.cog.atualizar_painel(guild)
+
+    @discord.ui.button(label=textos.META_PREVIA_BOTAO_EDITAR, emoji="✏️", style=discord.ButtonStyle.primary)
+    async def editar(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
+        await interaction.response.send_modal(EditarMetaModal(self))
+
+    @discord.ui.button(label=textos.META_PREVIA_BOTAO_SEM_IMAGEM, emoji="🖼️", style=discord.ButtonStyle.secondary)
+    async def tirar(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
+        self.estado["imagem"] = None
+        content, embeds, arquivos = self.render()
+        await interaction.response.edit_message(content=content, embeds=embeds, attachments=arquivos, view=self)
+
+    @discord.ui.button(label=textos.META_PREVIA_BOTAO_CANCELAR, emoji="✖️", style=discord.ButtonStyle.danger)
+    async def cancelar(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
+        self.criada = True  # nada mais pode criar
+        await interaction.response.edit_message(content=textos.META_PREVIA_CANCELADA, embeds=[], attachments=[], view=None)
+        self.stop()
 
 
 # ---------------------------------------------------------------------------------------------- cog
@@ -599,7 +753,24 @@ class Apoio(commands.Cog):
         return linhas
 
     # ------------------------------------------------------------------ painel de metas
-    async def montar_painel(self, guild: discord.Guild) -> discord.Embed:
+    def embed_meta(self, m: Any, arrecadado: int, apoiadores: int) -> tuple[discord.Embed, Optional[discord.File]]:
+        """O cartão de uma meta (o mesmo na prévia, no painel e no botão Ver metas). `m` é uma linha do banco ou um dict equivalente."""
+        pct = min(100, arrecadado * 100 // m["alvo_centavos"]) if m["alvo_centavos"] else 0
+        prazo = textos.APOIO_META_PRAZO.format(data=f"<t:{m['prazo']}:D>") if m["prazo"] else ""
+        corpo = (textos.APOIO_META_DESCRICAO.format(descricao=discord.utils.escape_markdown(m["descricao"])) if m["descricao"] else "") + \
+            textos.APOIO_META_LINHA.format(
+                barra=barra_progresso(arrecadado, m["alvo_centavos"], 14), pct=pct, arrecadado=reais(arrecadado),
+                alvo=reais(m["alvo_centavos"]), prazo=prazo, apoiadores=apoiadores)
+        e = embed(f"🎯 {m['titulo']}", corpo, m["cor"] or None)
+        arquivo = None
+        if m["imagem"]:
+            nome = f"meta{m['id']}.{IMAGENS.get(m['imagem_tipo'], 'png')}"
+            arquivo = discord.File(io.BytesIO(bytes(m["imagem"])), filename=nome)
+            e.set_image(url=f"attachment://{nome}")
+        return e, arquivo
+
+    async def montar_painel(self, guild: discord.Guild) -> tuple[list[discord.Embed], list[discord.File]]:
+        """O painel de apoio: um cartão com o convite, o mês e os últimos apoiadores, mais um cartão (com a própria imagem) por meta ativa."""
         banco = self.bot.banco
         preco = await banco.ajuste(guild.id, "kitsune_preco")
         minimo = await banco.ajuste(guild.id, "doacao_min")
@@ -607,19 +778,9 @@ class Apoio(commands.Cog):
         metas = await banco.metas_ativas(guild.id)
         if not metas:
             e.add_field(name=textos.APOIO_METAS_TITULO, value=textos.APOIO_SEM_METAS, inline=False)
-        for m in metas[:5]:
-            arrecadado = await banco.meta_arrecadado(m["id"])
-            pct = min(100, arrecadado * 100 // m["alvo_centavos"])
-            prazo = textos.APOIO_META_PRAZO.format(data=f"<t:{m['prazo']}:D>") if m["prazo"] else ""
-            corpo = (textos.APOIO_META_DESCRICAO.format(descricao=discord.utils.escape_markdown(m["descricao"])) if m["descricao"] else "") + \
-                textos.APOIO_META_LINHA.format(
-                    barra=barra_progresso(arrecadado, m["alvo_centavos"], 14), pct=pct, arrecadado=reais(arrecadado),
-                    alvo=reais(m["alvo_centavos"]), prazo=prazo, apoiadores=await banco.meta_apoiadores(m["id"]))
-            e.add_field(name=f"🎯 {m['titulo']}", value=corpo, inline=False)
-        inicio_mes = inicio_do_mes()
-        mes = await banco.pg_total(guild.id, inicio_mes)
+        mes = await banco.pg_total(guild.id, inicio_do_mes())
         if mes:
-            e.add_field(name="​", value=textos.APOIO_MES.format(valor=reais(mes)), inline=False)
+            e.add_field(name="\u200b", value=textos.APOIO_MES.format(valor=reais(mes)), inline=False)
         recentes = await banco.doacoes_recentes(guild.id, 5)
         if recentes:
             linhas = []
@@ -628,7 +789,13 @@ class Apoio(commands.Cog):
                 linhas.append(textos.APOIO_RECENTE_LINHA.format(nome=nome_publico(membro, bool(r["anonimo"])), valor=reais(r["valor_centavos"])))
             e.add_field(name=textos.APOIO_RECENTES, value="\n".join(linhas), inline=False)
         e.set_footer(text=textos.APOIO_RODAPE)
-        return e
+        embeds, arquivos = [e], []
+        for m in metas[:5]:
+            cartao, arquivo = self.embed_meta(m, await banco.meta_arrecadado(m["id"]), await banco.meta_apoiadores(m["id"]))
+            embeds.append(cartao)
+            if arquivo is not None:
+                arquivos.append(arquivo)
+        return embeds, arquivos
 
     async def publicar_apoio(self, guild: discord.Guild) -> tuple[bool, str]:
         """Publicador do /setup → Publicar painéis: o painel de metas e botões no canal de doações."""
@@ -649,8 +816,8 @@ class Apoio(commands.Cog):
             return None
         if not forcar and not await self.bot.banco.get_config_int(guild.id, "msg_doacoes"):
             return None
-        e = await self.montar_painel(guild)
-        return await publicar_ou_editar(self.bot, guild, canal, "doacoes", embeds=[e], view=self.view_painel())
+        embeds, arquivos = await self.montar_painel(guild)
+        return await publicar_ou_editar(self.bot, guild, canal, "doacoes", embeds=embeds, arquivos=arquivos, view=self.view_painel())
 
     # ------------------------------------------------------------------ laços
     @tasks.loop(seconds=PASSO_CONFERIR)
@@ -727,13 +894,20 @@ class Apoio(commands.Cog):
     async def apoiar(self, interaction: discord.Interaction) -> None:
         guild = interaction.guild
         assert guild is not None
-        await interaction.response.send_message(embed=await self.montar_painel(guild), view=self.view_painel(), ephemeral=True)
+        embeds, arquivos = await self.montar_painel(guild)
+        await interaction.response.send_message(embeds=embeds, files=arquivos, view=self.view_painel(), ephemeral=True)
 
     # ---- metas (Admin)
-    @meta.command(name="criar", description="(Admin) Cria uma meta de arrecadação. As doações novas já entram nela.")
-    @app_commands.describe(titulo="Nome da meta", valor="Quanto precisa arrecadar, em reais", prazo_dias="Em quantos dias acaba (0 = sem prazo)", descricao="Para que é")
+    @meta.command(name="criar", description="(Admin) Cria uma meta de arrecadação (com imagem opcional) e mostra uma prévia antes de publicar.")
+    @app_commands.describe(
+        titulo="Nome da meta", valor="Quanto precisa arrecadar, em reais", prazo_dias="Em quantos dias acaba (0 = sem prazo)",
+        descricao="Para que é", imagem="Imagem do cartão (PNG, JPG, WEBP ou GIF, até 1,5 MB)", cor="Cor do cartão em hexadecimal (ex.: #F28C38)",
+    )
     @exigir_nivel(config.NIVEL_ADMIN)
-    async def meta_criar(self, interaction: discord.Interaction, titulo: str, valor: int, prazo_dias: int = 0, descricao: str = "") -> None:
+    async def meta_criar(
+        self, interaction: discord.Interaction, titulo: str, valor: int, prazo_dias: int = 0, descricao: str = "",
+        imagem: Optional[discord.Attachment] = None, cor: Optional[str] = None,
+    ) -> None:
         guild = interaction.guild
         assert guild is not None
         if not 1 <= valor <= 1_000_000:
@@ -742,19 +916,36 @@ class Apoio(commands.Cog):
         if not 0 <= prazo_dias <= 3650:
             await responder_ephemeral(interaction, textos.META_PRAZO_INVALIDO)
             return
-        prazo = int(time.time()) + prazo_dias * DIA_S if prazo_dias else 0
-        meta_id = await self.bot.banco.meta_criar(guild.id, titulo.strip(), valor * 100, descricao.strip(), prazo)
-        await responder_ephemeral(interaction, textos.META_CRIADA.format(titulo=discord.utils.escape_markdown(titulo.strip()), id=meta_id, alvo=reais(valor * 100)))
-        await self.atualizar_painel(guild)
+        cor_int = parse_cor(cor or "")
+        if cor_int is None:
+            await responder_ephemeral(interaction, textos.META_COR_INVALIDA)
+            return
+        await interaction.response.defer(ephemeral=True)
+        dados, erro_imagem = await ler_imagem(imagem)
+        if erro_imagem:
+            await interaction.followup.send(erro_imagem, ephemeral=True)
+            return
+        estado = {"titulo": titulo.strip(), "descricao": descricao.strip(), "valor": valor, "prazo_dias": prazo_dias, "cor": cor_int, "imagem": dados}
+        view = PrevisaoMetaView(self, interaction.user.id, guild.id, estado)
+        content, embeds, arquivos = view.render()
+        view.interacao = interaction
+        await interaction.followup.send(content=content, embeds=embeds, files=arquivos, view=view, ephemeral=True)
 
-    @meta.command(name="editar", description="(Admin) Muda o nome, o valor, o prazo ou a descrição de uma meta ativa.")
-    @app_commands.describe(id="O número da meta (veja em /meta lista)", titulo="Novo nome", valor="Novo valor em reais", prazo_dias="Novo prazo em dias a partir de hoje (0 = sem prazo)", descricao="Nova descrição")
+    @meta.command(name="editar", description="(Admin) Muda o nome, o valor, o prazo, a descrição, a imagem ou a cor de uma meta ativa.")
+    @app_commands.describe(
+        id="O número da meta (veja em /meta lista)", titulo="Novo nome", valor="Novo valor em reais",
+        prazo_dias="Novo prazo em dias a partir de hoje (0 = sem prazo)", descricao="Nova descrição",
+        imagem="Nova imagem do cartão", tirar_imagem="Tira a imagem da meta", cor="Nova cor em hexadecimal (ex.: #F28C38)",
+    )
     @exigir_nivel(config.NIVEL_ADMIN)
-    async def meta_editar(self, interaction: discord.Interaction, id: int, titulo: Optional[str] = None, valor: Optional[int] = None,
-                          prazo_dias: Optional[int] = None, descricao: Optional[str] = None) -> None:
+    async def meta_editar(
+        self, interaction: discord.Interaction, id: int, titulo: Optional[str] = None, valor: Optional[int] = None,
+        prazo_dias: Optional[int] = None, descricao: Optional[str] = None, imagem: Optional[discord.Attachment] = None,
+        tirar_imagem: bool = False, cor: Optional[str] = None,
+    ) -> None:
         guild = interaction.guild
         assert guild is not None
-        if titulo is None and valor is None and prazo_dias is None and descricao is None:
+        if all(x is None for x in (titulo, valor, prazo_dias, descricao, imagem, cor)) and not tirar_imagem:
             await responder_ephemeral(interaction, textos.META_NADA_PARA_EDITAR)
             return
         if valor is not None and not 1 <= valor <= 1_000_000:
@@ -763,11 +954,20 @@ class Apoio(commands.Cog):
         if prazo_dias is not None and not 0 <= prazo_dias <= 3650:
             await responder_ephemeral(interaction, textos.META_PRAZO_INVALIDO)
             return
+        cor_int = None if cor is None else parse_cor(cor)
+        if cor is not None and cor_int is None:
+            await responder_ephemeral(interaction, textos.META_COR_INVALIDA)
+            return
+        await interaction.response.defer(ephemeral=True)
+        dados, erro_imagem = await ler_imagem(imagem)
+        if erro_imagem:
+            await interaction.followup.send(erro_imagem, ephemeral=True)
+            return
         prazo = None if prazo_dias is None else (int(time.time()) + prazo_dias * DIA_S if prazo_dias else 0)
         feito = await self.bot.banco.meta_editar(
-            guild.id, id, titulo=titulo.strip() if titulo else None, alvo_centavos=valor * 100 if valor else None,
-            descricao=descricao, prazo=prazo)
-        await responder_ephemeral(interaction, textos.META_EDITADA.format(id=id) if feito else textos.META_NAO_ACHADA.format(id=id))
+            guild.id, id, titulo=titulo.strip() if titulo else None, alvo_centavos=valor * 100 if valor else None, descricao=descricao,
+            prazo=prazo, imagem=dados[0] if dados else None, imagem_tipo=dados[1] if dados else "", limpar_imagem=tirar_imagem and not dados, cor=cor_int)
+        await interaction.followup.send(textos.META_EDITADA.format(id=id) if feito else textos.META_NAO_ACHADA.format(id=id), ephemeral=True)
         if feito:
             await self.atualizar_painel(guild)
 

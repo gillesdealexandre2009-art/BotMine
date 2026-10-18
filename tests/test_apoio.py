@@ -707,3 +707,140 @@ def test_setup_publica_o_painel_de_doacoes(tmp_path):
 
     assert PUBLICADORES["doacoes"] == ("Apoio", "publicar_apoio", "Doações e metas")
     assert rodar(cenario) == ((True, "#doacoes"), [True])
+
+
+# ------------------------------------------------------------------ metas com imagem e prévia
+PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 64
+
+
+class AnexoFalso:
+    def __init__(self, tipo, tamanho, dados=PNG):
+        self.content_type, self.size, self._dados = tipo, tamanho, dados
+
+    async def read(self):
+        return self._dados
+
+
+def test_cor_e_imagem_do_comando():
+    from cogs.apoio import MAX_IMAGEM, ler_imagem, parse_cor
+
+    assert parse_cor("#F28C38") == 0xF28C38 and parse_cor("f28c38") == 0xF28C38 and parse_cor("") == 0 and parse_cor("  ") == 0
+    assert parse_cor("#12345") is None and parse_cor("zzzzzz") is None and parse_cor("#1234567") is None
+
+    async def cenario():
+        return (
+            await ler_imagem(None),
+            await ler_imagem(AnexoFalso("image/png", 100)),
+            await ler_imagem(AnexoFalso("image/jpeg; charset=x", 100, b"jpg")),
+            await ler_imagem(AnexoFalso("application/pdf", 100)),
+            await ler_imagem(AnexoFalso("image/png", MAX_IMAGEM + 1)),
+            await ler_imagem(AnexoFalso(None, 100)),
+        )
+
+    nada, png, jpg, pdf, grande, sem_tipo = rodar(cenario)
+    assert nada == (None, None) and png == ((PNG, "image/png"), None) and jpg == ((b"jpg", "image/jpeg"), None)
+    assert pdf[0] is None and "PNG, JPG" in pdf[1] and grande[0] is None and "grande demais" in grande[1] and sem_tipo[0] is None
+
+
+def test_meta_guarda_imagem_e_cor_no_banco(tmp_path):
+    async def cenario():
+        banco = Banco(str(tmp_path / "t.db"))
+        await banco.conectar()
+        try:
+            a = await banco.meta_criar(G, "Com imagem", 10000, "d", 0, imagem=PNG, imagem_tipo="image/png", cor=0xAA00BB)
+            b = await banco.meta_criar(G, "Sem imagem", 5000, "", 0, imagem=None, imagem_tipo="image/png")  # tipo sem imagem não fica
+            antes = await banco.meta_por_id(G, a)
+            await banco.meta_editar(G, a, imagem=b"novo", imagem_tipo="image/webp", cor=0x112233)
+            trocada = await banco.meta_por_id(G, a)
+            await banco.meta_editar(G, a, titulo="Só o nome")  # editar outra coisa não mexe na imagem
+            so_nome = await banco.meta_por_id(G, a)
+            await banco.meta_editar(G, a, limpar_imagem=True)
+            limpa = await banco.meta_por_id(G, a)
+            return antes, trocada, so_nome, limpa, await banco.meta_por_id(G, b)
+        finally:
+            await banco.fechar()
+
+    antes, trocada, so_nome, limpa, sem = rodar(cenario)
+    assert bytes(antes["imagem"]) == PNG and antes["imagem_tipo"] == "image/png" and antes["cor"] == 0xAA00BB
+    assert bytes(trocada["imagem"]) == b"novo" and trocada["imagem_tipo"] == "image/webp" and trocada["cor"] == 0x112233
+    assert bytes(so_nome["imagem"]) == b"novo" and so_nome["titulo"] == "Só o nome"
+    assert limpa["imagem"] is None and limpa["imagem_tipo"] == ""
+    assert sem["imagem"] is None and sem["imagem_tipo"] == ""
+
+
+def test_painel_tem_um_cartao_por_meta_com_a_propria_imagem(tmp_path):
+    async def cenario():
+        banco, apoio, prov, mural, guild, cargo, registro = await montar(tmp_path)
+        try:
+            vazio = await apoio.montar_painel(guild)
+            a = await banco.meta_criar(G, "Host", 20000, "pagar a host", 0, imagem=PNG, imagem_tipo="image/png", cor=0xAA00BB)
+            await banco.meta_criar(G, "Mapa novo", 5000)
+            pid = await banco.pg_criar(G, USER_A, "doacao", 5000, "RR", int(time.time()) + 600, meta_id=a)
+            await banco.pg_marcar_pago(pid, 30, 0)
+            return vazio, await apoio.montar_painel(guild)
+        finally:
+            await banco.fechar()
+
+    (e_vazio, f_vazio), (embeds, arquivos) = rodar(cenario)
+    assert len(e_vazio) == 1 and f_vazio == [] and any(textos.APOIO_SEM_METAS in c.value for c in e_vazio[0].fields)
+    assert len(embeds) == 3 and embeds[0].title == textos.APOIO_TITULO  # convite + uma meta cada
+    host, mapa = embeds[1], embeds[2]
+    assert host.title == "🎯 Host" and host.color.value == 0xAA00BB and "25%" in host.description and "R$ 50,00" in host.description
+    assert host.image.url == f"attachment://meta{host.image.url.split('meta')[1]}" and host.image.url.endswith(".png")
+    assert [a.filename for a in arquivos] == [host.image.url.split("attachment://")[1]]  # só a meta com imagem manda arquivo
+    assert mapa.image.url is None and "0%" in mapa.description and mapa.color.value == 0xF28C38
+
+
+def test_previa_da_meta_e_igual_ao_que_vai_para_o_painel(tmp_path):
+    from cogs.apoio import PrevisaoMetaView
+
+    async def cenario():
+        banco, apoio, prov, mural, guild, cargo, registro = await montar(tmp_path)
+        try:
+            estado = {"titulo": "Host de novembro", "descricao": "ajuda a pagar", "valor": 150, "prazo_dias": 30, "cor": 0x336699, "imagem": (PNG, "image/png")}
+            view = PrevisaoMetaView(apoio, USER_A, G, estado)
+            content, embeds, arquivos = view.render()
+            erros = [
+                view.aplicar_edicao("", "x", "10", "0", ""),
+                view.aplicar_edicao("t", "x", "abc", "0", ""),
+                view.aplicar_edicao("t", "x", "0", "0", ""),
+                view.aplicar_edicao("t", "x", "10", "99999", ""),
+                view.aplicar_edicao("t", "x", "10", "0", "#zzz"),
+            ]
+            antes_da_edicao = dict(view.estado)
+            certo = view.aplicar_edicao(" Host ", " nova descrição ", "200", "7", "#FF0000")
+            _, editada, _ = view.render()
+            meta_id = await view.confirmar()
+            de_novo = await view.confirmar()
+            salva = await banco.meta_por_id(G, meta_id)
+            final, arquivo_final = apoio.embed_meta(salva, 0, 0)
+            return content, embeds, arquivos, erros, antes_da_edicao, certo, editada, meta_id, de_novo, salva, final, arquivo_final, estado
+        finally:
+            await banco.fechar()
+
+    content, embeds, arquivos, erros, antes, certo, editada, meta_id, de_novo, salva, final, arquivo_final, estado = rodar(cenario)
+    assert content == textos.META_PREVIA and embeds[0].title == "🎯 Host de novembro" and embeds[0].color.value == 0x336699
+    assert len(arquivos) == 1 and arquivos[0].filename == "meta0.png" and embeds[0].image.url == "attachment://meta0.png"
+    assert all(erros) and estado["valor"] == 200 and antes["valor"] == 150  # recusa não mexe no estado; aceitar mexe
+    assert certo is None and editada[0].title == "🎯 Host" and editada[0].color.value == 0xFF0000 and "R$ 200,00" in editada[0].description
+    assert meta_id > 0 and de_novo == 0  # criar duas vezes não duplica
+    assert salva["titulo"] == "Host" and salva["alvo_centavos"] == 20000 and bytes(salva["imagem"]) == PNG and salva["cor"] == 0xFF0000 and salva["prazo"] > 0
+    assert final.title == editada[0].title and final.description.split("\n")[-1] == editada[0].description.split("\n")[-1] and arquivo_final.filename == f"meta{meta_id}.png"
+
+
+def test_previa_sem_imagem_nao_manda_arquivo(tmp_path):
+    from cogs.apoio import PrevisaoMetaView
+
+    async def cenario():
+        banco, apoio, *_ = await montar(tmp_path)
+        try:
+            estado = {"titulo": "T", "descricao": "", "valor": 10, "prazo_dias": 0, "cor": 0, "imagem": (PNG, "image/png")}
+            view = PrevisaoMetaView(apoio, USER_A, G, estado)
+            habilitado_antes = not view.tirar.disabled
+            view.estado["imagem"] = None
+            _, embeds, arquivos = view.render()
+            return habilitado_antes, view.tirar.disabled, embeds[0].image.url, arquivos
+        finally:
+            await banco.fechar()
+
+    assert rodar(cenario) == (True, True, None, [])

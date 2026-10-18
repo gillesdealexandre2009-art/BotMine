@@ -393,3 +393,14 @@ CREATE INDEX ix_pagamentos_status ON pagamentos (status, expira_em);
 CREATE INDEX ix_pagamentos_pessoa ON pagamentos (guild_id, user_id);
 """,
 ))
+
+
+# Metas com imagem e cor própria (a imagem fica no banco, porque o link de anexo do Discord expira).
+MIGRACOES.append((
+    10,
+    """
+ALTER TABLE metas ADD COLUMN imagem BLOB;
+ALTER TABLE metas ADD COLUMN imagem_tipo TEXT NOT NULL DEFAULT '';
+ALTER TABLE metas ADD COLUMN cor INTEGER NOT NULL DEFAULT 0;
+""",
+))
