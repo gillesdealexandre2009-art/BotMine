@@ -1,6 +1,7 @@
 // @ts-check
 // Níveis e ranks, iguais aos do Discord: XP total guardado, nível calculado (5n² + 50n + 100 por nível).
 // XP vem do minuto ativo e da diária (ganchos em caudas.js). Não importa caudas, hud nem identidade.
+import { multiplicadorXpEra } from "../core/eras_modificadores.js";
 import { multiplicadorXp } from "./pets_bonus.js";
 import { Player, world } from "@minecraft/server";
 import { ICONES, SONS } from "../config.js";
@@ -147,7 +148,8 @@ export function ganharXp(alvo, quantidade) {
   const antes = infoNivel(alvo);
   const bruto = Number.isFinite(quantidade) ? quantidade : 0;
   // o pet equipado com bônus de XP aumenta o ganho (só para quem está online)
-  const ganho = Math.floor(typeof alvo === "string" ? bruto : bruto * multiplicadorXp(alvo));
+  // a Era em curso também pode multiplicar o XP (eras_mecanicas.js)
+  const ganho = Math.floor(typeof alvo === "string" ? bruto : bruto * multiplicadorXp(alvo) * multiplicadorXpEra(alvo));
   if (ganho <= 0 || antes.xp >= XP_MAXIMO) return antes;
   editarJogador(alvo, (d) => {
     d.xp = Math.min(XP_MAXIMO, antes.xp + ganho);

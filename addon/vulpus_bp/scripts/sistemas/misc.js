@@ -7,6 +7,7 @@ import * as textos from "../textos/misc.js";
 import { abrirComecar } from "./novato.js";
 import { dadosPet } from "./pets_bonus.js";
 import { menuColecao } from "./pets.js";
+import { menuEra } from "./eras.js";
 import { menuMinigames } from "./mg_menu.js";
 import { menuRegras } from "./regras.js";
 
@@ -24,6 +25,7 @@ export async function menuMisc(player, voltar) {
     .botao(textos.BOTAO_PETS, ICONES.perfil, (p) => menuColecao(p, aqui))
     .botao(textos.BOTAO_MINIGAMES, ICONES.minigames, (p) => menuMinigames(p, aqui))
     .botao(textos.BOTAO_COMECAR, ICONES.nova, (p) => abrirComecar(p))
+    .botao(textos.BOTAO_ERA, ICONES.tempo, (p) => menuEra(p, aqui))
     .botao(textos.BOTAO_REGRAS, ICONES.regras, (p) => menuRegras(p, aqui))
     .voltar(voltar)
     .abrir(player);

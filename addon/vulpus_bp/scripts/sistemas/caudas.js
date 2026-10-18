@@ -4,6 +4,7 @@ import { Player, system, world } from "@minecraft/server";
 import { ICONES } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { config, dadosJogador, editarJogador, todosJogadores } from "../core/db.js";
+import { multiplicadorCaudasMinutoEra } from "../core/eras_modificadores.js";
 import { Lista } from "../core/forms.js";
 import { online, porId } from "../core/jogadores.js";
 import { emEspera } from "../core/teleporte.js";
@@ -307,8 +308,10 @@ function checarPresenca(player) {
   const pagar = ativos >= Math.max(1, Math.floor(cfg.intervaloCaudasMin));
   iniciarPresenca(player, pagar ? 0 : ativos);
   if (!pagar) return;
-  const ganho = Math.max(0, Math.floor(cfg.caudasPorIntervalo));
-  if (ganho === 0) return;
+  const base = Math.max(0, Math.floor(cfg.caudasPorIntervalo));
+  if (base === 0) return;
+  // a Era em curso pode render um pouco mais por tempo online (eras_mecanicas.js)
+  const ganho = Math.floor(base * multiplicadorCaudasMinutoEra(player));
   adicionarCaudas(player, ganho);
   // Com a HUD ligada o "+N" aparece nela; sem HUD, avisa direto na actionbar (menos na contagem do teleporte).
   if (!hudLigada(player) && !emEspera(player)) player.onScreenDisplay.setActionBar(textos.GANHO_TEMPO_BARRA(ganho));

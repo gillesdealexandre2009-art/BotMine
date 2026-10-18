@@ -11,12 +11,14 @@ import * as textosCla from "../textos/clas.js";
 import * as textos from "../textos/dono.js";
 import * as textosKT from "../textos/kitsune_tempo.js";
 import * as textosArg from "../textos/arg.js";
+import * as textosEras from "../textos/eras.js";
 import * as textosPegadinhas from "../textos/pegadinhas.js";
 import { claPorId, CORES_CLA, defNivel, membroDe, todosClas } from "./cla_dados.js";
 import { guerraDe, lerEstado } from "./cla_guerra.js";
 import * as acoes from "./dono_acoes.js";
 import * as kitsuneTempo from "./kitsune_tempo.js";
 import { menuArg } from "./arg.js";
+import { menuEras } from "./eras.js";
 import { menuPegadinhas } from "./pegadinhas.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -76,6 +78,7 @@ export async function menuDono(player, voltar) {
     .botao(textosPegadinhas.BOTAO_PAINEL, ICONES.spawn, (p) => menuPegadinhas(p, aqui))
     .botao(textosArg.BOTAO_PAINEL, ICONES.spawn, (p) => menuArg(p, aqui))
     .cabecalho(textos.SECAO_ADMIN)
+    .botao(textosEras.BOTAO_PAINEL, ICONES.tempo, (p) => menuEras(p, aqui))
     .botao(textos.BOTAO_DONOS, ICONES.dono, (p) => menuDonos(p, aqui))
     .botao(textos.BOTAO_LOG, ICONES.historico, (p) => menuLog(p, aqui))
     .voltar(voltar)

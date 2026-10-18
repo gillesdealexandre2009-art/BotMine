@@ -12,6 +12,7 @@ import { ehStaff } from "../core/permissoes.js";
 import { erro, limitar, ok, registrarErro, som } from "../core/util.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/leilao.js";
+import { bonusVendaEra } from "../core/eras_modificadores.js";
 import { adicionarCaudas, saldo } from "./caudas.js";
 import { emMinigame } from "./mg_estado.js";
 import {
@@ -572,12 +573,16 @@ function comprar(player, id, rev, preco) {
     erro(player, geral.ERRO_INTERNO);
     return false;
   }
-  const liquido = preco - taxaVenda(preco);
+  const base = preco - taxaVenda(preco);
+  // bônus de venda da Era (ex.: plantações na Colheita), pago em Caudas pelo servidor: o item não é duplicado
+  const bonusEra = bonusVendaEra(lote.vendedor, lote.item.t, base, lote.item.q);
+  const liquido = base + bonusEra;
   gravarCaudasCaixa(lote.vendedor, caudasCaixa(lote.vendedor) + liquido);
   registrarPreco(lote.item, preco);
   registrarEventos([eventoDe("vendeu", lote, vendedorDe(lote), quem(player))]);
   avisar(player, textos.COMPROU(nomeItem(lote.item), lote.item.q, preco), SONS.ok);
   avisar(porId(lote.vendedor), textos.VENDIDO(nomeItem(lote.item), lote.item.q, player.name, liquido), SONS.ok);
+  if (bonusEra > 0) avisar(porId(lote.vendedor), [`§6Era §8» §7Bônus de venda da Era: §e+${bonusEra} Caudas§7 (já somado ao valor acima).`], SONS.ok);
   retirarComAviso(player, id);
   return true;
 }

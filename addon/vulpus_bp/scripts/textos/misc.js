@@ -12,4 +12,5 @@ export const CORPO = (pets, ativos, fichas) =>
 export const BOTAO_PETS = "Meus pets";
 export const BOTAO_MINIGAMES = "Minigames";
 export const BOTAO_COMECAR = "Primeiros passos";
+export const BOTAO_ERA = "Era da semana";
 export const BOTAO_REGRAS = "Regras do servidor";
