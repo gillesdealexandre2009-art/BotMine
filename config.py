@@ -30,7 +30,7 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.11.0"
+VERSAO = "1.12.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -87,6 +87,7 @@ COGS_PADRAO = [
     "quiz",
     "missoes",
     "apoio",
+    "convites",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -304,6 +305,14 @@ AJUSTES = {
     "doacao_min": (5, 1, 1000, "Menor doação por PIX, em reais"),
     "doacao_max": (500, 1, 10000, "Maior doação por PIX, em reais"),
     "pix_validade_min": (30, 5, 120, "Minutos que o PIX gerado vale"),
+    "convite_ligado": (1, 0, 1, "1 = programa Convide um amigo ligado"),
+    "convite_premio": (150, 0, 100000, "Caudas para quem convidou (por amigo que cumprir o caminho)"),
+    "convite_premio_novato": (75, 0, 100000, "Caudas para o amigo que chegou"),
+    "convite_nivel": (3, 0, 500, "Nível que o amigo precisa ter para o convite valer"),
+    "convite_horas": (24, 0, 720, "Horas mínimas do amigo no servidor para o convite valer"),
+    "convite_dias": (14, 1, 365, "Dias que o amigo tem para cumprir o caminho depois de entrar"),
+    "convite_teto_mes": (10, 1, 1000, "Máximo de convites premiados por pessoa por mês"),
+    "convite_exige_mc": (1, 0, 1, "1 = o amigo também precisa ligar a conta do Minecraft"),
     "prox_ligada": (1, 0, 1, "1 = chat de voz por proximidade do Minecraft ligado"),
     "prox_entrar": (48, 4, 128, "Blocos de distância para entrar na mesma sala de voz"),
     "prox_sair": (64, 4, 160, "Blocos de distância para sair da sala (maior que o de entrar, para ninguém ficar trocando)"),

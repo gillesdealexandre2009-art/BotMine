@@ -423,3 +423,30 @@ CREATE TABLE gastos (
 CREATE INDEX ix_gastos_guild ON gastos (guild_id, caixinha);
 """,
 ))
+
+
+# Convide um amigo: link pessoal de cada pessoa e quem entrou por cada link (uma vez só por pessoa).
+MIGRACOES.append((
+    12,
+    """
+CREATE TABLE convites (
+    guild_id   INTEGER NOT NULL,
+    user_id    INTEGER NOT NULL,
+    codigo     TEXT    NOT NULL,
+    criado_em  INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+CREATE UNIQUE INDEX ux_convites_codigo ON convites (guild_id, codigo);
+CREATE TABLE convidados (
+    guild_id       INTEGER NOT NULL,
+    convidado_id   INTEGER NOT NULL,
+    convidante_id  INTEGER NOT NULL,
+    codigo         TEXT    NOT NULL,
+    entrou_em      INTEGER NOT NULL,
+    status         TEXT    NOT NULL DEFAULT 'pendente',   -- pendente, pago, teto, saiu, expirado, recusado
+    fechado_em     INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (guild_id, convidado_id)
+);
+CREATE INDEX ux_convidados ON convidados (guild_id, convidante_id, status);
+""",
+))

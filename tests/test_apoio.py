@@ -483,7 +483,7 @@ def test_boost_nao_da_mais_kitsune():
     assert "boost" not in textos.KITSUNE_DESC.lower()
     faq = " ".join(v for p, v in textos.DUVIDAS_CAMPOS if "Kitsune" in p)
     assert "PIX" in faq and "Boost não dá Kitsune" in faq
-    assert any("Boost não dá mais Kitsune" in i for i in textos.CHANGELOG[0][2]) and textos.CHANGELOG[0][0] == config.VERSAO
+    assert any("Boost não dá mais Kitsune" in i for c in textos.CHANGELOG if c[0] == "1.11.0" for i in c[2]) and textos.CHANGELOG[0][0] == config.VERSAO
 
 
 def test_configuracao_do_apoio():

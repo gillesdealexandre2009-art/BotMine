@@ -487,6 +487,7 @@ COMANDOS_CAMPOS = [
         "💖 Apoio",
         "`/kitsune`: compre o selo Kitsune por PIX ({kitsune_preco} por mês)\n"
         "`/doar`: ajude a pagar a hospedagem com o valor que quiser\n"
+        "`/convidar`: seu link para trazer amigos e ganhar {moeda}\n"
         "`/apoiar`: as metas do mês e os botões de apoio",
     ),
     ("ℹ️ Outros", "`/ajuda`: este resumo, onde você estiver\n`/status`: vê se eu estou acordada"),
@@ -553,6 +554,14 @@ DUVIDAS_CAMPOS = [
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
+    (
+        "1.12.0",
+        "Convide um amigo",
+        [
+            "🦊 `/convidar` te dá um **link pessoal**: quando quem entrar por ele ficar um tempo na toca, ligar a conta do Minecraft e chegar ao nível 3, vocês dois ganham {moeda}",
+            "🏆 `/convites ranking` mostra quem mais trouxe amigos",
+        ],
+    ),
     (
         "1.11.0",
         "Apoie a toca por PIX",
@@ -1618,3 +1627,27 @@ PROX_STATUS_ENTRADA = "Entrada: {sala} ({n} pessoa(s))"
 PROX_STATUS_SALA = "{sala}: {quem}"
 PROX_STATUS_VISTO = "Última posição recebida do jogo: {quando}"
 PROX_STATUS_AJUSTES = "Entra a **{entrar}** blocos, sai a **{sair}**, espera **{espera}** s entre movimentos."
+
+
+# --- Convide um amigo ---
+CONVITE_DESLIGADO = "O programa de convites está desligado no momento."
+CONVITE_SEM_PERMISSAO = "Não consegui criar o seu link. Me dê a permissão **Gerenciar servidor** e **Criar convite** e tente de novo."
+CONVITE_SEM_CANAL = "Não achei um canal para criar o seu link. Fale com a staff."
+CONVITE_TITULO = "🦊 Convide um amigo"
+CONVITE_DESC = (
+    "Seu link pessoal: {link}\n\n"
+    "Quando quem entrar por ele **ficar {horas} h no servidor, ligar a conta do Minecraft (`/minecraft vincular`) e chegar ao nível {nivel}**, "
+    "vocês dois ganham: **você {premio}** e **seu amigo {premio_novato}**.\n"
+    "Vale em até **{dias} dias** depois da entrada, para contas com mais de {conta_dias} dias, e cada pessoa só rende uma vez. "
+    "Teto de **{teto} prêmios por mês** para quem convida."
+)
+CONVITE_STATS = "Aguardando: **{pendentes}** · Já valeram: **{pagos}** · Ganho no total: **{ganho}**"
+CONVITE_STATS_TETO = "Neste mês: **{mes}/{teto}** prêmios."
+CONVITE_RANKING_TITULO = "🏆 Quem mais trouxe amigos"
+CONVITE_RANKING_LINHA = "**{pos}.** {quem}: {pagos} amigo(s)"
+CONVITE_RANKING_VAZIO = "Ninguém trouxe amigos ainda. Use `/convidar`!"
+CONVITE_DM_CONVIDANTE = "🦊 Seu amigo **{amigo}** completou o caminho (tempo, conta do Minecraft e nível). Você ganhou **{premio}**!"
+CONVITE_DM_CONVIDANTE_TETO = "🦊 Seu amigo **{amigo}** completou o caminho, mas você já chegou ao teto de prêmios deste mês. Ele ganhou o dele!"
+CONVITE_DM_NOVATO = "🦊 Você completou o caminho de boas-vindas e ganhou **{premio}**! Obrigada por vir, {convidante} te trouxe."
+CONVITE_LOG_TITULO = "Convite premiado"
+CONVITE_LOG_DESC = "{convidante} convidou {amigo}: convidante {premio}, novato {premio_novato}."
