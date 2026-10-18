@@ -99,7 +99,8 @@ MC_CANAIS_PADRAO = {
     "mc_ip": 1561048542976680107,  # 🚪・ip-e-porta
     "mc_historico": 1549286294813806702,  # 📖・histórico
     "mc_login": 1561363701435469897,  # ✅・log-in
-    "mc_online": 1561364244505829396,  # 🟢 Online | (N) 🦊 (o nome do canal mostra quantos jogam agora)
+    # canal de VOZ: o /setup não escolhe canal de voz, então este fica só aqui (🟢 Online | (N) 🦊: o nome mostra quantos jogam agora)
+    "mc_online": 1561364244505829396,
 }
 # Servidores de Minecraft Bedrock (painel do ip-e-porta). Troque aqui se mudar.
 MC_SERVIDORES = (
@@ -169,7 +170,6 @@ CANAIS_CONFIG = {
     "mc_ip": "IP e porta do servidor de Minecraft (painel com status)",
     "mc_historico": "Histórico da Vulpus (clãs e guerras do Minecraft)",
     "mc_login": "Login do Minecraft (painel de vínculo e registro de entradas)",
-    "mc_online": "Contador de jogadores do Minecraft (o nome do canal vira \"🟢 Online | (N) 🦊\")",
     "doacoes": "Doações e metas (painel de apoio por PIX e mural de quem ajudou)",
 }
 # Se um desses canais não estiver no /setup, a Kiza procura um canal cujo nome contenha a palavra

@@ -665,7 +665,7 @@ def test_changelog_fala_do_cargo_sugestor_e_o_faq_tambem():
     import config
     import textos
 
-    assert config.CARGO_SUGESTOR_ID == 1561367707914604594 and "mc_online" in config.CANAIS_CONFIG
+    assert config.CARGO_SUGESTOR_ID == 1561367707914604594 and "mc_online" not in config.CANAIS_CONFIG  # canal de voz: não aparece no /setup
     assert config.MC_CANAIS_PADRAO["mc_online"] == 1561364244505829396
     valores = {"moeda": config.MOEDA_NOME, "sugestor": "<@&1561367707914604594>"}
     versao, _titulo, itens = next(c for c in textos.CHANGELOG if c[0] == "1.10.0")
