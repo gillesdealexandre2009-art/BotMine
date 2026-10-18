@@ -4,6 +4,17 @@ Textos prontos para colar no canal de changelog do Discord. O changelog da Kiza 
 
 ---
 
+## 18/10/2026: Chat de voz por proximidade
+
+Olá, pessoal! 🎧 Agora dá para conversar com quem está perto de você, direto na call do Discord:
+
+- **Entre na sala "🎧 Entrada"** do Discord e jogue normalmente: quem estiver a até **24 blocos** de você cai na mesma sala de voz, e quando vocês se afastam (uns **32 blocos**) cada um volta para a sua.
+- Precisa estar com a **conta ligada** (`/minecraft vincular`). Não quer ser movido? Use `/proximidade pausar`.
+- **Fora do mundo normal não vale**: minigames, Intervalo e o mistério da Vulpus não entram na conversa por proximidade.
+- Não muda o volume de cada pessoa (o Discord não permite): é por **grupos de sala**.
+
+---
+
 ## 18/10/2026: Conta única, Kitsune por PIX, mais privacidade e as Eras a caminho
 
 Olá, pessoal! 🦊 Foi uma semana grande na toca. Aqui vai o que mudou:
