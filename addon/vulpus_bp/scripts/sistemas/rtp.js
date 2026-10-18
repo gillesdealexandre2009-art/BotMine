@@ -77,6 +77,20 @@ function proteger(player, ticks, comQueda) {
 }
 
 /**
+ * Tem chão de verdade logo abaixo dos pés (chunk carregado e bloco sólido)?
+ * @param {Player} player
+ */
+function chaoSolido(player) {
+  try {
+    const { x, y, z } = player.location;
+    const b = player.dimension.getBlock({ x: Math.floor(x), y: Math.floor(y - 0.2), z: Math.floor(z) });
+    return !!b && !b.isAir && !b.isLiquid;
+  } catch {
+    return false; // chunk não carregado
+  }
+}
+
+/**
  * Queda protegida depois do RTP: efeitos renovados por no mínimo TICKS_PROTECAO_MIN (dá tempo de o
  * mundo carregar embaixo), rastro de fogo e altitude na actionbar; ao pousar vem um estouro de brasas.
  * Se a pessoa afundar no vazio antes de o chão existir, volta para o alto.
@@ -94,6 +108,8 @@ function descer(player, altura) {
     if (!player.isValid) return;
     try {
       player.removeEffect("slow_falling");
+      // folga: se ainda faltava chão, a resistência cobre os últimos blocos de queda
+      player.addEffect("resistance", 100, { amplifier: 4, showParticles: false });
     } catch (e) {
       registrarErro("Fim da queda do RTP", e);
     }
@@ -115,7 +131,8 @@ function descer(player, altura) {
         player.teleport({ x: c.x, y: altura, z: c.z }, { checkForBlocks: false, keepVelocity: false });
         return;
       }
-      const noChao = decorridos > CARENCIA_QUEDA && (player.isOnGround || player.isInWater || player.isFlying);
+      // "isOnGround" engana com o chunk ainda sem carregar: só vale como pouso se o bloco de baixo existe e é sólido
+      const noChao = decorridos > CARENCIA_QUEDA && (player.isInWater || player.isFlying || (player.isOnGround && chaoSolido(player)));
       if (noChao && !pousou) {
         pousou = true;
         proteger(player, TICKS_PROTECAO_POUSO, false);

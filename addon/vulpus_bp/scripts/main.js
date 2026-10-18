@@ -67,3 +67,4 @@ import "./sistemas/boas_vindas.js";
 import "./sistemas/ponte_chat.js";
 import "./sistemas/ponte_eventos.js";
 import "./sistemas/vinculo.js";
+import "./sistemas/privacidade.js";
