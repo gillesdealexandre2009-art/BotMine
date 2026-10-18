@@ -1,0 +1,3 @@
+Essa pasta conterá arquivos txt como uma lista de to-do, ao finalizar por gentileza sinalizar e excluir o arquivo daqui, pois já foi feito. Aqui ficará demandas que por falta de tokens não foram feitos na hora, por gentileza, sempre que estiver fazendo o processo crie um artifact de acompanhamento.
+
+Faça um trabalho por vez, não abra vários .txt de uma vez para evitar uso excessivo de tokens, sempre ao fazer uma tarefa dessas utilize /caveman ultra e ao entregar a parte do site e em respostas personalizadas pedidas pelo usuário(ex: faça-me um relatório) você vai desativar e responder com excelência, mas sem exagero. Logo após retorne ao caveman para evitar consumo de tokens em massa.

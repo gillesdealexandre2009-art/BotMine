@@ -1,0 +1,5 @@
+Essa pasta fica o local do projeto Feira! Será uma parte do lobby, cada imagem que tem aqui são prints demonstrativas de cada parte da feira e oq será possível fazer.
+
+Quero poder colocar os deploys em cada lugar da feira e tudo settado pelo addon para funcionar in-game ksks.
+
+ Imagina assim, a estante de tiro. Atualmente é só estrutura,mas eu queria que tivesse um npc (coloca algo quadrado sem textura mesmo só de placeholder), em cada lugar ksks. Isso ajudaria no entretenimento.
