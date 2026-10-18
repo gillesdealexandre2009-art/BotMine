@@ -331,3 +331,20 @@ CREATE TABLE mc_historico (
 );
 """,
 ))
+
+
+# Kitsune controlado pelo jogo: o que o servidor de Minecraft diz sobre o selo de cada pessoa (o cargo do Discord só espelha isto).
+MIGRACOES.append((
+    8,
+    """
+-- ativo: tem o selo no jogo agora; ate: fim do prazo em ms (0 = sem prazo). O cargo do Discord segue (ativo e ainda no prazo).
+CREATE TABLE mc_kitsune (
+    guild_id      INTEGER NOT NULL,
+    user_id       INTEGER NOT NULL,
+    ativo         INTEGER NOT NULL CHECK (ativo IN (0, 1)),
+    ate           INTEGER NOT NULL DEFAULT 0,
+    atualizado_em INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+""",
+))

@@ -140,6 +140,8 @@ Só vale no **servidor dedicado (BDS)**. O mundo no cliente (jogo comum) não te
 - **Permanência:** o vínculo fica gravado no jogador (`dados.vinculo`) e no banco do bot. Quem já está ligado entra mesmo com o bot fora do ar; quem nunca ligou espera. Se o id do jogador mudar (mundo copiado, servidor novo), o addon recupera os dados pelo mesmo nome (`core/db.js`, *adotarDadosAntigos*) e o bot reconhece a conta pelo nome.
 - A staff pode desligar o bloqueio no painel (a ponte do chat tem chave própria) e desvincular alguém com `/minecraft desvincular` no Discord.
 
+**Kitsune só pelo jogo.** O selo (tag `vulpus:kitsune`, com ou sem prazo de `kitsune_tempo.js`) é a fonte da verdade: a cada soma o jogo manda `{ativo, ate}` ao bot, que põe ou tira o cargo Kitsune do Discord; o status leva também a lista de selos com prazo (inclusive de quem está offline).
+
 **Subir de nível ficou mais difícil:** como o XP agora vem do jogo e do Discord, `xpPorMinuto` caiu de 3 para 2 e `xpDiaria` de 15 para 10 (os níveis de quem já jogou não mudam; a staff ajusta no painel).
 
 **Para ligar num servidor** (a hospedagem usa o mesmo formato):

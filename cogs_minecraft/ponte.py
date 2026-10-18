@@ -15,6 +15,7 @@ Comandos no Discord: /minecraft vincular, conta, desvincular (staff), painel (ad
 """
 from __future__ import annotations
 
+import asyncio
 import hmac
 import json
 import logging
@@ -198,7 +199,9 @@ class Ponte(commands.Cog):
         self._ultimo_aviso_falha: dict[int, float] = {}
         self.status: Optional[dict[str, Any]] = None  # último status do servidor (online, max, ts)
         self._ip_publicado: Optional[str] = None  # o que está no painel do ip-e-porta agora (para só editar se mudar)
-        self._troca_contador: float = -1e9  # quando o nome do canal contador foi trocado pela última vez (monotonic)
+        self._trocas_contador: list[float] = []  # quando o nome do canal contador foi trocado (monotonic), só as da janela
+        self._mexendo: dict[int, float] = {}  # pessoas cujo cargo Kitsune o próprio bot está mudando agora (monotonic até quando)
+        self._tarefas: set[asyncio.Task] = set()  # tarefas soltas (atualizar painel e contador depois de um status)
 
     # ------------------------------------------------------------------ ciclo de vida do servidor HTTP
     def criar_app(self) -> web.Application:
@@ -217,6 +220,7 @@ class Ponte(commands.Cog):
 
     async def cog_load(self) -> None:
         self.atualizar_paineis.start()
+        self.vencer_kitsune.start()
         if not self.token:
             log.warning("MC_BRIDGE_TOKEN não definido: a ponte com o Minecraft não sobe (os comandos /minecraft seguem).")
             return
@@ -228,6 +232,7 @@ class Ponte(commands.Cog):
 
     async def cog_unload(self) -> None:
         self.atualizar_paineis.cancel()
+        self.vencer_kitsune.cancel()
         if self._runner is not None:
             await self._runner.cleanup()
             self._runner = None
@@ -353,6 +358,9 @@ class Ponte(commands.Cog):
         resultado = await banco.mc_aplicar_sync(gid, vinculo["user_id"], vinculo["mc_id"], chave, d_caudas, d_xp)
         if not resultado["repetido"] and d_xp > 0:
             await self._depois_do_xp(gid, vinculo["user_id"], resultado["xp_antes"], resultado["xp"])
+        estado = self._selo_do_corpo(corpo.get("kitsune"))
+        if estado is not None:
+            await self.receber_kitsune(gid, vinculo["user_id"], vinculo["mc_nome"], *estado)
         return web.json_response({"ok": True, "saldo": resultado["saldo"], "xp": resultado["xp"]})
 
     async def rota_eventos(self, request: web.Request) -> web.Response:
@@ -383,10 +391,15 @@ class Ponte(commands.Cog):
             return web.json_response({"ok": False, "erro": "dados_invalidos"}, status=400)
         nomes = [n for n in (limpar_texto(x, 40) for x in online[:50]) if n]
         maximo = _inteiro(corpo.get("max"), 1000) or config.MC_MAX_JOGADORES
+        anterior = self.status
         self.status = {"online": nomes, "max": maximo, "ts": time.time()}
+        mudou = anterior is None or anterior.get("online") != nomes or anterior.get("max") != maximo
         gid = self.guild_id()
         if gid is not None:
             await self.bot.banco.set_config(gid, "mc_status", json.dumps(self.status))
+        await self._kitsunes_do_status(gid, corpo.get("kitsunes"))
+        if mudou:
+            self._depois_do_status()
         return web.json_response({"ok": True})
 
     async def rota_chat(self, request: web.Request) -> web.Response:
@@ -548,6 +561,153 @@ class Ponte(commands.Cog):
         ok = await self.garantir_paineis(forcar=True)
         await interaction.followup.send("Painéis atualizados. 🦊" if ok else "Não consegui publicar os painéis (confira os canais e minhas permissões).", ephemeral=True)
 
+    # ------------------------------------------------------------------ Kitsune: o jogo manda, o cargo do Discord só espelha
+    @staticmethod
+    def _selo_do_corpo(bruto: Any) -> Optional[tuple[bool, int]]:
+        """Lê {ativo, ate} que o jogo manda no sync. None se não veio ou veio estranho (nunca mexe no cargo por engano)."""
+        if not isinstance(bruto, dict) or not isinstance(bruto.get("ativo"), bool):
+            return None
+        ate = bruto.get("ate", 0)
+        if isinstance(ate, bool) or not isinstance(ate, (int, float)) or ate != ate or ate < 0 or ate > 4_000_000_000_000:
+            return None
+        return bruto["ativo"], int(ate)
+
+    async def cargo_kitsune_id(self, guild_id: int) -> int:
+        return await self.bot.banco.get_config_int(guild_id, "cargo_kitsune") or config.CARGO_KITSUNE_PADRAO
+
+    @staticmethod
+    def kitsune_vale(ativo: bool, ate: int, agora_ms: int) -> bool:
+        """O selo vale agora? (tem no jogo e, se tem prazo, ainda não passou)"""
+        return bool(ativo) and (ate == 0 or ate > agora_ms)
+
+    async def _cargo_kitsune(self, guild: discord.Guild, membro: discord.Member, desejado: bool, motivo: str) -> bool:
+        """Põe ou tira o cargo Kitsune para ele ficar como o jogo manda. True se mudou."""
+        cargo = guild.get_role(await self.cargo_kitsune_id(guild.id))
+        if cargo is None:
+            log.warning("Cargo Kitsune não encontrado no servidor %s", guild.id)
+            return False
+        tem = cargo in membro.roles
+        if tem == desejado:
+            return False
+        self._mexendo[membro.id] = time.monotonic() + 15
+        try:
+            if desejado:
+                await membro.add_roles(cargo, reason=motivo)
+            else:
+                await membro.remove_roles(cargo, reason=motivo)
+        except discord.HTTPException:
+            log.warning("Não consegui mexer no cargo Kitsune de %s", membro, exc_info=True)
+            return False
+        return True
+
+    async def receber_kitsune(self, guild_id: int, user_id: int, nome_mc: str, ativo: bool, ate: int) -> None:
+        """O jogo disse como está o selo Kitsune da pessoa: guarda, ajusta o cargo e avisa quando mudou."""
+        agora_ms = int(time.time() * 1000)
+        desejado = self.kitsune_vale(ativo, ate, agora_ms)  # o que fica guardado já vale "agora": selo com prazo vencido é inativo
+        antes, _depois = await self.bot.banco.mc_kitsune_registrar(guild_id, user_id, desejado, ate)
+        tinha = antes is not None and bool(antes["ativo"])
+        guild = self.bot.get_guild(guild_id)
+        membro = guild.get_member(user_id) if guild else None
+        if guild is not None and membro is not None:
+            await self._cargo_kitsune(guild, membro, desejado, "Kitsune do Minecraft")
+        if desejado == tinha:
+            return
+        ctx = await self.contexto_de(guild_id, nome_mc)
+        if desejado:
+            await self._enviar(guild_id, "mc_historico", embed=embeds.montar_kitsune_dado(nome_mc, ctx, ate))
+        else:
+            expirou = ate > 0 and ate <= agora_ms
+            await self._enviar(guild_id, "mc_historico", embed=embeds.montar_kitsune_fim(nome_mc, ctx, expirou))
+
+    async def _kitsunes_do_status(self, guild_id: Optional[int], bruto: Any) -> None:
+        """O jogo manda, junto do status, quem tem selo com prazo (também quem está offline): ajusta o cargo de quem ligou a conta."""
+        if guild_id is None or not isinstance(bruto, list):
+            return
+        for item in bruto[:100]:
+            if not isinstance(item, dict):
+                continue
+            nome = limpar_texto(item.get("nome", ""), 40)
+            ate = _inteiro(item.get("ate"), 4_000_000_000_000)
+            if not nome or ate is None or ate <= 0:
+                continue
+            vinculo = await self.bot.banco.mc_vinculo_por_nome(guild_id, nome)
+            if vinculo is None:
+                continue
+            atual = await self.bot.banco.mc_kitsune_de(guild_id, vinculo["user_id"])
+            if atual is not None and bool(atual["ativo"]) and int(atual["ate"]) == ate:
+                continue  # nada mudou: não mexe
+            await self.receber_kitsune(guild_id, vinculo["user_id"], vinculo["mc_nome"], True, ate)
+
+    @tasks.loop(minutes=5)
+    async def vencer_kitsune(self) -> None:
+        """Selos com prazo que passaram: tira o cargo (o jogo também tira o dele; aqui vale mesmo se a pessoa estiver offline)."""
+        try:
+            for linha in await self.bot.banco.mc_kitsune_vencidos(int(time.time() * 1000)):
+                vinculo = await self.bot.banco.mc_vinculo_de_usuario(linha["guild_id"], linha["user_id"])
+                atual = await self.bot.banco.mc_kitsune_de(linha["guild_id"], linha["user_id"])
+                nome = vinculo["mc_nome"] if vinculo is not None else "?"
+                await self.receber_kitsune(linha["guild_id"], linha["user_id"], nome, False, int(atual["ate"]) if atual else 0)
+        except Exception:
+            log.exception("Erro ao vencer selos Kitsune")
+
+    @vencer_kitsune.before_loop
+    async def _antes_de_vencer(self) -> None:
+        await self.bot.wait_until_ready()
+
+    @commands.Cog.listener()
+    async def on_member_update(self, antes: discord.Member, depois: discord.Member) -> None:
+        """Mexeram no cargo Kitsune na mão? Para quem tem conta ligada e estado conhecido do jogo, ele volta ao que o jogo manda."""
+        if depois.guild.id != self.guild_id():
+            return
+        cargo_id = await self.cargo_kitsune_id(depois.guild.id)
+        tinha, tem = antes.get_role(cargo_id) is not None, depois.get_role(cargo_id) is not None
+        if tinha == tem or time.monotonic() < self._mexendo.get(depois.id, 0.0):
+            return
+        estado = await self.bot.banco.mc_kitsune_de(depois.guild.id, depois.id)
+        if estado is None:
+            return  # o jogo ainda não disse nada sobre essa pessoa: não mexe
+        desejado = self.kitsune_vale(bool(estado["ativo"]), int(estado["ate"]), int(time.time() * 1000))
+        if tem != desejado and await self._cargo_kitsune(depois.guild, depois, desejado, "Kitsune só pelo jogo: voltei ao que o servidor manda"):
+            log.info("Cargo Kitsune de %s voltou ao que o jogo manda (%s)", depois, "tem" if desejado else "não tem")
+
+    @grupo.command(name="kitsune", description="(Staff) Mostra quem é Kitsune pelo jogo e quem tem o cargo sem o selo.")
+    @exigir_nivel(config.NIVEL_STAFF)
+    async def kitsune(self, interaction: discord.Interaction) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        banco = self.bot.banco
+        agora_ms = int(time.time() * 1000)
+        nomes = {linha["user_id"]: linha["mc_nome"] for linha in await banco.mc_vinculos_lista(guild.id)}
+        com: list[str] = []
+        ativos: set[int] = set()
+        for linha in await banco.mc_kitsune_lista(guild.id):
+            if self.kitsune_vale(bool(linha["ativo"]), int(linha["ate"]), agora_ms):
+                ativos.add(linha["user_id"])
+                prazo = embeds.texto_prazo(int(linha["ate"]), com_articulo=False)
+                com.append(textos.MC_KITSUNE_CMD_LINHA.format(mencao=f"<@{linha['user_id']}>", mc=discord.utils.escape_markdown(nomes.get(linha["user_id"], "?")), prazo=prazo))
+        so_cargo: list[str] = []
+        cargo = guild.get_role(await self.cargo_kitsune_id(guild.id))
+        for membro in (cargo.members if cargo else []):
+            if membro.id in ativos:
+                continue
+            if membro.id in nomes:
+                situacao = textos.MC_KITSUNE_CMD_SEM_SELO.format(mc=discord.utils.escape_markdown(nomes[membro.id]))
+            else:
+                situacao = textos.MC_KITSUNE_CMD_SEM_CONTA
+            so_cargo.append(textos.MC_KITSUNE_CMD_SO_CARGO_LINHA.format(mencao=membro.mention, situacao=situacao))
+
+        def bloco(linhas: list[str]) -> str:
+            texto = "\n".join(linhas[:15]) if linhas else textos.MC_KITSUNE_CMD_NADA
+            if len(linhas) > 15:
+                texto += f"\n… e mais {len(linhas) - 15}"
+            return texto[:1024]
+
+        e = discord.Embed(title=textos.MC_KITSUNE_CMD_TITULO, color=config.COR_PRINCIPAL)
+        e.add_field(name=textos.MC_KITSUNE_CMD_COM.format(n=len(com)), value=bloco(com), inline=False)
+        e.add_field(name=textos.MC_KITSUNE_CMD_SO_CARGO.format(n=len(so_cargo)), value=bloco(so_cargo), inline=False)
+        e.set_footer(text=textos.MC_KITSUNE_CMD_RODAPE)
+        await responder(interaction, embed=e, ephemeral=True)
+
     # ------------------------------------------------------------------ painéis (ip-e-porta e log-in)
     async def _mencao_canal(self, guild_id: int, chave: str, padrao: str) -> str:
         canal_id = await self.bot.banco.get_config_int(guild_id, f"canal_{chave}") or config.MC_CANAIS_PADRAO.get(chave)
@@ -607,8 +767,8 @@ class Ponte(commands.Cog):
     async def atualizar_contador(self, agora: Optional[float] = None, relogio: Optional[float] = None) -> bool:
         """Põe no nome do canal contador quantas pessoas jogam ("🟢 Online | (2) 🦊"). True se trocou o nome.
 
-        O Discord só deixa renomear um canal 2 vezes a cada 10 minutos: só troca se o nome mudou e se já passou
-        MC_CONTADOR_ESPERA desde a última troca (a mudança espera a próxima rodada, nunca se perde)."""
+        O Discord só deixa renomear um canal 2 vezes a cada 10 minutos: usa uma janela deslizante (MC_CONTADOR_LIMITE trocas em
+        MC_CONTADOR_JANELA segundos). Quase sempre a troca é imediata; se a janela encheu, a mudança espera a próxima rodada."""
         gid = self.guild_id()
         canal = await self.canal_mc(gid, "mc_online") if gid is not None else None
         if canal is None or not hasattr(canal, "edit"):
@@ -617,18 +777,32 @@ class Ponte(commands.Cog):
         if getattr(canal, "name", None) == desejado:
             return False
         relogio = time.monotonic() if relogio is None else relogio
-        if relogio - self._troca_contador < config.MC_CONTADOR_ESPERA:
+        self._trocas_contador = [t for t in self._trocas_contador if relogio - t < config.MC_CONTADOR_JANELA]
+        if len(self._trocas_contador) >= config.MC_CONTADOR_LIMITE:
             return False
+        self._trocas_contador.append(relogio)  # conta já: se falhar, o limite do Discord pode ter estourado e não insistimos
         try:
             await canal.edit(name=desejado, reason="Contador de jogadores do Minecraft")  # type: ignore[attr-defined]
         except discord.HTTPException:
             log.warning("Não consegui renomear o canal contador", exc_info=True)
-            self._troca_contador = relogio  # não insiste: o limite do Discord pode ter estourado
             return False
-        self._troca_contador = relogio
         return True
 
-    @tasks.loop(seconds=120)
+    def _depois_do_status(self) -> None:
+        """O jogo acabou de mandar o status: atualiza o contador e o painel na hora, sem esperar a próxima rodada."""
+
+        async def atualizar() -> None:
+            try:
+                await self.atualizar_contador()
+                await self.garantir_paineis()
+            except Exception:
+                log.exception("Erro ao atualizar o contador depois do status")
+
+        tarefa = asyncio.get_running_loop().create_task(atualizar())
+        self._tarefas.add(tarefa)
+        tarefa.add_done_callback(self._tarefas.discard)
+
+    @tasks.loop(seconds=60)
     async def atualizar_paineis(self) -> None:
         try:
             await self.garantir_paineis()

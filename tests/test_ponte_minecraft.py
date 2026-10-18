@@ -644,21 +644,21 @@ def test_contador_de_jogadores_no_nome_do_canal(tmp_path):
         ponte.canal_mc = canal_mc  # type: ignore[method-assign]
         try:
             ponte.status = {"online": ["Ana", "Lobo"], "max": 8, "ts": 1000.0}
-            a = await ponte.atualizar_contador(agora=1010.0, relogio=10_000.0)  # primeira troca: vai
+            a = await ponte.atualizar_contador(agora=1010.0, relogio=10_000.0)  # primeira troca: na hora
             b = await ponte.atualizar_contador(agora=1010.0, relogio=10_001.0)  # nada mudou: não mexe
             ponte.status = {"online": ["Ana", "Lobo", "Bia"], "max": 8, "ts": 1060.0}
-            c = await ponte.atualizar_contador(agora=1070.0, relogio=10_120.0)  # mudou, mas cedo demais: espera
-            d = await ponte.atualizar_contador(agora=1070.0, relogio=10_000.0 + 331.0)  # passou o tempo: troca
-            e = await ponte.atualizar_contador(agora=100_000.0, relogio=10_000.0 + 331.0 + 100.0)  # offline, ainda cedo
-            f = await ponte.atualizar_contador(agora=100_000.0, relogio=10_000.0 + 331.0 + 331.0)  # offline: troca
-            return (a, b, c, d, e, f), canal.trocas
+            c = await ponte.atualizar_contador(agora=1070.0, relogio=10_020.0)  # mudou: a segunda troca da janela também é na hora
+            ponte.status = {"online": ["Ana"], "max": 8, "ts": 1100.0}
+            d = await ponte.atualizar_contador(agora=1110.0, relogio=10_100.0)  # a janela (2 em 10 min) encheu: espera
+            e = await ponte.atualizar_contador(agora=1110.0, relogio=10_000.0 + 601.0)  # a primeira saiu da janela: troca
+            return (a, b, c, d, e), canal.trocas
         finally:
             await cliente.close()
             await banco.fechar()
 
-    (a, b, c, d, e, f), trocas = rodar(cenario)
-    assert (a, b, c, d, e, f) == (True, False, False, True, False, True)
-    assert trocas == ["🟢 Online | (2) 🦊", "🟢 Online | (3) 🦊", "🔴 Offline | (0) 🦊"]
+    (a, b, c, d, e), trocas = rodar(cenario)
+    assert (a, b, c, d, e) == (True, False, True, False, True)
+    assert trocas == ["🟢 Online | (2) 🦊", "🟢 Online | (3) 🦊", "🟢 Online | (1) 🦊"]
 
 
 def test_changelog_fala_do_cargo_sugestor_e_o_faq_tambem():

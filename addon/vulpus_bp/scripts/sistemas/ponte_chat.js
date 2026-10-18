@@ -28,6 +28,9 @@ let cursor = -1;
 let falhas = 0;
 let proximoTick = 0;
 let avisouFalha = false;
+/** Mensagens do chat vistas há pouco (pessoa|texto -> tick): o pack do chat e o da ponte podem repassar a mesma. @type {Map<string, number>} */
+const vistas = new Map();
+let registradas = 0;
 
 const ligada = () => config().ponteChatLigada === true && ponteViva();
 
@@ -62,7 +65,17 @@ system.afterEvents.scriptEventReceive.subscribe((ev) => {
     const jogador = typeof m?.i === "string" ? porId(m.i) : undefined;
     if (!jogador || travados.has(jogador.id)) return;
     const texto = limpar(String(m.t ?? ""));
-    if (texto) anunciar("msg", jogador.name, texto);
+    if (!texto) return;
+    const chave = `${jogador.id}|${texto}`;
+    const agora = system.currentTick;
+    if (agora - (vistas.get(chave) ?? -1000) < 40) return;
+    vistas.set(chave, agora);
+    if (vistas.size > 200) for (const [k, t] of vistas) if (agora - t > 100) vistas.delete(k);
+    if (registradas < 5) {
+      registradas++;
+      console.warn(`[Vulpus] Ponte do chat: mensagem de ${jogador.name} (${registradas}/5 no log)`);
+    }
+    anunciar("msg", jogador.name, texto);
   } catch (e) {
     registrarErro("Ponte do chat (mensagem)", e);
   }

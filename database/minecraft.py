@@ -220,3 +220,31 @@ class MinecraftMixin:
             (guild_id, desde, limite),
         )
         return [{"id": linha["id"], "nome": linha["nome"], "texto": linha["texto"]} for linha in linhas]
+
+    # ---- Kitsune controlado pelo jogo
+    async def mc_kitsune_registrar(self, guild_id: int, user_id: int, ativo: bool, ate: int):
+        """Guarda o que o jogo diz do selo Kitsune da pessoa. Devolve (antes, depois): `antes` é None na primeira vez."""
+        async with self._tx() as conn:
+            antes = await self._fetchone(
+                conn, "SELECT ativo, ate FROM mc_kitsune WHERE guild_id = ? AND user_id = ?", (guild_id, user_id)
+            )
+            await conn.execute(
+                "INSERT INTO mc_kitsune (guild_id, user_id, ativo, ate, atualizado_em) VALUES (?, ?, ?, ?, ?) "
+                "ON CONFLICT (guild_id, user_id) DO UPDATE SET ativo = excluded.ativo, ate = excluded.ate, "
+                "atualizado_em = excluded.atualizado_em",
+                (guild_id, user_id, 1 if ativo else 0, max(0, int(ate)), agora()),
+            )
+            return (dict(antes) if antes is not None else None), {"ativo": bool(ativo), "ate": max(0, int(ate))}
+
+    async def mc_kitsune_de(self, guild_id: int, user_id: int):
+        return await self._um("SELECT * FROM mc_kitsune WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
+
+    async def mc_kitsune_lista(self, guild_id: int):
+        return await self._todos("SELECT * FROM mc_kitsune WHERE guild_id = ? ORDER BY ativo DESC, ate", (guild_id,))
+
+    async def mc_kitsune_vencidos(self, agora_ms: int):
+        """Selos com prazo que já passaram e ainda constam como ativos (de todos os servidores)."""
+        return await self._todos("SELECT guild_id, user_id FROM mc_kitsune WHERE ativo = 1 AND ate > 0 AND ate <= ?", (agora_ms,))
+
+    async def mc_vinculos_lista(self, guild_id: int):
+        return await self._todos("SELECT user_id, mc_nome FROM mc_vinculos WHERE guild_id = ?", (guild_id,))

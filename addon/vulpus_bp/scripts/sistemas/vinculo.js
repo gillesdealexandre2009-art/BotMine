@@ -19,6 +19,8 @@ import { formatarNumero, registrarErro } from "../core/util.js";
 import * as textos from "../textos/vinculo.js";
 import { nivelDeXp } from "./niveis.js";
 import { emitir } from "../core/eventos.js";
+import { expiracaoDe } from "./kitsune_tempo.js";
+import { temSelo } from "./kitsune.js";
 
 /**
  * @typedef {object} Estado
@@ -221,6 +223,19 @@ function avaliar(p) {
  * @param {string} nome
  * @returns {Promise<boolean>} true se o Discord confirmou
  */
+/**
+ * Estado do selo Kitsune de quem está online (a tag) e o fim do prazo (0 = sem prazo). Guardado por id para a última soma, de quem acabou de sair.
+ * @type {Map<string, { ativo: boolean, ate: number }>}
+ */
+const selos = new Map();
+
+/** @param {Player} p */
+function lerSelo(p) {
+  const estado = { ativo: temSelo(p), ate: expiracaoDe(p.id) ?? 0 };
+  selos.set(p.id, estado);
+  return estado;
+}
+
 async function somar(id, nome) {
   const d0 = dadosJogador(id);
   if (!d0.vinculo) return false;
@@ -233,7 +248,7 @@ async function somar(id, nome) {
     });
   }
   const envio = pend;
-  const r = await chamar("POST", "/mc/sync", { id, nome, chave: envio.chave, caudas: envio.c, xp: envio.x });
+  const r = await chamar("POST", "/mc/sync", { id, nome, chave: envio.chave, caudas: envio.c, xp: envio.x, kitsune: selos.get(id) });
   if (r.status === 200 && r.corpo?.ok && Number.isFinite(r.corpo.saldo) && Number.isFinite(r.corpo.xp)) {
     const saldo = Math.max(0, Math.floor(r.corpo.saldo));
     const xp = Math.max(0, Math.floor(r.corpo.xp));
@@ -264,6 +279,7 @@ function agendarSoma(p, e) {
   e.somando = true;
   const primeira = dadosJogador(p).sync.baseC === 0 && dadosJogador(p).sync.baseX === 0 && !dadosJogador(p).sync.pend;
   const nome = p.name;
+  lerSelo(p);
   somar(p.id, nome)
     .then((deu) => {
       if (deu && primeira && p.isValid) {

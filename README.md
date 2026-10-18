@@ -132,6 +132,8 @@ Sem configurar nada no `/setup`, ela usa os ids padrão de `config.MC_CANAIS_PAD
 
 **Caudas e XP são um só.** O saldo e o XP do Discord (`perfis`) são a verdade; o jogo manda a diferença desde a última soma com uma chave única por envio (reenviar não soma duas vezes) e recebe o total de volta. A primeira soma de uma conta nova junta os dois lados. Cada soma entra no livro-razão como `minecraft`. Como o XP agora vem de dois lugares, cada mensagem rende menos (`xp_min`/`xp_max` caíram de 15–25 para 8–14; os níveis existentes não mudam).
 
+**Kitsune pelo jogo.** O selo Kitsune (com ou sem prazo) só se dá e se tira **dentro do jogo** (Painel de Dono → Kitsune com prazo). O servidor manda o estado de cada pessoa e a Kiza põe ou tira o cargo Kitsune (`cargo_kitsune` do `/setup`, padrão em `config.CARGO_KITSUNE_PADRAO`) sozinha; selo com prazo vencido perde o cargo mesmo com a pessoa offline (checagem a cada 5 min). Quem tem conta ligada e mexer no cargo na mão vê o cargo voltar ao que o jogo manda. Pessoas que ainda não ligaram a conta não são mexidas. Staff: `/minecraft kitsune` mostra quem tem selo, até quando, e quem tem o cargo sem o selo (para ligar a conta ou receber o selo no jogo). Entradas e saídas de Kitsune aparecem no histórico.
+
 **Para ligar:** variável `MC_BRIDGE_TOKEN` (segredo; sem ela a ponte não abre a porta) e um domínio público para o serviço no Railway. Detalhes e a lista de rotas em `cogs_minecraft/README.md`.
 
 ## 9. Problemas comuns

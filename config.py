@@ -108,10 +108,14 @@ MC_SERVIDORES = (
 # Site da Vulpus (Railway): a página /entrar abre o Minecraft já com o servidor (o Discord só deixa clicar em https).
 MC_SITE_URL = os.getenv("MC_SITE_URL", "https://site-production-f47b.up.railway.app")
 MC_MAX_JOGADORES = _inteiro("MC_MAX_JOGADORES", 8)
+# Cargo Kitsune do Discord (o /setup pode trocar): quem manda é o selo dentro do jogo, o cargo só espelha.
+CARGO_KITSUNE_PADRAO = 1550348302065860649
 # Cargo dado a quem sugeriu algo útil que o dono aprovou ou usou.
 CARGO_SUGESTOR_ID = 1561367707914604594
-# O Discord só deixa renomear um canal 2 vezes a cada 10 minutos: o contador espera isto entre uma troca e outra.
-MC_CONTADOR_ESPERA = 330
+# O Discord só deixa renomear um canal 2 vezes a cada 10 minutos: o contador usa no máximo MC_CONTADOR_LIMITE trocas por
+# janela de MC_CONTADOR_JANELA segundos (a primeira de cada janela é imediata; a mudança que não couber espera a vez dela).
+MC_CONTADOR_JANELA = 600
+MC_CONTADOR_LIMITE = 2
 # O servidor manda o status a cada minuto; sem notícias por tanto tempo, o painel mostra "fora do ar".
 MC_STATUS_VALIDADE = 180
 

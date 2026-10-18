@@ -20,6 +20,8 @@
   sincronização, com uma chave única (reenviar não soma duas vezes), e recebe o total de volta. A primeira sincronização manda
   tudo o que o jogador tinha: é a fusão (soma dos dois lados).
 
+- **Kitsune**: quem manda é o jogo. A soma (`/mc/sync`) leva `kitsune: {ativo, ate}` (fim em ms, 0 = sem prazo) e o status (`/mc/status`) leva `kitsunes: [{nome, ate}]` (todos os selos com prazo, também de quem está offline). O cargo do Discord segue (tabela `mc_kitsune`, migração 8); selo vencido perde o cargo na checagem de 5 em 5 minutos; mexida manual no cargo de quem tem conta ligada é desfeita.
+
 Os canais vêm do `/setup` (`canal_<chave>`) ou, sem isso, de `config.MC_CANAIS_PADRAO`. Os endereços ficam em `config.MC_SERVIDORES`.
 
 ## Rotas (todas com `Authorization: Bearer <MC_BRIDGE_TOKEN>`)

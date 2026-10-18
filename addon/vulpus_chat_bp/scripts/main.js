@@ -1,7 +1,7 @@
 // @ts-check
 // Entrada do pack "Vulpus Chat" (API Beta): troca a linha do chat pelo formato com selo, nível e cor.
 // Em qualquer falha a mensagem segue vanilla; só cancela depois de reenviar com sucesso.
-import { world } from "@minecraft/server";
+import { system, world } from "@minecraft/server";
 import { lerIdentidade } from "./canal.js";
 import { montarLinha, sanear } from "./formato.js";
 
@@ -23,7 +23,20 @@ function registrarErro(contexto, e) {
 }
 
 /**
- * Roda em modo restrito: só leitura de scoreboard e tag e sendMessage, sem system.run (não reordena o chat).
+ * Repassa a mensagem para a ponte com o Discord (o pack principal decide o que vai ao canal). Falhar aqui nunca atrapalha o chat.
+ * @param {ChatSendBeforeEvent} ev
+ */
+function encaminharParaPonte(ev) {
+  try {
+    const carga = JSON.stringify({ i: ev.sender.id, t: ev.message.slice(0, 400) });
+    system.run(() => system.sendScriptEvent("vulpus:ponte_chat", carga));
+  } catch (e) {
+    registrarErro("Ponte do Discord", e);
+  }
+}
+
+/**
+ * Roda em modo restrito: só leitura de scoreboard e tag e sendMessage (o único system.run é o repasse à ponte, que não mexe no chat).
  * @param {ChatSendBeforeEvent} ev
  */
 function aoFalar(ev) {
@@ -34,6 +47,7 @@ function aoFalar(ev) {
       ev.cancel = true;
       return;
     }
+    encaminharParaPonte(ev);
     const identidade = lerIdentidade(ev.sender);
     if (!identidade) return;
     const mensagem = sanear(ev.message);

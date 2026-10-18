@@ -2,12 +2,13 @@
 // Eventos do jogo para o Discord: mortes, sequência de abates (killstreak), subida de nível e o status do servidor.
 // Minigames ficam de fora: lá a morte faz parte da partida (e tem placar próprio). Mortes e abates que contam são os do mundo.
 import { EntityDamageCause, Player, system, world } from "@minecraft/server";
-import { emitir } from "../core/eventos.js";
+import { aoEvento, emitir } from "../core/eventos.js";
 import { online } from "../core/jogadores.js";
 import { chamar, ponteViva } from "../core/ponte_cliente.js";
 import { travados } from "../core/ponte_estado.js";
 import { nomeDimensao, registrarErro } from "../core/util.js";
 import { config } from "../core/db.js";
+import { listar as selosComPrazo } from "./kitsune_tempo.js";
 import { emMinigame } from "./mg_estado.js";
 import { aoSubirNivel } from "./niveis.js";
 
@@ -123,12 +124,17 @@ async function enviarStatus() {
     const nomes = online()
       .filter((p) => !travados.has(p.id))
       .map((p) => p.name);
-    await chamar("POST", "/mc/status", { online: nomes });
+    // os selos Kitsune com prazo vão junto (também de quem está offline): o cargo do Discord segue o jogo
+    await chamar("POST", "/mc/status", { online: nomes, kitsunes: selosComPrazo().map((c) => ({ nome: c.nome, ate: c.ate })) });
   } catch (e) {
     registrarErro("Ponte: status", e);
   } finally {
     statusEmVoo = false;
   }
 }
+// quando alguém entra ou sai, o painel e o contador do Discord mudam na hora (sem esperar o minuto cheio)
+aoEvento((tipo) => {
+  if (tipo === "entrada" || tipo === "saida") system.runTimeout(() => void enviarStatus(), 20);
+});
 system.runTimeout(() => void enviarStatus(), 200);
 system.runInterval(() => void enviarStatus(), TICKS_STATUS);

@@ -495,7 +495,11 @@ DUVIDAS_CAMPOS = [
     ),
     ("Como mudo a cor do meu nome?", "No canal de cargos, no menu **Cores**."),
     ("Fui punido injustamente, e agora?", "Abra um tíquete e explique com calma. A staff revisa."),
-    ("Como viro Kitsune?", "Dando boost no servidor. Está tudo no canal **seja-um-kitsune**."),
+    (
+        "Como viro Kitsune?",
+        "Dando boost no servidor (ou por brinde ou tempo limitado, a critério do dono). Está tudo no canal **seja-um-kitsune**. "
+        "O selo é liberado **dentro do jogo** e o cargo no Discord vem sozinho depois que você liga sua conta com `/minecraft vincular`.",
+    ),
     ("Marquei meu aniversário errado!", "Abra um tíquete com uma prova da data (um documento com o resto tampado serve). Um admin corrige."),
     ("O que é o bump?", "É o `/bump` do DISBOARD: ele sobe a toca na lista pública de servidores. Dá para fazer a cada 2h, e quem faz ganha {moeda}."),
     (
@@ -517,7 +521,8 @@ CHANGELOG = [
             "📖 **Histórico**: clãs que nascem e se despedem, guerras que começam e como terminam",
             "🚪 Painel de **IP e porta** sempre atualizado, com quem está jogando agora",
             "🦊 {moeda} e XP viram **um só** nos dois lugares. Subir de nível ficou mais difícil: cada mensagem rende menos XP",
-            "🟢 Um canal mostra quantas pessoas estão jogando agora",
+            "🟢 Um canal mostra quantas pessoas estão jogando agora, atualizado na hora",
+            "🦊 O **Kitsune** passa a ser controlado de dentro do jogo: o selo (com ou sem prazo) vira o cargo no Discord sozinho, e o cargo volta ao que o jogo manda se mexerem nele na mão. Staff: `/minecraft kitsune` mostra quem é quem",
             "🌟 Cargo novo: {sugestor}, para quem sugeriu algo útil que foi aprovado ou usado pelo dono",
         ],
     ),
@@ -1301,3 +1306,24 @@ CARGOS_VISUAL_OUTRO_SERVIDOR = "Este servidor não tem estilo de cargos configur
 CARGOS_VISUAL_APLICANDO = "⏳ Aplicando, devagar para não sobrecarregar o Discord..."
 CARGOS_VISUAL_FEITO = "✅ Pronto! **{renomeados}** cargo(s) renomeado(s), **{ajustados}** membro(s) ajustado(s)."
 CARGOS_VISUAL_FALHAS = "⚠️ Falhou em: {lista}"  # {lista}
+
+
+# ---- Kitsune controlado pelo jogo
+MC_KITSUNE_DADO_TITULO = "🦊 Novo Kitsune"
+MC_KITSUNE_DADO_DESC = "**{nome}** ganhou o selo **Kitsune**{prazo}."
+MC_KITSUNE_PRAZO = " até {data} ({relativo})"
+MC_KITSUNE_SEM_PRAZO = " sem prazo"
+MC_KITSUNE_FIM_TITULO = "🍂 Fim do Kitsune"
+MC_KITSUNE_FIM_EXPIROU = "O selo Kitsune de **{nome}** acabou."
+MC_KITSUNE_FIM_TIRADO = "**{nome}** não é mais Kitsune."
+MC_KITSUNE_CMD_TITULO = "🦊 Kitsune (quem manda é o jogo)"
+MC_KITSUNE_CMD_COM = "✅ Com o selo no jogo ({n})"
+MC_KITSUNE_CMD_LINHA = "{mencao} · {mc} · {prazo}"
+MC_KITSUNE_CMD_SO_CARGO = "⚠️ Têm o cargo no Discord mas não o selo no jogo ({n})"
+MC_KITSUNE_CMD_SO_CARGO_LINHA = "{mencao} · {situacao}"
+MC_KITSUNE_CMD_SEM_CONTA = "não ligou a conta"
+MC_KITSUNE_CMD_SEM_SELO = "ligou a conta ({mc}), mas está sem selo"
+MC_KITSUNE_CMD_NADA = "Ninguém por aqui."
+MC_KITSUNE_CMD_RODAPE = "O selo só se dá e se tira dentro do jogo (Painel de Dono → Kitsune com prazo). O cargo do Discord segue sozinho."
+MC_KITSUNE_SEM_PRAZO_LINHA = "sem prazo"
+MC_KITSUNE_ATE_LINHA = "até {data} ({relativo})"

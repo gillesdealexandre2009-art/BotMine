@@ -351,3 +351,23 @@ def montar_painel_login(mencao_chat: str = "#chat-bridge") -> discord.Embed:
 
 def montar_ajuda_login() -> discord.Embed:
     return discord.Embed(title=textos.MC_AJUDA_TITULO, description=textos.MC_AJUDA_DESC, color=config.COR_INFO)
+
+
+# ------------------------------------------------------------------ Kitsune
+def texto_prazo(ate_ms: int, com_articulo: bool = True) -> str:
+    """'até 11/11/2026 (em 24 dias)' com marcas de data do Discord, ou 'sem prazo'."""
+    if ate_ms <= 0:
+        return textos.MC_KITSUNE_SEM_PRAZO if com_articulo else textos.MC_KITSUNE_SEM_PRAZO_LINHA
+    seg = ate_ms // 1000
+    modelo = textos.MC_KITSUNE_PRAZO if com_articulo else textos.MC_KITSUNE_ATE_LINHA
+    return modelo.format(data=f"<t:{seg}:D>", relativo=f"<t:{seg}:R>")
+
+
+def montar_kitsune_dado(nome_mc: str, ctx: Contexto, ate_ms: int) -> discord.Embed:
+    desc = textos.MC_KITSUNE_DADO_DESC.format(nome=esc(nome_mc), prazo=texto_prazo(ate_ms))
+    return _base(textos.MC_KITSUNE_DADO_TITULO, desc, COR_CONQUISTA, nome_mc, ctx)
+
+
+def montar_kitsune_fim(nome_mc: str, ctx: Contexto, expirou: bool) -> discord.Embed:
+    modelo = textos.MC_KITSUNE_FIM_EXPIROU if expirou else textos.MC_KITSUNE_FIM_TIRADO
+    return _base(textos.MC_KITSUNE_FIM_TITULO, modelo.format(nome=esc(nome_mc)), COR_CLA_MORRE, nome_mc, ctx)
