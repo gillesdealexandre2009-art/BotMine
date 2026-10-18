@@ -77,3 +77,12 @@ def test_ajustes_da_proximidade_existem():
     a = config.AJUSTES
     assert a["prox_entrar"][0] == 24 and a["prox_sair"][0] == 32 and a["prox_ligada"][0] == 1
     assert a["prox_sair"][0] > a["prox_entrar"][0]
+
+
+def test_changelog_do_minecraft_cabe_no_embed_e_tem_chaves_unicas():
+    import textos
+
+    chaves = [c for c, _t, _x in textos.CHANGELOG_MC]
+    assert len(chaves) == len(set(chaves)) and chaves
+    for _c, titulo, texto in textos.CHANGELOG_MC:
+        assert len(titulo) <= 256 and len(texto) <= 4000

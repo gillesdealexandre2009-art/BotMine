@@ -691,6 +691,47 @@ CHANGELOG = [
         ],
     ),
 ]
+# Changelog do Minecraft (addon), publicado no mesmo canal do da Kiza pelo botão Changelog do /setup. Mais novo primeiro.
+# (chave única, título, texto pronto). O texto NÃO passa por .format (pode ter chaves). Espelha addon/CHANGELOG.md.
+CHANGELOG_MC = [
+    (
+        "mc_2026_10_18_proximidade",
+        "🎮 Minecraft · 18/10/2026: Chat de voz por proximidade",
+        "Olá, pessoal! 🎧 Agora dá para conversar com quem está perto de você, direto na call do Discord:\n\n"
+        "• **Entre na sala \"🎧 Entrada\"** do Discord e jogue normalmente: quem estiver a até **24 blocos** de você cai na mesma sala de voz, "
+        "e quando vocês se afastam (uns **32 blocos**) cada um volta para a sua.\n"
+        "• Precisa estar com a **conta ligada** (`/minecraft vincular`). Não quer ser movido? Use `/proximidade pausar`.\n"
+        "• **Fora do mundo normal não vale**: minigames, Intervalo e o mistério da Vulpus não entram na conversa por proximidade.\n"
+        "• Não muda o volume de cada pessoa (o Discord não permite): é por **grupos de sala**.",
+    ),
+    (
+        "mc_2026_10_18_conta_unica",
+        "🎮 Minecraft · 18/10/2026: Conta única, Kitsune por PIX, mais privacidade e as Eras a caminho",
+        "Olá, pessoal! 🦊 Foi uma semana grande na toca. Aqui vai o que mudou:\n\n"
+        "**🔗 Discord e Minecraft viraram um só**\n"
+        "• **Ligue sua conta** com `/minecraft vincular` (o código aparece na tela quando você entra, ou pelo botão no canal de login).\n"
+        "• **Caudas e XP são os mesmos** no jogo e no Discord.\n"
+        "• O **chat do jogo aparece no Discord**, e o que se escreve lá vai para o jogo. Entradas, saídas, mortes e sequências de abates também.\n"
+        "• O canal de **ip-e-porta** mostra quem está jogando agora, e o contador de online se atualiza sozinho.\n"
+        "• Reiniciar o servidor **não duplica nem perde** Caudas e XP.\n\n"
+        "**🦊 Kitsune por PIX (e o boost não vale mais)**\n"
+        "• O selo **Kitsune** agora se compra pelo Discord com `/kitsune`: **R$ 15 por mês**, pelo tempo que você quiser (1, 3, 6 ou 12 meses). O selo chega no jogo na hora.\n"
+        "• **Boost não dá mais Kitsune.**\n"
+        "• Quer só ajudar a pagar a hospedagem? Tem `/doar`, **metas** com barra de progresso e um mural de apoiadores. Doação não dá vantagem no jogo.\n\n"
+        "**🕶️ Mais privacidade**\n"
+        "• **Bases e bandeiras dos clãs ficam escondidas.** Só aparecem para o próprio clã e, quando uma guerra começa, para quem está nela.\n"
+        "• **Mapas e coordenadas desligados** para ninguém achar outro jogador sem ele saber. (A staff continua com os mapas.)\n\n"
+        "**🪂 Ajustes**\n"
+        "• O **RTP** não deixa mais você morrer de queda: o pouso só vale com chão firme de verdade.\n"
+        "• Várias correções no Intervalo, nos minigames e no mistério da Vulpus.\n\n"
+        "**🌗 A caminho: as Eras**\n"
+        "Vem aí uma **temporada de 20 semanas**, com uma Era por semana. Cada Era muda a neblina, as partículas e os sons, traz **vantagens e custos** próprios "
+        "e um **acontecimento diário** em horário fixo (duas vezes por dia). Você acompanha tudo em **Menu → Misc → Era da semana**. "
+        "Começa quando o dono apertar o botão. 👀\n\n"
+        "Obrigada por jogar com a gente! 🧡",
+    ),
+]
+
 CHANGELOG_TITULO = "🎞️ Versão {versao}: {titulo}"  # {versao} {titulo}
 
 # ============================================================================ vida (engajamento)

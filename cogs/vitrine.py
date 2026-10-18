@@ -150,6 +150,13 @@ class Vitrine(commands.Cog):
             except discord.HTTPException:
                 log.warning("Falha ao publicar changelog %s", versao, exc_info=True)
                 return False, textos.SETUP_ERRO_PUBLICAR
+        # novidades do Minecraft: depois das do bot, da mais antiga para a mais nova (as novas entram embaixo)
+        for chave, titulo, texto in reversed(textos.CHANGELOG_MC):
+            try:
+                await publicar_ou_editar(self.bot, guild, canal, f"changelog_{chave}", embeds=[embed(titulo, texto)], content=aviso)
+            except discord.HTTPException:
+                log.warning("Falha ao publicar changelog %s", chave, exc_info=True)
+                return False, textos.SETUP_ERRO_PUBLICAR
         return True, canal.mention
 
 
