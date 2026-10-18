@@ -481,8 +481,7 @@ COMANDOS_CAMPOS = [
         "⛏️ Servidor de Minecraft",
         "`/minecraft vincular`: liga sua conta do jogo com o código da tela (também pelo botão em {login})\n"
         "`/minecraft conta`: mostra a conta ligada, seu nível e suas {moeda}\n"
-        "`/online`: quem está jogando agora
-"
+        "`/online`: quem está jogando agora\n"
         "IP e porta em {ip}",
     ),
     (
