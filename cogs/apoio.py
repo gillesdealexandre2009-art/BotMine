@@ -14,6 +14,7 @@ import asyncio
 import base64
 import io
 import logging
+import os
 import re
 import secrets
 import time
@@ -510,6 +511,93 @@ class Apoio(commands.Cog):
             if await banco.meta_encerrar(guild.id, meta["id"], "concluida"):
                 await self._mural(guild, textos.PAGO_META_COMPLETA.format(titulo=discord.utils.escape_markdown(meta["titulo"])))
 
+    # ------------------------------------------------------------------ configuração guiada
+    async def configurar(self, guild: discord.Guild) -> list[str]:
+        """Cria o canal de doações (se não existir), publica os painéis e confere o cargo Kitsune. Devolve as linhas do relatório."""
+        from cogs.configuracao import aplicar_visibilidade  # import tardio: o cog de /setup importa muita coisa
+
+        ok, aviso, erro = textos.APOIO_CFG_OK, textos.APOIO_CFG_AVISO, textos.APOIO_CFG_ERRO
+        banco = self.bot.banco
+        linhas: list[str] = []
+
+        # 1) canal
+        canal = await self._canal_mural(guild)
+        if canal is None:
+            vizinho = await canal_da_funcao(self.bot, guild, "kitsune", (discord.TextChannel, discord.ForumChannel))
+            categoria = getattr(vizinho, "category", None)
+            try:
+                canal = await guild.create_text_channel(
+                    "💖・doações", category=categoria, topic="Ajude a toca a continuar de pé: metas, mural de apoiadores e Kitsune por PIX.",
+                    reason="Kiza: /apoio configurar",
+                )
+            except discord.HTTPException:
+                log.warning("Não consegui criar o canal de doações", exc_info=True)
+                linhas.append(erro.format(texto=textos.APOIO_CFG_CANAL_FALHOU))
+                canal = None
+            if canal is not None:
+                await banco.set_config(guild.id, "canal_doacoes", str(canal.id))
+                sucesso, detalhe = await aplicar_visibilidade(self.bot, guild, canal, "publico")
+                linhas.append(ok.format(texto=textos.APOIO_CFG_CANAL_CRIADO.format(canal=canal.mention)))
+                if not sucesso:
+                    linhas.append(aviso.format(texto=textos.APOIO_CFG_PERMISSAO_FALHOU.format(detalhe=detalhe)))
+        else:
+            linhas.append(ok.format(texto=textos.APOIO_CFG_CANAL_EXISTE.format(canal=canal.mention)))
+
+        # 2) painéis
+        if canal is not None:
+            try:
+                await self.atualizar_painel(guild, forcar=True)
+                linhas.append(ok.format(texto=textos.APOIO_CFG_PAINEL_OK.format(canal=canal.mention)))
+            except discord.HTTPException:
+                log.warning("Não consegui publicar o painel de apoio", exc_info=True)
+                linhas.append(erro.format(texto=textos.APOIO_CFG_PAINEL_FALHOU))
+        vitrine = self.bot.get_cog("Vitrine")
+        if vitrine is not None:
+            publicou, destino = await vitrine.publicar_kitsune(guild)  # type: ignore[attr-defined]
+            linhas.append(
+                ok.format(texto=textos.APOIO_CFG_KITSUNE_PAINEL_OK.format(canal=destino))
+                if publicou
+                else aviso.format(texto=textos.APOIO_CFG_KITSUNE_PAINEL_SEM_CANAL)
+            )
+
+        # 3) pagamento
+        if await self.ligado(guild.id):
+            linhas.append(ok.format(texto=textos.APOIO_CFG_PIX_OK) if self.pix.configurado else erro.format(texto=textos.APOIO_CFG_PIX_SEM_CHAVE))
+        else:
+            linhas.append(aviso.format(texto=textos.APOIO_CFG_AJUSTE_DESLIGADO))
+        base = os.getenv("PUBLIC_BASE_URL", "").strip()
+        segredo = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "").strip()
+        estado = f"{textos.APOIO_CFG_WEBHOOK_URL if base else textos.APOIO_CFG_WEBHOOK_SEM_URL}; {textos.APOIO_CFG_ASSINATURA_SIM if segredo else textos.APOIO_CFG_ASSINATURA_NAO}"
+        linhas.append((ok if base and segredo else aviso).format(texto=textos.APOIO_CFG_AVISOS_AUTOMATICOS.format(estado=estado)))
+
+        # 4) cargo Kitsune
+        cargo_id = await banco.get_config_int(guild.id, "cargo_kitsune") or config.CARGO_KITSUNE_PADRAO
+        cargo = guild.get_role(cargo_id)
+        if cargo is None:
+            linhas.append(erro.format(texto=textos.APOIO_CFG_CARGO_SEM))
+        elif cargo.managed:
+            linhas.append(erro.format(texto=textos.APOIO_CFG_CARGO_GERENCIADO.format(cargo=cargo.mention)))
+        elif not cargo < guild.me.top_role:
+            linhas.append(erro.format(texto=textos.APOIO_CFG_CARGO_ALTO.format(cargo=cargo.mention)))
+        else:
+            linhas.append(ok.format(texto=textos.APOIO_CFG_CARGO_OK.format(cargo=cargo.mention)))
+        if cargo is not None:
+            boosters = [m for m in guild.members if getattr(m, "premium_since", None) and cargo in m.roles]
+            linhas.append(
+                aviso.format(texto=textos.APOIO_CFG_BOOSTERS.format(n=len(boosters))) if boosters else ok.format(texto=textos.APOIO_CFG_BOOSTER_SEM)
+            )
+        agora_ms = int(time.time() * 1000)
+        selos = [s for s in await banco.mc_kitsune_lista(guild.id) if s["ativo"] and (s["ate"] == 0 or s["ate"] > agora_ms)]
+        linhas.append(ok.format(texto=textos.APOIO_CFG_SELOS.format(n=len(selos))))
+
+        # 5) metas e cargo Apoiador
+        linhas.append(ok.format(texto=textos.APOIO_CFG_METAS.format(n=len(await banco.metas_ativas(guild.id)))))
+        apoiador_id = await banco.get_config_int(guild.id, "cargo_apoiador")
+        apoiador = guild.get_role(apoiador_id) if apoiador_id else None
+        estado_apoiador = textos.APOIO_CFG_APOIADOR_SIM.format(cargo=apoiador.mention) if apoiador else textos.APOIO_CFG_APOIADOR_NAO
+        linhas.append(ok.format(texto=textos.APOIO_CFG_APOIADOR.format(estado=estado_apoiador)))
+        return linhas
+
     # ------------------------------------------------------------------ painel de metas
     async def montar_painel(self, guild: discord.Guild) -> discord.Embed:
         banco = self.bot.banco
@@ -717,6 +805,16 @@ class Apoio(commands.Cog):
             await interaction.followup.send(textos.APOIO_PAINEL_SEM_CANAL, ephemeral=True)
         else:
             await interaction.followup.send(textos.APOIO_PAINEL_PUBLICADO.format(canal=msg.channel.mention), ephemeral=True)  # type: ignore[union-attr]
+
+    @apoio.command(name="configurar", description="(Admin) Cria o canal de doações, publica os painéis e confere o cargo Kitsune.")
+    @exigir_nivel(config.NIVEL_ADMIN)
+    async def apoio_configurar(self, interaction: discord.Interaction) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        await interaction.response.defer(ephemeral=True)
+        linhas = await self.configurar(guild)
+        e = embed(textos.APOIO_CFG_TITULO, "\n".join(linhas))
+        await interaction.followup.send(embed=e, ephemeral=True)
 
     @apoio.command(name="pagamentos", description="(Admin) Mostra os últimos pagamentos confirmados e os totais.")
     @exigir_nivel(config.NIVEL_ADMIN)

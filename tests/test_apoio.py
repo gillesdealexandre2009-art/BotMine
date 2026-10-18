@@ -622,3 +622,68 @@ def test_webhook_aceita_pedido_da_api_de_orders(tmp_path):
             await banco.fechar()
 
     assert rodar(cenario) == (200, "pago", 200)
+
+
+# ------------------------------------------------------------------ /apoio configurar
+class CargoFalso:
+    def __init__(self, rid, posicao, gerenciado=False):
+        self.id, self.position, self.managed, self.mention = rid, posicao, gerenciado, f"<@&{rid}>"
+
+    def __lt__(self, outro):
+        return self.position < outro.position
+
+
+def montar_config(guild, cargo, canal=None, boosters=()):
+    guild.me = SimpleNamespace(top_role=CargoFalso(1, 50))
+    guild.get_role = lambda rid: cargo if cargo is not None and rid == cargo.id else None
+    guild.members = [SimpleNamespace(premium_since=1 if i in boosters else None, roles=[cargo]) for i in range(4)]
+    return guild
+
+
+def test_configurar_confere_o_cargo_kitsune(tmp_path):
+    async def cenario():
+        banco, apoio, prov, mural, guild, cargo, registro = await montar(tmp_path)
+        mural.mention = "#doacoes"
+        try:
+            await banco.mc_kitsune_registrar(G, USER_A, True, int(time.time() * 1000) + DIA_MS)
+            resultados = {}
+            for nome, c in (("ok", CargoFalso(config.CARGO_KITSUNE_PADRAO, 10)), ("gerenciado", CargoFalso(config.CARGO_KITSUNE_PADRAO, 10, True)),
+                            ("alto", CargoFalso(config.CARGO_KITSUNE_PADRAO, 99)), ("sem", None)):
+                montar_config(guild, c, boosters=(0, 1))
+                resultados[nome] = "\n".join(await apoio.configurar(guild))
+            apoio.pix = SimpleNamespace(configurado=False, fechar=None)
+            montar_config(guild, CargoFalso(config.CARGO_KITSUNE_PADRAO, 10))
+            resultados["sem_pix"] = "\n".join(await apoio.configurar(guild))
+            return resultados
+        finally:
+            await banco.fechar()
+
+    r = rodar(cenario)
+    assert "pode ser dado e tirado por mim" in r["ok"] and "2 booster(s)" in r["ok"] and "Kitsunes pelo jogo ou por compra: 1" in r["ok"]
+    assert "#doacoes" in r["ok"] and "PIX ligado" in r["ok"]
+    assert "gerenciado pelo Discord" in r["gerenciado"] and "pode ser dado" not in r["gerenciado"]
+    assert "acima do meu cargo" in r["alto"] and "não está configurado" in r["sem"]
+    assert "PIX desligado" in r["sem_pix"] and "MERCADOPAGO_ACCESS_TOKEN" in r["sem_pix"]
+
+
+def test_configurar_avisa_quando_nao_consegue_criar_o_canal(tmp_path):
+    async def cenario():
+        import discord
+
+        banco, apoio, prov, mural, guild, cargo, registro = await montar(tmp_path)
+        try:
+            async def sem_canal(_guild):
+                return None
+
+            async def falha(*a, **k):
+                raise discord.Forbidden(SimpleNamespace(status=403, reason="Forbidden"), "sem permissão")
+
+            apoio._canal_mural = sem_canal  # type: ignore[method-assign]
+            guild.create_text_channel = falha
+            montar_config(guild, CargoFalso(config.CARGO_KITSUNE_PADRAO, 10))
+            return "\n".join(await apoio.configurar(guild))
+        finally:
+            await banco.fechar()
+
+    texto = rodar(cenario)
+    assert "Gerenciar Canais" in texto and "Cargo Kitsune" in texto  # avisa, mas o resto da conferência continua
