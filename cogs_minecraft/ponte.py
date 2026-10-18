@@ -401,6 +401,8 @@ class Ponte(commands.Cog):
                     "vinculado": True,
                     "discord_id": str(vinculo["user_id"]),
                     "discord_nome": membro.display_name if membro else "",
+                    # já houve sincronização desta pessoa: se o jogo perdeu a anotação, não pode fundir (somar) de novo
+                    "ja_somou": await banco.mc_ja_sincronizou(gid, vinculo["user_id"]),
                 }
             )
         codigo, expira = await banco.mc_criar_codigo(gid, mc_id, nome, VALIDADE_CODIGO, novo_codigo())

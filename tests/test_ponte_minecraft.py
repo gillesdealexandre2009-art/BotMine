@@ -674,3 +674,22 @@ def test_changelog_fala_do_cargo_sugestor_e_o_faq_tambem():
     assert "<@&1561367707914604594>" in texto and "sugeriu algo útil" in texto and "quantas pessoas estão jogando" in texto
     faq = [v for p, v in textos.DUVIDAS_CAMPOS if "Sugestor" in p]
     assert faq and "<@&1561367707914604594>" in faq[0].format(**valores, ip="#ip", login="#login", tickets="#t", chat="#c", regras="#r", cargos="#cg", duvidas="#d")
+
+
+def test_vinculo_avisa_se_a_fusao_ja_aconteceu(tmp_path):
+    """Se o jogo perder a anotação do vínculo (reinício, dados novos), o bot avisa `ja_somou` e o jogo não funde de novo."""
+
+    async def cenario():
+        banco, ponte, cliente, _ = await montar(tmp_path)
+        try:
+            await vincular(banco, cliente, USER_A)
+            antes = await (await cliente.post("/mc/vinculo", json={"id": "mc-1", "nome": "Raposa"}, headers=AUTH)).json()
+            await sync(cliente, "k1", 30, 0)
+            depois = await (await cliente.post("/mc/vinculo", json={"id": "mc-1", "nome": "Raposa"}, headers=AUTH)).json()
+            return antes, depois
+        finally:
+            await cliente.close()
+            await banco.fechar()
+
+    antes, depois = rodar(cenario)
+    assert antes["ja_somou"] is False and depois["ja_somou"] is True

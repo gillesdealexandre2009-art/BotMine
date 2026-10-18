@@ -195,6 +195,10 @@ class MinecraftMixin:
             )
             return {"saldo": saldo, "xp": xp, "repetido": 0, "xp_antes": xp_antes}
 
+    async def mc_ja_sincronizou(self, guild_id: int, user_id: int) -> bool:
+        """Já existe alguma sincronização desta pessoa (a fusão das contas já aconteceu)?"""
+        return await self._um("SELECT 1 FROM mc_sync WHERE guild_id = ? AND user_id = ? LIMIT 1", (guild_id, user_id)) is not None
+
     async def mc_chat_enfileirar(self, guild_id: int, nome: str, texto: str, limite: int = 200) -> int:
         """Guarda uma mensagem do Discord para o jogo buscar. Mantém só as últimas `limite` (e nada com mais de 1 h)."""
         ts = agora()

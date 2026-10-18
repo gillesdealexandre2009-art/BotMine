@@ -144,8 +144,14 @@ async function consultar(p, e) {
     const novo = !d.vinculo || d.vinculo.discordId !== discordId;
     editarJogador(p, (x) => {
       if (novo) {
-        // outra conta do Discord (ou a primeira): a fusão manda o total do jogo de novo
-        x.sync = { baseC: 0, baseX: 0, pend: null };
+        if (r.corpo.ja_somou === true) {
+          // o bot já somou esta conta antes (o jogo só perdeu a anotação): sem fusão de novo, nada de contar em dobro.
+          // A base vira o que o jogo tem agora; o próximo sync (diferença 0) traz o saldo do Discord, que é a verdade.
+          x.sync = { baseC: x.caudas, baseX: x.xp, pend: null };
+        } else {
+          // outra conta do Discord (ou a primeira): a fusão manda o total do jogo de novo
+          x.sync = { baseC: 0, baseX: 0, pend: null };
+        }
       }
       x.vinculo = { discordId, nome: discordNome, desde: x.vinculo?.desde || Date.now(), mcId: id };
     });
