@@ -13,6 +13,7 @@ import { msg, registrarErro, som } from "../core/util.js";
 import { ANUNCIO_ERA, ENTRADA_ERA, PREVIA_FIM } from "../textos/eras.js";
 import { situacao } from "./eras_calendario.js";
 import { eraDe, TOTAL_ERAS } from "./eras_catalogo.js";
+import { eventoAtivo } from "./eras_eventos.js";
 import { dentro as dentroDoLobby } from "./lobby.js";
 import { emMinigame } from "./mg_estado.js";
 import { estaSumido } from "./sumico.js";
@@ -20,6 +21,8 @@ import { estaSumido } from "./sumico.js";
 /** @typedef {import("./eras_catalogo.js").Perfil} Perfil */
 
 export const ID_NEVOA = "vulpus_era";
+/** Neblina do acontecimento (fica por cima da da Era enquanto ele dura). */
+export const ID_NEVOA_EVENTO = "vulpus_era_ev";
 const OVERWORLD = "minecraft:overworld";
 const PASSO_RECONCILIAR = 40;
 const PASSO_AMBIENTE = 20;
@@ -29,8 +32,12 @@ const PREVIA_MS = 10 * 60 * 1000;
 const aplicada = new Map();
 /** @type {Map<string, { numero: number, ate: number }>} prévias em andamento */
 const previas = new Map();
+/** @type {Map<string, string>} id → id do acontecimento cuja neblina está no jogador agora ("" = nenhuma) */
+const eventoAplicado = new Map();
 /** @type {Map<string, number>} id → tick do próximo som ambiente */
 const proximoSom = new Map();
+/** @type {Map<string, number>} id → tick do próximo som do acontecimento */
+const proximoSomEvento = new Map();
 /** @type {Set<string>} quem já recebeu a apresentação da Era nesta sessão ("id:era") */
 const apresentados = new Set();
 /** @type {Set<string>} erros já registrados (uma vez por jogador e tipo) */
@@ -90,6 +97,51 @@ function tirarNevoa(p, vezes) {
   }
 }
 
+/** @param {Player} p @param {number} vezes */
+function tirarNevoaEvento(p, vezes) {
+  for (let i = 0; i < vezes; i++) {
+    try {
+      const r = p.runCommand(`fog @s remove "${ID_NEVOA_EVENTO}"`);
+      if (r && r.successCount === 0) break;
+    } catch {
+      break;
+    }
+  }
+}
+
+/** O acontecimento que está valendo para a Era oficial agora (visual: vale mesmo com as mecânicas desligadas). */
+export function eventoVisual() {
+  const s = situacao();
+  if (s.fase !== "ativa") return undefined;
+  const e = eventoAtivo(s.numero);
+  return e ? { ...e, numero: s.numero } : undefined;
+}
+
+/**
+ * Põe ou tira a neblina do acontecimento por cima da Era. Só vale na Era oficial (a prévia não mostra acontecimento) e fora de ambiente especial.
+ * @param {Player} p
+ * @param {number} quer  Era que a pessoa está vendo (0 = nenhuma)
+ */
+function aplicarEvento(p, quer) {
+  const ev = quer > 0 ? eventoVisual() : undefined;
+  const desejado = ev && ev.numero === quer ? `${eraDe(quer).id}_ev` : "";
+  const atual = eventoAplicado.get(p.id) ?? "";
+  if (desejado === atual) return;
+  if (atual) tirarNevoaEvento(p, 1);
+  eventoAplicado.delete(p.id);
+  if (!desejado) {
+    eventoAplicado.set(p.id, "");
+    return;
+  }
+  try {
+    p.runCommand(`fog @s push vulpus:${desejado} "${ID_NEVOA_EVENTO}"`);
+  } catch (e) {
+    avisarUmaVez(`fogev:${p.id}`, `Eras: neblina do acontecimento ${desejado}`, e);
+    return;
+  }
+  eventoAplicado.set(p.id, desejado);
+}
+
 /**
  * Fade de tela da Era (transição ao entrar).
  * @param {Player} p
@@ -113,12 +165,22 @@ export function aplicar(p, opcoes = {}) {
   if (!p.isValid) return;
   const quer = emAmbienteEspecial(p) ? 0 : numeroVisto(p);
   const tem = aplicada.get(p.id);
-  if (tem === quer) return;
-  if (tem === undefined) tirarNevoa(p, 4); // primeira vez nesta sessão: limpa sobra de reconexão ou /reload
-  else if (tem > 0) tirarNevoa(p, 1);
+  if (tem === quer) {
+    aplicarEvento(p, quer);
+    return;
+  }
+  if (tem === undefined) {
+    tirarNevoa(p, 4); // primeira vez nesta sessão: limpa sobra de reconexão ou /reload
+    tirarNevoaEvento(p, 2);
+  } else if (tem > 0) tirarNevoa(p, 1);
+  if (tem !== undefined) {
+    tirarNevoaEvento(p, 1);
+    eventoAplicado.delete(p.id);
+  }
   aplicada.delete(p.id);
   if (quer === 0) {
     aplicada.set(p.id, 0);
+    eventoAplicado.set(p.id, "");
     return;
   }
   const era = eraDe(quer);
@@ -130,6 +192,7 @@ export function aplicar(p, opcoes = {}) {
   }
   aplicada.set(p.id, quer);
   proximoSom.delete(p.id);
+  aplicarEvento(p, quer);
   if (opcoes.comTransicao && (tem ?? 0) !== quer) transicao(p, era);
   if (opcoes.apresentar) apresentar(p, era);
 }
@@ -180,12 +243,14 @@ export function limparPrevia(p) {
   return havia;
 }
 
-/** Tira a neblina da Era de todo mundo (e esquece o que estava aplicado). */
+/** Tira a neblina da Era (e a do acontecimento) de todo mundo e esquece o que estava aplicado. */
 export function limparTodos() {
   for (const p of online()) {
     if (aplicada.get(p.id)) tirarNevoa(p, 1);
+    if (eventoAplicado.get(p.id)) tirarNevoaEvento(p, 1);
   }
   aplicada.clear();
+  eventoAplicado.clear();
 }
 
 // ------------------------------------------------------------------ ambiente (partículas, sons e piscadas)
@@ -223,6 +288,34 @@ function sonsAmbiente(p, era) {
   proximoSom.set(p.id, agora + Math.floor(entre(era.intervaloSom[0], era.intervaloSom[1]) * 20));
 }
 
+/** @param {Player} p @param {import("./eras_eventos.js").Evento} ev */
+function ambienteDoEvento(p, ev) {
+  const { x, y, z } = p.location;
+  for (const esp of ev.particulas) {
+    for (let i = 0; i < esp.n; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = esp.aoLonge ? entre(10, esp.raio) : Math.sqrt(Math.random()) * esp.raio;
+      const pos = { x: x + Math.cos(ang) * dist, y: y + entre(esp.alturaMin, esp.alturaMax), z: z + Math.sin(ang) * dist };
+      if (!efeitos.emitir(p.dimension, esp.id, pos, esp.cor)) break;
+    }
+  }
+  if (ev.som) {
+    const agora = system.currentTick;
+    const quando = proximoSomEvento.get(p.id) ?? 0;
+    if (agora >= quando) {
+      som(p, ev.som.id, { volume: ev.som.volume, pitch: ev.som.pitch });
+      proximoSomEvento.set(p.id, agora + Math.floor(entre(8, 16) * 20));
+    }
+  }
+  if (ev.flash && Math.random() <= ev.flash.chance) {
+    try {
+      p.camera.fade({ fadeColor: ev.flash.cor, fadeTime: { fadeInTime: 0.03, holdTime: 0.04, fadeOutTime: 0.12 } });
+    } catch (e) {
+      avisarUmaVez(`flashev:${p.id}`, "Eras: piscada do acontecimento", e);
+    }
+  }
+}
+
 /** @param {Player} p @param {Perfil} era */
 function piscada(p, era) {
   if (!era.flash || Math.random() > era.flash.chance) return;
@@ -243,6 +336,8 @@ function ambiente() {
       particulasEra(p, era);
       sonsAmbiente(p, era);
       piscada(p, era);
+      const ev = eventoVisual();
+      if (ev && ev.numero === n) ambienteDoEvento(p, ev.evento);
     } catch (e) {
       avisarUmaVez(`ambiente:${p.id}`, "Eras: ambiente", e);
     }
@@ -284,6 +379,8 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   aplicada.delete(playerId);
   previas.delete(playerId);
   proximoSom.delete(playerId);
+  proximoSomEvento.delete(playerId);
+  eventoAplicado.delete(playerId);
   for (const k of [...apresentados]) if (k.startsWith(`${playerId}:`)) apresentados.delete(k);
   for (const k of [...jaAvisou]) if (k.endsWith(`:${playerId}`)) jaAvisou.delete(k);
 });

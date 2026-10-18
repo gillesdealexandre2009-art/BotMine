@@ -2,6 +2,7 @@
 // Textos das Eras (sistemas/eras*.js). Os de erro já saem em §c.
 import { duracaoCurta, formatarDataHora } from "../sistemas/eras_calendario.js";
 import { TOTAL_ERAS } from "../sistemas/eras_catalogo.js";
+import { eventoAtivo, eventosDe, proximoEvento } from "../sistemas/eras_eventos.js";
 
 /** @typedef {import("../sistemas/eras_catalogo.js").Perfil} Perfil */
 /** @typedef {import("../sistemas/eras_catalogo.js").Condicao} Condicao */
@@ -94,6 +95,29 @@ export function linhasMecanicas(era) {
   return l;
 }
 
+/** @typedef {import("../sistemas/eras_eventos.js").Evento} Evento */
+
+/** @param {Evento} e */
+export function descreverBonusEvento(e) {
+  /** @type {string[]} */
+  const b = [];
+  for (const f of e.efeitos ?? []) b.push(`${EFEITO[f.efeito] ?? f.efeito} ${nivelRomano(f.nivel)}${f.quando.length === 1 && f.quando[0] === "sempre" ? "" : ` (${quando(f.quando)})`}`);
+  if (e.xp) b.push(`XP ${mult(e.xp)}`);
+  if (e.colheitaX) b.push(`chance de prêmio de colheita ${mult(e.colheitaX)}`);
+  if (e.minerioX) b.push(`chance de prêmio de minério ${mult(e.minerioX)}`);
+  if (e.abateX) b.push(`Caudas por abate ${mult(e.abateX)}`);
+  return b.join(", ");
+}
+
+/** O acontecimento da Era, em linhas: nome, horários, duração e o que dá. @param {number} numero */
+export function linhasEvento(numero) {
+  return eventosDe(numero).flatMap((e) => [
+    `§e* ${e.nome}§7: todo dia às §f${e.horarios.join("§7 e §f")}§7 (Brasília), por ${e.duracaoMin} min`,
+    `§8  ${e.anuncio}`,
+    `§a  Bônus: §7${descreverBonusEvento(e)}`,
+  ]);
+}
+
 /** Status curto da temporada. @param {Situacao} s @param {EstadoEras} e @param {number} agora */
 export function statusTemporada(s, e, agora) {
   const mec = e.mecanicas ? "§aligadas" : "§cdesligadas";
@@ -104,13 +128,24 @@ export function statusTemporada(s, e, agora) {
       return `§7A temporada ${e.temporada} começa em §f${formatarDataHora(e.inicio)}§7 (daqui a §f${duracaoCurta(s.restanteMs)}§7).\n§7Mecânicas: ${mec}`;
     case "encerrada":
       return `§6Temporada ${e.temporada} encerrada em §f${formatarDataHora(s.fimTemporada)}§6.\n§7Fica a atmosfera da Era ${TOTAL_ERAS} até o dono decidir.\n§7As mecânicas pararam.`;
-    default:
+    default: {
+      const agoraEv = eventoAtivo(s.numero, agora);
+      const proximo = proximoEvento(s.numero, agora);
+      const linhaEv = agoraEv
+        ? `§e§lAcontecendo agora: ${agoraEv.evento.nome}§r§7 (mais ${Math.ceil(agoraEv.restanteSeg / 60)} min)`
+        : proximo
+          ? `§7Próximo acontecimento: §f${proximo.evento.nome}§7 às §f${formatarDataHora(proximo.inicio).slice(11)}§7 (daqui a ${duracaoCurta(proximo.inicio - agora)})`
+          : "";
       return [
         `§6Temporada ${e.temporada} §8| §fEra ${s.numero} de ${TOTAL_ERAS}: §e${s.era?.nome ?? ""}`,
         `§7Troca em §f${duracaoCurta(s.restanteMs)} §7(${formatarDataHora(s.fimEra)})${s.proxima ? ` para §f${s.proxima.nome}` : " e a temporada se encerra"}`,
+        linhaEv,
         `§7Mecânicas: ${mec}`,
         `§8Agora: ${formatarDataHora(agora)} (Brasília)`,
-      ].join("\n");
+      ]
+        .filter((l) => l !== "")
+        .join("\n");
+    }
   }
 }
 
@@ -126,6 +161,9 @@ export const FICHA_ERA = (era) =>
     "§6Regras da Era",
     ...linhasMecanicas(era),
     "",
+    "§6Acontecimento da Era",
+    ...linhasEvento(era.numero),
+    "",
     `§8Neblina: ${era.fog.inicio} a ${era.fog.fim} blocos`,
     ...era.limitacoes.map((x) => `§8- ${x}`),
   ].join("\n");
@@ -138,6 +176,15 @@ export const BOTAO_PROXIMA = (/** @type {Perfil} */ p) => `Prévia da próxima: 
 
 /** @param {Perfil} era */
 export const ANUNCIO_ERA = (era) => [`§6Era ${era.numero} §8» §e${era.nome}`, `§7${era.apresentacao}`, "§8Use /vulpus:era para ver o que ela dá e o que ela cobra."];
+/** @param {string} nome @param {string} anuncio @param {number} min */
+export const EVENTO_COMECOU = (nome, anuncio, min) => [`§e§l${nome} §r§8» §7${anuncio}`, `§8Dura ${min} min. Veja os bônus em /vulpus:era.`];
+/** @param {string} nome */
+export const EVENTO_TITULO = (nome) => `§e${nome}`;
+/** @param {number} min */
+export const EVENTO_SUBTITULO = (min) => `§7Acontecimento da Era, por ${min} min`;
+/** @param {string} nome @param {string} fim */
+export const EVENTO_TERMINOU = (nome, fim) => `§e${nome} §8» §7${fim}`;
+
 /** @param {Perfil} era */
 export const ENTRADA_ERA = (era) => `§6Era ${era.numero} §8» §e${era.nome}`;
 export const TEMPORADA_ENCERROU = ["§6A temporada chegou ao fim.", "§7A Era 20 fica como está até o dono decidir o que vem depois."];

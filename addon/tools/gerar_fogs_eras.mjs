@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 const { ERAS } = await import(pathToFileURL(join(raiz, "vulpus_bp/scripts/sistemas/eras_catalogo.js")).href);
+const { EVENTOS } = await import(pathToFileURL(join(raiz, "vulpus_bp/scripts/sistemas/eras_eventos.js")).href);
 const pasta = join(raiz, "vulpus_rp/fogs");
 mkdirSync(pasta, { recursive: true });
 const conferir = process.argv.includes("--conferir");
@@ -26,7 +27,12 @@ function neblina(e) {
   };
 }
 
-for (const e of ERAS) {
+/** Neblina de cada Era e de cada acontecimento (era_NN_ev). */
+const todas = [
+  ...ERAS.map((e) => ({ id: e.id, fog: e.fog })),
+  ...EVENTOS.map((lista, i) => ({ id: `${ERAS[i].id}_ev`, fog: { ...lista[0].fog, agua: lista[0].fog.cor } })),
+];
+for (const e of todas) {
   const caminho = join(pasta, `${e.id}.json`);
   const texto = JSON.stringify(neblina(e)) + "\n";
   if (conferir) {
@@ -42,4 +48,4 @@ if (conferir) {
   console.log(defasados === 0 ? "fogs das Eras em dia" : `${defasados} arquivo(s) desatualizado(s): rode node tools/gerar_fogs_eras.mjs`);
   process.exit(defasados ? 1 : 0);
 }
-console.log(`${ERAS.length} neblinas geradas em vulpus_rp/fogs`);
+console.log(`${todas.length} neblinas geradas em vulpus_rp/fogs`);

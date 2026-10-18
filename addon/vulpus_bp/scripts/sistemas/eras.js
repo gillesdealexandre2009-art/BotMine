@@ -24,8 +24,9 @@ import {
   situacao,
 } from "./eras_calendario.js";
 import { eraDe, ERAS, TOTAL_ERAS, validarCatalogo } from "./eras_catalogo.js";
+import { validarEventos } from "./eras_eventos.js";
 import "./eras_mecanicas.js";
-import { atualizarTodos, definirPrevia, jaApresentada, limparPrevia, limparTodos, marcarApresentada, temPrevia } from "./eras_visual.js";
+import { atualizarTodos, definirPrevia, emAmbienteEspecial, eventoVisual, jaApresentada, limparPrevia, limparTodos, marcarApresentada, temPrevia } from "./eras_visual.js";
 
 /** @typedef {() => any} Volta */
 
@@ -78,6 +79,40 @@ export function vigiar() {
 
 system.runTimeout(vigiar, 100);
 system.runInterval(vigiar, PASSO_VIGIA);
+
+// ------------------------------------------------------------------ acontecimentos: anuncia quando começam e quando acabam
+
+/** @type {{ chave: string, nome: string, fim: string } | undefined} o acontecimento já anunciado (para anunciar uma vez só) */
+let anunciadoEvento;
+
+/** Conferência a cada 5 s: anuncia o começo (com título e som) e o fim, e já empurra a neblina nova para todo mundo. */
+export function vigiarEventos() {
+  try {
+    const ev = eventoVisual();
+    if (!ev) {
+      if (anunciadoEvento) {
+        for (const p of online()) if (!emAmbienteEspecial(p)) msg(p, textos.EVENTO_TERMINOU(anunciadoEvento.nome, anunciadoEvento.fim));
+        anunciadoEvento = undefined;
+        atualizarTodos();
+      }
+      return;
+    }
+    const chave = `${ev.numero}:${ev.evento.id}:${ev.inicio}`;
+    if (anunciadoEvento?.chave === chave) return;
+    anunciadoEvento = { chave, nome: ev.evento.nome, fim: ev.evento.fim };
+    atualizarTodos();
+    if (ev.restanteSeg < 30) return; // o servidor voltou no fim da janela: não vale anunciar
+    for (const p of online()) {
+      if (emAmbienteEspecial(p)) continue;
+      for (const l of textos.EVENTO_COMECOU(ev.evento.nome, ev.evento.anuncio, ev.evento.duracaoMin)) msg(p, l);
+      mostrarTitulo(p, textos.EVENTO_TITULO(ev.evento.nome), { subtitulo: textos.EVENTO_SUBTITULO(ev.evento.duracaoMin), entrada: 10, fica: 50, saida: 20 });
+    }
+  } catch (e) {
+    registrarErro("Eras: acontecimentos", e);
+  }
+}
+
+system.runInterval(vigiarEventos, 100);
 
 // ------------------------------------------------------------------ permissões
 
@@ -232,7 +267,7 @@ export function acaoValidar(p) {
     erro(p, textos.SO_STAFF);
     return false;
   }
-  const problemas = validarCatalogo();
+  const problemas = [...validarCatalogo(), ...validarEventos()];
   if (problemas.length === 0) ok(p, textos.VALIDACAO_OK);
   else erro(p, textos.VALIDACAO_RUIM(problemas));
   return problemas.length === 0;

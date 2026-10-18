@@ -15,6 +15,7 @@ import * as textos from "../textos/eras.js";
 import { adicionarCaudas } from "./caudas.js";
 import { lerEstado, mecanicasValem, situacao } from "./eras_calendario.js";
 import { LIMITES } from "./eras_catalogo.js";
+import { eventoAtivo } from "./eras_eventos.js";
 import { emAmbienteEspecial } from "./eras_visual.js";
 import { estaSumido } from "./sumico.js";
 
@@ -44,6 +45,13 @@ const CULTURAS = /** @type {Record<string, [string, number]>} */ ({
 const MINERIO = /(?:_ore|ancient_debris)$/;
 
 // ------------------------------------------------------------------ Era e contexto
+
+/** O acontecimento valendo agora, com os bônus (só se as mecânicas valem). @returns {import("./eras_eventos.js").Evento | undefined} */
+export function eventoMecanico() {
+  const s = situacao();
+  if (!mecanicasValem(s, lerEstado())) return undefined;
+  return eventoAtivo(s.numero)?.evento;
+}
 
 /** As mecânicas da Era oficial agora, ou undefined se não valem (sem temporada, encerrada ou desligadas). @returns {Mecanicas | undefined} */
 export function mecanicasAtuais() {
@@ -139,15 +147,16 @@ function aplicarEfeito(p, efeito, nivel) {
 
 function rodarEfeitos() {
   const m = mecanicasAtuais();
-  if (!m || m.efeitos.length === 0) return;
+  const lista = [...(m?.efeitos ?? []), ...(eventoMecanico()?.efeitos ?? [])];
+  if (lista.length === 0) return;
   /** @type {Set<Condicao>} */
   const precisa = new Set();
-  for (const f of m.efeitos) for (const c of f.quando) precisa.add(c);
+  for (const f of lista) for (const c of f.quando) precisa.add(c);
   for (const p of online()) {
     try {
       if (!elegivel(p) || emCombate(p)) continue;
       const v = condicoesDe(p, precisa);
-      for (const f of m.efeitos) {
+      for (const f of lista) {
         if (vale(f.quando, v)) aplicarEfeito(p, f.efeito, f.nivel);
       }
     } catch (e) {
@@ -220,6 +229,7 @@ function multiplicadorDe(p, qual) {
   }
   const pulso = pulsoAtivo();
   if (pulso) total *= qual === "xp" ? pulso.xp : pulso.caudas;
+  if (qual === "xp") total *= eventoMecanico()?.xp ?? 1;
   return limitar(total);
 }
 
@@ -261,7 +271,8 @@ world.afterEvents.playerBreakBlock.subscribe(({ player, block, brokenBlockPermut
     const c = contagemDe(player.id);
     const cultura = CULTURAS[tipo];
     if (m.colheita && cultura && Number(/** @type {any} */ (brokenBlockPermutation).getState(cultura[0])) >= cultura[1]) {
-      if (c.c >= m.colheita.tetoDia || Math.random() >= m.colheita.chance) return;
+      const chance = Math.min(0.95, m.colheita.chance * (eventoMecanico()?.colheitaX ?? 1));
+      if (c.c >= m.colheita.tetoDia || Math.random() >= chance) return;
       const [id, minimo, maximo] = m.colheita.premios[Math.floor(Math.random() * m.colheita.premios.length)];
       const qtd = sorteio(minimo, maximo);
       const { x, y, z } = block.location;
@@ -273,7 +284,8 @@ world.afterEvents.playerBreakBlock.subscribe(({ player, block, brokenBlockPermut
       return;
     }
     if (m.minerio && MINERIO.test(tipo)) {
-      if (c.m >= m.minerio.tetoDia || Math.random() >= m.minerio.chance) return;
+      const chance = Math.min(0.95, m.minerio.chance * (eventoMecanico()?.minerioX ?? 1));
+      if (c.m >= m.minerio.tetoDia || Math.random() >= chance) return;
       adicionarCaudas(player, m.minerio.caudas);
       c.m++;
       gravarDia();
@@ -296,10 +308,11 @@ world.afterEvents.entityDie.subscribe(({ deadEntity, damageSource }) => {
     if (m.abate.quando && !vale(m.abate.quando, condicoesDe(quem, new Set(m.abate.quando)))) return;
     const c = contagemDe(quem.id);
     if (c.a >= m.abate.tetoDia) return;
-    adicionarCaudas(quem, m.abate.caudas);
+    const caudas = Math.floor(m.abate.caudas * (eventoMecanico()?.abateX ?? 1));
+    adicionarCaudas(quem, caudas);
     c.a++;
     gravarDia();
-    msg(quem, textos.PREMIO_ABATE(m.abate.caudas));
+    msg(quem, textos.PREMIO_ABATE(caudas));
   } catch (e) {
     registrarErro("Eras: prêmio de abate", e);
   }
