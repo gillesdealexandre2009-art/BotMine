@@ -1,0 +1,367 @@
+"""Presença da Kiza: ela posta sozinha para dar vida à toca.
+
+* Mídias (1x a cada 10 dias): um desenho fofo que ela "fez", com legenda de quem acabou de rabiscar.
+* Publicações (a cada 2 dias): um convite para o pessoal mostrar construções, prints e vídeos.
+* Lore (1x por mês): um capítulo novo da história da Kiza, citando amigos novos da toca.
+
+Quem escreve é o cérebro (cog `cerebro`): sem chave ou com o cérebro desligado, nada é postado.
+O relógio roda de 5 em 5 minutos; a hora de cada post é sorteada por dia (mas fixa para o dia, então um reinício não
+muda nem duplica nada) e a data do último post fica no banco.
+"""
+from __future__ import annotations
+
+import io
+import logging
+import random
+from datetime import date, datetime
+from typing import TYPE_CHECKING, Optional
+
+import discord
+from discord import app_commands
+from discord.ext import commands, tasks
+
+import config
+import textos
+from cogs.cerebro import APARENCIA
+from utils import rabisco
+from utils.helpers import TZ, canal_da_funcao, embed, responder, sem_acento, truncar
+from utils.permissoes import exigir_nivel
+
+if TYPE_CHECKING:  # pragma: no cover
+    from main import Kiza
+    from cogs.cerebro import Cerebro
+
+log = logging.getLogger("kiza.presenca")
+
+MIDIA_JANELA = (14, 21)  # hora (BRT) em que o desenho pode sair: entre 14h e 21h
+PUBLICACOES_JANELA = (11, 19)
+MIDIA_A_CADA_DIAS = 10
+PUBLICACOES_A_CADA_DIAS = 2
+LORE_A_PARTIR_DA_HORA = 12
+ARQUIVO_DESENHO = "desenho-da-kiza.png"
+TENTATIVAS_POR_DIA = 3  # se a IA falhar, tenta de novo no próximo tique (até aqui)
+
+TEMAS_MIDIA = [
+    "um desenho seu e da sua mãe (a kitsune de nove caudas) fazendo algo juntas",
+    "um desenho seu com um amigo da toca construindo uma casinha de blocos",
+    "a toca do VULPUS à noite, com lanternas e estrelas",
+    "você comendo seu lanchinho favorito, toda feliz",
+    "um creeper bem fofo que você encontrou",
+    "você dormindo enrolada na própria cauda no meio da floresta de blocos",
+    "você pescando num lago de blocos, esperando o peixe",
+    "você e a sua mãe vendo o pôr do sol do alto de uma colina",
+    "sua versão chibi (bem pequenininha e fofa) acenando",
+    "uma casa na árvore que você sonhou em construir",
+    "você olhando as estrelas com a cauda de cobertor",
+    "você com um pet imaginário (um filhote de raposa branca)",
+    "o seu cantinho preferido da toca, bem aconchegante",
+    "um dia de chuva na toca com você de guarda-chuva",
+]
+
+GANCHOS_PUBLICACOES = [
+    "postar um vídeo curto sobre o servidor no TikTok ou no Reels e colar o link aqui",
+    "fazer um post sobre o servidor no Instagram, no X ou no Twitter e mandar o link",
+    "mostrar uma construção do servidor num vídeo ou post e colar o link aqui",
+    "postar um clipe engraçado de um momento no servidor nas redes e trazer o link",
+    "chamar os amigos para o servidor com um post nas redes e deixar o link aqui",
+    "fazer um vídeo mostrando a própria base ou a toca e postar o link aqui",
+    "divulgar o servidor no story ou no status e mandar o print ou o link",
+    "postar um fail épico do Minecraft do servidor nas redes e mandar o link",
+]
+
+SISTEMA_TAREFA = (
+    "Você é a Kiza Misuchi, 18 anos, mascote do servidor VULPUS (Minecraft). Escreva como ela: português brasileiro de "
+    "chat, minúsculas, natural e despachada, poucos emojis (no máximo 1), nada de formatação de IA nem de 'olá pessoal'. "
+    "EVITE O CRINGE: nada de UwU/OwO/nya, nada de se chamar de fofa ou fofinha, nada de elogiar a própria cauda, nada de "
+    "ações entre asteriscos, sem exagero de 'ain', 'kkkk', '!!!' ou letras repetidas; humor seco e autoironia leve. "
+    "O servidor tem menores: tudo sempre fofo e leve. Você NÃO marca ninguém (@) e não promete Caudas, cargos ou prêmios. "
+    + APARENCIA
+)
+
+
+def minuto_do_dia(guild_id: int, dia: str, tag: str, hora_ini: int, hora_fim: int) -> int:
+    """Minuto do dia (0-1439) sorteado para `tag`, fixo para (servidor, dia): reiniciar o bot não muda o horário."""
+    rng = random.Random(f"{guild_id}:{dia}:{tag}")
+    return rng.randrange(hora_ini * 60, hora_fim * 60)
+
+
+def ids_candidatos(valor: str) -> list[int]:
+    return [int(p) for p in valor.split(",") if p.strip().isdigit()]
+
+
+class Presenca(commands.Cog):
+    def __init__(self, bot: "Kiza") -> None:
+        self.bot = bot
+
+    async def cog_load(self) -> None:
+        self.relogio.start()
+
+    async def cog_unload(self) -> None:
+        self.relogio.cancel()
+
+    # ------------------------------------------------------------------ utilidades
+    def _cerebro(self) -> Optional["Cerebro"]:
+        return self.bot.get_cog("Cerebro")  # type: ignore[return-value]
+
+    async def _cfg(self, guild_id: int, chave: str) -> str:
+        return await self.bot.banco.get_config(guild_id, f"presenca_{chave}") or ""
+
+    async def _set(self, guild_id: int, chave: str, valor: str) -> None:
+        await self.bot.banco.set_config(guild_id, f"presenca_{chave}", valor)
+
+    async def _tentativa(self, guild_id: int, tipo: str, chave_dia: str) -> bool:
+        """Conta uma tentativa para `chave_dia`. False quando já gastou todas (ou já postou)."""
+        dia, _, n = (await self._cfg(guild_id, f"{tipo}_tent")).partition(":")
+        feitas = int(n) if dia == chave_dia and n.isdigit() else 0
+        if feitas >= TENTATIVAS_POR_DIA:
+            return False
+        await self._set(guild_id, f"{tipo}_tent", f"{chave_dia}:{feitas + 1}")
+        return True
+
+    async def _canal_midia(self, guild: discord.Guild) -> Optional[discord.TextChannel]:
+        for cid in ids_candidatos(await self._cfg(guild.id, "canal_midia") or str(config.CANAL_MIDIAS_ID)):
+            canal = guild.get_channel(cid)
+            if isinstance(canal, discord.TextChannel):
+                return canal
+        return None
+
+    async def _canal_publicacoes(self, guild: discord.Guild) -> Optional[discord.TextChannel]:
+        """O canal de publicações. Confere o nome (devem existir 'public' nele) para nunca postar no canal errado."""
+        for cid in ids_candidatos(await self._cfg(guild.id, "canal_publicacoes") or str(config.CANAL_PUBLICACOES_ID)):
+            canal = guild.get_channel(cid)
+            if isinstance(canal, discord.TextChannel):
+                if "public" in sem_acento(canal.name):
+                    return canal
+                log.warning("Canal de publicações %s se chama '%s'; não vou postar nele", cid, canal.name)
+        return None
+
+    # ------------------------------------------------------------------ relógio
+    @tasks.loop(minutes=5)
+    async def relogio(self) -> None:
+        agora = datetime.now(TZ)
+        for guild in list(self.bot.guilds):
+            try:
+                await self._tique(guild, agora)
+            except Exception:  # um servidor com problema não para os outros
+                log.exception("Falha no relógio da presença em %s", guild.id)
+
+    @relogio.before_loop
+    async def _antes(self) -> None:
+        await self.bot.wait_until_ready()
+
+    async def _dias_desde(self, guild_id: int, chave: str, hoje: date) -> Optional[int]:
+        valor = await self._cfg(guild_id, chave)
+        try:
+            return (hoje - date.fromisoformat(valor)).days if valor else None
+        except ValueError:
+            return None
+
+    async def _reivindicar(self, guild: discord.Guild, chave: str, novo: str, aceita) -> tuple[bool, Optional[str]]:
+        return await self.bot.banco.reivindicar_config(guild.id, f"presenca_{chave}", novo, aceita)
+
+    async def _desfazer(self, guild: discord.Guild, chave: str, anterior: Optional[str]) -> None:
+        await self.bot.banco.set_config(guild.id, f"presenca_{chave}", anterior)
+
+    async def _tentar(self, guild: discord.Guild, tipo: str, chave: str, novo: str, aceita, hoje: str, tarefa) -> None:
+        """Reivindica o período (atômico), tenta postar e, se não der, devolve o período para tentar de novo.
+
+        A reivindicação vem ANTES do post: assim um reinício, ou dois processos do bot ao mesmo tempo, nunca postam duas vezes.
+        """
+        ok, anterior = await self._reivindicar(guild, chave, novo, aceita)
+        if not ok:
+            return
+        if not await self._tentativa(guild.id, tipo, hoje) or not await tarefa(guild):
+            await self._desfazer(guild, chave, anterior)
+
+    async def _tique(self, guild: discord.Guild, agora: datetime) -> None:
+        cerebro = self._cerebro()
+        if cerebro is None or not await cerebro.ativo(guild.id):
+            return
+        data = agora.date()
+        hoje, minuto = data.isoformat(), agora.hour * 60 + agora.minute
+
+        def a_cada(dias: int):
+            def aceita(atual: Optional[str]) -> bool:
+                try:
+                    return atual is None or (data - date.fromisoformat(atual)).days >= dias
+                except ValueError:
+                    return True
+            return aceita
+
+        # 1 desenho a cada MIDIA_A_CADA_DIAS dias. O "último" fica no banco e também é conferido no próprio canal.
+        alvo = minuto_do_dia(guild.id, hoje, "midia", *MIDIA_JANELA)
+        if alvo <= minuto < 22 * 60:
+            if not await self._cfg(guild.id, "midia_ultimo") and await self._cfg(guild.id, "midia_data"):
+                await self._set(guild.id, "midia_ultimo", await self._cfg(guild.id, "midia_data"))  # nome antigo da config
+            dias = await self._dias_desde(guild.id, "midia_ultimo", data)
+            if dias is None or dias >= MIDIA_A_CADA_DIAS:
+                recente = await self._ultimo_desenho_no_canal(guild)
+                if recente is not None and (data - recente).days < MIDIA_A_CADA_DIAS:
+                    await self._set(guild.id, "midia_ultimo", recente.isoformat())  # já postou (banco novo, outra cópia...)
+                else:
+                    await self._tentar(guild, "midia", "midia_ultimo", hoje, a_cada(MIDIA_A_CADA_DIAS), hoje, self.postar_midia)
+
+        alvo = minuto_do_dia(guild.id, hoje, "publicacoes", *PUBLICACOES_JANELA)
+        if alvo <= minuto < 21 * 60:
+            await self._tentar(guild, "pub", "pub_ultimo", hoje, a_cada(PUBLICACOES_A_CADA_DIAS), hoje, self.postar_publicacoes)
+
+        mes = f"{agora:%Y-%m}"
+        if agora.hour >= LORE_A_PARTIR_DA_HORA:
+            await self._tentar(guild, "lore", "lore_mes", mes, lambda atual: atual != mes, hoje, self.postar_lore)
+
+    async def _ultimo_desenho_no_canal(self, guild: discord.Guild) -> Optional[date]:
+        """Data do último desenho diário que a Kiza postou no canal de mídias (None se não achar)."""
+        canal = await self._canal_midia(guild)
+        if canal is None:
+            return None
+        try:
+            async for m in canal.history(limit=60):
+                if m.author.id == self.bot.user.id and any(a.filename == ARQUIVO_DESENHO for a in m.attachments):  # type: ignore[union-attr]
+                    return m.created_at.astimezone(TZ).date()
+        except discord.HTTPException:
+            log.warning("Não consegui ler o histórico do canal de mídias", exc_info=True)
+        return None
+
+    # ------------------------------------------------------------------ mídias: desenho do dia
+    async def postar_midia(self, guild: discord.Guild) -> bool:
+        cerebro, canal = self._cerebro(), await self._canal_midia(guild)
+        if cerebro is None or canal is None:
+            return False
+        tema = random.choice(TEMAS_MIDIA)
+        bruto = await cerebro._chamar_api(
+            SISTEMA_TAREFA,
+            f"Tarefa: você acabou de fazer um desenho e vai postar no canal de mídias para trazer vida à toca.\n"
+            f"Tema de hoje: {tema}.\n"
+            'Responda SOMENTE com um JSON: {"legenda": "...", "cena": "..."}\n'
+            "- legenda: 1 a 3 frases curtas, como a Kiza postando o desenho que fez (ex.: 'olha um desenho que eu fiz de mim e da "
+            "minha mãe :D'), natural e sem se achar fofa, e, de vez em quando, uma pergunta para o pessoal responder. Varie o jeito.\n"
+            "- cena: descrição objetiva do desenho (personagens, o que fazem, cenário, cores, legendas curtas a escrever), "
+            "para alguém desenhar com formas simples. Se a Kiza aparecer, siga a aparência dela.",
+            700, 40,
+        )
+        dados = rabisco.extrair_json(bruto or "")
+        if not dados or not isinstance(dados.get("legenda"), str) or not isinstance(dados.get("cena"), str):
+            log.warning("Mídia do dia sem JSON utilizável: %s", truncar(bruto or "vazia", 200))
+            return False
+        png = await cerebro.desenhar_cena(dados["cena"])
+        if png is None:
+            return False
+        try:
+            await canal.send(
+                truncar(dados["legenda"].strip(), 600),
+                file=discord.File(io.BytesIO(png), filename=ARQUIVO_DESENHO),
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+        except discord.HTTPException:
+            log.warning("Falha ao postar a mídia do dia", exc_info=True)
+            return False
+        return True
+
+    # ------------------------------------------------------------------ publicações: puxar o pessoal
+    async def postar_publicacoes(self, guild: discord.Guild) -> bool:
+        cerebro, canal = self._cerebro(), await self._canal_publicacoes(guild)
+        if cerebro is None or canal is None:
+            return False
+        gancho = random.choice(GANCHOS_PUBLICACOES)
+        bruto = await cerebro._chamar_api(
+            SISTEMA_TAREFA,
+            "Tarefa: escreva UMA mensagem curta (2 a 4 linhas, no máximo ~350 caracteres no total) para o canal de publicações. "
+            "Como funciona o canal: a pessoa posta algo sobre o servidor VULPUS nas redes sociais (TikTok, Instagram, X etc.) e "
+            "cola o LINK aqui; cada link enviado (e não apagado depois) vale +1 ponto no score dela no `/fidelidade`, e esses pontos "
+            "ajudam a pessoa a virar Helper no futuro (não prometa nada, só diga que ajuda). Máximo de 2 por dia contam. "
+            f"Gancho de hoje: convidar a galera a {gancho}. "
+            "Seja carismática e específica, como uma amiga puxando assunto, sem soar como propaganda nem como obrigação. "
+            "Explique o mecanismo de um jeito diferente a cada vez, em poucas palavras (nem toda mensagem precisa explicar tudo). "
+            "Nunca peça dados pessoais, só o link do post. Sem marcar ninguém. "
+            "Responda só com o texto da mensagem.",
+            400, 30,
+        )
+        texto = (bruto or "").strip().strip('"')
+        if not texto:
+            return False
+        try:
+            await canal.send(truncar(texto, 900), allowed_mentions=discord.AllowedMentions.none())
+        except discord.HTTPException:
+            log.warning("Falha ao postar o convite de publicações", exc_info=True)
+            return False
+        return True
+
+    # ------------------------------------------------------------------ lore mensal
+    async def _contexto_lore(self, guild: discord.Guild, agora: datetime) -> str:
+        novos = sorted(
+            (m for m in guild.members if not m.bot and m.joined_at and (agora - m.joined_at.astimezone(TZ)).days <= 30),
+            key=lambda m: m.joined_at,  # type: ignore[arg-type,return-value]
+            reverse=True,
+        )[:6]
+        topo = []
+        for user_id, _xp, _saldo in await self.bot.banco.top(guild.id, "xp", 3):
+            m = guild.get_member(user_id)
+            if m is not None and not m.bot:
+                topo.append(m.display_name)
+        linhas = [f"Mês: {agora:%m/%Y}. A toca tem {guild.member_count} membros."]
+        linhas.append("Amigos que chegaram na toca nos últimos 30 dias: " + (", ".join(m.display_name for m in novos) or "ninguém novo"))
+        if topo:
+            linhas.append("Os mais animados da toca: " + ", ".join(topo))
+        return "\n".join(linhas)
+
+    async def postar_lore(self, guild: discord.Guild, agora: Optional[datetime] = None) -> bool:
+        cerebro, canal = self._cerebro(), await canal_da_funcao(self.bot, guild, "lore")
+        if cerebro is None or not isinstance(canal, discord.TextChannel):
+            return False
+        agora = agora or datetime.now(TZ)
+        canon = "\n".join(f"{t}: {d}" for t, d in textos.LORE_CAPITULOS)
+        bruto = await cerebro._chamar_api(
+            SISTEMA_TAREFA,
+            "Tarefa: escreva o capítulo deste mês da lenda da Kiza (lore), como um relato curto na voz dela, em primeira pessoa, "
+            "bem natural, como alguém contando para amigos o que aconteceu no mês. NÃO use 'querido diário', NÃO faça poesia "
+            "forçada nem metáforas rebuscadas, NÃO elogie a própria fofura e NÃO termine com frase de efeito emocional. Prefira "
+            "fatos concretos e engraçados do dia a dia da toca (construções tortas, chat de madrugada, algum perrengue) com um "
+            "toque de fantasia leve (o mundo de blocos, as caudas). Cite 2 a 3 nomes REAIS da lista abaixo, cada um com UM "
+            "detalhe simples e inofensivo (chegou, construiu algo, animou o chat); escreva os nomes como na lista, com a "
+            "grafia exata, sem inventar apelidos nem fatos sérios. Nada de romance, nada de maldade.\n\n"
+            f"História até agora (mantenha coerente):\n{canon}\n\n"
+            f"Dados reais deste mês:\n{await self._contexto_lore(guild, agora)}\n\n"
+            'Responda SOMENTE com um JSON: {"titulo": "título curto e simples", "texto": "2 a 3 parágrafos curtos"}. '
+            "Em 'texto' use quebras de linha (\\n\\n) entre parágrafos, até ~800 caracteres.",
+            1500, 60,
+        )
+        dados = rabisco.extrair_json(bruto or "")
+        if not dados or not isinstance(dados.get("titulo"), str) or not isinstance(dados.get("texto"), str):
+            log.warning("Lore do mês sem JSON utilizável: %s", truncar(bruto or "vazia", 200))
+            return False
+        e = embed(f"📖 {agora:%m/%Y} · {truncar(dados['titulo'], 80)}", truncar(dados["texto"].strip(), 3800))
+        try:
+            await canal.send(embed=e, allowed_mentions=discord.AllowedMentions.none())
+        except discord.HTTPException:
+            log.warning("Falha ao postar a lore do mês", exc_info=True)
+            return False
+        return True
+
+    # ------------------------------------------------------------------ teste manual (admin)
+    @app_commands.command(name="kiza-postar", description="Faz a Kiza postar agora (para testar). Não muda a agenda dela.")
+    @app_commands.describe(tipo="O que a Kiza deve postar")
+    @app_commands.choices(
+        tipo=[
+            app_commands.Choice(name="Desenho (canal de mídias)", value="midia"),
+            app_commands.Choice(name="Convite (canal de publicações)", value="publicacoes"),
+            app_commands.Choice(name="Capítulo do mês (canal de lore)", value="lore"),
+        ]
+    )
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 60.0)
+    @exigir_nivel(3)
+    async def kiza_postar(self, interaction: discord.Interaction, tipo: app_commands.Choice[str]) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        cerebro = self._cerebro()
+        if cerebro is None or not await cerebro.ativo(guild.id):
+            await responder(interaction, "O cérebro está desligado (sem chave ou `/ajustes` cerebro = 0).")
+            return
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        acao = {"midia": self.postar_midia, "publicacoes": self.postar_publicacoes, "lore": self.postar_lore}[tipo.value]
+        ok = await acao(guild)
+        await interaction.followup.send("Postei! 🦊" if ok else "Não consegui postar (veja o log; confira também se o canal existe).", ephemeral=True)
+
+
+async def setup(bot: "Kiza") -> None:
+    await bot.add_cog(Presenca(bot))

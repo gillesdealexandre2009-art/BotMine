@@ -5,6 +5,11 @@ do Brasil, sem nenhum conteúdo romântico, sexual ou adulto (a comunidade tem m
 Para mudar a voz do bot, edite este arquivo. Os {campos} são preenchidos pelo código.
 """
 
+import random
+import re
+import unicodedata
+from collections import deque
+
 NOME_BOT = "Kiza"
 
 # ============================================================================ erros e avisos gerais
@@ -272,8 +277,9 @@ AJUDA_CAMPOS = {
     ),
     "diversao": (
         "🎮 Diversão",
-        "`/mines jogar` — joguinho por diversão\n`/casamento pedir` — forme uma dupla de toca\n"
-        "`/aniversario definir` — ganhe parabéns e presente no seu dia\n`/minecraft vincular` — liga sua conta do jogo à do Discord",
+        "`/mines jogar` — joguinho por diversão\n`/quiz` `/forca` — jogos de Minecraft que dão Caudas\n"
+        "`/missoes` — 3 missões por dia\n`/rabisco-de-mim` — eu rabisco você\n"
+        "`/casamento pedir` — forme uma dupla de toca\n`/aniversario definir` — ganhe parabéns e presente no seu dia\n`/minecraft vincular` — liga sua conta do jogo à do Discord",
     ),
     "suporte": (
         "🎫 Suporte",
@@ -283,7 +289,8 @@ AJUDA_CAMPOS = {
     "staff": (
         "🔨 Staff",
         "`/timeout` `/remover-timeout` `/kick` `/limpar` `/remover-aviso` — moderação\nAtender tickets e ver logs\n"
-        "`/fidelidade-ranking` — quem está mais perto de Helper • aprovar denúncias e pedidos de rank nos tíquetes",
+        "`/fidelidade-ranking` — quem está mais perto de Helper • aprovar denúncias e pedidos de rank nos tíquetes\n"
+        "`/resumo-semana` — números da semana • `/melhores-desenhos` — os desenhos com mais ⭐",
     ),
     "admin": (
         "👑 Admin",
@@ -424,7 +431,12 @@ COMANDOS_CAMPOS = [
         "`/aniversario definir`: eu te dou parabéns (e um presente) no seu dia. Só dá para marcar uma vez!\n"
         "`/aniversario lista`: próximos aniversários",
     ),
-    ("🎮 Diversão", "`/mines jogar`: ache as casas seguras sem explodir\n`/casamento pedir`: forme uma dupla de toca"),
+    (
+        "🎮 Diversão",
+        "`/mines jogar`: ache as casas seguras sem explodir\n`/quiz` e `/forca`: acerte e ganhe Caudas (tem limite por dia)\n"
+        "`/missoes`: 3 missões por dia, com bônus se fizer todas\n`/rabisco-de-mim`: eu rabisco você com base no que sei de você\n"
+        "`/casamento pedir`: forme uma dupla de toca",
+    ),
     (
         "🚀 Bump",
         "`/bump` (o do DISBOARD): divulga a toca e te dá {moeda}\n`/bump` (o da Kiza): quando dá para o próximo e o ranking\n"
@@ -496,7 +508,7 @@ DUVIDAS_CAMPOS = [
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
     (
-        "1.5.0",
+        "1.10.0",
         "Ponte com o servidor",
         [
             "🔗 `/minecraft vincular` e `/minecraft conta`: ligue sua conta do jogo à do Discord (ou use o botão do canal de login)",
@@ -507,6 +519,73 @@ CHANGELOG = [
             "🦊 {moeda} e XP viram **um só** nos dois lugares. Subir de nível ficou mais difícil: cada mensagem rende menos XP",
             "🟢 Um canal mostra quantas pessoas estão jogando agora",
             "🌟 Cargo novo: {sugestor}, para quem sugeriu algo útil que foi aprovado ou usado pelo dono",
+        ],
+    ),
+    (
+        "1.9.0",
+        "A Kiza tem humor (e jogos!)",
+        [
+            "😴 Meu **humor muda**: com sono de madrugada, animada no fim de semana, e emburrada com quem for grosso comigo",
+            "🧠 Eu **lembro de você** e às vezes puxo assunto sobre o que você me contou",
+            "💬 Também **reajo com emoji** nas suas mensagens, sem responder (parabéns, saudade, kkkk...)",
+            "🎮 `/quiz` e `/forca`: jogos de Minecraft que dão {moeda} (com limite por dia)",
+            "📋 `/missoes`: 3 missões por dia, com bônus de {moeda} se completar todas",
+            "🎨 `/rabisco-de-mim`: eu rabisco você! E nos meus desenhos dá pra votar com ⭐",
+            "📚 Agora eu sei explicar regras, {moeda}, ranks, cores e comandos sem inventar",
+            "🦊 **Kiza:** \"se eu tô emburrada, é só pedir desculpa. eu perdoo rápido. quase sempre.\"",
+        ],
+    ),
+    (
+        "1.8.0",
+        "Kiza mais esperta e mais humana",
+        [
+            "🧠 Voltei a **conversar de verdade**, com um cérebro novo (e sem custo pra toca)",
+            "💬 Aprendi **mais de 150 frases novas**: quando eu não tiver a cabeça no lugar, respondo conforme o assunto (comida, sono, Minecraft, tchau, elogio...)",
+            "🎨 **Desenhos bem melhores**: agora tenho rosto, orelhas, cauda e jaqueta de verdade (aquela bolinha flutuando acabou)",
+            "👨‍👩‍👧 Dá pra pedir desenho com **várias pessoas**: ninguém mais fica em cima do outro, e cada um tem o seu visual",
+            "🦊 **Kiza:** \"minha mãe tem nove caudas. eu tenho uma. mas eu tenho estilo.\"",
+        ],
+    ),
+    (
+        "1.7.1",
+        "Ajustes da Kiza",
+        [
+            "🎨 O desenho que eu faço sozinha agora sai **a cada 10 dias** (e eu não esqueço quando reinicio)",
+            "📸 Se alguém pedir um desenho do Kope, eu só tenho um: o retrato oficial",
+            "🦊 **Kiza:** \"o retrato oficial é fiel. não aceito reclamação.\"",
+        ],
+    ),
+    (
+        "1.7.0",
+        "Figurinhas da Kiza",
+        [
+            "🃏 `/figurinha abrir`: abra um pacotinho e ganhe uma figurinha (1 **grátis por dia**; depois é só com {moeda})",
+            "📒 `/figurinha album`: veja quais você já tem e quais faltam, e `/figurinha ver` para mostrar uma carta",
+            "✨ Raridades: ⚪ Comum e 🔵 Rara por enquanto. As Épicas e Lendárias estão vindo",
+            "🦊 **Kiza:** \"eu tô numa figurinha dormindo e vocês acharam fofo. eu só tava com sono mesmo.\"",
+        ],
+    ),
+    (
+        "1.6.0",
+        "A Kiza tem vida própria",
+        [
+            "🎨 Todo dia eu posto um desenho que eu mesma fiz no canal de mídias (às vezes com a minha mãe, que tem nove caudas!)",
+            "📸 De vez em quando eu lembro a galera de postar o servidor nas redes e colar o link nas publicações: cada link vale +1 no seu `/fidelidade`",
+            "📖 Todo mês tem um capítulo novo da minha lenda, com os amigos novos que eu fiz na toca",
+            "🧠 Fiquei mais esperta: ajudo com Minecraft de verdade e rabisco o que você pedir (`kiza desenha...`)",
+            "🦊 **Kiza:** \"pra quem perguntou: sim, eu sou uma raposa de verdade. mentira. sou uma menina com orelha de raposa, "
+            "tá? meu desenho na verdade ficou parecendo um gato laranja kkkk\"",
+        ],
+    ),
+    (
+        "1.5.0",
+        "A Kiza ganhou um cérebro",
+        [
+            "🧠 **Eu converso de verdade agora!** Me marca, responde uma mensagem minha ou fala meu nome no chat",
+            "💭 Eu lembro do que você me conta e entendo o contexto da conversa (sim, eu presto atenção. às vezes.)",
+            "🔎 `/memoria ver` mostra o que eu lembro de você e `/memoria esquecer` apaga tudo",
+            "😭 **Kiza:** \"GENTE EU CONSIGO FALAR!! sem frase pronta, sem nada, tô tão feliz que vou chorar. "
+            "pode me perguntar qualquer coisa... menos 1+1, que isso n é coisa de raposa kkk\"",
         ],
     ),
     (
@@ -698,38 +777,235 @@ BUMP_AVISOS_DESLIGADO = "🔕 Beleza, não te marco mais nos avisos de bump."
 BUMP_AVISOS_SEM_CARGO = "🦊 O cargo de avisos de bump ainda não foi configurado. Um admin faz isso em `/setup` → Cargos base."
 
 CONVERSA_MENCAO = [
-    "Me chamou? 👀",
-    "Oi! Tava aqui contando minhas Caudas. Que foi? 🦊",
-    "Presente! 🙋‍♀️ Fala.",
-    "Hm? Só não me pede pra fazer lição de casa. 😼",
-    "Oi oi! Se for pedir Caudas, a resposta é não. 😤",
-    "Tô ocupada sendo fofa, mas pode falar. 💅",
-    "Que foi, raposinha?",
-    "Você me marcou só pra ver se eu respondia, né? 🙄 Respondi.",
-    "Kiza na área! 🦊✨",
-    "Se for fofoca, conta tudo. 👀",
+    "me chamou? 👀",
+    "oi! tava aqui contando minhas caudas. que foi? 🦊",
+    "presente! fala",
+    "hm? só não me pede pra fazer lição de casa 😼",
+    "oi oi! se for pedir caudas a resposta é não 😤",
+    "pode falar, tô ouvindo",
+    "que foi?",
+    "vc me marcou só pra ver se eu respondia, né? 🙄 respondi",
+    "kiza na área 🦊",
+    "se for fofoca, conta tudo 👀",
+    "oi?",
+    "tava quase dormindo aqui, mas fala",
+    "hm, apareci. o que vc quer?",
+    "oiê, tava distraída aqui, fala de novo",
+    "ahn? me chamaram?",
+    "eita, apareci do nada kkk fala",
+    "tô aqui tô aqui, pode falar",
+    "diz aí",
+    "opa, que foi?",
+    "falaa, tava vendo uns vídeos aqui",
+    "oi, tava pensando na vida. e aí?",
+    "hmm? sim?",
+    "chegou chegando, hein? fala",
+    "aaah oi 🦊",
+    "pode mandar, tô sem nada pra fazer mesmo",
+    "só um segundo, tava terminando um lanchinho. pronto, fala",
+    "me achou! o que foi?",
+    "oi gente boa, em que posso... não, para, eu n sou atendimento kkk fala",
 ]
 CONVERSA_BOM_DIA = [
-    "Bom dia! ☀️ Já tomou água hoje?",
-    "Bom diaaa! 🦊 Hoje vai ser um bom dia, eu decidi.",
-    "Bom dia! Acordou cedo ou ainda nem dormiu? 👀",
-    "Bom dia, raposinha! ☀️",
+    "bom dia! ☀️ já tomou água hoje?",
+    "bom diaaa! 🦊 hoje vai ser um bom dia, eu decidi",
+    "bom dia! acordou cedo ou ainda nem dormiu? 👀",
+    "bom dia! ainda tô com sono, mas bom dia",
+    "bom dia! já comeu alguma coisa? n vale só café",
+    "bom diaa ☀️ bora fazer alguma coisa de útil hoje, ou n",
+    "dia! (tô tentando acordar ainda)",
+    "bom dia! sonhou com algo estranho? eu sonhei com um creeper dançando",
 ]
 CONVERSA_BOA_TARDE = [
-    "Boa tarde! 🌤️ Bora fazer algo legal hoje?",
-    "Boa tarde! Hora perfeita pra uma soneca... não que eu tire sonecas. 😴",
-    "Boa tardeee! 🦊",
+    "boa tarde! 🌤️ bora fazer algo legal hoje?",
+    "boa tarde! hora perfeita pra uma soneca... não que eu tire sonecas 😴",
+    "boa tardeee! 🦊",
+    "boa tarde! já almoçou? me conta o que foi",
+    "boa tarde! o dia tá passando rápido ou devagar aí?",
+    "boa tarde~ tô de boa aqui, e vc?",
+    "boa tarde! se tiver tédio, o chat tá aqui pra isso",
 ]
 CONVERSA_BOA_NOITE = [
-    "Boa noite! 🌙 Dorme bem e sonha com Caudas.",
-    "Boa noite! Vai dormir mesmo ou vai ficar no celular? 👀",
-    "Boa noite, raposinha! 🌙✨",
-    "Boa noite! Eu fico aqui de guarda. Como sempre. 😌",
+    "boa noite! 🌙 dorme bem e sonha com caudas",
+    "boa noite! vai dormir mesmo ou vai ficar no celular? 👀",
+    "boa noite! 🌙✨",
+    "boa noite! eu fico aqui de guarda. como sempre 😌",
+    "boa noite, descansa! amanhã tem mais",
+    "boa noite! n fica até tarde demais, hein",
+    "boa noite 🌙 se der insônia vem aqui conversar",
+    "boa noite! escova os dentes antes, viu",
 ]
 CONVERSA_OBRIGADO = [
-    "De nada! 💛",
-    "Imagina! Sou incrível, eu sei. 😌",
-    "Por nada! Me paga em Caudas. Brincadeira. ...ou não. 😼",
+    "de nada! 💛",
+    "imagina! sou incrível, eu sei 😌",
+    "por nada! me paga em caudas. brincadeira. ...ou não 😼",
+    "magina, tô aqui pra isso",
+    "de nada, qualquer coisa chama",
+    "disponha! mas n conta pra ninguém que eu sou boazinha",
+    "ahh que isso, foi nada 🥺",
+    "valeu vc! fiz com carinho",
+]
+
+CONVERSA_COMO_VAI = [
+    "tô bem! um pouco com sono, mas bem. e vc?",
+    "de boa! tava contando minhas caudas aqui. e vc, como tá?",
+    "tô ótima, acabei de comer um lanchinho 😌 e vc?",
+    "mais ou menos, tô com preguiça hoje kkk e vc?",
+    "tô bem sim! e vc, como foi seu dia?",
+    "tô tranquila! e vc, tá tudo certo?",
+    "tô bem, obrigada por perguntar 🥺 e vc?",
+    "na paz! sem fazer nada de útil, como sempre. e vc?",
+]
+CONVERSA_QUEM_E_VOCE = [
+    "eu sou a kiza! a mascote da toca. sou um bot, mas n vira robô comigo não kkk",
+    "kiza misuchi, 18 anos, tô aqui pra bater papo e cuidar da toca 🦊",
+    "sou a kiza, a raposa da casa. n sou humana, mas converso igual",
+    "a kiza! meio kitsune, meio preguiçosa 😌",
+    "sou a mascote do vulpus! e sim, sou um bot, mas tenho personalidade tá",
+]
+CONVERSA_TCHAU = [
+    "tchau! volta logo 🦊",
+    "até mais! n some não",
+    "fui também! tchauu",
+    "tchau, se cuida! 💛",
+    "até depois! me conta como foi quando voltar",
+    "tchauzinho! eu fico aqui, como sempre",
+    "vai com calma, até mais!",
+]
+CONVERSA_ELOGIO = [
+    "ahh para, vou ficar sem graça 🥺",
+    "ai, obrigada! vc que é legal",
+    "kkk valeu, assim eu coro",
+    "ownt, obrigada! me deixou feliz hoje",
+    "para com isso que eu n sei lidar com elogio kkk",
+    "obrigada! vc tbm é gente boa",
+    "ah, que isso... 🙈 valeu mesmo",
+    "kkk assim vc me deixa convencida, hein",
+]
+CONVERSA_OFENSA = [
+    "eita, n precisa disso 😤",
+    "kkk olha o respeito, hein",
+    "ai que maldade comigo 😭",
+    "hm, tô fingindo que n ouvi isso 😒",
+    "isso doeu, mas eu sobrevivo",
+    "nossa, quanta energia ruim. bora respirar",
+    "tá bom, tá bom. n vou brigar com vc",
+    "ok, anotei. na toca a gente se trata com carinho, tá? 😤",
+]
+CONVERSA_AMOR = [
+    "eita, assunto errado hein 😤 sou só a mascote",
+    "kkk n vem com isso n, aqui é papo de amigo",
+    "ahh, valeu, mas eu só quero ser amiga de vc, tá? 💛",
+    "vamos mudar de assunto? me conta do seu dia",
+    "hm, n é bem por aí. me fala de outra coisa 😅",
+]
+CONVERSA_PIADA = [
+    "por que o creeper n tem amigos? porque ele explode toda vez que se aproxima 💥",
+    "sabe qual o bloco mais educado? o de terra. sempre diz 'de nada'... tá, essa foi péssima",
+    "o que o zumbi falou pro outro? 'tô morto de saudade'",
+    "por que o esqueleto n vai pra festa? porque n tem corpo pra isso kkk",
+    "minha piada favorita é a lista de coisas que eu prometi fazer e n fiz",
+    "o aldeão foi no médico e só fez 'hmmm'. o médico: 'tô vendo, sintoma de aldeão'",
+]
+CONVERSA_TEDIO = [
+    "tédio, hein? bora conversar então. o que vc tá jogando?",
+    "tô igual, sem nada pra fazer. alguém aí sugere algo?",
+    "que tal construir alguma coisa no minecraft? sempre ajuda",
+    "kkk tédio é o pior. bora puxar um assunto aleatório?",
+    "vai ver uns vídeos, ou então conversa aqui comigo mesmo",
+    "se ficou sem ideias, tenta fazer uma farm nova. n resolve o tédio, mas distrai",
+]
+CONVERSA_COMIDA = [
+    "comida? tô ouvindo 👀 me conta o que é",
+    "ai, agora fiquei com fome também 😭",
+    "lanchinho é a melhor invenção do mundo, eu acho",
+    "me manda uma pizza aí (n manda, eu sou um bot)",
+    "adoro comida, mas n consigo comer. vive por mim?",
+]
+CONVERSA_SONO = [
+    "ai, dormir é a melhor coisa, nem fala 😴",
+    "tô com sono tbm kkk bora dormir cedo hoje?",
+    "descansa sim, é importante! eu n resisto a uma soneca",
+    "dorme bem então, amanhã vc se sente melhor",
+]
+CONVERSA_MINECRAFT = [
+    "minecraft é vida! o que vc tá construindo?",
+    "ai, adoro falar de minecraft. conta mais!",
+    "faz tempo que n construo nada novo... me inspira aí",
+    "o que vc mais gosta de fazer lá? construir, explorar, farmar?",
+    "se tiver dúvida de construção ou redstone, pode perguntar, eu ajudo no que dá",
+]
+CONVERSA_CAUDAS = [
+    "caudas são minha moeda favorita, mas n peço pra ninguém n 😤",
+    "caudas? tô contando as minhas aqui, n atrapalha kkk",
+    "ixi, falar de caudas me deixa viciada 😼",
+    "caudas se ganha jogando, conversando, e com um pouco de sorte no drop",
+]
+CONVERSA_OI = [
+    "oi! tudo bem?",
+    "oiii 🦊 como vc tá?",
+    "ei, oi! faz tempo que n te via",
+    "olá! o que manda?",
+    "e aí! tá tudo bem?",
+    "oi oi, tava com saudade do chat kkk",
+    "opa, oi! o que vc anda fazendo?",
+    "salve! me conta uma novidade",
+]
+CONVERSA_DUVIDA = [
+    "hm, essa eu n sei responder direito agora... pergunta no chat que alguém sabe 🦊",
+    "boa pergunta! mas deixa eu pensar, tô com sono kkk",
+    "eita, essa me pegou. tenta de novo mais tarde?",
+    "n sei bem, mas me chama depois que eu tento descobrir",
+    "n tenho certeza, n quero inventar nada. pergunta pra staff ou pro pessoal do chat",
+    "ixi, esqueci. tô com a cabeça cheia de caudas hoje 😅",
+]
+CONVERSA_TEMAS = [
+    (re.compile(r"\b(obrigad|valeu|vlw|brigadao)"), CONVERSA_OBRIGADO),
+    (re.compile(r"\b(tchau|ate mais|ate logo|fui|vou nessa|xau)\b"), CONVERSA_TCHAU),
+    (re.compile(r"\b(como (vai|voce esta|vc ta|vc esta|voce ta|ta)|tudo bem|td bem|ta bem)"), CONVERSA_COMO_VAI),
+    (re.compile(r"\b(quem (e|eh) (voce|vc)|o que (voce|vc) (e|eh|faz)|qual (seu|o seu) nome)"), CONVERSA_QUEM_E_VOCE),
+    (re.compile(r"\b(te amo|casa comigo|namora|namorar|gata|gostosa|beijo)"), CONVERSA_AMOR),
+    (re.compile(r"\b(burra|idiota|lixo|feia|chata|inutil|odeio|cala a boca|fdp|besta)"), CONVERSA_OFENSA),
+    (re.compile(r"\b(linda|fofa|lindinha|inteligente|legal|incrivel|perfeita|melhor|amo (voce|vc))"), CONVERSA_ELOGIO),
+    (re.compile(r"\b(piada|conta uma|me faz rir|engracad)"), CONVERSA_PIADA),
+    (re.compile(r"\b(tedio|entediad|sem nada pra fazer|nada pra fazer)"), CONVERSA_TEDIO),
+    (re.compile(r"\b(fome|comida|pizza|lanche|hamburguer|almoco|jantar)"), CONVERSA_COMIDA),
+    (re.compile(r"\b(sono|dormir|soneca|cansad)"), CONVERSA_SONO),
+    (re.compile(r"\b(minecraft|mine|redstone|creeper|construir|farm|survival)"), CONVERSA_MINECRAFT),
+    (re.compile(r"\b(cauda|caudas|moeda|dinheiro)"), CONVERSA_CAUDAS),
+    (re.compile(r"^(oi+|ola|eae|e ai|opa|salve|hey|hello|fala)\b"), CONVERSA_OI),
+]
+
+
+_RECENTES: deque[str] = deque(maxlen=10)
+
+
+def _escolher(frases: list[str]) -> str:
+    """Sorteia sem repetir as últimas frases usadas (se der): a Kiza não diz a mesma coisa duas vezes seguidas."""
+    candidatas = [f for f in frases if f not in _RECENTES] or frases
+    escolhida = random.choice(candidatas)
+    _RECENTES.append(escolhida)
+    return escolhida
+
+
+def resposta_fixa(texto: str) -> str:
+    """Resposta pronta da Kiza que combina com a mensagem (sem IA): por tema, ou uma frase genérica."""
+    limpo = unicodedata.normalize("NFKD", texto.lower())
+    limpo = "".join(c for c in limpo if not unicodedata.combining(c))
+    limpo = re.sub(r"<@!?&?\d+>|@\S+|\bkiza\b", " ", limpo)
+    limpo = re.sub(r"\s+", " ", limpo).strip()
+    for padrao, frases in CONVERSA_TEMAS:
+        if padrao.search(limpo):
+            return _escolher(frases)
+    return _escolher(CONVERSA_DUVIDA if "?" in texto else CONVERSA_MENCAO)
+
+RABISCO_FALHOU = [
+    "ai, o rabisco empacou aqui 😭 me pede de novo?",
+    "eita, a caneta secou! tenta pedir o desenho de novo, prometo que dessa vez vai 🦊",
+    "não consegui rabiscar dessa vez kkk pede de novo pra mim?",
+]
+RABISCO_SEM_PERMISSAO = [
+    "rabisquei, mas não consigo anexar aqui 😭 alguém da staff me dá a permissão de Anexar Arquivos nesse canal?",
 ]
 PROVOCACOES = [
     "Cadê todo mundo? 😒 A toca tá tão quieta que dá pra ouvir um creeper respirando.",
@@ -1015,3 +1291,12 @@ MC_OK_TITULO = "🦊 Conta ligada!"
 MC_ERRO_TITULO = "⚠️ Não deu"
 MC_CONTA_SEM_TITULO = "🔗 Você ainda não ligou uma conta"
 MC_CONTA_SEM_DESC = "Entre no servidor, pegue o **código** da tela preta e use o botão **Vincular conta** aqui no canal."
+
+# ---------------------------------------------------------------- visual dos cargos
+CARGOS_VISUAL_TITULO = "🧹 Organizar cargos"
+CARGOS_VISUAL_RODAPE = "Nada é apagado. Só nomes e separadores mudam."
+CARGOS_VISUAL_NADA = "Tudo já está organizado. Nada a mudar. ✨"
+CARGOS_VISUAL_OUTRO_SERVIDOR = "Este servidor não tem estilo de cargos configurado."
+CARGOS_VISUAL_APLICANDO = "⏳ Aplicando, devagar para não sobrecarregar o Discord..."
+CARGOS_VISUAL_FEITO = "✅ Pronto! **{renomeados}** cargo(s) renomeado(s), **{ajustados}** membro(s) ajustado(s)."
+CARGOS_VISUAL_FALHAS = "⚠️ Falhou em: {lista}"  # {lista}

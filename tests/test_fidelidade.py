@@ -17,6 +17,7 @@ from cogs.fidelidade import (
     eh_saudacao,
     faltando,
     ids_canais,
+    nome_de_canal_de_conversa,
     novatos_saudados,
     progresso,
 )
@@ -57,6 +58,13 @@ def test_novatos_saudados_marcando_ou_dizendo_bem_vindo():
     muitos = list(range(1, 11))
     assert novatos_saudados("bem-vindos!", set(), muitos) == muitos[-config.BOAS_VINDAS_GENERICA_MAX:]
     assert novatos_saudados("oi", {1, 2, 3, 4, 5}, muitos) == [1, 2, 3, 4, 5]  # marcando, vale para todos os marcados
+
+
+def test_canal_de_conversa_por_nome():
+    for nome in ("chat", "geral", "chat-geral", "💬・chat", "Chat Principal", "papo-geral"):
+        assert nome_de_canal_de_conversa(nome), nome
+    for nome in ("chatbot-config", "boas-vindas", "regras", "memes", "", None, "gerais-staff"):
+        assert not nome_de_canal_de_conversa(nome), nome
 
 
 def test_conta_nova_nao_rende_boas_vindas():
@@ -131,7 +139,7 @@ def test_migracao_importa_bumps_antigos(tmp_path, monkeypatch):
         return versoes, resultado
 
     versoes, (a, b, c) = rodar(cenario)
-    assert versoes == [1, 2, 3, 4, 5]
+    assert versoes == [1, 2, 3, 4, 5, 6, 7]
     assert (a, b) == (2, 1)
     assert c == {tipo: 0 for tipo in config.FIDELIDADE_TIPOS}
 

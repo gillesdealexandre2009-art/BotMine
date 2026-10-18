@@ -53,6 +53,9 @@ class Geral(commands.Cog):
         e.add_field(name="Versão", value=config.VERSAO)
         e.add_field(name="Servidores", value=str(len(self.bot.guilds)))
         e.add_field(name="Python / discord.py", value=f"{platform.python_version()} / {discord.__version__}")
+        cerebro = self.bot.get_cog("Cerebro")
+        if cerebro is not None:
+            e.add_field(name="🧠 Cérebro", value=cerebro.resumo_status(), inline=False)
         await interaction.response.send_message(embed=e, ephemeral=True)
 
 

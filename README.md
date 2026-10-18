@@ -1,10 +1,11 @@
 # 🦊 Kiza — bot do servidor VULPUS
 
-Bot de comunidade (Python 3.11+, discord.py 2.x, SQLite). **Sem IA de chat e sem nenhuma dependência de LLM**:
-a personalidade da Kiza vive só nos textos fixos (`textos.py`). Independente do SONHE (token, banco e config próprios).
+Bot de comunidade (Python 3.11+, discord.py 2.x, SQLite). **Cérebro (IA de conversa, opcional):** com `CEREBRO_API_KEY` (Groq, plano grátis, modelo `openai/gpt-oss-120b`) ou `ANTHROPIC_API_KEY` definida a Kiza conversa de verdade (cog `cerebro`: humor do dia, memória por pessoa, `/memoria ver|esquecer`, desenhos). Desenhos podem usar outro provedor com `DESENHO_API_KEY` (Gemini grátis). Se a IA estiver fora ou no limite, ela responde com frases prontas por assunto (`textos.py`). `/status` mostra a saúde do cérebro. Independente do SONHE (token, banco e config próprios).
+
+**Variáveis opcionais:** `CEREBRO_API_KEY`, `CEREBRO_API_URL`, `CEREBRO_MODELO`, `DESENHO_API_KEY`, `DESENHO_MODELO`, `BACKUP_ENVIAR_DISCORD=true` (copia o backup diário para o canal de logs da staff).
 
 **Módulos:** entrada (boas-vindas, adeus, autorole, regras, verificação) · painel de cargos · tickets · moderação e casos ·
-automod e modo raid · logs · regras por canal e sugestões · XP e níveis · economia · união de toca · Mines · fidelidade e pedido de rank (caminho até Helper) · `/ajuda` `/status` · backup.
+automod e modo raid · logs · regras por canal e sugestões · XP e níveis · economia · união de toca · Mines · fidelidade e pedido de rank (caminho até Helper) · quiz, forca e missões diárias · figurinhas · `/ajuda` `/status` · backup e resumo semanal da staff.
 
 ## 1. Discord Developer Portal (uma vez)
 1. Crie o aplicativo → **Bot** → *Reset Token* (guarde o token, ele vira `DISCORD_TOKEN`).
@@ -112,7 +113,10 @@ Qualquer pessoa vê o quadro de qualquer outra (é motivador). Quando alguém da
 
 **Passo a passo da staff:** `/setup` → *Cargos base* → **Criar cargo Porteiro** e escolher o cargo **Helper** → *Publicações* → marcar os canais → *Publicar painéis* → **Tickets** (para aparecer o botão novo) → dar o Porteiro para quem recebe a galera → conferir `/configuracao`.
 
-## 8. Ponte com o servidor de Minecraft (v1.5.0)
+## 7.1 Presença da Kiza (cog `presenca`, precisa do cérebro ligado)
+A Kiza posta sozinha: **desenho do dia** no canal de mídias, **lembrete a cada 2 dias** no canal de publicações (postar o servidor nas redes e colar o link: cada link vale +1 na fidelidade) e **capítulo da lore todo mês** no canal de lore (o do `/setup`, ou um canal com "lore" no nome). IDs padrão em `config.py` (`CANAL_MIDIAS_ID`, `CANAL_PUBLICACOES_ID`); o canal de publicações só é usado se o nome tiver "public". Admin: `/kiza-postar` testa na hora sem mexer na agenda.
+
+## 8. Ponte com o servidor de Minecraft (v1.10.0)
 A Kiza conversa com o servidor por uma porta HTTP própria (`cogs_minecraft/ponte.py`), protegida por um segredo. O que ela faz:
 
 | Canal (chave do `/setup`) | O que aparece |

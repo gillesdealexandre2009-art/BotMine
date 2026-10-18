@@ -43,7 +43,7 @@ Os canais vêm do `/setup` (`canal_<chave>`) ou, sem isso, de `config.MC_CANAIS_
 O token e o endereço também ficam no servidor do jogo (arquivos de segredo da pasta `config/`); nunca no repositório.
 
 ## Dados e permanência
-Tudo está no SQLite do bot (migração 5): `mc_vinculos`, `mc_codigos`, `mc_sync`, `mc_chat`, `mc_historico`. Nada é apagado numa
+Tudo está no SQLite do bot (migração 7): `mc_vinculos`, `mc_codigos`, `mc_sync`, `mc_chat`, `mc_historico`. Nada é apagado numa
 atualização; desvincular só tira a ligação (o saldo e o XP ficam) e deixa um registro em `mc_historico`.
 `transacoes` continua sendo o livro-razão: cada soma vinda do jogo tem `tipo = 'minecraft'` e a chave do envio em `ref`.
 

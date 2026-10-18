@@ -227,10 +227,45 @@ ALTER TABLE tickets ADD COLUMN avaliado_por INTEGER;
 """,
 ))
 
+MIGRACOES.append((
+    5,
+    """
+-- Cérebro da Kiza: fatos duradouros que ela lembra sobre cada pessoa (curtos, ditos pela própria pessoa).
+CREATE TABLE cerebro_memorias (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id  INTEGER NOT NULL,
+    user_id   INTEGER NOT NULL,
+    fato      TEXT    NOT NULL,
+    criado_em INTEGER NOT NULL
+);
+CREATE INDEX ix_cerebro_memorias_user ON cerebro_memorias (guild_id, user_id, id);
+""",
+))
+
+MIGRACOES.append((
+    6,
+    """
+-- Figurinhas: inventário por pessoa e o controle do pacotinho grátis do dia.
+CREATE TABLE figurinhas (
+    guild_id    INTEGER NOT NULL,
+    user_id     INTEGER NOT NULL,
+    carta_id    TEXT    NOT NULL,
+    quantidade  INTEGER NOT NULL CHECK (quantidade > 0),
+    primeira_em INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, user_id, carta_id)
+);
+CREATE TABLE figurinhas_gratis (
+    guild_id INTEGER NOT NULL,
+    user_id  INTEGER NOT NULL,
+    dia      TEXT    NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+""",
+))
 
 # Ponte com o Minecraft: vínculo Discord <-> jogador, códigos de vínculo, livro de sincronização (idempotente) e fila do chat.
 MIGRACOES.append((
-    5,
+    7,
     """
 -- Um vínculo por pessoa e por conta do jogo. mc_id é o id do jogador no mundo (pode mudar se o mundo mudar: então a conta é
 -- reconhecida pelo nome e o id é atualizado); mc_nome_norm é o nome sem caixa nem espaços repetidos.

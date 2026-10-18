@@ -30,11 +30,30 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.5.0"
+VERSAO = "1.10.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
 DATABASE_PATH = os.getenv("DATABASE_PATH", "kiza.db")
+# Cérebro (IA de conversa). Sem chave, a Kiza volta às frases fixas de textos.py.
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+# Provedor grátis compatível com OpenAI (padrão: Groq). Tem prioridade sobre a Anthropic quando a chave existe.
+# Gemini: CEREBRO_API_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+CEREBRO_API_KEY = os.getenv("CEREBRO_API_KEY", "")
+CEREBRO_API_URL = os.getenv("CEREBRO_API_URL", "https://api.groq.com/openai/v1/chat/completions")
+CEREBRO_MODELO = os.getenv("CEREBRO_MODELO") or (
+    "openai/gpt-oss-120b" if CEREBRO_API_KEY else "claude-sonnet-5-5"
+)
+# Provedor só para desenhos (opcional). Gemini grátis: aistudio.google.com/apikey. Sem chave, desenha com o do chat.
+# tolera espaço sobrando no nome ou no valor da variável (acontece ao colar no painel da Railway)
+DESENHO_API_KEY = next((v.strip() for k, v in os.environ.items() if k.strip() == "DESENHO_API_KEY"), "")
+DESENHO_API_URL = os.getenv(
+    "DESENHO_API_URL", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+)
+DESENHO_MODELO = os.getenv("DESENHO_MODELO", "gemini-flash-latest")
+# Onde a Kiza posta sozinha (cog presenca). Dá para trocar por servidor com a config presenca_canal_midia / presenca_canal_publicacoes.
+CANAL_MIDIAS_ID = _inteiro("CANAL_MIDIAS_ID", 1549291538138529852)
+CANAL_PUBLICACOES_ID = _inteiro("CANAL_PUBLICACOES_ID", 1555798080798851163)
 BACKUP_DIR = os.getenv("BACKUP_DIR", str(Path(DATABASE_PATH).resolve().parent / "backups"))
 BACKUP_RETENCAO = _inteiro("BACKUP_RETENCAO", 7)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -46,6 +65,7 @@ COGS_PADRAO = [
     "configuracao",
     "entrada",
     "cargos",
+    "cargos_visual",
     "tickets",
     "logs",
     "moderacao",
@@ -61,6 +81,11 @@ COGS_PADRAO = [
     "vida",
     "bump",
     "fidelidade",
+    "cerebro",
+    "presenca",
+    "figurinhas",
+    "quiz",
+    "missoes",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -232,6 +257,16 @@ AJUSTES = {
     "drop_min": (30, 1, 100000, "Valor mínimo de um drop"),
     "drop_max": (80, 1, 100000, "Valor máximo de um drop"),
     "conversa": (1, 0, 1, "1 = Kiza responde menções e cumprimentos"),
+    "reacoes": (1, 0, 1, "1 = Kiza reage com emoji a mensagens do chat (sem responder)"),
+    "quiz_premio": (15, 0, 100000, "Caudas por acerto no /quiz"),
+    "quiz_max_dia": (5, 0, 100, "Quantos acertos do /quiz pagam por pessoa por dia"),
+    "forca_premio": (20, 0, 100000, "Caudas por vitória na /forca"),
+    "forca_max_dia": (3, 0, 100, "Quantas vitórias da /forca pagam por pessoa por dia"),
+    "missao_premio": (25, 0, 100000, "Caudas por missão diária concluída"),
+    "cerebro": (1, 0, 1, "1 = cérebro (IA) ligado: a Kiza conversa de verdade quando chamada"),
+    "cerebro_max_dia": (400, 0, 100000, "Respostas do cérebro por dia no servidor (controle de custo)"),
+    "figurinha_preco": (150, 0, 100000, "Caudas por pacotinho de figurinha"),
+    "figurinha_gratis": (1, 0, 1, "1 = 1 pacotinho de figurinha grátis por dia"),
     "provocar_h": (4, 0, 48, "Horas mínimas entre provocações de chat parado (0 = desliga)"),
     "chat_parado_min": (120, 15, 1440, "Minutos sem mensagem para o chat contar como parado"),
     "niver_premio": (200, 0, 100000, "Caudas de presente de aniversário"),
