@@ -11,7 +11,7 @@
 // o mesmo envio é repetido com a mesma chave e o Discord não soma duas vezes. A primeira soma de uma conta nova manda o total
 // do jogo inteiro (base 0): essa é a fusão das duas contas.
 import { InputPermissionCategory, Player, system, world } from "@minecraft/server";
-import { config, dadosJogador, editarJogador } from "../core/db.js";
+import { config, dadosJogador, descarregarJogadores, editarJogador } from "../core/db.js";
 import { online } from "../core/jogadores.js";
 import { chamar, ponteViva } from "../core/ponte_cliente.js";
 import { desmarcarTravado, marcarTravado, travados } from "../core/ponte_estado.js";
@@ -33,6 +33,18 @@ import { temSelo } from "./kitsune.js";
  * @property {number} proximaSoma  tick da próxima soma de Caudas e XP
  * @property {boolean} somando
  */
+
+/**
+ * Edita e grava NA HORA (sem o atraso em lote): o vínculo e a base de soma não podem se perder se o servidor for parado
+ * de repente, senão o jogo manda o total de novo e o Discord soma em dobro.
+ * @param {Player | string} alvo
+ * @param {(dados: import("../core/db.js").DadosJogador) => any} fn
+ */
+function editarJa(alvo, fn) {
+  const dados = editarJogador(alvo, fn);
+  descarregarJogadores();
+  return dados;
+}
 
 const CICLO_TICKS = 20;
 const CONSULTA_TRAVADO_TICKS = 100;
@@ -142,7 +154,7 @@ async function consultar(p, e) {
     const discordId = String(r.corpo.discord_id ?? "");
     const discordNome = String(r.corpo.discord_nome ?? "");
     const novo = !d.vinculo || d.vinculo.discordId !== discordId;
-    editarJogador(p, (x) => {
+    editarJa(p, (x) => {
       if (novo) {
         if (r.corpo.ja_somou === true) {
           // o bot já somou esta conta antes (o jogo só perdeu a anotação): sem fusão de novo, nada de contar em dobro.
@@ -162,7 +174,7 @@ async function consultar(p, e) {
   if (r.status === 200 && r.corpo?.ok && r.corpo.vinculado === false) {
     if (d.vinculo) {
       // a staff desvinculou: o jogo também esquece (as Caudas e o XP ficam como estão)
-      editarJogador(p, (x) => {
+      editarJa(p, (x) => {
         x.vinculo = null;
         x.sync = { baseC: 0, baseX: 0, pend: null };
       });
@@ -249,7 +261,7 @@ async function somar(id, nome) {
   if (!pend) {
     pend = { chave: novaChave(), c: d0.caudas - d0.sync.baseC, x: d0.xp - d0.sync.baseX, sc: d0.caudas, sx: d0.xp };
     const guardar = pend;
-    editarJogador(id, (x) => {
+    editarJa(id, (x) => {
       x.sync.pend = guardar;
     });
   }
@@ -258,7 +270,7 @@ async function somar(id, nome) {
   if (r.status === 200 && r.corpo?.ok && Number.isFinite(r.corpo.saldo) && Number.isFinite(r.corpo.xp)) {
     const saldo = Math.max(0, Math.floor(r.corpo.saldo));
     const xp = Math.max(0, Math.floor(r.corpo.xp));
-    editarJogador(id, (x) => {
+    editarJa(id, (x) => {
       // o que o jogador ganhou ou gastou enquanto a resposta vinha continua valendo, por cima do total do Discord
       x.caudas = Math.max(0, saldo + (x.caudas - envio.sc));
       x.xp = Math.max(0, xp + (x.xp - envio.sx));
@@ -268,7 +280,7 @@ async function somar(id, nome) {
   }
   if (r.status === 403 && r.corpo?.erro === "nao_vinculado") {
     // o bot não conhece mais o vínculo: o jogo esquece, e o ciclo trava de novo
-    editarJogador(id, (x) => {
+    editarJa(id, (x) => {
       x.vinculo = null;
       x.sync = { baseC: 0, baseX: 0, pend: null };
     });
