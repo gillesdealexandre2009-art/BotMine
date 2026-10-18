@@ -301,6 +301,11 @@ AJUSTES = {
     "doacao_min": (5, 1, 1000, "Menor doação por PIX, em reais"),
     "doacao_max": (500, 1, 10000, "Maior doação por PIX, em reais"),
     "pix_validade_min": (30, 5, 120, "Minutos que o PIX gerado vale"),
+    "prox_ligada": (1, 0, 1, "1 = chat de voz por proximidade do Minecraft ligado"),
+    "prox_entrar": (24, 4, 128, "Blocos de distância para entrar na mesma sala de voz"),
+    "prox_sair": (32, 4, 160, "Blocos de distância para sair da sala (maior que o de entrar, para ninguém ficar trocando)"),
+    "prox_espera_seg": (6, 1, 120, "Segundos mínimos entre dois movimentos da mesma pessoa de sala"),
+    "prox_max_salas": (15, 1, 50, "Máximo de salas de proximidade ao mesmo tempo"),
 }
 # Quantos meses de Kitsune dá para comprar de uma vez (o preço é o do mês vezes isto).
 KITSUNE_MESES = (1, 3, 6, 12)

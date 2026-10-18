@@ -1561,3 +1561,19 @@ CAIXA_GERAL_SEM_META = "💖 Doação geral (sem meta)"
 DOAR_ONDE_TITULO = "💖 Para onde vai a doação?"
 DOAR_ONDE_DESC = "Escolha a meta que você quer ajudar, ou a **caixinha geral**."
 DOAR_ONDE_PLACEHOLDER = "Escolha para onde vai"
+
+# --- Chat de proximidade (voz) ---
+PROX_SEM_PERMISSAO = "Não consegui criar a categoria ou a sala. Me dê a permissão **Gerenciar canais** (e **Mover membros**) e tente de novo."
+PROX_CONFIGURADO = (
+    "Pronto! Entre em {entrada} para falar por proximidade: quem estiver a até **{distancia} blocos** de você no jogo cai na mesma sala. "
+    "Precisa ter a conta ligada (`/minecraft vincular`). Para parar de ser movido, use `/proximidade pausar`."
+)
+PROX_PAUSADO = "Pausado: não vou mais te mover de sala. Use `/proximidade retomar` para voltar."
+PROX_RETOMADO = "Voltei a te mover de sala por proximidade quando você estiver na sala de entrada."
+PROX_STATUS_TITULO = "🎧 Chat de proximidade"
+PROX_STATUS_LIGADA = "Ligado: **{estado}**"
+PROX_STATUS_SEM_CANAIS = "Ainda não há sala de entrada. Use `/proximidade configurar`."
+PROX_STATUS_ENTRADA = "Entrada: {sala} ({n} pessoa(s))"
+PROX_STATUS_SALA = "{sala}: {quem}"
+PROX_STATUS_VISTO = "Última posição recebida do jogo: {quando}"
+PROX_STATUS_AJUSTES = "Entra a **{entrar}** blocos, sai a **{sair}**, espera **{espera}** s entre movimentos."

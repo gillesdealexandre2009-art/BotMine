@@ -163,6 +163,7 @@ export const CAMPOS = {
   vinculoObrigatorio: "Vínculo com o Discord obrigatório (sem ele: tela preta e parado). Só vale no servidor com a ponte",
   vinculoSyncSeg: "Vínculo: de quantos em quantos segundos soma Caudas e XP com o Discord (10 a 600)",
   ponteChatLigada: "Ponte do chat ligada (mensagens, entradas e saídas vão e vêm do Discord)",
+  proximidadeLigada: "Chat de voz por proximidade: manda ao Discord a posição de quem tem a conta ligada (só com a ponte)",
   argLigado: "Mistério da Vulpus ligado",
   argTentativas: "Mistério: tentativas no terminal antes de travar",
   argEsperaMin: "Mistério: espera depois de errar demais (min)",

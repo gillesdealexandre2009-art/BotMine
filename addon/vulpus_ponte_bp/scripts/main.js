@@ -13,7 +13,7 @@ import { secrets, variables } from "@minecraft/server-admin";
 const ID_PEDIDO = "vulpus:ponte_req";
 const ID_RESPOSTA = "vulpus:ponte_res";
 /** Só estas rotas do bot (o pack principal nunca pede outra coisa). */
-const CAMINHO_VALIDO = /^\/mc\/(saude|vinculo|sync|eventos|status|chat)(\?desde=-?\d{1,12})?$/;
+const CAMINHO_VALIDO = /^\/mc\/(saude|vinculo|sync|eventos|status|chat|prox)(\?desde=-?\d{1,12})?$/;
 const TAMANHO_PEDACO = 1200;
 const TEMPO_LIMITE_SEG = 10;
 const CORPO_MAXIMO = 8000;

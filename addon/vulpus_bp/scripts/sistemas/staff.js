@@ -391,7 +391,7 @@ const GRUPOS = [
     chaves: ["mesasLigadas", "mesasDecoracao", "textoAlcance", "mesasVelhaSeg", "mesasXadrezMin", "mesasContagemSeg", "mesasAssentoAlturaCm"],
   },
   { id: "quiosque", cat: textos.BOTAO_FEIRA, titulo: textos.GRUPO_QUIOSQUE, icone: ICONES.ajustes, chaves: ["quiosqueLigado", "quiosqueFalaSeg"] },
-  { id: "vinculo", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_VINCULO, icone: ICONES.ajustes, chaves: ["vinculoObrigatorio", "vinculoSyncSeg", "ponteChatLigada"] },
+  { id: "vinculo", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_VINCULO, icone: ICONES.ajustes, chaves: ["vinculoObrigatorio", "vinculoSyncSeg", "ponteChatLigada", "proximidadeLigada"] },
   { id: "arg", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ARG, icone: ICONES.ajustes, chaves: ["argLigado", "argTentativas", "argEsperaMin", "argGlitchPct"] },
   { id: "minigames", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_MINIGAMES, icone: ICONES.ajustes, chaves: ["mgLigado", "mgMinJogadores", "mgMaxJogadores", "mgContagemSeg", "mgCheioSeg", "mgRefillSeg", "mgBwCamasSeg", "mgPilaresSeg", "mgPilaresLavaSeg", "mgBridgeRespawnSeg", "mgBordaInicioSeg", "mgBordaDuracaoSeg", "mgDanoBorda", "mgLimiteSeg", "mgPremioVitoria", "mgPremioKill", "mgPremioCama", "mgMinPremio", "mgCaudasDia", "mgRecargaPremioSeg", "mgEsperaSaidaSeg"] },
   { id: "pets", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_PETS, icone: ICONES.ajustes, chaves: ["petsLigados", "petCusto", "petEsperaSeg", "petMaxDia", "petPityRaro", "petPityLendario", "petBonusPct", "petMaxAtivos", "petKitsuneLote"] },

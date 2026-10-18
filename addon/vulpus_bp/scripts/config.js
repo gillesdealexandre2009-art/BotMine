@@ -119,6 +119,7 @@ export const PADROES = {
   vinculoObrigatorio: true,
   vinculoSyncSeg: 30,
   ponteChatLigada: true,
+  proximidadeLigada: true,
   masmCaudasDia: 600,
   masmDanoPct: 60,
   masmRaioCredito: 20,

@@ -56,3 +56,12 @@ atualização; desvincular só tira a ligação (o saldo e o XP ficam) e deixa u
 - Rank/ações críticas não devem ir numa fila em memória "consumida ao ler": use confirmação (ack) e persista no banco.
 - Entregar item/dinheiro em dois lugares exige "claim primeiro, entrega depois" com trava compartilhada, senão duplica.
 - Serializar itens perde dados (poções, bundles, banners...): use allowlist de itens.
+
+## Chat de voz por proximidade
+
+O jogo manda `POST /mc/prox` (`{pos:[{id,nome,d,x,y,z,livre}]}`) a cada ~3 s quando alguém anda, e a cada 15 s como sinal de vida; só vão jogadores com a conta ligada. O cog `proximidade.py` junta quem está a até `prox_entrar` blocos (e só separa além de `prox_sair`, histerese) e **move** cada pessoa para uma sala de voz temporária da categoria "Proximidade". Sozinho, ou em minigame/Intervalo/mistério/outra dimensão/sumido (`livre=false`), a pessoa volta para a sala de entrada.
+
+- O Discord **não** deixa um bot mudar o volume de ninguém: a proximidade é por grupos de sala, não por distância.
+- Só move quem já está numa sala da categoria (entrar na sala de entrada é o "sim"); nunca puxa gente de outras calls.
+- `/proximidade configurar` (admin) cria a categoria e a entrada; `/proximidade pausar|retomar` (qualquer um); `/proximidade status` (staff). Ajustes em `/ajustes`: `prox_ligada`, `prox_entrar` (24), `prox_sair` (32), `prox_espera_seg` (6), `prox_max_salas` (15). O bot precisa de **Gerenciar canais** e **Mover membros**.
+- No jogo: `proximidadeLigada` (painel da staff, grupo do vínculo). O pack da ponte (0.1.1) passou a aceitar o caminho `/mc/prox`.

@@ -34,6 +34,7 @@ import config
 import textos
 from cogs_minecraft import embeds
 from cogs_minecraft.embeds import Contexto
+from cogs_minecraft.proximidade import validar_pontos
 from utils.helpers import arquivo_banner, formatar_moeda, formatar_numero, nivel_por_xp, publicar_ou_editar, responder
 from utils.permissoes import checar_membro, exigir_nivel
 from utils.pix import assinatura_valida
@@ -215,6 +216,7 @@ class Ponte(commands.Cog):
                 web.post("/mc/sync", self.rota_sync),
                 web.post("/mc/eventos", self.rota_eventos),
                 web.post("/mc/status", self.rota_status),
+                web.post("/mc/prox", self.rota_prox),
                 web.get("/mc/chat", self.rota_chat),
                 web.post("/pix/webhook", self.rota_pix),
             ]
@@ -411,6 +413,21 @@ class Ponte(commands.Cog):
             )
         codigo, expira = await banco.mc_criar_codigo(gid, mc_id, nome, VALIDADE_CODIGO, novo_codigo())
         return web.json_response({"ok": True, "vinculado": False, "codigo": codigo, "expira_em": expira})
+
+    async def rota_prox(self, request: web.Request) -> web.Response:
+        """Posições dos jogadores (chat de voz por proximidade). Responde na hora; o movimento nas calls acontece depois."""
+        corpo = await self._json(request)
+        gid = self.guild_id()
+        if gid is None:
+            return web.json_response({"ok": False, "erro": "sem_servidor"}, status=503)
+        prox = self.bot.get_cog("Proximidade")
+        if prox is None:
+            return web.json_response({"ok": True, "ativo": False})
+        pontos = validar_pontos(corpo)
+        tarefa = asyncio.create_task(prox.processar(gid, pontos))
+        self._tarefas.add(tarefa)
+        tarefa.add_done_callback(self._tarefas.discard)
+        return web.json_response({"ok": True, "ativo": True, "n": len(pontos)})
 
     async def rota_sync(self, request: web.Request) -> web.Response:
         corpo = await self._json(request)
