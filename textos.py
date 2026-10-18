@@ -373,8 +373,9 @@ KITSUNE_TITULO = "🦊 Seja um Kitsune"
 KITSUNE_DESC = (
     "Os **Kitsunes** são as raposas que ajudam a manter a toca de pé. Sem eles, eu estaria "
     "dormindo num servidor desligado. 😿\n\n"
-    "**Como virar Kitsune:** dê **boost** no servidor (o plano mensal, cerca de R$ 10).\n"
-    "O cargo fica com você enquanto o boost estiver ativo."
+    "**Como virar Kitsune:** pague por **PIX** aqui mesmo, direto pelo botão abaixo ou com `/kitsune`. "
+    "Cada mês custa **{kitsune_preco}** e o selo vale pelo tempo que você comprou. "
+    "Pagou, eu libero na hora, no Discord e no jogo (basta ter ligado sua conta com `/minecraft vincular`)."
 )
 KITSUNE_CAMPOS = [
     ("⚡ XP em dobro", "Kitsune ganha **2x XP** em toda mensagem. Sobe de rank e desbloqueia cores mais rápido."),
@@ -453,6 +454,12 @@ COMANDOS_CAMPOS = [
         "`/minecraft conta`: mostra a conta ligada, seu nível e suas {moeda}\n"
         "IP e porta em {ip}",
     ),
+    (
+        "💖 Apoio",
+        "`/kitsune`: compre o selo Kitsune por PIX ({kitsune_preco} por mês)\n"
+        "`/doar`: ajude a pagar a hospedagem com o valor que quiser\n"
+        "`/apoiar`: as metas do mês e os botões de apoio",
+    ),
     ("ℹ️ Outros", "`/ajuda`: este resumo, onde você estiver\n`/status`: vê se eu estou acordada"),
 ]
 COMANDOS_RODAPE = "Me marque no chat se quiser conversar. Prometo responder. Talvez."
@@ -497,8 +504,14 @@ DUVIDAS_CAMPOS = [
     ("Fui punido injustamente, e agora?", "Abra um tíquete e explique com calma. A staff revisa."),
     (
         "Como viro Kitsune?",
-        "Dando boost no servidor (ou por brinde ou tempo limitado, a critério do dono). Está tudo no canal **seja-um-kitsune**. "
-        "O selo é liberado **dentro do jogo** e o cargo no Discord vem sozinho depois que você liga sua conta com `/minecraft vincular`.",
+        "Comprando por PIX com `/kitsune` (ou pelo botão do canal **seja-um-kitsune**): {kitsune_preco} por mês, pelo tempo que você quiser. "
+        "O selo é liberado **dentro do jogo** e o cargo no Discord vem sozinho depois que você liga sua conta com `/minecraft vincular`. "
+        "Boost não dá Kitsune. Também dá para ganhar o selo por brinde ou por tempo limitado, a critério do dono.",
+    ),
+    (
+        "Como ajudo o servidor?",
+        "Doando qualquer valor por PIX com `/doar` (a partir de {doacao_min}) ou comprando Kitsune. No canal de doações tem as **metas** do mês e o mural de quem ajudou. "
+        "Doação não dá vantagem no jogo: é só para a toca continuar de pé. 💖",
     ),
     ("Marquei meu aniversário errado!", "Abra um tíquete com uma prova da data (um documento com o resto tampado serve). Um admin corrige."),
     ("O que é o bump?", "É o `/bump` do DISBOARD: ele sobe a toca na lista pública de servidores. Dá para fazer a cada 2h, e quem faz ganha {moeda}."),
@@ -511,6 +524,16 @@ DUVIDAS_CAMPOS = [
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
+    (
+        "1.11.0",
+        "Apoie a toca por PIX",
+        [
+            "🦊 Dá para **comprar Kitsune** por PIX com `/kitsune`: R$ 15 por mês, pelo tempo que você escolher (1, 3, 6 ou 12 meses). Pagou, o selo e o cargo chegam sozinhos",
+            "💖 `/doar`: ajude a pagar a hospedagem com o valor que quiser, a partir de R$ 5. Tem mural de apoiadores e dá para doar anonimamente",
+            "🎯 **Metas** de arrecadação com barra de progresso no canal de doações. A staff cria com `/meta`",
+            "🚫 **Boost não dá mais Kitsune**: o selo agora é só por compra, brinde ou tempo limitado",
+        ],
+    ),
     (
         "1.10.0",
         "Ponte com o servidor",
@@ -1331,3 +1354,99 @@ MC_KITSUNE_CMD_NADA = "Ninguém por aqui."
 MC_KITSUNE_CMD_RODAPE = "O selo só se dá e se tira dentro do jogo (Painel de Dono → Kitsune com prazo). O cargo do Discord segue sozinho."
 MC_KITSUNE_SEM_PRAZO_LINHA = "sem prazo"
 MC_KITSUNE_ATE_LINHA = "até {data} ({relativo})"
+
+
+# ---------------------------------------------------------------- apoio por PIX (Kitsune e doações)
+APOIO_TITULO = "💖 Ajude a toca a continuar de pé"
+APOIO_DESC = (
+    "A hospedagem do servidor é paga todo mês do bolso do dono. Quem ajuda mantém as luzes acesas. 🦊\n\n"
+    "• **Virar Kitsune:** {kitsune_preco} por mês, pelo tempo que quiser. O selo e o cargo chegam na hora.\n"
+    "• **Doar:** qualquer valor a partir de {doacao_min}. Vai para a meta do mês.\n\n"
+    "É tudo por **PIX**, sem sair do Discord. Doação **não dá vantagem no jogo**."
+)
+APOIO_RODAPE = "Obrigada, de coração, a cada pessoa que ajuda. 🧡"
+APOIO_BOTAO_KITSUNE = "Virar Kitsune"
+APOIO_BOTAO_DOAR = "Doar"
+APOIO_BOTAO_METAS = "Ver metas"
+APOIO_METAS_TITULO = "🎯 Metas"
+APOIO_SEM_METAS = "Nenhuma meta ativa agora. Mas qualquer ajuda é bem-vinda! 💖"
+APOIO_META_LINHA = "{barra} **{pct}%**\n{arrecadado} de {alvo}{prazo} · {apoiadores} apoiador(es)"
+APOIO_META_PRAZO = " · até {data}"
+APOIO_META_DESCRICAO = "_{descricao}_\n"
+APOIO_MES = "📅 Neste mês a toca recebeu **{valor}**. Obrigada!"
+APOIO_RECENTES = "💬 Últimas doações"
+APOIO_RECENTE_LINHA = "**{nome}** · {valor}"
+APOIO_ANONIMO = "Alguém especial"
+
+APOIO_DESLIGADO = "O apoio por PIX está desligado agora."
+APOIO_SEM_PROVEDOR = "O PIX ainda não foi ligado (falta a chave do Mercado Pago). Avise o dono."
+APOIO_VALOR_INVALIDO = "O valor tem que ser um número inteiro de reais entre {minimo} e {maximo}."
+APOIO_MUITOS_PENDENTES = "Você já tem {n} cobranças esperando pagamento. Pague, ou espere elas expirarem."
+APOIO_ERRO_PIX = "Não consegui gerar o PIX agora. Tente de novo daqui a pouco; se continuar, avise a staff."
+APOIO_ESCOLHA_MESES = "🦊 Quantos meses de Kitsune?"
+APOIO_ESCOLHA_DESC = "Cada mês custa **{preco}** e dura **{dias} dias**. Se você já é Kitsune, o tempo novo é somado ao que você tem."
+APOIO_MESES_OPCAO = "{n} mês(es) · {valor}"
+APOIO_MESES_PLACEHOLDER = "Escolha o tempo"
+
+PIX_TITULO_KITSUNE = "🦊 Kitsune por {meses} mês(es)"
+PIX_TITULO_DOACAO = "💖 Doação"
+PIX_DESC = (
+    "Valor: **{valor}**\n\n"
+    "**Como pagar:** abra o app do seu banco, vá em **PIX → Pix Copia e Cola** e cole o código abaixo "
+    "(ou leia o QR code). Confira o valor e o nome antes de confirmar.\n\n"
+    "Vale até {expira}. Quando o pagamento cair, eu libero **na hora**, não precisa avisar ninguém."
+)
+PIX_CAMPO_CODIGO = "📋 Copia e Cola"
+PIX_BOTAO_COPIAR = "Copiar o código"
+PIX_BOTAO_CONFERIR = "Já paguei"
+PIX_BOTAO_CANCELAR = "Cancelar"
+PIX_AINDA_NAO = "Ainda não vi o pagamento. Pode levar alguns segundos depois de pagar; eu aviso assim que cair. 🦊"
+PIX_JA_PAGO = "Esse pagamento já foi confirmado. 💖"
+PIX_CANCELADO = "Cobrança cancelada. Se você já tiver pago, me avise na staff que eu confiro."
+PIX_NAO_E_SEU = "Essa cobrança não é sua."
+PIX_EXPIROU = "Essa cobrança expirou. Gere outra com `/kitsune` ou `/doar`."
+
+PAGO_KITSUNE_DM = (
+    "🦊 **Pagamento confirmado!** Você agora é **Kitsune** até **{data}** ({relativo}).\n"
+    "{jogo}"
+)
+PAGO_KITSUNE_JOGO_LIGADO = "No jogo o selo chega na próxima vez que você entrar ou em até 1 minuto, se já estiver online."
+PAGO_KITSUNE_JOGO_SEM_CONTA = "Para o selo aparecer no Minecraft, ligue sua conta com `/minecraft vincular`."
+PAGO_DOACAO_DM = "💖 **Doação recebida:** {valor}. Muito obrigada por ajudar a toca a continuar de pé! 🧡"
+PAGO_META_COMPLETA = "🎉 **Meta batida:** {titulo}! Obrigada a todo mundo que ajudou. 🧡"
+PAGO_MURAL = "💖 **{nome}** doou **{valor}**{meta}!{mensagem}"
+PAGO_MURAL_META = " para a meta **{titulo}**"
+PAGO_MURAL_MENSAGEM = "\n> {mensagem}"
+PAGO_MURAL_KITSUNE = "🦊 **{nome}** virou Kitsune! Obrigada por apoiar a toca."
+PAGO_LOG_VALOR_DIFERENTE = "Pagamento {id} chegou com valor diferente (esperado {esperado}, veio {veio}). Não liberei nada; confira no Mercado Pago."
+PAGO_LOG_DEVOLVIDO = "O pagamento {id} ({tipo}, {valor}) foi devolvido ou contestado no Mercado Pago. Confira se precisa tirar o Kitsune."
+
+DOAR_MODAL_TITULO = "Doar por PIX"
+DOAR_MODAL_VALOR = "Valor em reais (ex.: 10)"
+DOAR_MODAL_MENSAGEM = "Mensagem para o mural (opcional)"
+DOAR_MODAL_ANONIMO = "Aparecer como anônimo? (sim ou não)"
+
+META_CRIADA = "🎯 Meta **{titulo}** criada (id `{id}`): {alvo}. As doações novas já entram nela."
+META_EDITADA = "Meta `{id}` atualizada."
+META_ENCERRADA = "Meta `{id}` encerrada."
+META_NAO_ACHADA = "Não achei a meta `{id}` (ou ela já foi encerrada)."
+META_VALOR_INVALIDO = "O valor da meta tem que ser um número inteiro de reais, de 1 a 1.000.000."
+META_PRAZO_INVALIDO = "O prazo é em dias, de 1 a 3650 (0 = sem prazo)."
+META_NADA_PARA_EDITAR = "Diga pelo menos uma coisa para mudar."
+META_LISTA_TITULO = "🎯 Metas"
+META_LISTA_LINHA = "`{id}` · **{titulo}** · {arrecadado} / {alvo}"
+META_LISTA_ENCERRADAS = "Encerradas há pouco"
+META_FIM_CONCLUIDA = "concluída"
+META_FIM_PRAZO = "prazo acabou"
+META_FIM_ENCERRADA = "encerrada pela staff"
+META_PRAZO_ACABOU = "⏰ O prazo da meta **{titulo}** acabou ({arrecadado} de {alvo})."
+
+APOIO_ADMIN_TITULO = "💳 Pagamentos recentes"
+APOIO_ADMIN_VAZIO = "Nenhum pagamento confirmado ainda."
+APOIO_ADMIN_LINHA = "`{id}` · {tipo} · {valor} · <@{user}> · {quando}"
+APOIO_ADMIN_TIPO = {"kitsune": "🦊 Kitsune", "doacao": "💖 Doação"}
+APOIO_ADMIN_TOTAIS = "Mês: **{mes}** (Kitsune {kitsune}, doações {doacoes}) · Total: **{total}**"
+APOIO_PAINEL_PUBLICADO = "Painel de apoio publicado em {canal}."
+APOIO_PAINEL_SEM_CANAL = "Defina o canal **Doações e metas** no `/setup` primeiro."
+APOIO_CONFERIDO = "Conferi {n} pagamento(s) pendente(s)."
+APOIO_LOG_EXPIRADOS = "{n} cobrança(s) PIX expiraram sem pagamento."

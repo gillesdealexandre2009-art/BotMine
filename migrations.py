@@ -348,3 +348,48 @@ CREATE TABLE mc_kitsune (
 );
 """,
 ))
+
+
+# Apoio ao servidor: pagamentos por PIX (compra de Kitsune e doações) e as metas de arrecadação. Valores sempre em centavos.
+MIGRACOES.append((
+    9,
+    """
+CREATE TABLE metas (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id       INTEGER NOT NULL,
+    titulo         TEXT    NOT NULL,
+    descricao      TEXT    NOT NULL DEFAULT '',
+    alvo_centavos  INTEGER NOT NULL CHECK (alvo_centavos > 0),
+    criada_em      INTEGER NOT NULL,
+    prazo          INTEGER NOT NULL DEFAULT 0,      -- ts em segundos; 0 = sem prazo
+    encerrada_em   INTEGER NOT NULL DEFAULT 0,      -- 0 = ativa
+    motivo_fim     TEXT    NOT NULL DEFAULT ''      -- concluida, prazo ou encerrada
+);
+CREATE INDEX ix_metas_ativas ON metas (guild_id, encerrada_em);
+
+CREATE TABLE pagamentos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id        INTEGER NOT NULL,
+    user_id         INTEGER NOT NULL,
+    tipo            TEXT    NOT NULL CHECK (tipo IN ('kitsune', 'doacao')),
+    valor_centavos  INTEGER NOT NULL CHECK (valor_centavos > 0),
+    meses           INTEGER NOT NULL DEFAULT 0,
+    meta_id         INTEGER,                         -- doação: a meta que recebeu (NULL = geral)
+    anonimo         INTEGER NOT NULL DEFAULT 0,
+    mensagem        TEXT    NOT NULL DEFAULT '',
+    status          TEXT    NOT NULL DEFAULT 'pendente' CHECK (status IN ('pendente', 'pago', 'expirado', 'cancelado')),
+    ref             TEXT    NOT NULL UNIQUE,         -- a nossa referência, enviada ao provedor
+    provedor_id     TEXT    UNIQUE,                  -- o id do pagamento no provedor (Mercado Pago)
+    copia_cola      TEXT    NOT NULL DEFAULT '',
+    qr_base64       TEXT    NOT NULL DEFAULT '',
+    criado_em       INTEGER NOT NULL,
+    expira_em       INTEGER NOT NULL,
+    pago_em         INTEGER NOT NULL DEFAULT 0,
+    kitsune_ate     INTEGER NOT NULL DEFAULT 0,      -- ms: fim do prazo que esta compra dá (já somado às anteriores)
+    aplicado        INTEGER NOT NULL DEFAULT 0,      -- o Discord já recebeu o efeito (cargo, aviso, mural)
+    jogo_ok         INTEGER NOT NULL DEFAULT 0       -- o jogo já confirmou o selo (só compra de Kitsune)
+);
+CREATE INDEX ix_pagamentos_status ON pagamentos (status, expira_em);
+CREATE INDEX ix_pagamentos_pessoa ON pagamentos (guild_id, user_id);
+""",
+))

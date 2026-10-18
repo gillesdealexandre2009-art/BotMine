@@ -30,7 +30,7 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.10.0"
+VERSAO = "1.11.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -86,6 +86,7 @@ COGS_PADRAO = [
     "figurinhas",
     "quiz",
     "missoes",
+    "apoio",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -169,6 +170,7 @@ CANAIS_CONFIG = {
     "mc_historico": "Histórico da Vulpus (clãs e guerras do Minecraft)",
     "mc_login": "Login do Minecraft (painel de vínculo e registro de entradas)",
     "mc_online": "Contador de jogadores do Minecraft (o nome do canal vira \"🟢 Online | (N) 🦊\")",
+    "doacoes": "Doações e metas (painel de apoio por PIX e mural de quem ajudou)",
 }
 # Se um desses canais não estiver no /setup, a Kiza procura um canal cujo nome contenha a palavra
 # (sem acento e sem maiúscula). Configurar no /setup sempre vence.
@@ -181,6 +183,7 @@ CANAIS_POR_NOME = {
     "duvidas": "duvidas",
     "chat": "chat",
     "perolas": "perolas",
+    "doacoes": "doac",
 }
 CARGOS_BASE = {
     "visitante": "Visitante (cargo de quem acabou de entrar)",
@@ -189,6 +192,7 @@ CARGOS_BASE = {
     "bump": "Avisos de bump (mencionado quando dá para dar /bump de novo)",
     "porteiro": "Porteiro (marcado nas boas-vindas para a equipe receber quem chega)",
     "helper": "Helper (dado pela staff no tíquete Solicitar rank)",
+    "apoiador": "Apoiador (quem já doou por PIX; a Kiza dá sozinha)",
 }
 GRUPOS_CARGOS = {
     "cores": {"titulo": "🎨 Cores", "placeholder": "🎨 Escolha a cor do seu nome"},
@@ -291,7 +295,15 @@ AJUSTES = {
     "helper_call_min": (2880, 0, 600000, "Minutos na call de voz para poder pedir Helper (2880 = 48 h)"),
     "helper_nivel": (5, 0, 500, "Nível mínimo de XP para poder pedir Helper"),
     "helper_dias": (30, 0, 3650, "Dias mínimos no servidor para poder pedir Helper"),
+    "apoio_ligado": (1, 0, 1, "1 = compra de Kitsune e doações por PIX ligadas"),
+    "kitsune_preco": (15, 1, 1000, "Reais por mês de Kitsune (compra por PIX)"),
+    "kitsune_dias_mes": (30, 1, 31, "Dias que cada mês de Kitsune comprado dura"),
+    "doacao_min": (5, 1, 1000, "Menor doação por PIX, em reais"),
+    "doacao_max": (500, 1, 10000, "Maior doação por PIX, em reais"),
+    "pix_validade_min": (30, 5, 120, "Minutos que o PIX gerado vale"),
 }
+# Quantos meses de Kitsune dá para comprar de uma vez (o preço é o do mês vezes isto).
+KITSUNE_MESES = (1, 3, 6, 12)
 
 # --------------------------------------------------------------------------- fidelidade (caminho até Helper)
 # tipo: (emoji, rótulo, ajuste com a meta). A ordem aqui é a ordem do quadro do /fidelidade.

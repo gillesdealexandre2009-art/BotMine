@@ -136,6 +136,28 @@ Sem configurar nada no `/setup`, ela usa os ids padrão de `config.MC_CANAIS_PAD
 
 **Para ligar:** variável `MC_BRIDGE_TOKEN` (segredo; sem ela a ponte não abre a porta) e um domínio público para o serviço no Railway. Detalhes e a lista de rotas em `cogs_minecraft/README.md`.
 
+## 8.1 Apoio por PIX: Kitsune e doações (v1.11.0, cog `apoio`)
+Quem quer ajudar paga por **PIX** sem sair do Discord, e o dinheiro cai direto na conta do dono no **Mercado Pago**. Nada de cartão: só o valor, uma referência da Kiza e um e-mail genérico passam pela API.
+
+| Comando / botão | O que faz |
+|---|---|
+| `/kitsune [meses]` (ou o botão do canal seja-um-kitsune) | compra o selo Kitsune: R$ 15 por mês (`kitsune_preco`), de 1, 3, 6 ou 12 meses; cada mês dura 30 dias (`kitsune_dias_mes`). O prazo **soma** ao que a pessoa já tem |
+| `/doar valor [mensagem] [anonimo] [meta]` | doação a partir de R$ 5 (`doacao_min`) até R$ 500 (`doacao_max`); vai para a meta escolhida (ou a mais antiga ativa) e aparece no mural, com recado ou anônima |
+| `/apoiar` | mostra as metas e os botões (Virar Kitsune, Doar, Ver metas) |
+| `/meta criar\|editar\|encerrar` (admin), `/meta lista` (staff) | metas de arrecadação com barra de progresso; fecham sozinhas quando batem o valor ou passa o prazo |
+| `/apoio painel` (admin) | publica/atualiza o painel no canal **Doações e metas** (`doacoes` no `/setup`); `/apoio pagamentos` mostra os últimos e os totais; `/apoio conferir` força a conferência |
+
+**Como o pagamento é confirmado.** A Kiza grava uma cobrança "pendente", pede o PIX ao Mercado Pago e mostra o "copia e cola" e o QR só para a pessoa (vale 30 min, `pix_validade_min`). Quando o PIX cai, o Mercado Pago avisa em `POST /pix/webhook` (na mesma porta da ponte) e, de qualquer jeito, a Kiza confere as cobranças pendentes a cada 15 s. Nos dois caminhos ela **consulta o pagamento na API** e só libera se estiver aprovado, com o **valor** e a **referência** certos; um aviso falso não credita nada. Cada pagamento vale **uma vez** (garantido no banco, mesmo com o aviso, o laço e o botão "Já paguei" chegando juntos), e um PIX que cai depois do prazo ainda vale. Se o bot cair no meio, o que foi pago e não entregue é reentregue ao voltar. Pagamento devolvido ou com valor diferente avisa a staff nos logs gerais.
+
+**Kitsune comprado.** O cargo vem na hora; o selo no jogo vai na próxima sincronização da ponte (`/mc/sync` devolve `kitsune_conceder`, o jogo aplica o fim do prazo e confirma com `kitsune_ok`; repetir é seguro). Quem ainda não ligou a conta recebe o cargo agora e o selo quando ligar. **Boost não dá mais Kitsune.** Doação não dá nenhuma vantagem; só o cargo opcional **Apoiador** (`cargo_apoiador` no `/setup`).
+
+**Para ligar (Railway → variáveis):**
+- `MERCADOPAGO_ACCESS_TOKEN` (obrigatória): a "Access Token" de produção da aplicação no Mercado Pago (mercadopago.com.br/developers). A conta precisa ter uma chave PIX cadastrada.
+- `PUBLIC_BASE_URL` (recomendada): o domínio público do bot (ex.: `https://botmine-production-70b0.up.railway.app`); com ela a cobrança já pede o aviso automático. No painel do Mercado Pago, em Webhooks, aponte para `<domínio>/pix/webhook` com o evento **Pagamentos**.
+- `MERCADOPAGO_WEBHOOK_SECRET` (opcional): a "assinatura secreta" do webhook; se existir, a Kiza recusa avisos sem assinatura válida.
+- `PIX_EMAIL_PAGADOR` (opcional): e-mail genérico exigido pela API.
+Sem a chave, o apoio fica desligado e o resto da Kiza segue normal. Valores e ligar/desligar: `/ajustes` (`apoio_ligado`, `kitsune_preco`, `kitsune_dias_mes`, `doacao_min`, `doacao_max`, `pix_validade_min`). Migração 9 (`pagamentos`, `metas`).
+
 ## 9. Problemas comuns
 - **Comandos não aparecem:** confira o convite (`applications.commands`); globais podem demorar; use `DEV_GUILD_ID` para testar.
 - **"Falha ao carregar o cog":** veja o log; o resto do bot continua de pé.

@@ -36,6 +36,7 @@ from cogs_minecraft import embeds
 from cogs_minecraft.embeds import Contexto
 from utils.helpers import arquivo_banner, formatar_moeda, formatar_numero, nivel_por_xp, publicar_ou_editar, responder
 from utils.permissoes import checar_membro, exigir_nivel
+from utils.pix import assinatura_valida
 
 if TYPE_CHECKING:  # pragma: no cover
     from main import Kiza
@@ -215,6 +216,7 @@ class Ponte(commands.Cog):
                 web.post("/mc/eventos", self.rota_eventos),
                 web.post("/mc/status", self.rota_status),
                 web.get("/mc/chat", self.rota_chat),
+                web.post("/pix/webhook", self.rota_pix),
             ]
         )
         return app
@@ -356,6 +358,8 @@ class Ponte(commands.Cog):
 
     @web.middleware
     async def _autenticar(self, request: web.Request, handler):  # type: ignore[no-untyped-def]
+        if request.path == "/pix/webhook":  # o aviso do Mercado Pago não tem o nosso token: quem confere é o cog de apoio, na API
+            return await handler(request)
         enviado = request.headers.get("Authorization", "")
         esperado = f"Bearer {self.token}"
         if not self.token or not hmac.compare_digest(enviado.encode(), esperado.encode()):
@@ -425,10 +429,47 @@ class Ponte(commands.Cog):
         resultado = await banco.mc_aplicar_sync(gid, vinculo["user_id"], vinculo["mc_id"], chave, d_caudas, d_xp)
         if not resultado["repetido"] and d_xp > 0:
             await self._depois_do_xp(gid, vinculo["user_id"], resultado["xp_antes"], resultado["xp"])
+        # Kitsune comprado por PIX: o jogo confirma o que já aplicou (kitsune_ok) e recebe o que ainda falta (kitsune_conceder)
+        confirmados = corpo.get("kitsune_ok")
+        if isinstance(confirmados, list):
+            await banco.pg_jogo_ok(gid, vinculo["user_id"], [i for i in confirmados if isinstance(i, int) and not isinstance(i, bool)])
+        agora_ms = int(time.time() * 1000)
+        pendentes = await banco.pg_kitsune_pendentes_jogo(gid, vinculo["user_id"])
+        conceder = [{"id": int(c["id"]), "ate": int(c["kitsune_ate"])} for c in pendentes if int(c["kitsune_ate"]) > agora_ms]
+        vencidas = [int(c["id"]) for c in pendentes if int(c["kitsune_ate"]) <= agora_ms]  # acabou antes de o jogo saber: nada a dar
+        if vencidas:
+            await banco.pg_jogo_ok(gid, vinculo["user_id"], vencidas)
         estado = self._selo_do_corpo(corpo.get("kitsune"))
-        if estado is not None:
+        if estado is not None and not conceder:  # com compra por entregar, o selo que o jogo conta ainda está velho
             await self.receber_kitsune(gid, vinculo["user_id"], vinculo["mc_nome"], *estado)
-        return web.json_response({"ok": True, "saldo": resultado["saldo"], "xp": resultado["xp"]})
+        resposta: dict[str, Any] = {"ok": True, "saldo": resultado["saldo"], "xp": resultado["xp"]}
+        if conceder:
+            resposta["kitsune_conceder"] = conceder
+        return web.json_response(resposta)
+
+    async def rota_pix(self, request: web.Request) -> web.Response:
+        """Aviso do Mercado Pago ("pagamento mudou"). Não credita nada por conta própria: manda o cog de apoio conferir na API."""
+        apoio = self.bot.get_cog("Apoio")
+        if apoio is None:
+            return web.json_response({"ok": False, "erro": "apoio_desligado"}, status=503)
+        try:
+            corpo = await request.json()
+        except Exception:
+            corpo = {}
+        if not isinstance(corpo, dict):
+            corpo = {}
+        dados = corpo.get("data")
+        data_id = str((dados.get("id") if isinstance(dados, dict) else None) or request.query.get("data.id") or request.query.get("id") or "")
+        segredo = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "").strip()
+        if segredo and not assinatura_valida(segredo, request.headers.get("x-signature", ""), request.headers.get("x-request-id", ""), data_id):
+            return web.json_response({"ok": False, "erro": "assinatura"}, status=401)
+        tipo = str(corpo.get("type") or request.query.get("type") or "payment")
+        if tipo != "payment" or not data_id.isdigit():
+            return web.json_response({"ok": True})
+        tarefa = asyncio.create_task(apoio.processar_webhook(data_id))  # type: ignore[attr-defined]
+        self._tarefas.add(tarefa)
+        tarefa.add_done_callback(self._tarefas.discard)
+        return web.json_response({"ok": True})
 
     async def rota_eventos(self, request: web.Request) -> web.Response:
         corpo = await self._json(request)

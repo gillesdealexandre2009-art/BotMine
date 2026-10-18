@@ -93,3 +93,11 @@ kiza/
 - [x] Comandos `/minecraft vincular`, `conta`, `desvincular` (staff) e `painel` (admin); painel de login com botões e modal
 - [x] Canais: chat-bridge, ip-e-porta, histórico e log-in (ids padrão em `config.MC_CANAIS_PADRAO`, `/setup` pode trocar)
 - [x] Textos, /ajuda, vitrine de comandos, FAQ, changelog 1.5.0, README; XP por mensagem menor; testes em tests/test_ponte_minecraft.py
+
+### Bloco 7 — Apoio por PIX (v1.11.0)
+- [x] Migração 9: `pagamentos` (PIX de Kitsune e doações, só vale uma vez) e `metas`
+- [x] `utils/pix.py`: provedor Mercado Pago (cobrança com copia e cola e QR, consulta, assinatura do webhook); sempre confere o pagamento na API
+- [x] `cogs/apoio.py`: `/kitsune`, `/doar`, `/apoiar`, `/meta`, `/apoio`; painel e mural no canal de doações; laço de 15 s que confere pendentes; reentrega do que ficou pago e não entregue
+- [x] Ponte: `POST /pix/webhook` (sem o token da ponte; só manda conferir) e `/mc/sync` entrega o Kitsune comprado ao jogo (`kitsune_conceder` / `kitsune_ok`)
+- [x] Addon: `concederPorCompra` (selo com prazo vindo do Discord); textos sem "booster"
+- [x] Boost não dá mais Kitsune (texto do painel, FAQ e changelog 1.11.0); testes em tests/test_apoio.py

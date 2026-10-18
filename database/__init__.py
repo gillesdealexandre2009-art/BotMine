@@ -27,6 +27,7 @@ from migrations import MIGRACOES
 from .comunidade import ComunidadeMixin
 from .configuracao import ConfigMixin
 from .economia import EconomiaMixin
+from .apoio import ApoioMixin
 from .minecraft import MinecraftMixin
 from .moderacao import ModeracaoMixin
 from .util import agora
@@ -37,7 +38,7 @@ log = logging.getLogger("kiza.db")
 __all__ = ["Banco", "agora"]
 
 
-class Banco(ConfigMixin, EconomiaMixin, ModeracaoMixin, ComunidadeMixin, MinecraftMixin):
+class Banco(ConfigMixin, EconomiaMixin, ModeracaoMixin, ComunidadeMixin, MinecraftMixin, ApoioMixin):
     def __init__(self, caminho: str) -> None:
         self.caminho = caminho
         self._conn: Optional[aiosqlite.Connection] = None

@@ -6,7 +6,7 @@ Em canais de fórum (infos/dúvidas costumam ser fórum), o painel vira um post 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import discord
 from discord.ext import commands
@@ -14,6 +14,7 @@ from discord.ext import commands
 import config
 import textos
 from utils.helpers import canal_da_funcao, com_banner, embed, publicar_ou_editar, publicar_ou_editar_forum
+from utils.pix import reais
 
 if TYPE_CHECKING:  # pragma: no cover
     from main import Kiza
@@ -37,6 +38,9 @@ class Vitrine(commands.Cog):
             "duvidas": ("duvidas", "canal de dúvidas"),
         }
         valores = {"moeda": config.MOEDA_NOME, "sugestor": f"<@&{config.CARGO_SUGESTOR_ID}>"}
+        # preços do apoio por PIX (os ajustes do servidor, em reais)
+        valores["kitsune_preco"] = reais(await self.bot.banco.ajuste(guild.id, "kitsune_preco") * 100)
+        valores["doacao_min"] = reais(await self.bot.banco.ajuste(guild.id, "doacao_min") * 100)
         for campo, (chave, generico) in nomes.items():
             canal = await canal_da_funcao(self.bot, guild, chave, TEXTO_OU_FORUM)
             valores[campo] = canal.mention if canal else f"**{generico}**"
@@ -63,6 +67,7 @@ class Vitrine(commands.Cog):
         *,
         titulo_post: str = "",
         aceita_forum: bool = False,
+        view: Optional[discord.ui.View] = None,
     ) -> tuple[bool, str]:
         tipos = TEXTO_OU_FORUM if aceita_forum else (discord.TextChannel,)
         canal: Union[discord.TextChannel, discord.ForumChannel, None] = await canal_da_funcao(self.bot, guild, chave, tipos)
@@ -75,7 +80,7 @@ class Vitrine(commands.Cog):
                     self.bot, guild, canal, chave, titulo_post or e.title or chave, embeds=embeds, arquivos=arquivos
                 )
                 return True, post.mention
-            await publicar_ou_editar(self.bot, guild, canal, chave, embeds=embeds, arquivos=arquivos)
+            await publicar_ou_editar(self.bot, guild, canal, chave, embeds=embeds, arquivos=arquivos, view=view)
         except discord.HTTPException:
             log.warning("Falha ao publicar %s", chave, exc_info=True)
             return False, textos.SETUP_ERRO_PUBLICAR
@@ -94,7 +99,9 @@ class Vitrine(commands.Cog):
         cargo = guild.get_role(cargo_id) if cargo_id else None
         if cargo is not None:
             e.color = cargo.color if cargo.color.value else e.color
-        return await self._publicar(guild, "kitsune", e)
+        apoio = self.bot.get_cog("Apoio")  # os botões de compra por PIX (cogs/apoio.py), se o cog estiver carregado
+        view = apoio.view_painel() if apoio is not None else None  # type: ignore[attr-defined]
+        return await self._publicar(guild, "kitsune", e, view=view)
 
     async def publicar_lore(self, guild: discord.Guild) -> tuple[bool, str]:
         e = self._montar(textos.LORE_TITULO, "", textos.LORE_CAPITULOS, textos.LORE_RODAPE, {})

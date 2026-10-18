@@ -33,6 +33,9 @@ Os canais vêm do `/setup` (`canal_<chave>`) ou, sem isso, de `config.MC_CANAIS_
 | `POST /mc/status` `{online: [...]}` | atualiza o painel do ip-e-porta |
 | `GET /mc/chat?desde=N` | mensagens do chat-bridge depois de N (`-1` = só o marcador) |
 | `GET /mc/saude` | `{ok: true}` |
+| `POST /pix/webhook` | aviso do Mercado Pago (sem o token da ponte): manda o cog `apoio` conferir o pagamento na API. Veja o README da raiz, seção 8.1 |
+
+`POST /mc/sync` também aceita `kitsune_ok: [ids]` (compras de Kitsune que o jogo já aplicou) e devolve `kitsune_conceder: [{id, ate}]` com as que faltam.
 
 ## Configuração (variáveis de ambiente do Railway)
 | variável | para quê |

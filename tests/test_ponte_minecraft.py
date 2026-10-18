@@ -668,8 +668,7 @@ def test_changelog_fala_do_cargo_sugestor_e_o_faq_tambem():
     assert config.CARGO_SUGESTOR_ID == 1561367707914604594 and "mc_online" in config.CANAIS_CONFIG
     assert config.MC_CANAIS_PADRAO["mc_online"] == 1561364244505829396
     valores = {"moeda": config.MOEDA_NOME, "sugestor": "<@&1561367707914604594>"}
-    versao, _titulo, itens = textos.CHANGELOG[0]
-    assert versao == "1.10.0"
+    versao, _titulo, itens = next(c for c in textos.CHANGELOG if c[0] == "1.10.0")
     texto = "\n".join(i.format(**valores) for i in itens)
     assert "<@&1561367707914604594>" in texto and "sugeriu algo útil" in texto and "quantas pessoas estão jogando" in texto
     faq = [v for p, v in textos.DUVIDAS_CAMPOS if "Sugestor" in p]
