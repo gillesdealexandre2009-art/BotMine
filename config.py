@@ -116,6 +116,8 @@ MC_MAX_JOGADORES = _inteiro("MC_MAX_JOGADORES", 8)
 CARGO_KITSUNE_PADRAO = 1550348302065860649
 # Cargo dado a quem sugeriu algo útil que o dono aprovou ou usou.
 CARGO_SUGESTOR_ID = 1561367707914604594
+# Canal dos updates do Minecraft (usado quando "changelog_mc" não está no /setup)
+CANAL_UPDATES_MC_ID = 1555314364838580307
 # O Discord só deixa renomear um canal 2 vezes a cada 10 minutos: o contador usa no máximo MC_CONTADOR_LIMITE trocas por
 # janela de MC_CONTADOR_JANELA segundos (a primeira de cada janela é imediata; a mudança que não couber espera a vez dela).
 MC_CONTADOR_JANELA = 600
@@ -161,6 +163,7 @@ CANAIS_CONFIG = {
     "kitsune": "Seja um Kitsune (vantagens do VIP)",
     "lore": "Lore (história da Kiza e da toca)",
     "changelog": "Changelog (novidades da Kiza)",
+    "changelog_mc": "Updates do Minecraft (changelog do jogo; sem isso, uso o canal de updates padrão)",
     "comandos": "Comandos (guia dos comandos)",
     "duvidas": "Dúvidas (fórum ou texto: perguntas frequentes)",
     "chat": "Chat principal (pergunta do dia, drops, conversa)",

@@ -150,13 +150,19 @@ class Vitrine(commands.Cog):
             except discord.HTTPException:
                 log.warning("Falha ao publicar changelog %s", versao, exc_info=True)
                 return False, textos.SETUP_ERRO_PUBLICAR
-        # novidades do Minecraft: depois das do bot, da mais antiga para a mais nova (as novas entram embaixo)
+        # novidades do Minecraft: vão para o canal de updates do jogo (do /setup, ou o padrão), da mais antiga para a mais nova
+        canal_mc = await canal_da_funcao(self.bot, guild, "changelog_mc")
+        if canal_mc is None:
+            alvo = guild.get_channel(config.CANAL_UPDATES_MC_ID)
+            canal_mc = alvo if isinstance(alvo, discord.TextChannel) else canal
         for chave, titulo, texto in reversed(textos.CHANGELOG_MC):
             try:
-                await publicar_ou_editar(self.bot, guild, canal, f"changelog_{chave}", embeds=[embed(titulo, texto)], content=aviso)
+                await publicar_ou_editar(self.bot, guild, canal_mc, f"changelog_{chave}", embeds=[embed(titulo, texto)], content=aviso)
             except discord.HTTPException:
                 log.warning("Falha ao publicar changelog %s", chave, exc_info=True)
                 return False, textos.SETUP_ERRO_PUBLICAR
+        if canal_mc.id != canal.id:
+            return True, f"{canal.mention} e {canal_mc.mention}"
         return True, canal.mention
 
 
