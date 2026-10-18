@@ -550,3 +550,75 @@ def test_sem_chave_o_pix_nao_liga():
             await mp.consultar("1")
 
     rodar(cenario)
+
+
+# ------------------------------------------------------------------ API de Orders (a nova do Mercado Pago)
+def test_mercado_pago_orders_cria_consulta_e_cai_para_payments(monkeypatch):
+    pedidos: list[dict] = []
+    estados = {"ORD1": ("processed", "accredited"), "ORD2": ("action_required", "waiting_transfer"), "ORD3": ("expired", "expired"),
+               "ORD4": ("refunded", "refunded"), "ORD5": ("processed", "pending")}
+
+    async def criar_ordem(request):
+        corpo = await request.json()
+        pedidos.append({"corpo": corpo, "idem": request.headers.get("X-Idempotency-Key"), "auth": request.headers.get("Authorization")})
+        if corpo["external_reference"] == "NEGADO":
+            return web.json_response({"message": "sem acesso"}, status=403)
+        return web.json_response({"id": "ORD1", "status": "action_required", "transactions": {"payments": [{"id": "PAY1", "payment_method": {
+            "id": "pix", "type": "bank_transfer", "qr_code": "000201ORDERS", "qr_code_base64": "QUJD"}}]}}, status=201)
+
+    async def ver_ordem(request):
+        oid = request.match_info["oid"]
+        if oid not in estados:
+            return web.Response(text="nao encontrado", status=404)
+        status, detalhe = estados[oid]
+        return web.json_response({"id": oid, "status": status, "status_detail": detalhe, "total_amount": "15.00", "external_reference": "KZREF",
+                                  "transactions": {"payments": [{"id": "PAY1", "status": status, "status_detail": detalhe, "amount": "15.00"}]}})
+
+    async def criar_pagamento(request):
+        return web.json_response({"id": 321, "status": "pending", "point_of_interaction": {"transaction_data": {"qr_code": "000201PAYMENTS", "qr_code_base64": ""}}}, status=201)
+
+    async def cenario():
+        app = web.Application()
+        app.add_routes([web.post("/v1/orders", criar_ordem), web.get("/v1/orders/{oid}", ver_ordem), web.post("/v1/payments", criar_pagamento)])
+        servidor = TestServer(app)
+        await servidor.start_server()
+        monkeypatch.setattr(pixmod, "API", f"http://127.0.0.1:{servidor.port}")
+        mp = MercadoPago("token")
+        try:
+            cobranca = await mp.criar(1500, "Kitsune", "KZREF", 10)
+            status = {oid: (await mp.consultar(oid)).status for oid in estados}
+            completo = await mp.consultar("ORD1")
+            caiu = await mp.criar(1500, "x", "NEGADO", 30)  # a API nova recusou: tenta a antiga
+            return cobranca, status, completo, caiu
+        finally:
+            await mp.fechar()
+            await servidor.close()
+
+    cobranca, status, completo, caiu = rodar(cenario)
+    assert cobranca == CobrancaPix("ORD1", "000201ORDERS", "QUJD")
+    corpo = pedidos[0]["corpo"]
+    assert corpo["type"] == "online" and corpo["total_amount"] == "15.00" and corpo["processing_mode"] == "automatic"
+    assert corpo["external_reference"] == "KZREF" and corpo["payer"]["email"]
+    assert corpo["transactions"]["payments"][0] == {"amount": "15.00", "payment_method": {"id": "pix", "type": "bank_transfer"}, "expiration_time": "PT30M"}
+    assert pedidos[0]["idem"] == "KZREF" and pedidos[0]["auth"] == "Bearer token"
+    assert status == {"ORD1": "aprovado", "ORD2": "pendente", "ORD3": "cancelado", "ORD4": "devolvido", "ORD5": "pendente"}
+    assert completo == PagamentoPix("ORD1", "aprovado", 1500, "KZREF")
+    assert caiu == CobrancaPix("321", "000201PAYMENTS", "")
+
+
+def test_webhook_aceita_pedido_da_api_de_orders(tmp_path):
+    async def cenario():
+        banco, apoio, prov, mural, cliente, _ = await montar_ponte(tmp_path, [MembroFalso(USER_A, "Ana")])
+        try:
+            _, pg = await apoio.cobrar(G, USER_A, "doacao", 1000, "D")
+            await banco._exec("UPDATE pagamentos SET provedor_id = 'ORD01ABC' WHERE id = ?", (pg["id"],))
+            prov.estado["ORD01ABC"] = PagamentoPix("ORD01ABC", "aprovado", 1000, pg["ref"])
+            r = await cliente.post("/pix/webhook", json={"type": "order", "action": "order.processed", "data": {"id": "ORD01ABC"}})
+            await asyncio.sleep(0.1)
+            lixo = await cliente.post("/pix/webhook", json={"type": "order", "data": {"id": "../../x"}})
+            return r.status, (await banco.pg_por_id(pg["id"]))["status"], lixo.status
+        finally:
+            await cliente.close()
+            await banco.fechar()
+
+    assert rodar(cenario) == (200, "pago", 200)

@@ -14,6 +14,7 @@ import asyncio
 import base64
 import io
 import logging
+import re
 import secrets
 import time
 from datetime import datetime, timedelta, timezone
@@ -402,7 +403,7 @@ class Apoio(commands.Cog):
 
     async def processar_webhook(self, provedor_id: str) -> bool:
         """Aviso do Mercado Pago: confere o pagamento citado (o corpo do aviso nunca é confiado)."""
-        if not self.pix.configurado or not str(provedor_id).isdigit():
+        if not self.pix.configurado or not re.fullmatch(r"[A-Za-z0-9]{4,40}", str(provedor_id)):
             return False
         banco = self.bot.banco
         pg = await banco.pg_por_provedor(str(provedor_id))

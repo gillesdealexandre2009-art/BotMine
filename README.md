@@ -153,8 +153,10 @@ Quem quer ajudar paga por **PIX** sem sair do Discord, e o dinheiro cai direto n
 
 **Para ligar (Railway → variáveis):**
 - `MERCADOPAGO_ACCESS_TOKEN` (obrigatória): a "Access Token" de produção da aplicação no Mercado Pago (mercadopago.com.br/developers). A conta precisa ter uma chave PIX cadastrada.
+  Ao criar a aplicação escolha **Checkout Transparente** e o tipo de API **API de Orders** (a de Payments está sendo descontinuada; a Kiza fala com as duas: tenta a que `MERCADOPAGO_API` indicar, `orders` por padrão, e cai para a outra se falhar).
 - `PUBLIC_BASE_URL` (recomendada): o domínio público do bot (ex.: `https://botmine-production-70b0.up.railway.app`); com ela a cobrança já pede o aviso automático. No painel do Mercado Pago, em Webhooks, aponte para `<domínio>/pix/webhook` com o evento **Pagamentos**.
 - `MERCADOPAGO_WEBHOOK_SECRET` (opcional): a "assinatura secreta" do webhook; se existir, a Kiza recusa avisos sem assinatura válida.
+- `MERCADOPAGO_API` (opcional): `orders` (padrão) ou `payments`.
 - `PIX_EMAIL_PAGADOR` (opcional): e-mail genérico exigido pela API.
 Sem a chave, o apoio fica desligado e o resto da Kiza segue normal. Valores e ligar/desligar: `/ajustes` (`apoio_ligado`, `kitsune_preco`, `kitsune_dias_mes`, `doacao_min`, `doacao_max`, `pix_validade_min`). Migração 9 (`pagamentos`, `metas`).
 

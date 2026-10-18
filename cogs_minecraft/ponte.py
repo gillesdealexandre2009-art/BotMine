@@ -463,8 +463,8 @@ class Ponte(commands.Cog):
         segredo = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "").strip()
         if segredo and not assinatura_valida(segredo, request.headers.get("x-signature", ""), request.headers.get("x-request-id", ""), data_id):
             return web.json_response({"ok": False, "erro": "assinatura"}, status=401)
-        tipo = str(corpo.get("type") or request.query.get("type") or "payment")
-        if tipo != "payment" or not data_id.isdigit():
+        tipo = str(corpo.get("type") or request.query.get("topic") or request.query.get("type") or "payment")
+        if tipo not in {"payment", "order"} or not re.fullmatch(r"[A-Za-z0-9]{4,40}", data_id):
             return web.json_response({"ok": True})
         tarefa = asyncio.create_task(apoio.processar_webhook(data_id))  # type: ignore[attr-defined]
         self._tarefas.add(tarefa)
