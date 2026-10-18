@@ -3,8 +3,8 @@ import config
 from cogs_minecraft.proximidade import Ponto, agrupar, planejar, validar_pontos
 
 
-def p(x, z=0.0, d="overworld", livre=True, y=64.0):
-    return Ponto(d, x, y, z, livre)
+def p(x, z=0.0, d="overworld", livre=True, y=64.0, zona=""):
+    return Ponto(d, x, y, z, livre, zona)
 
 
 def conjuntos(grupos):
@@ -31,6 +31,23 @@ def test_histerese_mantem_quem_ja_estava_junto():
 def test_dimensao_diferente_e_ambiente_especial_ficam_sozinhos():
     g = agrupar({1: p(0), 2: p(1, d="nether"), 3: p(2, livre=False), 4: p(3, livre=False)}, {}, 24, 32)
     assert conjuntos(g) == [[1], [2], [3], [4]]
+
+
+def test_mesma_zona_fica_junta_de_qualquer_distancia_e_zonas_diferentes_nao_se_misturam():
+    pontos = {
+        1: p(0, livre=False, zona="vulpus:minigames", d="vulpus:minigames"),
+        2: p(900, livre=False, zona="vulpus:minigames", d="vulpus:minigames"),
+        3: p(0, livre=False, zona="vulpus:intervalo", d="vulpus:intervalo"),
+        4: p(5),
+        5: p(1, livre=False),  # sumido: sozinho
+    }
+    assert conjuntos(agrupar(pontos, {}, 24, 32)) == [[1, 2], [3], [4], [5]]
+
+
+def test_validar_pontos_le_a_zona():
+    bom = {"id": "a", "nome": "A", "d": "vulpus:minigames", "x": 1, "y": 1, "z": 1, "livre": False, "zona": "vulpus:minigames"}
+    assert validar_pontos({"pos": [bom]})[0][2].zona == "vulpus:minigames"
+    assert validar_pontos({"pos": [{**bom, "zona": 5}]})[0][2].zona == ""
 
 
 def test_planejar_cada_um_sozinho_ganha_a_propria_sala_e_grupo_ganha_sala_nova():

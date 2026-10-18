@@ -3,8 +3,9 @@
 O Discord não deixa um bot mexer no volume de cada pessoa, então a proximidade é por GRUPOS: o jogo manda a posição de cada jogador
 ligado (POST /mc/prox, de 3 em 3 s), o bot junta quem está a até `prox_entrar` blocos (e só desfaz o grupo além de `prox_sair`, para
 ninguém ficar trocando de sala) e move cada pessoa para uma sala de voz temporária da categoria "Proximidade". Quem fica sozinho
-ganha uma sala só dele (a entrada é compartilhada). Fora do Mundo normal, em minigames, no Intervalo e nas regiões do mistério o jogo marca `livre = false` e a
-pessoa fica sozinha na sala dela.
+ganha uma sala só dele (a entrada é compartilhada). Lugares especiais (todos os minigames, o Intervalo, a dimensão secreta, o mistério) têm uma sala própria cada: o jogo manda
+`zona` e todo mundo da mesma zona fica junto, sem olhar a distância. Nether e End seguem a proximidade normal (só junta quem
+está na mesma dimensão).
 
 Quem participa: quem está numa sala de voz da categoria (entrada ou temporárias) e tem a conta ligada (`/minecraft vincular`). Entrar
 na sala de entrada é o "sim"; sair para qualquer outra call, ou `/proximidade pausar`, é o "não". O bot nunca puxa ninguém de fora
@@ -48,7 +49,8 @@ class Ponto:
     x: float
     y: float
     z: float
-    livre: bool  # False = em ambiente especial (minigame, Intervalo, mistério, outra dimensão): não conversa por proximidade
+    livre: bool  # False = em lugar especial (minigame, Intervalo, dimensão secreta, mistério) ou sumido: não conversa por distância
+    zona: str = ""  # lugar especial: quem tem a mesma zona fica na mesma sala, sem olhar distância ("" = sem zona)
 
 
 def distancia(a: Ponto, b: Ponto) -> float:
@@ -58,7 +60,8 @@ def distancia(a: Ponto, b: Ponto) -> float:
 def agrupar(pontos: dict[int, Ponto], grupo_anterior: dict[int, Optional[int]], entrar: float, sair: float) -> list[set[int]]:
     """Componentes de pessoas "perto": ligadas se a distância é <= entrar, ou <= sair quando já estavam no mesmo grupo (histerese).
 
-    Quem não está livre fica sozinho. Devolve todos os grupos, inclusive os de uma pessoa só."""
+    Quem está num lugar especial (zona) fica com todo mundo da mesma zona, de qualquer distância; quem não está livre e não tem zona
+    (sumido) fica sozinho. Devolve todos os grupos, inclusive os de uma pessoa só."""
     ids = [u for u, p in pontos.items() if p.livre]
     pai = {u: u for u in ids}
 
@@ -81,8 +84,15 @@ def agrupar(pontos: dict[int, Ponto], grupo_anterior: dict[int, Optional[int]], 
     for u in ids:
         grupos.setdefault(achar(u), set()).add(u)
     resultado = list(grupos.values())
-    resultado += [{u} for u, p in pontos.items() if not p.livre]
-    return resultado
+    por_zona: dict[str, set[int]] = {}
+    for u, p in pontos.items():
+        if p.livre:
+            continue
+        if p.zona:
+            por_zona.setdefault(p.zona, set()).add(u)
+        else:
+            resultado.append({u})
+    return resultado + list(por_zona.values())
 
 
 def planejar(grupos: list[set[int]], atual: dict[int, int], temporarias: set[int], entrada: int, max_salas: int) -> dict[int, tuple[str, int]]:
@@ -141,7 +151,9 @@ def validar_pontos(bruto: Any) -> list[tuple[str, str, Ponto]]:
         coords = [item.get(c) for c in ("x", "y", "z")]
         if any(isinstance(c, bool) or not isinstance(c, (int, float)) or c != c or abs(c) > LIMITE_COORD for c in coords):
             continue
-        saida.append((mc_id, nome, Ponto(str(dim)[:40], float(coords[0]), float(coords[1]), float(coords[2]), item.get("livre") is True)))
+        zona = item.get("zona")
+        zona = zona[:40] if isinstance(zona, str) else ""
+        saida.append((mc_id, nome, Ponto(str(dim)[:40], float(coords[0]), float(coords[1]), float(coords[2]), item.get("livre") is True, zona)))
     return saida
 
 
