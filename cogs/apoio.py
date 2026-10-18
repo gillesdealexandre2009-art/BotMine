@@ -630,6 +630,18 @@ class Apoio(commands.Cog):
         e.set_footer(text=textos.APOIO_RODAPE)
         return e
 
+    async def publicar_apoio(self, guild: discord.Guild) -> tuple[bool, str]:
+        """Publicador do /setup → Publicar painéis: o painel de metas e botões no canal de doações."""
+        canal = await self._canal_mural(guild)
+        if canal is None:
+            return False, textos.SETUP_SEM_CANAL
+        try:
+            await self.atualizar_painel(guild, forcar=True)
+        except discord.HTTPException:
+            log.warning("Não consegui publicar o painel de apoio", exc_info=True)
+            return False, textos.SETUP_ERRO_PUBLICAR
+        return True, canal.mention
+
     async def atualizar_painel(self, guild: discord.Guild, forcar: bool = False) -> Optional[discord.Message]:
         """Edita o painel do canal de doações (só se ele já foi publicado, a não ser que `forcar`)."""
         canal = await self._canal_mural(guild)

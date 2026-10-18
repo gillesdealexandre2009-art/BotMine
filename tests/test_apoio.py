@@ -687,3 +687,23 @@ def test_configurar_avisa_quando_nao_consegue_criar_o_canal(tmp_path):
 
     texto = rodar(cenario)
     assert "Gerenciar Canais" in texto and "Cargo Kitsune" in texto  # avisa, mas o resto da conferência continua
+
+
+def test_setup_publica_o_painel_de_doacoes(tmp_path):
+    from cogs.configuracao import PUBLICADORES
+
+    async def cenario():
+        banco, apoio, prov, mural, guild, cargo, registro = await montar(tmp_path)
+        mural.mention = "#doacoes"
+        chamadas = []
+        try:
+            async def atualizar(_guild, forcar=False):
+                chamadas.append(forcar)
+
+            apoio.atualizar_painel = atualizar  # type: ignore[method-assign]
+            return await apoio.publicar_apoio(guild), chamadas
+        finally:
+            await banco.fechar()
+
+    assert PUBLICADORES["doacoes"] == ("Apoio", "publicar_apoio", "Doações e metas")
+    assert rodar(cenario) == ((True, "#doacoes"), [True])

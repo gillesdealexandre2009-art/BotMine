@@ -52,6 +52,7 @@ PUBLICADORES = {
     "changelog": ("Vitrine", "publicar_changelog", "Changelog"),
     "comandos": ("Vitrine", "publicar_comandos", "Comandos"),
     "duvidas": ("Vitrine", "publicar_duvidas", "Dúvidas (FAQ)"),
+    "doacoes": ("Apoio", "publicar_apoio", "Doações e metas"),
 }
 
 
@@ -556,6 +557,7 @@ class SecaoPublicar(SecaoBase):
             ("changelog", "Changelog", "🎞️"),
             ("comandos", "Comandos", "🤖"),
             ("duvidas", "Dúvidas", "❓"),
+            ("doacoes", "Doações", "💖"),
         ]
         for i, (chave, rotulo, emoji) in enumerate(vitrine):
             self.add_item(BotaoPublicar([chave], rotulo, emoji, discord.ButtonStyle.secondary, row=1 + i // 5))
