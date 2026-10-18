@@ -22,6 +22,7 @@ import { barra, G, glyph } from "../glyphs.js";
  * @property {number} caudas
  * @property {number} mudanca  ganho (ou perda) recente de Caudas; 0 = nada em destaque
  * @property {number} online
+ * @property {string[]} [era]  linhas da Era (sistemas/eras_hud.js): 0, 1 ou 2; ausente = sem a linha
  * @property {number} x
  * @property {number} y
  * @property {number} z
@@ -119,7 +120,7 @@ export const LINHAS_MINIGAME = (linhas, caudas, mudanca) => [...linhas.slice(0, 
  * @param {InfoSidebar} info
  * @returns {string[]}
  */
-export const LINHAS = ({ nome, cla, guerra, ctf, cabeca, minigame, rank, cargo, kitsune, nivel, fracao, caudas, mudanca, online, x, y, z, direcao }) => [
+export const LINHAS = ({ nome, cla, guerra, ctf, cabeca, minigame, era, rank, cargo, kitsune, nivel, fracao, caudas, mudanca, online, x, y, z, direcao }) => [
   ...(nome ? [nome] : []),
   ...(cargo ? [`${glyph(cargo.glyph)} ${cargo.cor}${cargo.nome}${KITSUNE(kitsune)}`] : []),
   `${glyph(rank.glyph)} ${rank.cor}${rank.nome}${cargo ? "" : KITSUNE(kitsune)}`,
@@ -128,6 +129,7 @@ export const LINHAS = ({ nome, cla, guerra, ctf, cabeca, minigame, rank, cargo, 
   `${glyph(G.CAUDAS)} §6${formatarNumero(caudas)}${DESTAQUE(mudanca)}`,
   ...(cabeca > 0 ? [LINHA_CABECA(cabeca)] : []),
   `${glyph(G.ONLINE)} §f${formatarNumero(online)} §7online`,
+  ...(era ?? []),
   ...(minigame ? [minigame] : []),
   LINHA_LOCAL(x, y, z, direcao),
   ...(cla ? [LINHA_CLA(cla)] : []),

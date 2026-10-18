@@ -43,6 +43,7 @@
  *   n por segundo (a cada 20 ticks, com chance); aoLonge = anel distante (10 a 20 blocos) em vez de em volta
  * @property {{ id: string, volume: number, pitch: number }[]} sons
  * @property {[number, number]} intervaloSom  segundos entre um som e outro (por jogador)
+ * @property {number} [fundo]  volume do fundo sonoro contínuo da Era (0 a 0,8; padrão 0,45; a Sala Branca é quase silêncio)
  * @property {{ cor: RGB, seg: number }} transicao  fade de tela ao entrar na Era (seg 0 = sem fade)
  * @property {{ chance: number, cor: RGB }} [flash]  piscada de tela muito breve e rara (chance por segundo, por jogador)
  * @property {string} titulo
@@ -71,7 +72,7 @@ export const ERAS = Object.freeze([
     emocional: "Segurança e curiosidade.",
     descricao: "A floresta viva e luminosa que define a identidade de referência da Vulpus: neblina suave, vagalumes dourados e passarinhos.",
     paleta: ["#e8b25a", "#6fa55a", "#f2e3b8"],
-    fog: { cor: "#e9dcb4", agua: "#4f8a6a", inicio: 24, fim: 100 },
+    fog: { cor: "#f1e0ac", agua: "#4f8a6a", inicio: 13, fim: 62 },
     particulas: [{ id: "minecraft:colored_flame_particle", cor: rgb("#ffd36b"), n: 2, raio: 7, alturaMin: 0.5, alturaMax: 3, chance: 0.9 }],
     sons: [{ id: "vulpus.p_passaro_1", volume: 0.6, pitch: 1 }, { id: "vulpus.p_passaro_2", volume: 0.6, pitch: 1 }, { id: "vulpus.p_passaro_3", volume: 0.6, pitch: 1 }],
     intervaloSom: [30, 90],
@@ -90,7 +91,7 @@ export const ERAS = Object.freeze([
     emocional: "Saudade boa, contemplação.",
     descricao: "Cobre, dourado e marrom. Brasas quentes flutuam e o vento sopra entre as árvores. É a Era da Colheita.",
     paleta: ["#b87333", "#d9a441", "#6b4226"],
-    fog: { cor: "#c99a63", agua: "#6b5a3a", inicio: 16, fim: 70 },
+    fog: { cor: "#d89b54", agua: "#6b5a3a", inicio: 9, fim: 43 },
     particulas: [{ id: "minecraft:colored_flame_particle", cor: rgb("#c4762f"), n: 2, raio: 7, alturaMin: 1, alturaMax: 4, chance: 0.9 }],
     sons: [{ id: "vulpus.p_vento_rajada_1", volume: 0.45, pitch: 1 }, { id: "vulpus.p_vento_rajada_3", volume: 0.45, pitch: 1 }],
     intervaloSom: [40, 100],
@@ -113,7 +114,7 @@ export const ERAS = Object.freeze([
     emocional: "Curiosidade e um pouco de coragem.",
     descricao: "Azul profundo com pontos dourados perdidos ao longe, como lanternas de alguém que também explora a floresta.",
     paleta: ["#14213d", "#e0b04c", "#2b3a67"],
-    fog: { cor: "#1c2c52", agua: "#102244", inicio: 12, fim: 56 },
+    fog: { cor: "#14295a", agua: "#102244", inicio: 7, fim: 35 },
     particulas: [{ id: "minecraft:colored_flame_particle", cor: rgb("#ffcf5e"), n: 1, raio: 18, alturaMin: 0.5, alturaMax: 3, aoLonge: true, chance: 0.8 }],
     sons: [{ id: "vulpus.p_flauta_distante_1", volume: 0.4, pitch: 1 }, { id: "vulpus.p_ding_suave", volume: 0.35, pitch: 1 }],
     intervaloSom: [60, 150],
@@ -135,8 +136,8 @@ export const ERAS = Object.freeze([
     emocional: "Quietude e aconchego de quem está abrigado.",
     descricao: "Branco, cinza e azul-gelo. Poucos flocos, quase nenhum som: o mundo parece prender a respiração.",
     paleta: ["#eef3f8", "#9fb8cc", "#c9d3dc"],
-    fog: { cor: "#dfe8f0", agua: "#7fa2bd", inicio: 14, fim: 55 },
-    particulas: [{ id: "minecraft:snowflake_particle", n: 3, raio: 8, alturaMin: 2, alturaMax: 6, chance: 0.9 }],
+    fog: { cor: "#dce8f3", agua: "#7fa2bd", inicio: 8, fim: 34 },
+    particulas: [{ id: "minecraft:snowflake_particle", n: 3, raio: 9, alturaMin: 3, alturaMax: 10, chance: 0.9 }],
     sons: [{ id: "vulpus.p_vento_rajada_1", volume: 0.25, pitch: 0.9 }],
     intervaloSom: [120, 240],
     transicao: { cor: rgb("#eef3f8"), seg: 1.5 },
@@ -158,8 +159,8 @@ export const ERAS = Object.freeze([
     emocional: "Ternura com um fundo de melancolia.",
     descricao: "Rosa-pálido, branco e verde suave. Pétalas caindo devagar, um sino distante que lembra que tudo passa.",
     paleta: ["#f3c6d3", "#ffffff", "#9cc59a"],
-    fog: { cor: "#f4dde4", agua: "#7fb8a0", inicio: 30, fim: 110 },
-    particulas: [{ id: "minecraft:cherry_leaves_particle", n: 2, raio: 8, alturaMin: 2, alturaMax: 6, chance: 0.85 }],
+    fog: { cor: "#f7dae3", agua: "#7fb8a0", inicio: 16, fim: 68 },
+    particulas: [{ id: "minecraft:cherry_leaves_particle", n: 3, raio: 9, alturaMin: 3, alturaMax: 10, chance: 0.85 }],
     sons: [{ id: "vulpus.p_sino_suave_1", volume: 0.45, pitch: 1 }, { id: "vulpus.p_sino_suave_2", volume: 0.45, pitch: 1 }, { id: "vulpus.p_sino_suave_3", volume: 0.45, pitch: 1 }, { id: "vulpus.p_sino_suave_4", volume: 0.45, pitch: 1 }],
     intervaloSom: [120, 300],
     transicao: { cor: rgb("#ffe6ee"), seg: 1.3 },
@@ -181,7 +182,7 @@ export const ERAS = Object.freeze([
     emocional: "Estranhamento suave.",
     descricao: "Azul-leitoso e prata. A neblina se adensa, o brilho flutua devagar e o mundo deixa de parecer inteiramente familiar.",
     paleta: ["#c9d6f2", "#c0c6d4", "#e6ebf7"],
-    fog: { cor: "#d3dcf2", agua: "#8ea5d6", inicio: 10, fim: 48 },
+    fog: { cor: "#cedaf7", agua: "#8ea5d6", inicio: 6, fim: 30 },
     particulas: [{ id: "minecraft:endrod", n: 2, raio: 7, alturaMin: 0.5, alturaMax: 4, chance: 0.9 }],
     sons: [{ id: "vulpus.p_ding_suave", volume: 0.4, pitch: 0.8 }, { id: "vulpus.p_sussurro_curto_1", volume: 0.2, pitch: 1 }],
     intervaloSom: [90, 180],
@@ -203,7 +204,7 @@ export const ERAS = Object.freeze([
     emocional: "Encanto com um pouco de estranheza.",
     descricao: "Verde-pálido, lilás e branco. Esporos lilás sobem do chão e sinos delicados soam onde não deveria haver ninguém.",
     paleta: ["#b7d9b0", "#c9a8f0", "#ffffff"],
-    fog: { cor: "#d4e8d0", agua: "#9a86c8", inicio: 14, fim: 60 },
+    fog: { cor: "#d2eccc", agua: "#9a86c8", inicio: 8, fim: 37 },
     particulas: [
       { id: "minecraft:villager_happy", n: 2, raio: 7, alturaMin: 0.3, alturaMax: 3, chance: 0.9 },
       { id: "minecraft:colored_flame_particle", cor: rgb("#c9a8f0"), n: 1, raio: 7, alturaMin: 0.5, alturaMax: 3.5, chance: 0.8 },
@@ -228,7 +229,7 @@ export const ERAS = Object.freeze([
     emocional: "Cautela, sem sustos.",
     descricao: "Verde-petróleo com dourado distante. Silhuetas se destacam na neblina e, às vezes, parece que alguém anda onde não há ninguém.",
     paleta: ["#1f4a4a", "#d4b15a", "#0f2a2a"],
-    fog: { cor: "#25504d", agua: "#143838", inicio: 10, fim: 40 },
+    fog: { cor: "#1f5653", agua: "#143838", inicio: 6, fim: 25 },
     particulas: [{ id: "minecraft:colored_flame_particle", cor: rgb("#d4b15a"), n: 1, raio: 20, alturaMin: 1, alturaMax: 3, aoLonge: true, chance: 0.35 }],
     sons: [
       { id: "vulpus.p_passos_distantes_1", volume: 0.35, pitch: 1 }, { id: "vulpus.p_passos_distantes_2", volume: 0.35, pitch: 1 },
@@ -253,10 +254,11 @@ export const ERAS = Object.freeze([
     emocional: "Vazio calmo, quase hipnótico.",
     descricao: "Branco, cinza-claro e azul frio. A neblina é pálida, o silêncio é grande e só uma lâmpada falha de vez em quando. Uma homenagem à Sala Branca.",
     paleta: ["#f2f4f7", "#b9c4d6", "#dfe5ee"],
-    fog: { cor: "#eef1f6", agua: "#a9b9d0", inicio: 8, fim: 34 },
+    fog: { cor: "#edf1f7", agua: "#a9b9d0", inicio: 4, fim: 21 },
     particulas: [],
     sons: [{ id: "vulpus.p_lampada_falhando_1", volume: 0.3, pitch: 1 }, { id: "vulpus.p_lampada_falhando_2", volume: 0.3, pitch: 1 }],
     intervaloSom: [40, 120],
+    fundo: 0.3,
     transicao: { cor: rgb("#ffffff"), seg: 0.8 },
     titulo: "§fEra 9", subtitulo: "§7Corredores do SONHE",
     apresentacao: "Tudo parece o mesmo corredor. Siga em frente.",
@@ -275,7 +277,7 @@ export const ERAS = Object.freeze([
     emocional: "Um aperto bom no peito.",
     descricao: "Dourado de trigo, preto e tons pálidos. Poeira dourada no ar e, muito raramente, um telefone toca abafado em algum lugar do campo.",
     paleta: ["#d8b45c", "#0b0b0b", "#d9d2c0"],
-    fog: { cor: "#d9c58c", agua: "#6b6340", inicio: 12, fim: 50 },
+    fog: { cor: "#e5cb80", agua: "#6b6340", inicio: 7, fim: 31 },
     particulas: [{ id: "minecraft:colored_flame_particle", cor: rgb("#e6c673"), n: 2, raio: 7, alturaMin: 0.3, alturaMax: 3, chance: 0.9 }],
     sons: [{ id: "vulpus.ligacao", volume: 0.35, pitch: 1 }],
     intervaloSom: [1200, 2400],
@@ -296,7 +298,7 @@ export const ERAS = Object.freeze([
     emocional: "Melancolia, desgaste, abandono.",
     descricao: "Cinza, verde apagado e marrom. Neblina dessaturada, poeira parada e rangidos de madeira velha.",
     paleta: ["#8a8d86", "#6b7560", "#6a5543"],
-    fog: { cor: "#8e9088", agua: "#5b665a", inicio: 10, fim: 40 },
+    fog: { cor: "#8f9187", agua: "#5b665a", inicio: 6, fim: 25 },
     particulas: [{ id: "minecraft:basic_smoke_particle", n: 2, raio: 7, alturaMin: 0.5, alturaMax: 3, chance: 0.8 }],
     sons: [{ id: "vulpus.p_rangido_madeira_1", volume: 0.35, pitch: 0.8 }, { id: "vulpus.p_rangido_madeira_2", volume: 0.35, pitch: 0.8 }, { id: "vulpus.p_vento_rajada_3", volume: 0.25, pitch: 0.8 }],
     intervaloSom: [60, 150],
@@ -315,7 +317,7 @@ export const ERAS = Object.freeze([
     emocional: "Tensão contida.",
     descricao: "Vermelho-escuro e preto. A neblina fica curta e pesada, brasas vermelhas sobem raras e uma batida grave soa ao longe.",
     paleta: ["#3a0a0f", "#0a0a0a", "#8c1d28"],
-    fog: { cor: "#3d0c12", agua: "#2a0a10", inicio: 8, fim: 30 },
+    fog: { cor: "#44050c", agua: "#2a0a10", inicio: 4, fim: 20 },
     particulas: [
       { id: "minecraft:lava_particle", n: 1, raio: 6, alturaMin: 0.3, alturaMax: 2, chance: 0.7 },
       { id: "minecraft:redstone_ore_dust_particle", n: 2, raio: 7, alturaMin: 0.5, alturaMax: 3, chance: 0.8 },
@@ -340,10 +342,11 @@ export const ERAS = Object.freeze([
     emocional: "Desconforto breve e controlado.",
     descricao: "Preto, branco e um vermelho pontual. A neblina parece errada, a tela pisca por um instante e uma estática curta corta o silêncio.",
     paleta: ["#0a0a0a", "#f5f5f5", "#c4161c"],
-    fog: { cor: "#1a1a1c", agua: "#101012", inicio: 6, fim: 36 },
+    fog: { cor: "#1a1a1c", agua: "#101012", inicio: 3, fim: 22 },
     particulas: [{ id: "minecraft:basic_crit_particle", n: 1, raio: 6, alturaMin: 0.5, alturaMax: 3, chance: 0.6 }],
     sons: [{ id: "vulpus.p_lampada_falhando_1", volume: 0.3, pitch: 0.6 }, { id: "vulpus.p_lampada_falhando_2", volume: 0.3, pitch: 0.6 }, { id: "vulpus.p_sussurro_curto_2", volume: 0.2, pitch: 0.7 }],
     intervaloSom: [25, 90],
+    fundo: 0.35,
     transicao: { cor: rgb("#050505"), seg: 0.6 },
     flash: { chance: 0.012, cor: rgb("#f5f5f5") },
     titulo: "§8Era 13", subtitulo: "§cErro de Realidade",
@@ -363,7 +366,7 @@ export const ERAS = Object.freeze([
     emocional: "Silêncio de lugar sem gente.",
     descricao: "Cinza-azulado e amarelo envelhecido. Poeira parada, vento e um mundo que continua existindo mesmo parecendo vazio.",
     paleta: ["#7c8a99", "#c9b458", "#4d5864"],
-    fog: { cor: "#8795a3", agua: "#56677a", inicio: 12, fim: 52 },
+    fog: { cor: "#8395a7", agua: "#56677a", inicio: 7, fim: 32 },
     particulas: [{ id: "minecraft:white_smoke_particle", n: 1, raio: 7, alturaMin: 0.5, alturaMax: 3, chance: 0.8 }],
     sons: [{ id: "vulpus.p_vento_rajada_1", volume: 0.35, pitch: 0.9 }, { id: "vulpus.p_apito_de_trem_distante", volume: 0.25, pitch: 1 }],
     intervaloSom: [150, 420],
@@ -384,7 +387,7 @@ export const ERAS = Object.freeze([
     emocional: "Carinho misterioso.",
     descricao: "Preto, dourado e verde-musgo. Pontinhos dourados aparecem raros no escuro e uma música de caixinha toca longe, como um recado deixado por alguém.",
     paleta: ["#0e0e0c", "#d4af37", "#4a5d3a"],
-    fog: { cor: "#161812", agua: "#1d2a1a", inicio: 8, fim: 36 },
+    fog: { cor: "#161911", agua: "#1d2a1a", inicio: 4, fim: 22 },
     particulas: [{ id: "minecraft:colored_flame_particle", cor: rgb("#ffd34d"), n: 1, raio: 8, alturaMin: 0.3, alturaMax: 3, chance: 0.5 }],
     sons: [{ id: "vulpus.p_flauta_distante_2", volume: 0.3, pitch: 1.3 }, { id: "vulpus.p_flauta_distante_3", volume: 0.3, pitch: 1.3 }],
     intervaloSom: [90, 200],
@@ -407,10 +410,11 @@ export const ERAS = Object.freeze([
     emocional: "Calma absoluta.",
     descricao: "Branco dominante e cinza muito claro. Quase nenhum efeito, de propósito: a força vem da ausência.",
     paleta: ["#ffffff", "#ededed", "#f7f7f7"],
-    fog: { cor: "#f6f6f6", agua: "#d8dde4", inicio: 10, fim: 30 },
+    fog: { cor: "#f6f6f6", agua: "#d8dde4", inicio: 6, fim: 20 },
     particulas: [],
     sons: [],
     intervaloSom: [600, 600],
+    fundo: 0.12,
     transicao: { cor: rgb("#ffffff"), seg: 1 },
     titulo: "§fEra 16", subtitulo: "§7A Sala Branca",
     apresentacao: "Não tem nada aqui. É de propósito.",
@@ -425,7 +429,7 @@ export const ERAS = Object.freeze([
     emocional: "Pequenez diante do grande.",
     descricao: "Azul quase preto e prata. Luzes prateadas sobem devagar e ondas soam ao longe, como se o mundo inteiro fosse mar.",
     paleta: ["#050a1a", "#c0c8d8", "#16213a"],
-    fog: { cor: "#08122a", agua: "#050c20", inicio: 8, fim: 32 },
+    fog: { cor: "#03102f", agua: "#050c20", inicio: 4, fim: 20 },
     particulas: [{ id: "minecraft:endrod", n: 2, raio: 7, alturaMin: 0.3, alturaMax: 4, chance: 0.9 }],
     sons: [{ id: "vulpus.p_gota_agua_1", volume: 0.4, pitch: 0.8 }, { id: "vulpus.p_gota_agua_2", volume: 0.4, pitch: 0.8 }, { id: "vulpus.p_gota_agua_3", volume: 0.4, pitch: 0.8 }, { id: "vulpus.p_vento_rajada_3", volume: 0.2, pitch: 0.7 }],
     intervaloSom: [30, 90],
@@ -447,7 +451,7 @@ export const ERAS = Object.freeze([
     emocional: "Instabilidade crescente, com respeito ao que a Vulpus é.",
     descricao: "Preto, dourado e cinza. Fendas douradas pulsam no ar e um sino rachado soa de vez em quando, lembrando que a Vulpus de sempre continua ali.",
     paleta: ["#0b0b0b", "#d4af37", "#808080"],
-    fog: { cor: "#141414", agua: "#0e0e10", inicio: 8, fim: 34 },
+    fog: { cor: "#141414", agua: "#0e0e10", inicio: 4, fim: 21 },
     particulas: [{ id: "minecraft:colored_flame_particle", cor: rgb("#ffcc33"), n: 2, raio: 7, alturaMin: 0.3, alturaMax: 4, chance: 0.8 }],
     sons: [{ id: "vulpus.p_sino_feira_1", volume: 0.35, pitch: 0.5 }, { id: "vulpus.p_dark_ambience_ambience_5", volume: 0.3, pitch: 0.9 }],
     intervaloSom: [120, 300],
@@ -468,7 +472,7 @@ export const ERAS = Object.freeze([
     emocional: "Despedida carinhosa.",
     descricao: "Azul noturno, âmbar e branco. Um pouco de cada Era (brasa, floco, brilho) em pequena quantidade, como lembranças que sobraram.",
     paleta: ["#1b2a4a", "#e8a440", "#ffffff"],
-    fog: { cor: "#22335a", agua: "#142040", inicio: 10, fim: 50 },
+    fog: { cor: "#1a3062", agua: "#142040", inicio: 6, fim: 31 },
     particulas: [
       { id: "minecraft:colored_flame_particle", cor: rgb("#e8a440"), n: 1, raio: 7, alturaMin: 0.5, alturaMax: 3, chance: 0.8 },
       { id: "minecraft:snowflake_particle", n: 1, raio: 8, alturaMin: 2, alturaMax: 6, chance: 0.6 },
@@ -496,7 +500,7 @@ export const ERAS = Object.freeze([
     emocional: "Encerramento e esperança.",
     descricao: "Branco-dourado, prata e escuridão. Luzes sobem para um céu que não se vê e um coro suave fecha o ciclo.",
     paleta: ["#fbf3dc", "#c0c0c8", "#0a0a12"],
-    fog: { cor: "#e9dfc4", agua: "#4a4a62", inicio: 8, fim: 42 },
+    fog: { cor: "#efe2be", agua: "#4a4a62", inicio: 4, fim: 26 },
     particulas: [
       { id: "minecraft:endrod", n: 2, raio: 7, alturaMin: 0.3, alturaMax: 5, chance: 0.9 },
       { id: "minecraft:colored_flame_particle", cor: rgb("#fbeec0"), n: 1, raio: 7, alturaMin: 0.3, alturaMax: 5, chance: 0.8 },
@@ -533,7 +537,7 @@ const CONDICOES = new Set(["dia", "noite", "ceu", "teto", "caverna", "agua", "fo
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const SOM = /^vulpus\.[a-z0-9_]+$/;
 /** Limites para o catálogo não ficar injogável nem injusto. */
-export const LIMITES = Object.freeze({ multMax: 3, fogFimMin: 28, nivelMax: 1, chanceMax: 0.5, tetoDiaMax: 60, caudasMax: 50, vendaTetoMax: 10000, vendaDiaMax: 20000, porItemMax: 200 });
+export const LIMITES = Object.freeze({ multMax: 3, fogFimMin: 20, nivelMax: 1, chanceMax: 0.5, tetoDiaMax: 60, caudasMax: 50, vendaTetoMax: 10000, vendaDiaMax: 20000, porItemMax: 200 });
 
 /**
  * Confere o catálogo inteiro: 20 perfis, números de 1 a 20 sem repetir, campos obrigatórios, cores, neblina jogável, sons, efeitos e
@@ -568,6 +572,7 @@ export function validarCatalogo(lista = ERAS) {
       if (!SOM.test(s.id)) problemas.push(`${onde}: som "${s.id}" inválido`);
       if (!(s.volume > 0 && s.volume <= 1) || !(s.pitch >= 0.5 && s.pitch <= 2)) problemas.push(`${onde}: som ${s.id} com volume/tom inválido`);
     }
+    if (e.fundo !== undefined && !(e.fundo >= 0 && e.fundo <= 0.8)) problemas.push(`${onde}: volume do fundo fora de 0 a 0,8`);
     if (e.sons.length > 0 && !(e.intervaloSom[0] >= 20 && e.intervaloSom[1] >= e.intervaloSom[0])) problemas.push(`${onde}: intervalo de som inválido`);
     if (!(e.transicao.seg >= 0 && e.transicao.seg <= 3)) problemas.push(`${onde}: transição inválida`);
     if (e.flash && !(e.flash.chance > 0 && e.flash.chance <= 0.02)) problemas.push(`${onde}: piscada de tela fora do limite (máx. 2% por segundo)`);

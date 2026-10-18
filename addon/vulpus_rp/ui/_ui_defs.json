@@ -2,6 +2,7 @@
   "ui_defs": [
     "ui/vulpus/vulpus_menu.json",
     "ui/vulpus/vulpus_hud.json",
-    "ui/vulpus/vulpus_filtro.json"
+    "ui/vulpus/vulpus_filtro.json",
+    "ui/vulpus/vulpus_era.json"
   ]
 }

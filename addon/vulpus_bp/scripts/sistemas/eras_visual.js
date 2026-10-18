@@ -9,11 +9,13 @@ import { Player, system, world } from "@minecraft/server";
 import { pontoEmZona } from "../core/arg_zona.js";
 import { online } from "../core/jogadores.js";
 import * as efeitos from "../core/efeitos.js";
-import { msg, registrarErro, som } from "../core/util.js";
+import { diaBrasilia, msg, registrarErro, som } from "../core/util.js";
+import { mostrarTitulo } from "../core/tela.js";
 import { ANUNCIO_ERA, ENTRADA_ERA, PREVIA_FIM } from "../textos/eras.js";
 import { situacao } from "./eras_calendario.js";
 import { eraDe, TOTAL_ERAS } from "./eras_catalogo.js";
 import { eventoAtivo } from "./eras_eventos.js";
+import { definirFonteTinta } from "./eras_tinta.js";
 import { emMinigame } from "./mg_estado.js";
 import { estaSumido } from "./sumico.js";
 
@@ -26,6 +28,11 @@ const OVERWORLD = "minecraft:overworld";
 const PASSO_RECONCILIAR = 40;
 const PASSO_AMBIENTE = 20;
 const PREVIA_MS = 10 * 60 * 1000;
+/** As partículas do catálogo são "por segundo"; o jogo emite DENSIDADE vezes isso para a atmosfera aparecer de verdade. */
+const DENSIDADE = 3;
+/** O fundo sonoro de cada Era (vulpus.era_NN) dura 24 s, com 1 s de fade nas pontas: repete a cada 23 s e as pontas se cruzam. */
+const REPETE_FUNDO_TICKS = 23 * 20;
+const VOLUME_FUNDO_PADRAO = 0.45;
 
 /** @type {Map<string, number>} id → número da Era cuja neblina está no jogador agora */
 const aplicada = new Map();
@@ -35,6 +42,12 @@ const previas = new Map();
 const eventoAplicado = new Map();
 /** @type {Map<string, number>} id → tick do próximo som ambiente */
 const proximoSom = new Map();
+/** @type {Map<string, number>} id → Era cujo fundo sonoro está tocando agora */
+const fundoTocando = new Map();
+/** @type {Map<string, number>} id → tick do próximo reinício do fundo */
+const proximoFundo = new Map();
+/** @type {Map<string, string>} id → dia (Brasília) da última abertura de Era mostrada */
+const aberturaDoDia = new Map();
 /** @type {Map<string, number>} id → tick do próximo som do acontecimento */
 const proximoSomEvento = new Map();
 /** @type {Set<string>} quem já recebeu a apresentação da Era nesta sessão ("id:era") */
@@ -203,12 +216,19 @@ export function marcarApresentada(p, era) {
 /** A pessoa já viu o anúncio desta Era nesta sessão? @param {Player} p @param {Perfil} era */
 export const jaApresentada = (p, era) => apresentados.has(`${p.id}:${era.id}`);
 
-/** Mostra o nome da Era uma vez por sessão. @param {Player} p @param {Perfil} era */
+/** Mostra o nome da Era uma vez por sessão e faz a abertura grande (título, fade e som) na primeira entrada do dia. @param {Player} p @param {Perfil} era */
 function apresentar(p, era) {
   const chave = `${p.id}:${era.id}`;
   if (apresentados.has(chave)) return;
   apresentados.add(chave);
   try {
+    const hoje = diaBrasilia(Date.now());
+    if (aberturaDoDia.get(p.id) !== `${hoje}:${era.id}`) {
+      aberturaDoDia.set(p.id, `${hoje}:${era.id}`);
+      mostrarTitulo(p, era.titulo, { subtitulo: era.subtitulo, entrada: 20, fica: 90, saida: 30 });
+      transicao(p, era);
+      som(p, "random.levelup", { volume: 0.4, pitch: 0.7 });
+    }
     p.onScreenDisplay.setActionBar(ENTRADA_ERA(era));
     for (const l of ANUNCIO_ERA(era)) msg(p, l);
   } catch (e) {
@@ -261,7 +281,7 @@ function particulasEra(p, era) {
   const { x, y, z } = p.location;
   const dim = p.dimension;
   for (const esp of era.particulas) {
-    for (let i = 0; i < esp.n; i++) {
+    for (let i = 0; i < esp.n * DENSIDADE; i++) {
       if (Math.random() > esp.chance) continue;
       const ang = Math.random() * Math.PI * 2;
       const dist = esp.aoLonge ? entre(10, esp.raio) : Math.sqrt(Math.random()) * esp.raio;
@@ -269,6 +289,32 @@ function particulasEra(p, era) {
       if (!efeitos.emitir(dim, esp.id, pos, esp.cor)) return;
     }
   }
+}
+
+/** Para o fundo sonoro que estiver tocando (trocou de Era, entrou em ambiente especial ou saiu do mundo normal). @param {Player} p */
+function pararFundo(p) {
+  const n = fundoTocando.get(p.id);
+  if (n === undefined) return;
+  fundoTocando.delete(p.id);
+  proximoFundo.delete(p.id);
+  try {
+    p.runCommand(`stopsound @s vulpus.era_${String(n).padStart(2, "0")}`);
+  } catch {
+    // nada tocando: normal
+  }
+}
+
+/** Mantém o fundo sonoro contínuo da Era (um loop de 24 s repetido a cada 23 s). @param {Player} p @param {Perfil} era */
+function fundoSonoro(p, era) {
+  if (fundoTocando.get(p.id) !== era.numero) {
+    pararFundo(p);
+    fundoTocando.set(p.id, era.numero);
+    proximoFundo.set(p.id, 0);
+  }
+  const agora = system.currentTick;
+  if (agora < (proximoFundo.get(p.id) ?? 0)) return;
+  som(p, `vulpus.${era.id}`, { volume: era.fundo ?? VOLUME_FUNDO_PADRAO, pitch: 1 });
+  proximoFundo.set(p.id, agora + REPETE_FUNDO_TICKS);
 }
 
 /** @param {Player} p @param {Perfil} era */
@@ -329,8 +375,12 @@ function ambiente() {
     try {
       if (aplicada.get(p.id) !== numeroVistoAplicado(p)) continue;
       const n = aplicada.get(p.id) ?? 0;
-      if (n === 0 || estaSumido(p)) continue;
+      if (n === 0 || estaSumido(p)) {
+        pararFundo(p);
+        continue;
+      }
       const era = eraDe(n);
+      fundoSonoro(p, era);
       particulasEra(p, era);
       sonsAmbiente(p, era);
       piscada(p, era);
@@ -362,13 +412,20 @@ function reconciliar() {
   }
 }
 
+// a tinta de cor da tela (placar) segue a Era que a pessoa vê, e some nos ambientes especiais
+definirFonteTinta((p) => (emAmbienteEspecial(p) ? 0 : numeroVisto(p)));
+
 system.runInterval(reconciliar, PASSO_RECONCILIAR);
 system.runInterval(ambiente, PASSO_AMBIENTE);
 
 world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
   if (!initialSpawn) return;
   // espera a pessoa assentar no mundo antes de empurrar a neblina
-  system.runTimeout(() => aplicar(player, { apresentar: true }), 40);
+  system.runTimeout(() => {
+    aplicar(player);
+    const n = aplicada.get(player.id) ?? 0;
+    if (player.isValid && n > 0) apresentar(player, eraDe(n)); // a conferência de 2 em 2 s pode já ter aplicado a neblina: a abertura vem daqui
+  }, 40);
 });
 world.afterEvents.playerDimensionChange.subscribe(({ player }) => {
   system.runTimeout(() => aplicar(player), 10);
@@ -379,6 +436,9 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   proximoSom.delete(playerId);
   proximoSomEvento.delete(playerId);
   eventoAplicado.delete(playerId);
+  fundoTocando.delete(playerId);
+  proximoFundo.delete(playerId);
+  // aberturaDoDia fica: a abertura grande é uma por dia, mesmo reconectando
   for (const k of [...apresentados]) if (k.startsWith(`${playerId}:`)) apresentados.delete(k);
   for (const k of [...jaAvisou]) if (k.endsWith(`:${playerId}`)) jaAvisou.delete(k);
 });

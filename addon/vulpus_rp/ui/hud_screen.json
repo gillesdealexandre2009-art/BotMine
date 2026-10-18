@@ -8,7 +8,8 @@
         "operation": "insert_back",
         "value": [
           { "vulpus_sidebar@vulpus_hud.sidebar": {} },
-          { "vulpus_filtro@vulpus_filtro.raiz": {} }
+          { "vulpus_filtro@vulpus_filtro.raiz": {} },
+          { "vulpus_era@vulpus_era.raiz": {} }
         ]
       }
     ]

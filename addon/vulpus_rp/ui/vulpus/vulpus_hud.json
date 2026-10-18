@@ -44,7 +44,7 @@
         "binding_type": "view",
         "source_control_name": "dados_visivel",
         "resolve_sibling_scope": true,
-        "source_property_name": "((not ((#preserved_text - '§v§s§b§r') = #preserved_text)) and (not (((#preserved_text - '§v§s§b§r') - '§v§f§i§l§r') = '')))",
+        "source_property_name": "((not ((#preserved_text - '§v§s§b§r') = #preserved_text)) and (not (((((((((((((((((((((((#preserved_text - '§v§s§b§r') - '§v§f§i§l§r') - '§v§e§r01') - '§v§e§r02') - '§v§e§r03') - '§v§e§r04') - '§v§e§r05') - '§v§e§r06') - '§v§e§r07') - '§v§e§r08') - '§v§e§r09') - '§v§e§r10') - '§v§e§r11') - '§v§e§r12') - '§v§e§r13') - '§v§e§r14') - '§v§e§r15') - '§v§e§r16') - '§v§e§r17') - '§v§e§r18') - '§v§e§r19') - '§v§e§r20') = '')))",
         "target_property_name": "#visible"
       }
     ],
@@ -92,7 +92,7 @@
       {
         "binding_type": "view",
         "source_control_name": "dados_texto",
-        "source_property_name": "((#preserved_text - '§v§s§b§r') - '§v§f§i§l§r')",
+        "source_property_name": "((((((((((((((((((((((#preserved_text - '§v§s§b§r') - '§v§f§i§l§r') - '§v§e§r01') - '§v§e§r02') - '§v§e§r03') - '§v§e§r04') - '§v§e§r05') - '§v§e§r06') - '§v§e§r07') - '§v§e§r08') - '§v§e§r09') - '§v§e§r10') - '§v§e§r11') - '§v§e§r12') - '§v§e§r13') - '§v§e§r14') - '§v§e§r15') - '§v§e§r16') - '§v§e§r17') - '§v§e§r18') - '§v§e§r19') - '§v§e§r20')",
         "target_property_name": "#text",
         "binding_condition": "always"
       }

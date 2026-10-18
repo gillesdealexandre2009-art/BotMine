@@ -1,0 +1,1263 @@
+{
+  "namespace": "vulpus_era",
+  "raiz": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "layer": 2,
+    "controls": [
+      {
+        "dados_era@vulpus_era.dados": {}
+      },
+      {
+        "tinta_01@vulpus_era.tinta_01": {}
+      },
+      {
+        "tinta_02@vulpus_era.tinta_02": {}
+      },
+      {
+        "tinta_03@vulpus_era.tinta_03": {}
+      },
+      {
+        "tinta_04@vulpus_era.tinta_04": {}
+      },
+      {
+        "tinta_05@vulpus_era.tinta_05": {}
+      },
+      {
+        "tinta_06@vulpus_era.tinta_06": {}
+      },
+      {
+        "tinta_07@vulpus_era.tinta_07": {}
+      },
+      {
+        "tinta_08@vulpus_era.tinta_08": {}
+      },
+      {
+        "tinta_09@vulpus_era.tinta_09": {}
+      },
+      {
+        "tinta_10@vulpus_era.tinta_10": {}
+      },
+      {
+        "tinta_11@vulpus_era.tinta_11": {}
+      },
+      {
+        "tinta_12@vulpus_era.tinta_12": {}
+      },
+      {
+        "tinta_13@vulpus_era.tinta_13": {}
+      },
+      {
+        "tinta_14@vulpus_era.tinta_14": {}
+      },
+      {
+        "tinta_15@vulpus_era.tinta_15": {}
+      },
+      {
+        "tinta_16@vulpus_era.tinta_16": {}
+      },
+      {
+        "tinta_17@vulpus_era.tinta_17": {}
+      },
+      {
+        "tinta_18@vulpus_era.tinta_18": {}
+      },
+      {
+        "tinta_19@vulpus_era.tinta_19": {}
+      },
+      {
+        "tinta_20@vulpus_era.tinta_20": {}
+      }
+    ]
+  },
+  "dados": {
+    "type": "panel",
+    "size": [
+      0,
+      0
+    ],
+    "property_bag": {
+      "#preserved_text": ""
+    },
+    "bindings": [
+      {
+        "binding_name": "#hud_title_text_string",
+        "binding_condition": "always"
+      },
+      {
+        "binding_name": "#hud_title_text_string",
+        "binding_name_override": "#preserved_text",
+        "binding_condition": "visibility_changed"
+      },
+      {
+        "binding_type": "view",
+        "source_property_name": "((not (#hud_title_text_string = #preserved_text)) and (not ((#hud_title_text_string - '§v§s§b§r') = #hud_title_text_string)))",
+        "target_property_name": "#visible",
+        "binding_condition": "always"
+      }
+    ]
+  },
+  "tinta_01": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r01') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            1,
+            0.851,
+            0.541
+          ],
+          "alpha": 0.1,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.227,
+            0.165,
+            0.02
+          ],
+          "alpha": 0.7,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_02": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r02') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.851,
+            0.541,
+            0.239
+          ],
+          "alpha": 0.16,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.227,
+            0.102,
+            0
+          ],
+          "alpha": 0.8,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_03": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r03') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.102,
+            0.165,
+            0.416
+          ],
+          "alpha": 0.2,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0,
+            0,
+            0.078
+          ],
+          "alpha": 0.9,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_04": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r04') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.812,
+            0.902,
+            1
+          ],
+          "alpha": 0.14,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.039,
+            0.102,
+            0.2
+          ],
+          "alpha": 0.75,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_05": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r05') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            1,
+            0.761,
+            0.839
+          ],
+          "alpha": 0.12,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.227,
+            0.102,
+            0.145
+          ],
+          "alpha": 0.6,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_06": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r06') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.784,
+            0.831,
+            1
+          ],
+          "alpha": 0.12,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.063,
+            0.078,
+            0.227
+          ],
+          "alpha": 0.7,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_07": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r07') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.839,
+            0.722,
+            1
+          ],
+          "alpha": 0.12,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.102,
+            0.059,
+            0.2
+          ],
+          "alpha": 0.7,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_08": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r08') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.114,
+            0.353,
+            0.322
+          ],
+          "alpha": 0.2,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0,
+            0.067,
+            0.059
+          ],
+          "alpha": 0.95,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_09": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r09') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.941,
+            0.957,
+            1
+          ],
+          "alpha": 0.1,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.533,
+            0.565,
+            0.627
+          ],
+          "alpha": 0.7,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_10": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r10') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.902,
+            0.757,
+            0.353
+          ],
+          "alpha": 0.16,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.165,
+            0.114,
+            0
+          ],
+          "alpha": 0.8,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_11": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r11') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.541,
+            0.553,
+            0.518
+          ],
+          "alpha": 0.2,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.071,
+            0.071,
+            0.063
+          ],
+          "alpha": 0.9,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_12": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r12') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.541,
+            0.082,
+            0.125
+          ],
+          "alpha": 0.2,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.102,
+            0,
+            0.016
+          ],
+          "alpha": 0.95,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_13": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r13') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.063,
+            0.063,
+            0.063
+          ],
+          "alpha": 0.14,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0,
+            0,
+            0
+          ],
+          "alpha": 1,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_14": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r14') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.49,
+            0.561,
+            0.639
+          ],
+          "alpha": 0.16,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.051,
+            0.071,
+            0.102
+          ],
+          "alpha": 0.8,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_15": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r15') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.227,
+            0.29,
+            0.133
+          ],
+          "alpha": 0.18,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0,
+            0,
+            0
+          ],
+          "alpha": 0.95,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_16": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r16') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            1,
+            1,
+            1
+          ],
+          "alpha": 0.06,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.604,
+            0.627,
+            0.659
+          ],
+          "alpha": 0.55,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_17": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r17') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.039,
+            0.102,
+            0.251
+          ],
+          "alpha": 0.22,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0,
+            0.008,
+            0.039
+          ],
+          "alpha": 1,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_18": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r18') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.831,
+            0.686,
+            0.216
+          ],
+          "alpha": 0.12,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.039,
+            0.031,
+            0
+          ],
+          "alpha": 0.95,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_19": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r19') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.227,
+            0.31,
+            0.541
+          ],
+          "alpha": 0.16,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.016,
+            0.024,
+            0.059
+          ],
+          "alpha": 0.8,
+          "layer": 2
+        }
+      }
+    ]
+  },
+  "tinta_20": {
+    "type": "panel",
+    "size": [
+      "100%",
+      "100%"
+    ],
+    "property_bag": {
+      "#visible": false
+    },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_era",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§e§r20') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      {
+        "tom": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/era_tom",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            1,
+            0.945,
+            0.784
+          ],
+          "alpha": 0.14,
+          "layer": 1
+        }
+      },
+      {
+        "vinheta": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_vinheta",
+          "keep_ratio": false,
+          "size": [
+            "100%",
+            "100%"
+          ],
+          "color": [
+            0.102,
+            0.078,
+            0
+          ],
+          "alpha": 0.7,
+          "layer": 2
+        }
+      }
+    ]
+  }
+}

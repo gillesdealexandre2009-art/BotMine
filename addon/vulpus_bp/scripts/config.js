@@ -42,6 +42,8 @@ export const PADROES = {
   diariaBonusMax: 7,
   linkDiscord: "",
   hudPadrao: true,
+  // Tinta de cor na tela durante as Eras (precisa do placar ligado e do pacote de recursos novo). Começa desligada para conferir o visual.
+  erasTinta: false,
   // XP mais difícil desde que o Discord também dá XP (o XP é um só, somado pela ponte): cada fonte rende menos
   xpPorMinuto: 2,
   xpDiaria: 10,

@@ -19,6 +19,8 @@ import { apelidoDe, nomeExibido, temaNomeDe } from "./kitsune.js";
 import { infoNivel } from "./niveis.js";
 import { glitchHud } from "./arg.js";
 import { glitchHudIntervalo } from "./intervalo.js";
+import { linhasEra } from "./eras_hud.js";
+import { marcaTinta } from "./eras_tinta.js";
 import { linhasHud as linhasMinigame } from "./mg_motor.js";
 import { linhaSpleef } from "./spleef.js";
 
@@ -28,6 +30,9 @@ import { linhaSpleef } from "./spleef.js";
 export const FLAG_SIDEBAR = "§v§s§b§r";
 /** Marcador do filtro de câmera antiga, logo depois de FLAG_SIDEBAR (igual ao do vulpus_filtro.json e do vulpus_hud.json). */
 export const FLAG_FILTRO = "§v§f§i§l§r";
+
+/** Marcas que vão antes do texto do placar: a do placar, a do filtro de câmera antiga (se ligado) e a da tinta da Era (se ligada). @param {Player} player */
+const marcasDe = (player) => FLAG_SIDEBAR + (filtroLigadoPara(player) ? FLAG_FILTRO : "") + marcaTinta(player);
 
 /** De quantos em quantos ticks o loop olha cada jogador. */
 const TICKS_CICLO = 10;
@@ -85,7 +90,7 @@ function montar(player, caudas, mudanca, quantosOnline) {
   const mg = linhasMinigame(player);
   if (mg) {
     const finais = textos.LINHAS_MINIGAME(mg, caudas, mudanca);
-    return { texto: FLAG_SIDEBAR + (filtroLigadoPara(player) ? FLAG_FILTRO : "") + finais.join("\n"), chave: finais.join("\n") };
+    return { texto: marcasDe(player) + finais.join("\n"), chave: finais.join("\n") };
   }
   const { nivel, fracao, rank } = infoNivel(player);
   const { x, y, z } = player.location;
@@ -122,6 +127,7 @@ function montar(player, caudas, mudanca, quantosOnline) {
     caudas,
     mudanca,
     online: quantosOnline,
+    era: linhasEra(),
     x,
     y,
     z,
@@ -129,7 +135,7 @@ function montar(player, caudas, mudanca, quantosOnline) {
   });
   const finais = glitchHudIntervalo(player, glitchHud(player, linhas));
   const local = textos.LINHA_LOCAL(x, y, z, rumo);
-  return { texto: FLAG_SIDEBAR + (filtroLigadoPara(player) ? FLAG_FILTRO : "") + finais.join("\n"), chave: finais.filter((l) => l !== local).join("\n") };
+  return { texto: marcasDe(player) + finais.join("\n"), chave: finais.filter((l) => l !== local).join("\n") };
 }
 
 /**
@@ -159,7 +165,7 @@ function atualizar(player, quantosOnline) {
   const ultimo = enviados.get(player.id);
   if (!hudLigada(player)) {
     // scoreboard desligado: só a flag (e o marcador do filtro, se ligado, para o filtro continuar sem a caixa)
-    const alvo = FLAG_SIDEBAR + (filtroLigadoPara(player) ? FLAG_FILTRO : "");
+    const alvo = marcasDe(player);
     if (ultimo ? ultimo.texto !== alvo : alvo !== FLAG_SIDEBAR) enviar(player, alvo);
     else if (ultimo && alvo !== FLAG_SIDEBAR && agora - ultimo.tick >= TICKS_REENVIO) enviar(player, alvo);
     return;

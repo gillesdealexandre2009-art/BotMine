@@ -77,6 +77,7 @@ export const GRUPO_TIRO = "Tiro ao alvo";
 export const GRUPO_MOEDA = "Cara ou coroa";
 export const GRUPO_MESAS = "Mesas de jogo";
 export const GRUPO_COMUNIDADE = "Canto comunitário";
+export const GRUPO_ERAS = "Eras";
 export const GRUPO_GERAL = "Geral";
 /** Rótulos dos campos de configuração (as chaves são as de PADROES). */
 export const CAMPOS = {
@@ -97,6 +98,7 @@ export const CAMPOS = {
   diariaBonusMax: "Diária: máximo de dias com bônus",
   linkDiscord: "Link do Discord (vazio = sem link)",
   hudPadrao: "Scoreboard lateral ligada para quem não escolheu",
+  erasTinta: "Tinta de cor na tela durante as Eras (precisa do placar ligado; confira o visual antes de deixar ligada)",
   xpPorMinuto: "XP por minuto ativo",
   xpDiaria: "XP da diária",
   temaAnimadoNivel: "Nível mínimo (com Kitsune) para as cores de nome animadas",
