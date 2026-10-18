@@ -250,9 +250,9 @@ def montar_evento(ev: dict[str, Any], ctx: Contexto, sorteio: random.Random = ra
     if t == "msg":
         return [("mc_chat", textos.MC_PONTE_MSG.format(nome=esc(ev["nome"]), texto=discord.utils.escape_mentions(ev["texto"])), None)]
     if t == "entrada":
-        return [("mc_chat", None, montar_entrada(ev, ctx)), ("mc_login", None, montar_login_entrou(ev, ctx))]
+        return [("mc_chat", None, montar_entrada(ev, ctx)), ("mc_log", None, montar_login_entrou(ev, ctx))]
     if t == "saida":
-        return [("mc_chat", None, montar_saida(ev, ctx)), ("mc_login", None, montar_login_saiu(ev, ctx))]
+        return [("mc_chat", None, montar_saida(ev, ctx)), ("mc_log", None, montar_login_saiu(ev, ctx))]
     if t == "morte":
         return [("mc_chat", None, montar_morte(ev, ctx, sorteio))]
     if t == "streak":

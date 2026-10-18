@@ -62,7 +62,7 @@ async def montar(tmp_path, membros=()):
         get_cog=lambda _nome: None,
     )
     ponte = Ponte(bot)  # type: ignore[arg-type]
-    canais = {chave: CanalFalso() for chave in ("mc_chat", "mc_ip", "mc_historico", "mc_login")}
+    canais = {chave: CanalFalso() for chave in ("mc_chat", "mc_ip", "mc_historico", "mc_login", "mc_log")}
 
     async def canal_mc(_gid, chave):
         return canais[chave]
@@ -369,7 +369,7 @@ def test_eventos_vao_para_os_canais_certos_com_embeds(tmp_path):
 
     status, canais = rodar(cenario)
     assert status == 200
-    chat, hist, login = canais["mc_chat"].embeds, canais["mc_historico"].embeds, canais["mc_login"].embeds
+    chat, hist, login = canais["mc_chat"].embeds, canais["mc_historico"].embeds, canais["mc_log"].embeds
     # chat: entrada, saída, 3 mortes, streak, fim da sequência, nível, conquista
     assert len(chat) == 9 and len(hist) == 5 and len(login) == 2
     assert "entrou" in chat[0].title and "saiu" in chat[1].title and "1h 02min" in chat[1].description
@@ -411,7 +411,7 @@ def test_eventos_com_conta_ligada_usam_o_discord_da_pessoa(tmp_path):
             await banco.fechar()
 
     canais = rodar(cenario)
-    login = canais["mc_login"].embeds
+    login = canais["mc_log"].embeds
     assert "<@111>" in login[-1].description and login[-1].author.icon_url == "https://cdn.exemplo/111.png"
     campos = {c.name: c.value for c in login[-1].fields}
     assert campos["Nível"] != "" and "321" in campos["Caudas"]
@@ -495,7 +495,7 @@ def test_vincular_pelo_botao_ou_comando_avisa_o_canal_de_login(tmp_path):
             await ponte.responder_vinculo(interacao, "ZZZZZZ")  # errado
             await ponte.responder_vinculo(interacao, r["codigo"])  # certo (como no modal)
             await ponte.responder_vinculo(interacao, "ABCDEF")  # já ligada: o código nem é consumido
-            return respostas, canais["mc_login"].embeds
+            return respostas, canais["mc_log"].embeds
         finally:
             await cliente.close()
             await banco.fechar()
@@ -516,7 +516,7 @@ def test_codigos_recusados_em_sequencia_bloqueiam_e_o_canal_nao_enche(tmp_path):
         banco, ponte, cliente, canais = await montar(tmp_path, [ana])
         try:
             resultados = [(await ponte.vincular_conta(ponte.bot.guilds[0], ana, f"ERRADO{i}"))[0] for i in range(7)]  # type: ignore[arg-type]
-            return resultados, canais["mc_login"].embeds
+            return resultados, canais["mc_log"].embeds
         finally:
             await cliente.close()
             await banco.fechar()

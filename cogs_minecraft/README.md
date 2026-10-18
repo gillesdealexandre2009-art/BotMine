@@ -11,8 +11,8 @@
 - **Histórico** (`mc_historico`, 📖・histórico): clãs que nascem e se despedem; guerras que começam e como terminam.
 - **IP e porta** (`mc_ip`, 🚪・ip-e-porta): painel com os dois endereços, o passo a passo e o status (quem está jogando). O servidor
   manda o status a cada minuto; sem notícias por `MC_STATUS_VALIDADE` segundos o painel mostra "fora do ar".
-- **Login** (`mc_login`, ✅・log-in): painel com botões (Vincular conta, Minha conta, Como funciona) e o registro de logins,
-  logouts, vínculos, desvínculos e códigos recusados.
+- **Login** (`mc_login`, ✅・log-in): só o painel com botões (Vincular conta, Minha conta, Como funciona). Os registros de logins,
+  logouts, vínculos, desvínculos e códigos recusados vão para os logs gerais da staff (`canal_logs_gerais` do `/setup`).
 - **Vínculo**: quem não tem a conta ligada fica com a tela preta no jogo e vê um código de 6 letras (vale 15 min);
   `/minecraft vincular` ou o botão liga a conta. Uma conta do jogo por pessoa e uma pessoa por conta. O vínculo é reconhecido
   pelo id do jogador e, se o id mudar (mundo copiado, servidor novo), pelo nome: ele não se perde.

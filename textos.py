@@ -516,7 +516,7 @@ CHANGELOG = [
         "Ponte com o servidor",
         [
             "🔗 `/minecraft vincular` e `/minecraft conta`: ligue sua conta do jogo à do Discord (ou use o botão do canal de login)",
-            "🔐 Painel de **login** com botões e registro de entradas, saídas e vínculos em embeds",
+            "🔐 Painel de **login** com botões para ligar sua conta (o canal fica só com o painel)",
             "💬 **Ponte de chat**: o que acontece no servidor (mensagens, quem entra e sai, mortes e sequências de abates) aparece aqui, e o que você escreve no canal vai para o jogo",
             "📖 **Histórico**: clãs que nascem e se despedem, guerras que começam e como terminam",
             "🚪 Painel de **IP e porta** sempre atualizado, com quem está jogando agora",

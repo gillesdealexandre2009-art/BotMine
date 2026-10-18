@@ -250,8 +250,17 @@ class Ponte(commands.Cog):
         return None
 
     async def canal_mc(self, guild_id: int, chave: str) -> Optional[discord.abc.Messageable]:
-        """Canal da ponte: o do /setup (canal_<chave>) ou o padrão de config.MC_CANAIS_PADRAO."""
+        """Canal da ponte: o do /setup (canal_<chave>) ou o padrão de config.MC_CANAIS_PADRAO.
+
+        "mc_log" é o registro de logins e vínculos para a staff: usa o canal de logs gerais do /setup (sem ele, não registra)."""
+        if chave == "mc_log":
+            chave = "logs_gerais"
+            canal_id = await self.bot.banco.get_config_int(guild_id, "canal_logs_gerais")
+            return await self._buscar_canal(canal_id)
         canal_id = await self.bot.banco.get_config_int(guild_id, f"canal_{chave}") or config.MC_CANAIS_PADRAO.get(chave)
+        return await self._buscar_canal(canal_id)
+
+    async def _buscar_canal(self, canal_id: Optional[int]) -> Optional[discord.abc.Messageable]:
         if not canal_id:
             return None
         canal = self.bot.get_channel(canal_id)
@@ -473,13 +482,13 @@ class Ponte(commands.Cog):
         resultado, nome = await self.bot.banco.mc_vincular(guild.id, membro.id, codigo)
         ctx = await self._ctx_membro(guild.id, membro)
         if resultado == "ok":
-            await self._enviar(guild.id, "mc_login", embed=embeds.montar_vinculado(nome or "", ctx))
+            await self._enviar(guild.id, "mc_log", embed=embeds.montar_vinculado(nome or "", ctx))
         elif resultado == "codigo_invalido":
             self._falhas.setdefault(membro.id, []).append(time.monotonic())
             agora = time.monotonic()
             if agora - self._ultimo_aviso_falha.get(membro.id, -1e9) >= TEMPO_FALHA_CODIGO:
                 self._ultimo_aviso_falha[membro.id] = agora
-                await self._enviar(guild.id, "mc_login", embed=embeds.montar_codigo_recusado(ctx))
+                await self._enviar(guild.id, "mc_log", embed=embeds.montar_codigo_recusado(ctx))
         return resultado, nome
 
     async def responder_vinculo(self, interaction: discord.Interaction, codigo: str) -> None:
@@ -547,7 +556,7 @@ class Ponte(commands.Cog):
             return
         log.info("%s desvinculou %s (%s)", interaction.user, membro, nome)
         ctx = await self._ctx_membro(guild.id, membro)
-        await self._enviar(guild.id, "mc_login", embed=embeds.montar_desvinculado(nome, ctx, interaction.user.mention))
+        await self._enviar(guild.id, "mc_log", embed=embeds.montar_desvinculado(nome, ctx, interaction.user.mention))
         await responder(
             interaction,
             textos.MC_DESVINCULO_OK.format(alvo=membro.mention, nome=discord.utils.escape_markdown(nome)),
@@ -762,6 +771,7 @@ class Ponte(commands.Cog):
                     feito = False
         else:
             feito = False
+        await self._limpar_canal_login(canal_login)
         return feito
 
     async def atualizar_contador(self, agora: Optional[float] = None, relogio: Optional[float] = None) -> bool:
@@ -801,6 +811,25 @@ class Ponte(commands.Cog):
         tarefa = asyncio.get_running_loop().create_task(atualizar())
         self._tarefas.add(tarefa)
         tarefa.add_done_callback(self._tarefas.discard)
+
+    async def _limpar_canal_login(self, canal: Optional[discord.abc.Messageable]) -> None:
+        """Uma vez só: apaga do canal de login os registros que o bot postou antes (ele fica só com o painel)."""
+        gid = self.guild_id()
+        if gid is None or not isinstance(canal, discord.TextChannel) or await self.bot.banco.get_config(gid, "mc_login_limpo") == "1":
+            return
+        painel_id = await self.bot.banco.get_config_int(gid, "msg_mc_login")
+        if not painel_id:
+            return  # o painel ainda não existe: nada seguro para preservar
+        titulos = {textos.MC_LOGIN_ENTROU_TITULO, textos.MC_LOGIN_SAIU_TITULO, textos.MC_LOGIN_VINCULADO_TITULO, textos.MC_LOGIN_DESVINCULADO_TITULO, textos.MC_LOGIN_FALHA_TITULO}
+        try:
+            async for msg in canal.history(limit=200):
+                if self.bot.user is None or msg.author.id != self.bot.user.id or msg.id == painel_id:
+                    continue
+                if any(e.title in titulos for e in msg.embeds):
+                    await msg.delete()
+            await self.bot.banco.set_config(gid, "mc_login_limpo", "1")
+        except discord.HTTPException:
+            log.warning("Não consegui limpar o canal de login", exc_info=True)
 
     @tasks.loop(seconds=60)
     async def atualizar_paineis(self) -> None:

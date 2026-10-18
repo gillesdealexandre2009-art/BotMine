@@ -124,7 +124,7 @@ A Kiza conversa com o servidor por uma porta HTTP própria (`cogs_minecraft/pont
 | 💬 chat-bridge (`mc_chat`) | mensagens, quem entra e sai, mortes e sequências de abates do jogo; o que se escreve ali vai para o jogo |
 | 🚪 ip-e-porta (`mc_ip`) | painel com os dois endereços, o passo a passo e quem está jogando agora (atualizado sozinho) |
 | 📖 histórico (`mc_historico`) | clãs que nascem e se despedem; guerras que começam e como terminam |
-| ✅ log-in (`mc_login`) | painel com botões (**Vincular conta**, **Minha conta**, **Como funciona**) e o registro de logins, logouts e vínculos |
+| ✅ log-in (`mc_login`) | só o painel com botões (**Vincular conta**, **Minha conta**, **Como funciona**): nada de registro neste canal. Logins, logouts, vínculos, desvínculos e códigos recusados vão para os **logs gerais** da staff (`/setup`); sem esse canal configurado, não registra |
 
 Sem configurar nada no `/setup`, ela usa os ids padrão de `config.MC_CANAIS_PADRAO`. Os painéis são publicados (ou editados) sozinhos; `/minecraft painel` (admin) força.
 
