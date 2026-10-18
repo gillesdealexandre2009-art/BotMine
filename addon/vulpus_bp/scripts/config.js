@@ -6,7 +6,7 @@ export const ITEM_MENU = "vulpus:menu";
 export const TAG_STAFF = "vulpus:staff";
 export const TAG_ADMIN = "vulpus:admin";
 export const TAG_HELPER = "vulpus:helper";
-/** Booster do Discord: só o selo, nenhuma vantagem no jogo. */
+/** Selo Kitsune (comprado por PIX no Discord, dado por um dono ou por tempo limitado): só enfeite, nenhuma vantagem no jogo. */
 export const TAG_KITSUNE = "vulpus:kitsune";
 /** Prefixo da propriedade dinâmica do MUNDO com os dados de cada jogador (+ player.id). */
 export const PREFIXO_JOGADOR = "vulpus:j:";

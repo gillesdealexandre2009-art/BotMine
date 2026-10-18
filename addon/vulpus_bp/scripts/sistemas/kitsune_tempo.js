@@ -1,13 +1,14 @@
 // @ts-check
 // Selo Kitsune com prazo. Só um dono dá (pelo Painel de Dono): vale por N dias, soma ao prazo que a pessoa já tem, aparece no
 // menu /apelido e no chat ao entrar, e some sozinho quando acaba (se a pessoa já tinha o selo do Discord, ele fica). O selo é
-// a tag vulpus:kitsune, a mesma do booster; o que muda aqui é só o prazo, guardado no mundo.
+// a tag vulpus:kitsune; o que muda aqui é só o prazo, guardado no mundo. O prazo também vem de compras por PIX no Discord (o bot manda
+// o fim do prazo no sync e o jogo aplica com concederPorCompra).
 import { Player, system, world } from "@minecraft/server";
 import { TAG_KITSUNE } from "../config.js";
 import { lerMundo, salvarMundo } from "../core/db.js";
 import { ehDono, registrarLogDono } from "../core/dono.js";
 import { online, porId } from "../core/jogadores.js";
-import { erro, msg, ok, registrarErro } from "../core/util.js";
+import { erro, formatarData, msg, ok, registrarErro } from "../core/util.js";
 import * as textos from "../textos/kitsune_tempo.js";
 import { acharPessoa } from "./dono_acoes.js";
 import { atualizarIdentidade } from "./identidade.js";
@@ -152,6 +153,37 @@ export function darKitsuneTempo(autor, alvo, diasBruto) {
   registrarLogDono(nomeAutor, "kitsune com prazo", rotulo, true, texto);
   ok(autor, texto);
   return true;
+}
+
+/**
+ * Kitsune comprado por PIX no Discord: vale até `ate` (ms). Soma sem pisar no que a pessoa já tem (fica o maior prazo) e é seguro repetir
+ * (o bot reenvia a mesma compra até o jogo confirmar). Quem já tinha o selo sem prazo continua com ele depois que acabar.
+ * @param {string} id  id do jogador
+ * @param {string} nome
+ * @param {number} ate
+ * @returns {boolean} se aplicou (false = prazo já passou)
+ */
+export function concederPorCompra(id, nome, ate) {
+  try {
+    if (typeof id !== "string" || !Number.isFinite(ate) || ate <= Date.now()) return false;
+    const lista = lerDados();
+    const atual = lista[id];
+    const alvo = porId(id);
+    const base = atual?.base ?? (!!alvo && temTag(alvo));
+    const novo = Math.max(ate, atual?.ate ?? 0);
+    const mudou = !atual || atual.ate < novo;
+    lista[id] = { nome: String(nome).slice(0, 32), ate: novo, base };
+    gravar();
+    if (alvo?.isValid) {
+      conferir(alvo, false);
+      if (mudou) msg(alvo, textos.AVISO_COMPRA(novo));
+    }
+    if (mudou) registrarLogDono("Discord", "kitsune comprado", `${nome} até ${formatarData(novo)}`, true, "pagamento por PIX confirmado");
+    return true;
+  } catch (e) {
+    registrarErro("Kitsune com prazo: compra", e);
+    return false;
+  }
 }
 
 /**

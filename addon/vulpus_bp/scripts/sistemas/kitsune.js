@@ -1,5 +1,5 @@
 // @ts-check
-// Visual Kitsune (selo do booster do Discord): apelido de exibição e tema de cor do nome. Só cosmético,
+// Visual Kitsune (selo Kitsune): apelido de exibição e tema de cor do nome. Só cosmético,
 // nenhuma vantagem no jogo. O nome da conta continua no Perfil ("Conta: ...") para a moderação.
 // Não importa identidade.js: quem mostra o nome se inscreve em aoMudarVisual.
 import { Player } from "@minecraft/server";
@@ -54,7 +54,7 @@ function avisarMudanca(player) {
 }
 
 /**
- * Tem o selo Kitsune (tag do booster).
+ * Tem o selo Kitsune (tag vulpus:kitsune).
  * @param {Player} player
  */
 export function temSelo(player) {

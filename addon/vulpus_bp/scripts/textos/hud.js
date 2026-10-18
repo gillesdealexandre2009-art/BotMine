@@ -16,7 +16,7 @@ import { barra, G, glyph } from "../glyphs.js";
  * @property {string | null} [minigame]  linha pronta do minigame (Spleef: fila ou partida); null/ausente = sem a linha
  * @property {Rank} rank
  * @property {InfoCargo | null} cargo  Admin, Staff ou Helper; null = sem cargo
- * @property {boolean} kitsune  selo Kitsune (booster)
+ * @property {boolean} kitsune  selo Kitsune
  * @property {number} nivel
  * @property {number} fracao  progresso no nível, 0..1
  * @property {number} caudas

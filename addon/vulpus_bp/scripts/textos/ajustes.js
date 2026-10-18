@@ -50,7 +50,7 @@ export const CANTO_LISTA = (tem, lote, escondidos) =>
     `${marca(tem)} §fCápsulas de pet: abrir §e${lote}§f de uma vez`,
     `${marca(tem)} §fEsconder os pets sem perder os bônus${tem ? ` §7(agora: ${escondidos ? "escondidos" : "visíveis"})` : ""}`,
   ].join("\n");
-export const CANTO_SEM_SELO = "\n\n§7Você ainda não tem o selo. Apoie o servidor no Discord (booster) para liberar tudo isso.";
+export const CANTO_SEM_SELO = "\n\n§7Você ainda não tem o selo. Vire Kitsune no Discord (comando /kitsune, por PIX) para liberar tudo isso.";
 export const BOTAO_CANTO_VISUAL = "Apelido e cor do nome";
 export const BOTAO_CANTO_ABATE = "Efeito de abate";
 export const BOTAO_CANTO_PAINEL = "Tema do painel";

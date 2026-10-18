@@ -12,7 +12,7 @@ Addon de Minecraft Bedrock do servidor **Vulpus**, com a Kiza (a raposa kitsune)
   - `vulpus_bp`: o pack de comportamento (os sistemas). Não precisa de experimento;
   - `vulpus_rp`: o pack de recursos (o visual do menu, do placar e os glyphs);
   - `vulpus_chat_bp`: o pack **Vulpus Chat**. É opcional e **precisa do experimento "APIs Beta"** (veja "O chat").
-- **Sem pay-to-win:** nada no addon é vendido nem exclusivo de quem paga. O selo Kitsune (booster do Discord) é só enfeite.
+- **Sem pay-to-win:** nada no addon é vendido nem exclusivo de quem paga. O selo Kitsune (comprado no Discord ou dado por um dono) é só enfeite.
 
 ## O que precisa ter no computador
 
@@ -70,7 +70,7 @@ Ao importar uma versão nova com o mesmo número, o jogo pode manter a antiga. N
 
 ## Níveis e ranks
 
-- O XP sobe **3 por minuto ativo** (andando, não parado/AFK) e **15 na diária**. Nada mais dá XP por enquanto, e o booster não multiplica.
+- O XP sobe **3 por minuto ativo** (andando, não parado/AFK) e **15 na diária**. Nada mais dá XP por enquanto, e o selo Kitsune não multiplica.
 - Para subir do nível n para o n+1 são `5n² + 50n + 100` de XP (a mesma conta do Discord).
 - Ranks:
 
@@ -85,7 +85,7 @@ Ao importar uma versão nova com o mesmo número, o jogo pode manter a antiga. N
 - Ao subir de nível aparece uma mensagem; ao trocar de rank aparece um título na tela e um aviso para todo mundo.
 - **Sobre a cabeça** (nameTag) ficam 2 linhas: o selo com o cargo ou o rank e o nível, e embaixo o nome.
 - **Cargos:** Admin (operador ou tag `vulpus:admin`), Staff (tag `vulpus:staff`) e Helper (tag `vulpus:helper`). O cargo aparece no lugar do rank. Helper é só selo: não abre o painel da staff.
-- **Kitsune:** a tag `vulpus:kitsune` põe o selo do booster. É só enfeite.
+- **Kitsune:** a tag `vulpus:kitsune` põe o selo Kitsune. É só enfeite.
 - Em **Perfil > Nível e ranks** (ou `/vulpus:nivel`) aparecem o seu nível, os ranks, o ranking e como ganhar XP. O lugar do antigo botão Nível no menu agora é do **Clã**.
 
 ## Placar do lado e tema
@@ -283,7 +283,7 @@ Painel só do **dono do servidor**, separado do da staff (staff comum e operador
 
 ## Visual Kitsune
 
-Mimo para quem tem o selo **Kitsune** (booster do Discord). **É só visual**, sem nenhuma vantagem no jogo. Fica em Ajustes > Visual Kitsune ou `/vulpus:apelido`.
+Mimo para quem tem o selo **Kitsune** (compra por PIX no Discord, `/kitsune`). **É só visual**, sem nenhuma vantagem no jogo. Fica em Ajustes > Visual Kitsune ou `/vulpus:apelido`.
 
 - **Apelido:** de 3 a 16 letras, aparece no lugar do nome sobre a cabeça, no chat, no placar do lado e no menu. Só letras do nosso alfabeto (com acento), números, espaço e `_ . -`. Não vale palavrão, nome de cargo ("Admin", "Staff", "Porteiro"...) nem o nome de outra pessoa da toca, nem disfarçado com número no lugar de letra ("K1za", "4dmin"). O nome da conta continua no Perfil ("Conta: ...") para a moderação. `/vulpus:apelido tirar` volta ao nome da conta.
 - **Cor do nome:** 18 temas, entre cores sólidas e degradês letra a letra (Pôr do sol, Oceano, Sakura, Lava, Aurora, Floresta, Arco-íris, Gelo, Ouro, Ametista, Lunar, Brasa...). O chat mostra o mesmo apelido e o mesmo tema.

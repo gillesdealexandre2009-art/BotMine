@@ -22,6 +22,9 @@ export function restante(ms) {
 /** @param {number} ate */
 export const VALE_ATE = (ate) => `até ${formatarData(ate)}`;
 
+/** @param {number} ate */
+export const AVISO_COMPRA = (ate) => `§6Kitsune §8» §7Seu pagamento foi confirmado! Você é Kitsune até §f${formatarData(ate)}§7. Obrigada por ajudar a toca! §6🦊`;
+
 export const SO_DONO = "Só um dono pode dar o selo Kitsune.";
 export const DIAS_INVALIDOS = "Escolha de 1 a 365 dias.";
 /** @param {string} nome */

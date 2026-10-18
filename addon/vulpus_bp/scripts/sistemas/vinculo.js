@@ -19,7 +19,7 @@ import { formatarNumero, registrarErro } from "../core/util.js";
 import * as textos from "../textos/vinculo.js";
 import { nivelDeXp } from "./niveis.js";
 import { emitir } from "../core/eventos.js";
-import { expiracaoDe } from "./kitsune_tempo.js";
+import { concederPorCompra, expiracaoDe } from "./kitsune_tempo.js";
 import { temSelo } from "./kitsune.js";
 
 /**
@@ -254,6 +254,9 @@ function lerSelo(p) {
   return estado;
 }
 
+/** @type {Map<string, number[]>} compras de Kitsune que o jogo já aplicou e ainda vai confirmar ao bot no próximo sync */
+const comprasAplicadas = new Map();
+
 async function somar(id, nome) {
   const d0 = dadosJogador(id);
   if (!d0.vinculo) return false;
@@ -266,10 +269,25 @@ async function somar(id, nome) {
     });
   }
   const envio = pend;
-  const r = await chamar("POST", "/mc/sync", { id, nome, chave: envio.chave, caudas: envio.c, xp: envio.x, kitsune: selos.get(id) });
+  const confirmadas = [...(comprasAplicadas.get(id) ?? [])];
+  const r = await chamar("POST", "/mc/sync", { id, nome, chave: envio.chave, caudas: envio.c, xp: envio.x, kitsune: selos.get(id), kitsune_ok: confirmadas });
   if (r.status === 200 && r.corpo?.ok && Number.isFinite(r.corpo.saldo) && Number.isFinite(r.corpo.xp)) {
     const saldo = Math.max(0, Math.floor(r.corpo.saldo));
     const xp = Math.max(0, Math.floor(r.corpo.xp));
+    // Kitsune comprado por PIX: aplica o que o bot mandou e guarda o aviso para o próximo sync (o bot reenvia até receber)
+    if (confirmadas.length > 0) {
+      const restantes = (comprasAplicadas.get(id) ?? []).filter((c) => !confirmadas.includes(c));
+      if (restantes.length > 0) comprasAplicadas.set(id, restantes);
+      else comprasAplicadas.delete(id);
+    }
+    if (Array.isArray(r.corpo.kitsune_conceder)) {
+      for (const c of r.corpo.kitsune_conceder) {
+        if (!c || !Number.isInteger(c.id) || !Number.isFinite(c.ate)) continue;
+        concederPorCompra(id, nome, c.ate);
+        const lista = comprasAplicadas.get(id) ?? [];
+        if (!lista.includes(c.id)) comprasAplicadas.set(id, [...lista, c.id]);
+      }
+    }
     editarJa(id, (x) => {
       // o que o jogador ganhou ou gastou enquanto a resposta vinha continua valendo, por cima do total do Discord
       x.caudas = Math.max(0, saldo + (x.caudas - envio.sc));

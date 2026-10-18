@@ -115,7 +115,7 @@ export async function mostrar(player, form) {
 }
 
 /**
- * Pode usar o tema? Os de Kitsune pedem o selo (tag do booster).
+ * Pode usar o tema? Os de Kitsune pedem o selo (tag vulpus:kitsune).
  * @param {Player} player
  * @param {Tema} tema
  */
