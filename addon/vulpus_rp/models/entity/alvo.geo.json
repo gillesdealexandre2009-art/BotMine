@@ -1,0 +1,54 @@
+{
+  "format_version": "1.16.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.vulpus.alvo",
+        "texture_width": 32,
+        "texture_height": 32,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [0, 0, 0]
+      },
+      "bones": [
+        {
+          "name": "alvo",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-8, 0, -1],
+              "size": [16, 16, 2],
+              "uv": {
+                "north": { "uv": [0, 0], "uv_size": [16, 16] },
+                "south": { "uv": [16, 0], "uv_size": [16, 16] },
+                "east": { "uv": [0, 16], "uv_size": [2, 16] },
+                "west": { "uv": [0, 16], "uv_size": [2, 16] },
+                "up": { "uv": [4, 16], "uv_size": [16, 2] },
+                "down": { "uv": [4, 16], "uv_size": [16, 2] }
+              }
+            }
+          ]
+        },
+        {
+          "name": "palito",
+          "parent": "alvo",
+          "pivot": [0, 0, 0],
+          "cubes": [
+            {
+              "origin": [-1, -24, -1],
+              "size": [2, 24, 2],
+              "uv": {
+                "north": { "uv": [4, 18], "uv_size": [2, 12] },
+                "south": { "uv": [4, 18], "uv_size": [2, 12] },
+                "east": { "uv": [4, 18], "uv_size": [2, 12] },
+                "west": { "uv": [4, 18], "uv_size": [2, 12] },
+                "up": { "uv": [4, 18], "uv_size": [2, 2] },
+                "down": { "uv": [4, 18], "uv_size": [2, 2] }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

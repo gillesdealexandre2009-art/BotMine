@@ -7,6 +7,7 @@ import { lerMundo, salvarMundo } from "../core/db.js";
 import { ehStaff } from "../core/permissoes.js";
 import { localDe, teleportar } from "../core/teleporte.js";
 import { erro, formatarCoords, nomeDimensao, ok, registrarErro } from "../core/util.js";
+import { destinoDosPontos } from "./spawn_pontos.js";
 import { SO_STAFF } from "../textos/geral.js";
 import * as textos from "../textos/spawn.js";
 
@@ -50,7 +51,7 @@ function spawnPadrao() {
  * Spawn em vigor: o salvo pela staff ou o padrão do mundo.
  * @returns {Local | undefined}
  */
-function localSpawn() {
+export function localSpawn() {
   const salvo = lerMundo(CHAVE_SPAWN);
   return ehLocal(salvo) ? salvo : spawnPadrao();
 }
@@ -59,8 +60,10 @@ function localSpawn() {
  * Teleporta para o spawn (com as regras de teleporte).
  * @param {Player} player
  */
-export function irSpawn(player) {
-  const destino = localSpawn();
+export async function irSpawn(player) {
+  const multiplo = await destinoDosPontos(player);
+  if (multiplo.tipo === "cancelou") return;
+  const destino = multiplo.tipo === "ponto" ? multiplo.local : localSpawn();
   if (!destino) {
     erro(player, textos.SEM_SPAWN);
     return;

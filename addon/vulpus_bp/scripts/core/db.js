@@ -1,7 +1,13 @@
 // @ts-check
 // Persistência em propriedades dinâmicas do MUNDO (dá para ler dados de quem está offline).
-// Tudo em JSON, com cache em memória e gravação imediata.
-import { world } from "@minecraft/server";
+// Tudo em JSON, com cache em memória. Dados do mundo (salvarMundo) e configuração gravam na hora; os dados de cada
+// jogador (caudas, XP, tempo...) mudam o tempo todo e gravam em lote: a mudança vale na hora para o resto do addon (o
+// cache em memória é a fonte) e vai para a propriedade dinâmica no máximo ATRASO_GRAVACAO ticks depois, com um só
+// JSON.stringify por jogador por janela, não um por mudança.
+// Janela de risco: se o servidor cair sem aviso (crash, kill), perdem-se as mudanças de jogador dos últimos
+// ATRASO_GRAVACAO ticks (5 s). Parada normal não perde nada: grava tudo quando alguém sai (só os dados dele), ao
+// desligar (system.beforeEvents.shutdown, quando existe), ao listar jogadores e ao chamar descarregarJogadores().
+import { system, world } from "@minecraft/server";
 import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -30,11 +36,36 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {{ dia: string, sequencia: number }} diaria  dia (Brasília, "2026-10-02") da última diária e dias seguidos
  * @property {Casa[]} casas
  * @property {import("./teleporte.js").Local | null} voltar
- * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema, cla: boolean }} ajustes
+ * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema, cla: boolean, pegadinhas: boolean, musica: boolean, abate: string }} ajustes
  *   hud (scoreboard lateral) null = usar config().hudPadrao; cla = linha do clã no placar
  * @property {boolean} recebeuItem
  * @property {string} apelido  nome de exibição (só vale com o selo Kitsune; "" = o nome da conta)
- * @property {string} temaNome  tema de cor do nome (cores.js; só vale com o selo Kitsune; "" = sem tema)
+ * @property {string} apelidoDono  apelido posto por um dono (vale mesmo sem selo e manda no apelido da pessoa; "" = nenhum)
+ * @property {string} temaNome  tema de cor do nome (cores.js; vale com o selo Kitsune, com o desbloqueio do evento ou para dono; "" = sem tema)
+ * @property {string[]} conquistas  ids das conquistas ganhas (sistemas/conquistas.js)
+ * @property {string[]} coresExtras  temas de cor desbloqueados por eventos (valem sem o selo Kitsune)
+ * @property {number[]} inauguracao  números (0 a 19) das raposinhas do Evento de inauguração já achadas
+ * @property {{ cap: number, tent: number, ate: number, fim: boolean }} arg  mistério da Vulpus: capítulos alcançados (0 a 6), tentativas no terminal, bloqueio até (ms) e se já passou
+ * @property {Vinculo | null} vinculo  conta do Discord ligada (sistemas/vinculo.js); null = ainda não ligou
+ * @property {SyncDiscord} sync  controle da soma de Caudas e XP com o Discord (sistemas/vinculo.js)
+ */
+
+/**
+ * @typedef {object} Vinculo
+ * @property {string} discordId  id da conta do Discord
+ * @property {string} nome  nome no Discord quando ligou (só para mostrar)
+ * @property {number} desde  ms em que ligou
+ * @property {string} mcId  id que o jogador tinha ao ligar
+ */
+
+/**
+ * Caudas e XP são os mesmos no jogo e no Discord. O jogo manda a diferença desde a última soma (baseC, baseX = os totais que o
+ * Discord devolveu) e recebe o total de volta. pend é o envio em andamento (guardado antes de enviar: se o servidor cair no meio,
+ * o mesmo envio é repetido com a mesma chave e o Discord não soma duas vezes).
+ * @typedef {object} SyncDiscord
+ * @property {number} baseC  Caudas do Discord na última soma
+ * @property {number} baseX  XP do Discord na última soma
+ * @property {{ chave: string, c: number, x: number, sc: number, sx: number } | null} pend  chave, diferenças enviadas e totais do jogo no momento do envio
  */
 
 /**
@@ -47,8 +78,14 @@ export const TEMAS_MENU = Object.freeze(["laranja", "black", "sakura", "lunar", 
 /** Teto por propriedade (o jogo aceita até 32767 caracteres). */
 const LIMITE_JSON = 30000;
 
+/** Ticks entre uma mudança nos dados de um jogador e a gravação dela (a janela de risco de um crash). */
+export const ATRASO_GRAVACAO = 100;
+
 /** @type {Map<string, DadosJogador>} */
 const cache = new Map();
+/** Ids de jogador com mudança ainda não gravada na propriedade dinâmica. @type {Set<string>} */
+const sujos = new Set();
+let gravacaoAgendada = false;
 /** @type {Config | undefined} */
 let cacheConfig;
 
@@ -66,10 +103,17 @@ function dadosNovos() {
     diaria: { dia: "", sequencia: 0 },
     casas: [],
     voltar: null,
-    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja", cla: true },
+    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja", cla: true, pegadinhas: true, musica: true, abate: "auto" },
     recebeuItem: false,
     apelido: "",
+    apelidoDono: "",
     temaNome: "",
+    conquistas: [],
+    coresExtras: [],
+    inauguracao: [],
+    arg: { cap: 0, tent: 0, ate: 0, fim: false },
+    vinculo: null,
+    sync: { baseC: 0, baseX: 0, pend: null },
   };
 }
 
@@ -82,6 +126,7 @@ const idDe = (alvo) => (typeof alvo === "string" ? alvo : alvo.id);
  * @returns {any}
  */
 function lerJson(chave) {
+  if (chave.startsWith(PREFIXO_JOGADOR) && sujos.has(chave.slice(PREFIXO_JOGADOR.length))) descarregarJogador(chave.slice(PREFIXO_JOGADOR.length));
   const bruto = world.getDynamicProperty(chave);
   if (typeof bruto !== "string") return undefined;
   try {
@@ -165,11 +210,55 @@ function completar(lido) {
       sons: booleano(ajustes.sons, base.ajustes.sons),
       tema: TEMAS_MENU.includes(ajustes.tema) ? ajustes.tema : "laranja",
       cla: booleano(ajustes.cla, base.ajustes.cla),
+      pegadinhas: booleano(ajustes.pegadinhas, base.ajustes.pegadinhas),
+      musica: booleano(ajustes.musica, base.ajustes.musica),
+      abate: typeof ajustes.abate === "string" && /^[a-z]{1,12}$/.test(ajustes.abate) ? ajustes.abate : "auto",
     },
     recebeuItem: booleano(lido.recebeuItem, base.recebeuItem),
     apelido: typeof lido.apelido === "string" ? lido.apelido.slice(0, 16) : base.apelido,
+    apelidoDono: typeof lido.apelidoDono === "string" ? lido.apelidoDono.slice(0, 16) : base.apelidoDono,
     temaNome: typeof lido.temaNome === "string" ? lido.temaNome.slice(0, 16) : base.temaNome,
+    conquistas: listaTexto(lido.conquistas),
+    coresExtras: listaTexto(lido.coresExtras),
+    arg: argLido(lido.arg),
+    vinculo: vinculoLido(lido.vinculo),
+    sync: syncLido(lido.sync),
+    inauguracao: Array.isArray(lido.inauguracao) ? [...new Set(/** @type {number[]} */ (lido.inauguracao).filter((n) => Number.isInteger(n) && n >= 0 && n < 100))] : base.inauguracao,
   };
+}
+
+/** @param {any} v @returns {{ cap: number, tent: number, ate: number, fim: boolean }} */
+function argLido(v) {
+  const n = (/** @type {unknown} */ x) => (Number.isFinite(x) ? Math.max(0, Math.floor(/** @type {number} */ (x))) : 0);
+  return v && typeof v === "object" ? { cap: Math.min(20, n(v.cap)), tent: n(v.tent), ate: n(v.ate), fim: v.fim === true } : { cap: 0, tent: 0, ate: 0, fim: false };
+}
+
+/** @param {any} v @returns {Vinculo | null} */
+function vinculoLido(v) {
+  if (!v || typeof v !== "object" || typeof v.discordId !== "string" || !/^d{5,25}$/.test(v.discordId)) return null;
+  return {
+    discordId: v.discordId,
+    nome: typeof v.nome === "string" ? v.nome.slice(0, 40) : "",
+    desde: numero(v.desde, 0),
+    mcId: typeof v.mcId === "string" ? v.mcId.slice(0, 64) : "",
+  };
+}
+
+/** @param {any} v @returns {SyncDiscord} */
+function syncLido(v) {
+  const n = (/** @type {unknown} */ x) => Math.max(0, Math.floor(numero(x, 0)));
+  if (!v || typeof v !== "object") return { baseC: 0, baseX: 0, pend: null };
+  const p = v.pend;
+  const pend =
+    p && typeof p === "object" && typeof p.chave === "string" && p.chave.length > 0 && p.chave.length <= 64
+      ? { chave: p.chave, c: Math.floor(numero(p.c, 0)), x: Math.floor(numero(p.x, 0)), sc: n(p.sc), sx: n(p.sx) }
+      : null;
+  return { baseC: n(v.baseC), baseX: n(v.baseX), pend };
+}
+
+/** @param {unknown} v @returns {string[]} lista de textos curtos, sem repetição */
+function listaTexto(v) {
+  return Array.isArray(v) ? [...new Set(v.filter((t) => typeof t === "string" && t !== "").map((t) => t.slice(0, 24)))].slice(0, 60) : [];
 }
 
 /**
@@ -187,18 +276,155 @@ export function dadosJogador(alvo) {
   }
   if (typeof alvo !== "string" && alvo.isValid && dados.nome !== alvo.name) {
     dados.nome = alvo.name;
-    gravarJson(PREFIXO_JOGADOR + id, dados);
+    marcarSujo(id);
   }
   return dados;
 }
 
+/** @param {string} id */
+function marcarSujo(id) {
+  sujos.add(id);
+  if (gravacaoAgendada) return;
+  gravacaoAgendada = true;
+  system.runTimeout(() => {
+    gravacaoAgendada = false;
+    descarregarJogadores();
+  }, ATRASO_GRAVACAO);
+}
+
 /**
- * Grava os dados do jogador no mundo.
+ * Grava na propriedade dinâmica os dados de um jogador com mudança pendente.
+ * @param {string} id
+ */
+function descarregarJogador(id) {
+  sujos.delete(id);
+  const dados = cache.get(id);
+  if (dados) gravarJson(PREFIXO_JOGADOR + id, dados);
+}
+
+/** Grava já todos os dados de jogador com mudança pendente (saída, desligamento, listagens, testes). */
+export function descarregarJogadores() {
+  for (const id of [...sujos]) {
+    try {
+      descarregarJogador(id);
+    } catch (e) {
+      console.warn(`[Vulpus] Não gravei os dados de ${id}: ${e}`);
+    }
+  }
+}
+
+/**
+ * O jogador tem dados guardados (já gravados ou esperando gravação)?
+ * @param {string} id
+ */
+export function temDadosSalvos(id) {
+  return sujos.has(id) || world.getDynamicProperty(PREFIXO_JOGADOR + id) !== undefined;
+}
+
+/** Peso de um registro de jogador: quanto progresso ele tem (para escolher o certo entre dois com o mesmo nome). @param {any} j */
+const pesoDe = (j) => numero(j?.xp, 0) + numero(j?.caudas, 0) + numero(j?.tempo, 0);
+
+/**
+ * Passa tudo o que era de um id para outro: o registro do jogador, as chaves com o id e, dentro de qualquer valor do mundo
+ * (donos, clãs, progresso de mistérios...), o id entre aspas.
+ * @param {string} velho
+ * @param {string} novo
+ * @returns {number} quantas propriedades mudaram
+ */
+function trocarId(velho, novo) {
+  let mudou = 0;
+  const entre = `"${velho}"`;
+  const por = `"${novo}"`;
+  for (const chave of world.getDynamicPropertyIds()) {
+    try {
+      const valor = world.getDynamicProperty(chave);
+      const alvo = chave.includes(velho) ? chave.split(velho).join(novo) : chave;
+      const texto = typeof valor === "string" && valor.includes(entre) ? valor.split(entre).join(por) : valor;
+      if (alvo === chave && texto === valor) continue;
+      world.setDynamicProperty(alvo, texto);
+      if (alvo !== chave) world.setDynamicProperty(chave, undefined);
+      mudou++;
+    } catch (e) {
+      console.warn(`[Vulpus] Não passei ${chave} do id ${velho} para ${novo}: ${e}`);
+    }
+  }
+  for (const id of [velho, novo]) {
+    cache.delete(id);
+    sujos.delete(id);
+  }
+  return mudou;
+}
+
+/**
+ * Quem entra num id novo (mundo copiado de um mundo local para um servidor, conta trocada de aparelho...) e tem um registro
+ * antigo com o MESMO NOME (conta Xbox, confiável) ganha de volta os dados antigos. O registro antigo some, então só acontece
+ * uma vez, e só vale se o antigo tem mais progresso que o novo.
+ * @param {string} id
+ * @param {string} nome
+ */
+function adotarDadosAntigos(id, nome) {
+  try {
+    if (!nome) return;
+    descarregarJogadores();
+    const procurado = nome.toLowerCase();
+    /** @type {{ velho: string, peso: number } | undefined} */
+    let melhor;
+    for (const chave of world.getDynamicPropertyIds()) {
+      if (!chave.startsWith(PREFIXO_JOGADOR) || chave === PREFIXO_JOGADOR + id) continue;
+      const velho = chave.slice(PREFIXO_JOGADOR.length);
+      if (velho.length < 6) continue; // ids curtos podem aparecer dentro de outros textos
+      const bruto = world.getDynamicProperty(chave);
+      if (typeof bruto !== "string") continue;
+      let lido;
+      try {
+        lido = JSON.parse(bruto);
+      } catch {
+        continue;
+      }
+      if (typeof lido?.nome !== "string" || lido.nome.toLowerCase() !== procurado) continue;
+      const peso = pesoDe(lido);
+      if (!melhor || peso > melhor.peso) melhor = { velho, peso };
+    }
+    if (!melhor) return;
+    const atual = lerJson(PREFIXO_JOGADOR + id);
+    if (atual !== undefined && pesoDe(atual) >= melhor.peso) return;
+    const n = trocarId(melhor.velho, id);
+    console.warn(`[Vulpus] ${nome}: dados antigos (id ${melhor.velho}) passaram para o id novo (${n} propriedades).`);
+  } catch (e) {
+    console.warn(`[Vulpus] Não consegui adotar os dados antigos de ${nome}: ${e}`);
+  }
+}
+world.afterEvents.playerJoin.subscribe(({ playerId, playerName }) => adotarDadosAntigos(playerId, playerName));
+
+// Quem sai leva os dados para a propriedade na hora; ao desligar, vai tudo.
+world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+  const gravar = () => {
+    if (!sujos.has(playerId)) return;
+    try {
+      descarregarJogador(playerId);
+    } catch (e) {
+      console.warn(`[Vulpus] Não gravei os dados de ${playerId} ao sair: ${e}`);
+    }
+  };
+  gravar();
+  // Os outros ouvintes de saída (tempo online, Caudas) ainda mexem nos dados neste tick: grava de novo no seguinte.
+  system.run(gravar);
+});
+try {
+  system.beforeEvents.shutdown?.subscribe(() => descarregarJogadores());
+} catch (e) {
+  console.warn(`[Vulpus] Sem gancho de desligamento: ${e}`);
+}
+
+/**
+ * Marca os dados do jogador para gravar (em lote, até ATRASO_GRAVACAO ticks depois; ver o topo do arquivo).
  * @param {Player | string} alvo
- * @returns {boolean} se gravou
+ * @returns {boolean} true (o limite de tamanho é conferido na gravação; avisa no log)
  */
 export function salvarJogador(alvo) {
-  return gravarJson(PREFIXO_JOGADOR + idDe(alvo), dadosJogador(alvo));
+  dadosJogador(alvo);
+  marcarSujo(idDe(alvo));
+  return true;
 }
 
 /**
@@ -219,6 +445,7 @@ export function editarJogador(alvo, fn) {
  * @returns {{ id: string, dados: DadosJogador }[]}
  */
 export function todosJogadores() {
+  descarregarJogadores();
   return world
     .getDynamicPropertyIds()
     .filter((chave) => chave.startsWith(PREFIXO_JOGADOR))
@@ -285,7 +512,10 @@ export function lerMundo(chave, padrao) {
  */
 export function salvarMundo(chave, valor) {
   if (chave === CHAVE_CONFIG) cacheConfig = undefined;
-  if (chave.startsWith(PREFIXO_JOGADOR)) cache.delete(chave.slice(PREFIXO_JOGADOR.length));
+  if (chave.startsWith(PREFIXO_JOGADOR)) {
+    sujos.delete(chave.slice(PREFIXO_JOGADOR.length)); // a gravação de agora vale mais que a pendente
+    cache.delete(chave.slice(PREFIXO_JOGADOR.length));
+  }
   if (valor === undefined) {
     world.setDynamicProperty(chave, undefined);
     return true;

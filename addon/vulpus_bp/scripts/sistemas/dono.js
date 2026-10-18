@@ -9,9 +9,15 @@ import { confirmar, Lista, perguntar } from "../core/forms.js";
 import { erro, msg } from "../core/util.js";
 import * as textosCla from "../textos/clas.js";
 import * as textos from "../textos/dono.js";
+import * as textosKT from "../textos/kitsune_tempo.js";
+import * as textosArg from "../textos/arg.js";
+import * as textosPegadinhas from "../textos/pegadinhas.js";
 import { claPorId, CORES_CLA, defNivel, membroDe, todosClas } from "./cla_dados.js";
 import { guerraDe, lerEstado } from "./cla_guerra.js";
 import * as acoes from "./dono_acoes.js";
+import * as kitsuneTempo from "./kitsune_tempo.js";
+import { menuArg } from "./arg.js";
+import { menuPegadinhas } from "./pegadinhas.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {import("./cla_dados.js").Cla} Cla */
@@ -48,10 +54,56 @@ export async function menuDono(player, voltar) {
   const aqui = () => menuDono(player, voltar);
   await new Lista(textos.TITULO)
     .texto(textos.CORPO(todosClas().length, lerEstado().guerras.length, donosRegistrados().length + DONOS.length))
+    .cabecalho(textos.SECAO_CLAS)
     .botao(textos.BOTAO_TIMES, ICONES.cla, (p) => menuTimes(p, aqui))
     .botao(textos.BOTAO_GUERRAS, ICONES.guerra, (p) => menuGuerras(p, aqui))
+    .cabecalho(textos.SECAO_JOGADORES)
+    .botao(textos.BOTAO_APELIDO, ICONES.apelido, async (p) => {
+      if (!podeAbrir(p, "apelido")) return;
+      const r = await perguntar(p, textos.TITULO_APELIDO, [
+        { tipo: "texto", rotulo: textos.ROTULO_APELIDO_JOGADOR },
+        { tipo: "texto", rotulo: textos.ROTULO_APELIDO_NOVO },
+      ]);
+      if (r && r[0]) acoes.definirApelidoDe(p, r[0], r[1] ?? "");
+      await aqui();
+    })
+    .botao(textosKT.BOTAO_PAINEL, ICONES.apelido, (p) => menuKitsuneTempo(p, aqui))
+    .botao(textosPegadinhas.BOTAO_PAINEL, ICONES.spawn, (p) => menuPegadinhas(p, aqui))
+    .botao(textosArg.BOTAO_PAINEL, ICONES.spawn, (p) => menuArg(p, aqui))
+    .cabecalho(textos.SECAO_ADMIN)
     .botao(textos.BOTAO_DONOS, ICONES.dono, (p) => menuDonos(p, aqui))
     .botao(textos.BOTAO_LOG, ICONES.historico, (p) => menuLog(p, aqui))
+    .voltar(voltar)
+    .abrir(player);
+}
+
+// ---------------------------------------------------------------- kitsune com prazo
+
+/**
+ * Dar o selo Kitsune por alguns dias, ver quem tem e tirar.
+ * @param {Player} player
+ * @param {Volta} voltar
+ */
+async function menuKitsuneTempo(player, voltar) {
+  if (!podeAbrir(player, "kitsune com prazo")) return;
+  const aqui = () => menuKitsuneTempo(player, voltar);
+  await new Lista(textosKT.TITULO_PAINEL)
+    .texto(textosKT.CORPO_PAINEL(kitsuneTempo.listar(), Date.now()))
+    .botao(textosKT.BOTAO_DAR, ICONES.nova, async (p) => {
+      if (!podeAbrir(p, "dar kitsune")) return;
+      const r = await perguntar(p, textosKT.TITULO_DAR, [
+        { tipo: "texto", rotulo: textosKT.ROTULO_JOGADOR },
+        { tipo: "numero", rotulo: textosKT.ROTULO_DIAS, padrao: 30, min: 1, max: 365 },
+      ]);
+      if (r && r[0]) kitsuneTempo.darKitsuneTempo(p, r[0], r[1]);
+      await aqui();
+    })
+    .botao(textosKT.BOTAO_TIRAR, ICONES.nao, async (p) => {
+      if (!podeAbrir(p, "tirar kitsune")) return;
+      const r = await perguntar(p, textosKT.BOTAO_TIRAR, [{ tipo: "texto", rotulo: textosKT.ROTULO_JOGADOR }]);
+      if (r && r[0]) kitsuneTempo.tirarKitsuneTempo(p, r[0]);
+      await aqui();
+    })
     .voltar(voltar)
     .abrir(player);
 }

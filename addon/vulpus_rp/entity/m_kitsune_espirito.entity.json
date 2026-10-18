@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:m_kitsune_espirito",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/vulpus/entidades/m_kitsune_espirito"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.m_kitsune_espirito"
+      },
+      "animations": {
+        "andar": "animation.vulpus.m_kitsune_espirito.andar",
+        "ataque": "animation.vulpus.m_kitsune_espirito.ataque"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "andar": "query.modified_move_speed > 0.02 || true"
+          },
+          {
+            "ataque": "variable.attack_time > 0"
+          }
+        ],
+        "scale": "1.0"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.m_padrao"
+      ],
+      "spawn_egg": {
+        "base_color": "#bedcff",
+        "overlay_color": "#ffffff"
+      }
+    }
+  }
+}

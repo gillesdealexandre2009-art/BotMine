@@ -525,6 +525,7 @@ export const QUANDO = (ms) => {
   return `${dois(d.getUTCDate())}/${dois(d.getUTCMonth() + 1)} ${dois(d.getUTCHours())}:${dois(d.getUTCMinutes())}`;
 };
 
+export const NO_MINIGAME = "§cO leilão e a caixa ficam fechados durante os minigames. Saia da partida para usar.";
 export const DESC_LEILAO = "Abre o leilão";
 export const DESC_VENDER = "Anuncia no leilão o item da mão";
 export const DESC_CAIXA = "Abre a caixa de retirada do leilão";

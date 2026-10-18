@@ -17,6 +17,7 @@ import { avisarCla, limpar } from "./cla_acoes.js";
 import { claDe, claPorId, claPorTag, CORES_CLA, defNivel, editarCla, membroDe, novoCla, problemaNome, problemaTag, todosClas } from "./cla_dados.js";
 import { guerraDe, iniciar, lerEstado, salvar as salvarGuerras, terminar } from "./cla_guerra.js";
 import { expandirBase } from "./cla_terreno.js";
+import { APELIDO_MAX, definirApelidoDoDono, problemaApelido } from "./kitsune.js";
 
 /** @typedef {import("./cla_dados.js").Cla} Cla */
 /** @typedef {import("./cla_guerra.js").Guerra} Guerra */
@@ -415,6 +416,34 @@ export function consultarTime(autor, alvo) {
     if (!pessoa) return { erro: textos.PESSOA_NAO_ACHADA(textoDe(alvo)) };
     const cla = claDe(pessoa.id);
     return textos.CONSULTA(pessoa.nome, cla, cla ? membroDe(cla, pessoa.id)?.cargo : undefined, cla ? nomeLider(cla) : "", !!porId(pessoa.id));
+  });
+}
+
+/**
+ * O dono muda o apelido de outra pessoa (ou tira, com texto vazio). Vale mesmo sem selo Kitsune e manda no
+ * apelido que a pessoa escolheu; as mesmas regras de nome (tamanho, letras, palavrão, imitar alguém) valem.
+ * @param {Player} autor
+ * @param {string} alvo
+ * @param {string} apelidoBruto
+ */
+export function definirApelidoDe(autor, alvo, apelidoBruto) {
+  return executar(autor, "apelido", `${textoDe(alvo)} = ${textoDe(apelidoBruto)}`, () => {
+    const pessoa = acharPessoa(alvo);
+    if (!pessoa) return { erro: textos.PESSOA_NAO_ACHADA(textoDe(alvo)) };
+    const nome = textoDe(apelidoBruto).replace(/§./g, "").trim().replace(/\s+/g, " ");
+    if (nome.length > APELIDO_MAX * 2) return { erro: textos.APELIDO_LONGO };
+    if (nome === "") {
+      definirApelidoDoDono(pessoa.id, "");
+      const p = porId(pessoa.id);
+      if (p && p.id !== autor.id) msg(p, textos.APELIDO_TIRADO_AVISO);
+      return textos.APELIDO_TIRADO(pessoa.nome);
+    }
+    const problema = problemaApelido(nome, pessoa.id);
+    if (problema) return { erro: problema };
+    definirApelidoDoDono(pessoa.id, nome);
+    const p = porId(pessoa.id);
+    if (p && p.id !== autor.id) msg(p, textos.APELIDO_MUDADO_AVISO(nome));
+    return textos.APELIDO_DEFINIDO(pessoa.nome, nome);
   });
 }
 

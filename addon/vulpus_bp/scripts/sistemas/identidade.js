@@ -5,15 +5,23 @@ import { CommandPermissionLevel, Player, PlayerPermissionLevel, system, world } 
 import { ICONES, TAG_ADMIN, TAG_HELPER, TAG_KITSUNE, TAG_STAFF } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { Lista } from "../core/forms.js";
-import { online, porId } from "../core/jogadores.js";
+import { online, porId, TAG_SUMIDO } from "../core/jogadores.js";
 import { ehStaff } from "../core/permissoes.js";
 import { erro, msg, ok, registrarErro } from "../core/util.js";
+import { TEMAS_COR } from "../cores.js";
 import { G, glyph } from "../glyphs.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/niveis.js";
 import { aoMudarCla, tagDe, tagPintada } from "./cla_dados.js";
 import { aoMudarVisual, apelidoDe, nomeExibido, resetarVisual, temaNomeDe } from "./kitsune.js";
 import { aoSubirNivel, infoNivel } from "./niveis.js";
+
+/** Ticks por "quadro" da onda de cores: o índice do quadro é tick / PASSO_ANIMACAO (a velocidade da onda). */
+const PASSO_ANIMACAO = 5;
+/** De quantos em quantos ticks o nome animado é reenviado (2 quadros por vez: mesma velocidade, metade dos pacotes). */
+const INTERVALO_ANIMACAO = 10;
+/** @type {Map<string, string>} id → as linhas do nameTag acima do nome (marcas + selo/nível), da última atualização completa */
+const linhasFixas = new Map();
 
 /** @typedef {"admin" | "staff" | "helper"} Cargo */
 /** @typedef {{ nome: string, glyph: string, cor: string, codigo: number }} InfoCargo */
@@ -173,8 +181,11 @@ export function atualizarIdentidade(player) {
   const cla = tagDe(player);
   const prefixoCla = cla ? `§8[${tagPintada(cla)}§8]§r ` : "";
   const linha1 = `${prefixoCla}${glyph(marca.glyph)} ${marca.cor}${marca.nome} §7Nv ${info.nivel}${kitsune ? ` ${glyph(G.KITSUNE)}` : ""}`;
-  const nameTag = [...marcasDe(player), linha1, nomeExibido(player)].join("\n");
-  if (player.nameTag !== nameTag) player.nameTag = nameTag;
+  const fixas = [...marcasDe(player), linha1].join("\n");
+  linhasFixas.set(player.id, fixas);
+  const nameTag = `${fixas}\n${nomeExibido(player, "§f", Math.floor(system.currentTick / PASSO_ANIMACAO))}`;
+  const nomeFinal = player.hasTag(TAG_SUMIDO) ? "" : nameTag; // quem está "fora" fica sem nome em cima da cabeça
+  if (player.nameTag !== nomeFinal) player.nameTag = nomeFinal;
   const apelido = apelidoDe(player);
   const temaNome = temaNomeDe(player);
   sincronizarTags(player, [
@@ -440,3 +451,27 @@ registrarComando(
     alternarKitsune(p, alvo);
   },
 );
+
+// Cores de nome animadas: redesenha o nameTag de quem usa uma, andando a onda de cores.
+system.runInterval(() => {
+  try {
+    for (const p of online()) {
+      const tema = temaNomeDe(p);
+      if (!tema || TEMAS_COR[tema].modo !== "onda") continue;
+      const fixas = linhasFixas.get(p.id);
+      if (fixas === undefined) {
+        atualizarIdentidade(p);
+        continue;
+      }
+      // Só o nome anda: as linhas de cima vêm da última atualização completa (níveis, clã e cargo a refazem por evento).
+      const nameTag = `${fixas}\n${nomeExibido(p, "§f", Math.floor(system.currentTick / PASSO_ANIMACAO))}`;
+      if (p.nameTag !== nameTag) p.nameTag = nameTag;
+    }
+  } catch (e) {
+    registrarErro("Identidade: animação do nome", e);
+  }
+}, INTERVALO_ANIMACAO);
+
+world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+  linhasFixas.delete(playerId);
+});

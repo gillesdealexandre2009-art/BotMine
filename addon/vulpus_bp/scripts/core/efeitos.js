@@ -18,8 +18,8 @@ import { registrarErro, som } from "./util.js";
 /** @typedef {import("@minecraft/server").RGB} RGB */
 
 /**
- * Tema do efeito: kitsune (padrão), casa, spawn, voltar, tpa ou cla (casa do clã).
- * @typedef {"kitsune" | "casa" | "spawn" | "voltar" | "tpa" | "cla"} TemaTeleporte
+ * Tema do efeito: kitsune (padrão), casa, spawn, voltar, tpa, cla (casa do clã) ou rtp (mundo aberto).
+ * @typedef {"kitsune" | "casa" | "spawn" | "voltar" | "tpa" | "cla" | "rtp"} TemaTeleporte
  */
 
 /**
@@ -40,17 +40,15 @@ import { registrarErro, som } from "./util.js";
 
 const P = Object.freeze({
   CHAMA: "minecraft:colored_flame_particle",
-  FATUO: "minecraft:blue_flame_particle",
-  ALMA_CHAMA: "minecraft:small_soul_fire_flame",
-  ALMA: "minecraft:soul_particle",
+  FATUO: "minecraft:basic_flame_particle",
+  ALMA_CHAMA: "minecraft:basic_flame_particle",
+  ALMA: "minecraft:white_smoke_particle",
   FAISCA: "minecraft:endrod",
   RAJADA: "minecraft:wind_explosion_emitter",
   FUMACA: "minecraft:basic_smoke_particle",
   FUMACA_BRANCA: "minecraft:white_smoke_particle",
   CORACAO: "minecraft:heart_particle",
   PETALA: "minecraft:cherry_leaves_particle",
-  TOTEM: "minecraft:totem_particle",
-  BRILHO: "minecraft:villager_happy",
   CRITICO: "minecraft:basic_crit_particle",
 });
 
@@ -73,6 +71,7 @@ const LARANJA = { red: 1, green: 0.5, blue: 0.08 };
 const DOURADO = { red: 1, green: 0.78, blue: 0.22 };
 const ROSA = { red: 1, green: 0.45, blue: 0.55 };
 const CINZA = { red: 0.62, green: 0.66, blue: 0.78 };
+const BRASA = { red: 0.9, green: 0.35, blue: 0.08 };
 const CARMIM = { red: 0.85, green: 0.12, blue: 0.1 };
 
 /** Raio das caudas em volta do jogador, em blocos. */
@@ -252,12 +251,12 @@ const TEMAS = {
     subtitulo: textos.TP_SUB_SPAWN,
     floreio: (dim, c) => {
       if (anel(dim, c, { raio: 2, n: 16, y: 0.1 }, P.CHAMA, [DOURADO, LARANJA])) {
-        nuvem(dim, c, { n: 18, largura: 0.3, y0: 1, alto: 0.6 }, P.TOTEM);
+        nuvem(dim, c, { n: 18, largura: 0.3, y0: 1, alto: 0.6 }, P.FAISCA);
       }
     },
   },
   voltar: {
-    cores: [CINZA, CINZA],
+    cores: [BRASA, CINZA],
     fatuo: P.ALMA_CHAMA,
     fade: { red: 0.08, green: 0.09, blue: 0.12 },
     sons: [[S.ALMA, 1, 1], [S.PORTAL, 0.7, 0.6]],
@@ -277,7 +276,7 @@ const TEMAS = {
     sons: [[S.ALLAY, 1.1, 0.9], [S.RAPOSA, 1.3, 0.8]],
     subtitulo: textos.TP_SUB_TPA,
     floreio: (dim, c) => {
-      if (nuvem(dim, c, { n: 6, largura: 0.8, y0: 0.5, alto: 1.5 }, P.BRILHO)) {
+      if (nuvem(dim, c, { n: 6, largura: 0.8, y0: 0.5, alto: 1.5 }, P.FAISCA)) {
         anel(dim, c, { raio: 0.5, n: 2, y: 2.2 }, P.CORACAO);
       }
     },
@@ -291,6 +290,19 @@ const TEMAS = {
     floreio: (dim, c) => {
       if (anel(dim, c, { raio: 1.6, n: 12, y: 0.1 }, P.CHAMA, [CARMIM, DOURADO])) {
         nuvem(dim, c, { n: 10, largura: 0.6, y0: 0.8, alto: 1.2 }, P.CRITICO);
+      }
+    },
+  },
+  rtp: {
+    cores: [LARANJA, DOURADO],
+    fatuo: P.FATUO,
+    fade: { red: 0.55, green: 0.3, blue: 0.06 },
+    sons: [[S.SOPRO, 1, 0.9], [S.FOGOS, 1.4, 0.7], [S.RAPOSA, 1.5, 0.8]],
+    titulo: textos.TP_TITULO_RTP,
+    subtitulo: textos.TP_SUB_RTP,
+    floreio: (dim, c) => {
+      if (anel(dim, c, { raio: 1.8, n: 14, y: 0.1 }, P.CHAMA, [LARANJA, DOURADO])) {
+        nuvem(dim, c, { n: 12, largura: 0.9, y0: 0.5, alto: 2 }, P.FAISCA);
       }
     },
   },

@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:m_general_sem_bandeira",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/vulpus/entidades/m_general_sem_bandeira"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.m_general_sem_bandeira"
+      },
+      "animations": {
+        "andar": "animation.vulpus.m_general_sem_bandeira.andar",
+        "ataque": "animation.vulpus.m_general_sem_bandeira.ataque"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "andar": "query.modified_move_speed > 0.02 || true"
+          },
+          {
+            "ataque": "variable.attack_time > 0"
+          }
+        ],
+        "scale": "1.7"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.m_padrao"
+      ],
+      "spawn_egg": {
+        "base_color": "#545460",
+        "overlay_color": "#ffffff"
+      }
+    }
+  }
+}

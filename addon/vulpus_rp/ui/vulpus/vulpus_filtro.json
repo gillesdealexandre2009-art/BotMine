@@ -1,0 +1,84 @@
+{
+  "namespace": "vulpus_filtro",
+
+  "raiz": {
+    "type": "panel",
+    "size": [ "100%", "100%" ],
+    "layer": 3,
+    "controls": [
+      { "dados_filtro@vulpus_filtro.dados": {} },
+      { "overlay@vulpus_filtro.overlay": {} }
+    ]
+  },
+
+  "dados": {
+    "type": "panel",
+    "size": [ 0, 0 ],
+    "property_bag": { "#preserved_text": "" },
+    "bindings": [
+      { "binding_name": "#hud_title_text_string", "binding_condition": "always" },
+      {
+        "binding_name": "#hud_title_text_string",
+        "binding_name_override": "#preserved_text",
+        "binding_condition": "visibility_changed"
+      },
+      {
+        "binding_type": "view",
+        "source_property_name": "((not (#hud_title_text_string = #preserved_text)) and (not ((#hud_title_text_string - '§v§s§b§r') = #hud_title_text_string)))",
+        "target_property_name": "#visible",
+        "binding_condition": "always"
+      }
+    ]
+  },
+
+  "overlay": {
+    "type": "panel",
+    "size": [ "100%", "100%" ],
+    "ignored": false,
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "bindings": [
+      {
+        "binding_type": "view",
+        "source_control_name": "dados_filtro",
+        "resolve_sibling_scope": true,
+        "source_property_name": "(not ((#preserved_text - '§v§f§i§l§r') = #preserved_text))",
+        "target_property_name": "#visible"
+      }
+    ],
+    "controls": [
+      { "tom": { "type": "image", "texture": "textures/vulpus/ui/filtro_tom", "keep_ratio": false, "size": [ "100%", "100%" ], "alpha": 0.06, "layer": 1 } },
+      {
+        "graos_a": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_ruido_a",
+          "keep_ratio": false,
+          "size": [ "104%", "104%" ],
+          "alpha": 0.05,
+          "layer": 2,
+          "anims": [ "@vulpus_filtro.tremer_a1" ]
+        }
+      },
+      {
+        "graos_b": {
+          "type": "image",
+          "texture": "textures/vulpus/ui/filtro_ruido_b",
+          "keep_ratio": false,
+          "size": [ "104%", "104%" ],
+          "alpha": 0.04,
+          "layer": 2,
+          "anims": [ "@vulpus_filtro.tremer_b1" ]
+        }
+      },
+      { "vinheta": { "type": "image", "texture": "textures/vulpus/ui/filtro_vinheta", "keep_ratio": false, "size": [ "100%", "100%" ], "alpha": 0.45, "layer": 3 } }
+    ]
+  },
+
+  "tremer_a1": { "anim_type": "offset", "easing": "linear", "duration": 0.12, "from": [ 0, 0 ], "to": [ -9, 5 ], "next": "@vulpus_filtro.tremer_a2" },
+  "tremer_a2": { "anim_type": "offset", "easing": "linear", "duration": 0.12, "from": [ -9, 5 ], "to": [ 6, -7 ], "next": "@vulpus_filtro.tremer_a3" },
+  "tremer_a3": { "anim_type": "offset", "easing": "linear", "duration": 0.12, "from": [ 6, -7 ], "to": [ 0, 0 ], "next": "@vulpus_filtro.tremer_a1" },
+
+  "tremer_b1": { "anim_type": "offset", "easing": "linear", "duration": 0.17, "from": [ 7, 6 ], "to": [ -5, -8 ], "next": "@vulpus_filtro.tremer_b2" },
+  "tremer_b2": { "anim_type": "offset", "easing": "linear", "duration": 0.17, "from": [ -5, -8 ], "to": [ -8, 4 ], "next": "@vulpus_filtro.tremer_b3" },
+  "tremer_b3": { "anim_type": "offset", "easing": "linear", "duration": 0.17, "from": [ -8, 4 ], "to": [ 7, 6 ], "next": "@vulpus_filtro.tremer_b1" }
+}

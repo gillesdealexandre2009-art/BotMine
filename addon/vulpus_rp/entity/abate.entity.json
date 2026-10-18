@@ -1,0 +1,58 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:abate",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "caudas": "textures/vulpus/entidades/abate_caudas",
+        "sakura": "textures/vulpus/entidades/abate_sakura",
+        "lunar": "textures/vulpus/entidades/abate_lunar",
+        "espirito": "textures/vulpus/entidades/abate_espirito",
+        "brasa": "textures/vulpus/entidades/abate_brasa",
+        "aurora": "textures/vulpus/entidades/abate_aurora",
+        "estelar": "textures/vulpus/entidades/abate_estelar",
+        "sombra": "textures/vulpus/entidades/abate_sombra",
+        "ditadora": "textures/vulpus/entidades/abate_ditadora"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.abate"
+      },
+      "animations": {
+        "f0": "animation.vulpus.abate.f0",
+        "f1": "animation.vulpus.abate.f1",
+        "f2": "animation.vulpus.abate.f2",
+        "f3": "animation.vulpus.abate.f3",
+        "f4": "animation.vulpus.abate.f4",
+        "f5": "animation.vulpus.abate.f5"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "f0": "query.property('vulpus:forma') == 0"
+          },
+          {
+            "f1": "query.property('vulpus:forma') == 1"
+          },
+          {
+            "f2": "query.property('vulpus:forma') == 2"
+          },
+          {
+            "f3": "query.property('vulpus:forma') == 3"
+          },
+          {
+            "f4": "query.property('vulpus:forma') == 4"
+          },
+          {
+            "f5": "query.property('vulpus:forma') == 5"
+          }
+        ]
+      },
+      "render_controllers": [
+        "controller.render.vulpus.abate"
+      ]
+    }
+  }
+}

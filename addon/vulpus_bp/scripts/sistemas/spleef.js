@@ -15,6 +15,7 @@ import {
   system,
   world,
 } from "@minecraft/server";
+import { textoNaEntidade } from "../core/flutuante.js";
 import { ICONES, SONS } from "../config.js";
 import { config, lerMundo, salvarMundo } from "../core/db.js";
 import * as efeitos from "../core/efeitos.js";
@@ -1309,7 +1310,7 @@ export function atualizarPlacar() {
       ent = dim.spawnEntity(ENTIDADE_TEXTO, pos);
       ent.addTag(TAG_PLACAR);
     } else ent.teleport(pos, { dimension: dim });
-    ent.nameTag = textoPlacar();
+    textoNaEntidade(ent, textoPlacar());
     placarPendente = false;
     return true;
   } catch (e) {

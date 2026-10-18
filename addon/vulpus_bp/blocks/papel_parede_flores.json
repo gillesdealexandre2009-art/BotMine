@@ -1,0 +1,31 @@
+{
+  "format_version": "1.21.100",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vulpus:papel_parede_flores",
+      "menu_category": {
+        "category": "construction",
+        "group": "minecraft:itemGroup.name.concrete"
+      }
+    },
+    "components": {
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:light_emission": 11,
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vulpus_papel_parede_flores",
+          "render_method": "opaque",
+          "ambient_occlusion": false,
+          "face_dimming": false
+        }
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.8
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6
+      },
+      "minecraft:map_color": "#FFF3DC"
+    }
+  }
+}

@@ -4,8 +4,11 @@
 // (vulpus_chat_bp/scripts/formato.js): mudou aqui, mude lá também (o teste teste_clas.mjs compara).
 
 /**
- * cores: códigos § sem o §; modo "degrade" espalha as cores pelo texto, "ciclo" alterna letra a letra.
- * @typedef {{ nome: string, cores: string[], modo: "degrade" | "ciclo" }} TemaCor
+ * cores: códigos § sem o §; modo "degrade" espalha as cores pelo texto, "ciclo" alterna letra a letra e "onda" é um
+ * ciclo que anda com o tempo (o parâmetro fase de pintar; o nameTag é redesenhado a cada instante).
+ * grupo: "animado" (Kitsune nível 20) ou "evento" (desbloqueado por um evento); sem grupo = Kitsune comum.
+ * oculto: continua valendo para quem já tem, mas não aparece mais nas listas (era quase igual a outro).
+ * @typedef {{ nome: string, cores: string[], modo: "degrade" | "ciclo" | "onda", grupo?: "animado" | "evento", oculto?: boolean }} TemaCor
  */
 
 /** @type {Readonly<Record<string, Readonly<TemaCor>>>} */
@@ -25,9 +28,17 @@ export const TEMAS_COR = Object.freeze({
   arcoiris: { nome: "Arco-íris", cores: ["c", "6", "e", "a", "b", "9", "d"], modo: "ciclo" },
   gelo: { nome: "Gelo", cores: ["f", "b", "3"], modo: "degrade" },
   ouro: { nome: "Ouro", cores: ["g", "e", "6"], modo: "degrade" },
-  ametista: { nome: "Ametista", cores: ["d", "5"], modo: "degrade" },
-  lunar: { nome: "Lunar", cores: ["f", "7", "b"], modo: "degrade" },
-  brasa: { nome: "Brasa", cores: ["6", "c", "4"], modo: "degrade" },
+  ametista: { nome: "Ametista", cores: ["d", "5"], modo: "degrade", oculto: true },
+  lunar: { nome: "Lunar", cores: ["f", "7", "b"], modo: "degrade", oculto: true },
+  brasa: { nome: "Brasa", cores: ["6", "c", "4"], modo: "degrade", oculto: true },
+  // animados (Kitsune nível 20; dono usa quando quiser)
+  chamaviva: { nome: "Chama viva", cores: ["e", "6", "c", "4", "c", "6"], modo: "onda", grupo: "animado" },
+  ondadomar: { nome: "Onda do mar", cores: ["f", "b", "3", "9", "3", "b"], modo: "onda", grupo: "animado" },
+  auroraboreal: { nome: "Aurora boreal", cores: ["a", "b", "9", "d", "9", "b"], modo: "onda", grupo: "animado" },
+  galaxia: { nome: "Galáxia", cores: ["5", "d", "9", "3", "9", "d"], modo: "onda", grupo: "animado" },
+  eletrico: { nome: "Elétrico", cores: ["e", "f", "b", "9", "b", "f"], modo: "onda", grupo: "animado" },
+  // do Evento de inauguração: do branco ao azul
+  inauguracao: { nome: "Céu da inauguração", cores: ["f", "b", "3", "9"], modo: "degrade", grupo: "evento" },
 });
 
 /**
@@ -39,19 +50,35 @@ export function temaValido(id) {
 }
 
 /**
+ * Temas de um grupo, sem os ocultos: "comum" (sem grupo), "animado" ou "evento".
+ * @param {"comum" | "animado" | "evento"} grupo
+ * @returns {[string, Readonly<TemaCor>][]}
+ */
+export function temasDoGrupo(grupo) {
+  return Object.entries(TEMAS_COR).filter(([, t]) => !t.oculto && (t.grupo ?? "comum") === grupo);
+}
+
+/**
  * Pinta o texto com o tema (sem §r no fim). Tema desconhecido: devolve undefined.
+ * Temas "onda" andam: a cor da letra i é a (i + fase) do ciclo; fase 0 = parado.
  * @param {string} texto
  * @param {string} temaId
+ * @param {number} [fase]
  * @returns {string | undefined}
  */
-export function pintar(texto, temaId) {
+export function pintar(texto, temaId, fase = 0) {
   if (!temaValido(temaId)) return undefined;
   const { cores, modo } = TEMAS_COR[temaId];
   const letras = [...texto];
   let saida = "";
   let anterior = "";
   letras.forEach((letra, i) => {
-    const cor = modo === "ciclo" ? cores[i % cores.length] : cores[Math.min(cores.length - 1, Math.floor((i * cores.length) / letras.length))];
+    const cor =
+      modo === "onda"
+        ? cores[(((i + Math.floor(fase)) % cores.length) + cores.length) % cores.length]
+        : modo === "ciclo"
+          ? cores[i % cores.length]
+          : cores[Math.min(cores.length - 1, Math.floor((i * cores.length) / letras.length))];
     if (cor !== anterior) saida += `§${cor}`;
     anterior = cor;
     saida += letra;

@@ -8,6 +8,7 @@
 import { Player, system, world } from "@minecraft/server";
 import { SONS } from "../config.js";
 import { config, lerMundo, salvarMundo } from "../core/db.js";
+import { emitir } from "../core/eventos.js";
 import { online } from "../core/jogadores.js";
 import { mostrarTitulo } from "../core/tela.js";
 import { erro, msg, ok, registrarErro, som } from "../core/util.js";
@@ -389,6 +390,7 @@ export function iniciar(g) {
     mostrarTitulo(p, textos.TITULO_GUERRA, { subtitulo: textos.SUBTITULO_GUERRA(g) });
   }
   notificar("comecou", g);
+  emitir("guerra_inicio", { a: g.tags.a, b: g.tags.b, aposta: g.aposta.a + g.aposta.b, ctf: g.ctf !== null && g.ctf !== undefined });
 }
 
 /**
@@ -440,6 +442,19 @@ export function terminar(g, motivo, vencedor) {
   e.recargas[chavePar(g.a, g.b)] = Date.now();
   salvar();
   world.sendMessage(PREFIXO + textos.GUERRA_TERMINOU(g, lado, motivo, lado ? total : 0));
+  emitir("guerra_fim", {
+    a: g.tags.a,
+    b: g.tags.b,
+    pa: g.pontos.a,
+    pb: g.pontos.b,
+    vencedor: lado ? g.tags[lado] : "",
+    motivo,
+    premio: lado ? total : 0,
+    cacador: cacador ? cacador.nome : "",
+    cacador_n: cacador ? cacador.n : 0,
+    capturas_a: g.ctf ? g.ctf.capturas.a : 0,
+    capturas_b: g.ctf ? g.ctf.capturas.b : 0,
+  });
   if (!cacador) return true;
   world.sendMessage(PREFIXO + textos.CACADOR(g, cacador.nome, cacador.lado, cacador.n));
   const quem = online().find((p) => p.id === cacador.id);

@@ -6,9 +6,13 @@ import { ICONES } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { config, dadosJogador, editarJogador, TEMAS_MENU } from "../core/db.js";
 import { Lista, podeUsarTema, temaDoPainel } from "../core/forms.js";
-import { ok } from "../core/util.js";
+import { erro, ok } from "../core/util.js";
 import * as textos from "../textos/ajustes.js";
-import { menuKitsune } from "./kitsune.js";
+import { menuAbate } from "./abate.js";
+import { menuKitsune, temSelo } from "./kitsune.js";
+import { alternarEsconderPets, menuColecao, petsEscondidos } from "./pets.js";
+import { alternarMusica } from "./musica.js";
+import { alternarPegadinhas } from "./pegadinhas.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {import("../core/db.js").Tema} Tema */
@@ -82,7 +86,7 @@ export async function menuTemas(player, voltar) {
  * @param {() => any} [voltar]
  */
 export async function menuAjustes(player, voltar) {
-  const { tpa, sons, cla } = dadosJogador(player).ajustes;
+  const { tpa, sons, cla, pegadinhas, musica } = dadosJogador(player).ajustes;
   const tema = temaDoPainel(player);
   const hud = hudLigada(player);
   /** @param {(p: Player) => void} trocar */
@@ -115,6 +119,20 @@ export async function menuAjustes(player, voltar) {
       }),
     )
     .botao(
+      textos.BOTAO_PEGADINHAS(pegadinhas),
+      icone(pegadinhas),
+      eReabrir((p) => {
+        ok(p, textos.PEGADINHAS_MUDOU(alternarPegadinhas(p)));
+      }),
+    )
+    .botao(
+      textos.BOTAO_MUSICA(musica),
+      icone(musica),
+      eReabrir((p) => {
+        ok(p, textos.MUSICA_MUDOU(alternarMusica(p)));
+      }),
+    )
+    .botao(
       textos.BOTAO_CLA(cla),
       icone(cla),
       eReabrir((p) => {
@@ -124,9 +142,39 @@ export async function menuAjustes(player, voltar) {
         ok(p, textos.CLA_MUDOU(!cla));
       }),
     )
-    .botao(textos.BOTAO_KITSUNE, ICONES.kitsune, (p) => menuKitsune(p, () => menuAjustes(p, voltar)))
+    .botao(textos.BOTAO_KITSUNE, ICONES.kitsune, (p) => menuCantoKitsune(p, () => menuAjustes(p, voltar)))
     .voltar(voltar)
     .abrir(player);
+}
+
+/**
+ * Cantinho Kitsune: todas as vantagens do selo reunidas, com atalho para cada uma.
+ * @param {Player} player
+ * @param {() => any} [voltar]
+ */
+export async function menuCantoKitsune(player, voltar) {
+  const tem = temSelo(player);
+  const aqui = () => menuCantoKitsune(player, voltar);
+  const escondidos = petsEscondidos(player);
+  const lote = config().petKitsuneLote;
+  const tela = new Lista(textos.TITULO_CANTO).texto(`${textos.CANTO_INTRO}\n\n${textos.CANTO_LISTA(tem, lote, escondidos)}${tem ? "" : textos.CANTO_SEM_SELO}`);
+  /** @param {(p: Player) => any} fn */
+  const so = (fn) => async (/** @type {Player} */ p) => {
+    if (!temSelo(p)) {
+      erro(p, textos.BLOQUEADO_KITSUNE);
+      return aqui();
+    }
+    return fn(p);
+  };
+  tela.botao(textos.BOTAO_CANTO_VISUAL, ICONES.apelido, (p) => menuKitsune(p, aqui));
+  tela.botao(textos.BOTAO_CANTO_ABATE, ICONES.ajustes, so((p) => menuAbate(p, aqui)));
+  tela.botao(textos.BOTAO_CANTO_PAINEL, ICONES.tema, (p) => menuTemas(p, aqui));
+  tela.botao(textos.BOTAO_CANTO_PETS(escondidos), ICONES.perfil, so(async (p) => {
+    alternarEsconderPets(p);
+    await aqui();
+  }));
+  tela.botao(textos.BOTAO_CANTO_PETS_COLECAO, ICONES.perfil, (p) => menuColecao(p, aqui));
+  await tela.voltar(voltar).abrir(player);
 }
 
 registrarComando({ nome: "hud", descricao: textos.DESC_HUD }, (p) => alternarHud(p));

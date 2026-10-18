@@ -12,6 +12,7 @@ import { JOGADOR_OFFLINE } from "../textos/geral.js";
 import * as textos from "../textos/perfil.js";
 import { sequenciaAtual } from "./caudas.js";
 import { claDe, membroDe, tagPintada } from "./cla_dados.js";
+import { conquistasDe } from "./conquistas.js";
 import { CARGOS, cargoDe, ehKitsune, selo } from "./identidade.js";
 import { apelidoDe, nomeExibido } from "./kitsune.js";
 import { infoNivel, menuNivel } from "./niveis.js";
@@ -52,6 +53,7 @@ export async function menuPerfil(player, voltar, alvoId) {
       mortes: dados.mortes,
       casas: dados.casas.length,
       limiteCasas: config().limiteCasas,
+      conquistas: conquistasDe(alvoOnline ?? id),
     }),
   );
   lista.botao(textos.BOTAO_NIVEL, ICONES.nivel, (p) => menuNivel(p, aqui, alvoId));

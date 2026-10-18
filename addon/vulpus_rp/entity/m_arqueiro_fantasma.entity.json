@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:m_arqueiro_fantasma",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/vulpus/entidades/m_arqueiro_fantasma"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.m_arqueiro_fantasma"
+      },
+      "animations": {
+        "andar": "animation.vulpus.m_arqueiro_fantasma.andar",
+        "ataque": "animation.vulpus.m_arqueiro_fantasma.ataque"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "andar": "query.modified_move_speed > 0.02 || true"
+          },
+          {
+            "ataque": "variable.attack_time > 0"
+          }
+        ],
+        "scale": "1.0"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.m_padrao"
+      ],
+      "spawn_egg": {
+        "base_color": "#3454ba",
+        "overlay_color": "#ffffff"
+      }
+    }
+  }
+}

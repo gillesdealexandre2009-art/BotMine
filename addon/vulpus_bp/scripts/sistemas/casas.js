@@ -1,10 +1,13 @@
 // @ts-check
 // Casas do jogador: criar, ir, mover, renomear e apagar, com limite configurável pela staff.
+import { pontoEmZona } from "../core/arg_zona.js";
+import * as textosArg from "../textos/arg.js";
 import { ICONES } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { config, dadosJogador, editarJogador } from "../core/db.js";
 import { confirmar, Lista, perguntar } from "../core/forms.js";
 import { localDe, teleportar } from "../core/teleporte.js";
+import { entrarNoIntervalo, intervaloConstruido } from "./intervalo.js";
 import { erro, formatarCoords, msg, nomeDimensao, ok } from "../core/util.js";
 import * as textos from "../textos/casas.js";
 
@@ -12,6 +15,9 @@ import * as textos from "../textos/casas.js";
 /** @typedef {import("../core/db.js").Casa} Casa */
 
 const MAX_NOME = 16;
+
+/** A casa que aparece depois da ligação do telefone: não conta no limite, não se move, renomeia nem apaga. @param {Casa} c */
+const ehCorrompida = (c) => c.nome === textosArg.CASA_CORROMPIDA;
 
 /** @param {string} nome */
 const chave = (nome) => nome.toLowerCase();
@@ -40,6 +46,7 @@ function problemaNoNome(player, nome, propria) {
   if (nome === "") return textos.NOME_VAZIO;
   if ([...nome].length > MAX_NOME) return textos.NOME_LONGO(MAX_NOME);
   if (nome.includes("§")) return textos.NOME_COM_SECAO;
+  if (chave(nome) === chave(textosArg.CASA_CORROMPIDA)) return textosArg.CASA_FIXA;
   const outra = acharCasa(player, nome);
   if (outra && outra !== propria) return textos.NOME_REPETIDO(outra.nome);
   return undefined;
@@ -70,6 +77,10 @@ function casaAqui(player, nome) {
  * @returns {boolean} se criou
  */
 function criarCasa(player, nomeDigitado) {
+  if (pontoEmZona({ ...localDe(player) })) {
+    erro(player, textosArg.LUGAR_NAO_EXISTE);
+    return false;
+  }
   const nome = limparNome(nomeDigitado);
   const problema = problemaNoNome(player, nome);
   if (problema) {
@@ -77,7 +88,7 @@ function criarCasa(player, nomeDigitado) {
     return false;
   }
   const limite = config().limiteCasas;
-  if (dadosJogador(player).casas.length >= limite) {
+  if (dadosJogador(player).casas.filter((c) => !ehCorrompida(c)).length >= limite) {
     erro(player, textos.LIMITE(limite));
     return false;
   }
@@ -94,6 +105,14 @@ function criarCasa(player, nomeDigitado) {
  * @param {Casa} casa
  */
 function moverCasa(player, casa) {
+  if (ehCorrompida(casa)) {
+    erro(player, textosArg.CASA_FIXA);
+    return;
+  }
+  if (pontoEmZona({ ...localDe(player) })) {
+    erro(player, textosArg.LUGAR_NAO_EXISTE);
+    return;
+  }
   if (!dadosJogador(player).casas.includes(casa)) {
     erro(player, textos.NAO_EXISTE(casa.nome));
     return;
@@ -108,6 +127,10 @@ function moverCasa(player, casa) {
  * @param {Casa} casa
  */
 function apagarCasa(player, casa) {
+  if (ehCorrompida(casa)) {
+    erro(player, textosArg.CASA_FIXA);
+    return;
+  }
   editarJogador(player, (dados) => {
     dados.casas = dados.casas.filter((c) => c !== casa);
   });
@@ -120,6 +143,12 @@ function apagarCasa(player, casa) {
  * @param {Casa} casa
  */
 function irCasa(player, casa) {
+  if (ehCorrompida(casa)) {
+    // leva na hora para o Intervalo (o lugar "não existe" para o painel: nada de espera de teleporte)
+    if (!intervaloConstruido()) return void erro(player, textosArg.CASA_VAZIA);
+    entrarNoIntervalo(player);
+    return;
+  }
   teleportar(
     player,
     () => {
@@ -170,6 +199,10 @@ async function novaCasa(player, voltarCasas) {
  * @param {(nome: string) => any} voltarCasa  reabre o menu da casa (pelo nome novo)
  */
 async function renomearCasa(player, casa, voltarCasa) {
+  if (ehCorrompida(casa)) {
+    erro(player, textosArg.CASA_FIXA);
+    return voltarCasa(casa.nome);
+  }
   const nome = await pedirNome(player, textos.FORM_RENOMEAR, casa.nome, casa);
   if (nome === undefined) return;
   // Pode ter sido apagada enquanto o form estava aberto.
@@ -218,6 +251,10 @@ async function menuCasa(player, nome, voltarCasas) {
     return voltarCasas();
   }
   const reabrir = (nomeAtual = casa.nome) => menuCasa(player, nomeAtual, voltarCasas);
+  if (ehCorrompida(casa)) {
+    await new Lista(casa.nome).texto(textosArg.CASA_FIXA).botao(textos.IR, ICONES.tpa, () => irCasa(player, casa)).voltar(voltarCasas).abrir(player);
+    return;
+  }
   await new Lista(casa.nome)
     .texto(textos.INFO_CASA(nomeDimensao(casa.d), formatarCoords(casa)))
     .botao(textos.IR, ICONES.tpa, () => irCasa(player, casa))
@@ -240,13 +277,14 @@ export async function menuCasas(player, voltar) {
   const reabrir = () => menuCasas(player, voltar);
   const { casas } = dadosJogador(player);
   const limite = config().limiteCasas;
-  const corpo = [textos.CONTAGEM(casas.length, limite), casas.length ? textos.DICA_LISTA : textos.NENHUMA];
+  const proprias = casas.filter((c) => !ehCorrompida(c));
+  const corpo = [textos.CONTAGEM(proprias.length, limite), casas.length ? textos.DICA_LISTA : textos.NENHUMA];
   const lista = new Lista(textos.TITULO).texto(corpo.join("\n"));
   for (const casa of casas) {
     const rotulo = textos.BOTAO_CASA(casa.nome, nomeDimensao(casa.d), formatarCoords(casa));
     lista.botao(rotulo, ICONES.casas, () => menuCasa(player, casa.nome, reabrir));
   }
-  if (casas.length < limite) lista.botao(textos.NOVA, ICONES.nova, () => novaCasa(player, reabrir));
+  if (proprias.length < limite) lista.botao(textos.NOVA, ICONES.nova, () => novaCasa(player, reabrir));
   else lista.rotulo(textos.NO_LIMITE(limite));
   await lista.voltar(voltar).abrir(player);
 }
@@ -266,7 +304,7 @@ function casaDoComando(player, nome) {
     return undefined;
   }
   erro(player, textos.NAO_EXISTE(limparNome(nome)));
-  msg(player, textos.SUAS_CASAS(casas.map((c) => c.nome).join(", ")));
+  msg(player, textos.SUAS_CASAS(casas.filter((c) => !ehCorrompida(c)).map((c) => c.nome).join(", ")));
   return undefined;
 }
 

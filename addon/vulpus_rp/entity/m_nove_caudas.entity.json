@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:m_nove_caudas",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/vulpus/entidades/m_nove_caudas"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.m_nove_caudas"
+      },
+      "animations": {
+        "andar": "animation.vulpus.m_nove_caudas.andar",
+        "ataque": "animation.vulpus.m_nove_caudas.ataque"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "andar": "query.modified_move_speed > 0.02 || true"
+          },
+          {
+            "ataque": "variable.attack_time > 0"
+          }
+        ],
+        "scale": "2.4"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.m_brilho"
+      ],
+      "spawn_egg": {
+        "base_color": "#f0c846",
+        "overlay_color": "#ffffff"
+      }
+    }
+  }
+}

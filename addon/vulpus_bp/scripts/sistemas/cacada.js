@@ -11,9 +11,9 @@
 // vulpus:cacada:rank (caçadores) e vulpus:cacada:log. Toda mudança confere tudo de novo e grava antes de
 // mexer no saldo, sem await no meio (clique duplo, formulário velho e /reload não duplicam nem perdem Caudas).
 import { Player, system, world } from "@minecraft/server";
-import { ICONES, PREFIXO_JOGADOR, SONS } from "../config.js";
+import { ICONES, SONS } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
-import { config, dadosJogador, lerMundo, salvarMundo, todosJogadores } from "../core/db.js";
+import { config, dadosJogador, lerMundo, salvarMundo, temDadosSalvos, todosJogadores } from "../core/db.js";
 import { anel, emitir, nuvem } from "../core/efeitos.js";
 import { confirmar, Lista, perguntar } from "../core/forms.js";
 import { online, porId, porNome } from "../core/jogadores.js";
@@ -319,7 +319,7 @@ export function acharPessoa(bruto) {
 }
 
 /** @param {string} id */
-const registrado = (id) => !!porId(id) || (world.getDynamicProperty(PREFIXO_JOGADOR + id) !== undefined && dadosJogador(id).primeira > 0);
+const registrado = (id) => !!porId(id) || (temDadosSalvos(id) && dadosJogador(id).primeira > 0);
 
 // ---------------------------------------------------------------- gravação
 

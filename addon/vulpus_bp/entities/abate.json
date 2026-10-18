@@ -1,0 +1,117 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "vulpus:abate",
+      "is_experimental": false,
+      "is_summonable": true,
+      "is_spawnable": false,
+      "spawn_category": "misc",
+      "properties": {
+        "vulpus:tema": {
+          "type": "int",
+          "range": [
+            0,
+            8
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "vulpus:forma": {
+          "type": "int",
+          "range": [
+            0,
+            5
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "vulpus:var": {
+          "type": "int",
+          "range": [
+            0,
+            3
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "vulpus:tam": {
+          "type": "int",
+          "range": [
+            0,
+            2
+          ],
+          "default": 1,
+          "client_sync": true
+        }
+      }
+    },
+    "component_groups": {
+      "vulpus:vida": {
+        "minecraft:timer": {
+          "time": [
+            3.2,
+            3.2
+          ],
+          "looping": false,
+          "time_down_event": {
+            "event": "vulpus:sumir",
+            "target": "self"
+          }
+        }
+      },
+      "vulpus:somindo": {
+        "minecraft:instant_despawn": {}
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "vulpus_abate",
+          "inanimate"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 0.01,
+        "height": 0.01
+      },
+      "minecraft:physics": {
+        "has_gravity": false,
+        "has_collision": false
+      },
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:damage_sensor": {
+        "triggers": {
+          "cause": "all",
+          "deals_damage": "no"
+        }
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      },
+      "minecraft:fire_immune": {},
+      "minecraft:nameable": {
+        "allow_name_tag_renaming": false
+      }
+    },
+    "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "vulpus:vida"
+          ]
+        }
+      },
+      "vulpus:sumir": {
+        "add": {
+          "component_groups": [
+            "vulpus:somindo"
+          ]
+        }
+      }
+    }
+  }
+}

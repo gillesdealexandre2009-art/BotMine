@@ -1,0 +1,71 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.vulpus.m_raposa_sombra.andar": {
+      "loop": true,
+      "bones": {
+        "pata_fe": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 70 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "pata_fd": {
+          "rotation": [
+            "-(math.cos(query.modified_distance_moved * 38.17) * 70 * query.modified_move_speed)",
+            0,
+            0
+          ]
+        },
+        "pata_te": {
+          "rotation": [
+            "-(math.cos(query.modified_distance_moved * 38.17) * 70 * query.modified_move_speed)",
+            0,
+            0
+          ]
+        },
+        "pata_td": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 70 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "cabeca": {
+          "rotation": [
+            "math.sin(query.life_time * 50) * 3 + query.target_x_rotation * 0.3",
+            "query.target_y_rotation * 0.5",
+            0
+          ]
+        },
+        "corpo": {
+          "position": [
+            0,
+            "math.abs(math.cos(query.modified_distance_moved * 38.17)) * 0.4 * query.modified_move_speed",
+            0
+          ]
+        }
+      }
+    },
+    "animation.vulpus.m_raposa_sombra.ataque": {
+      "loop": true,
+      "bones": {
+        "cabeca": {
+          "rotation": [
+            "30 * math.sin(variable.attack_time * 180)",
+            0,
+            0
+          ]
+        },
+        "corpo": {
+          "rotation": [
+            "-10 * math.sin(variable.attack_time * 180)",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

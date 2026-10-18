@@ -702,8 +702,14 @@ function ajustarEntidade(claId, alvo) {
  * Confere as entidades: adota as que já existem (depois de /reload), tira repetidas e as de clã sem bandeira,
  * cria as que faltam e põe cada uma no lugar.
  */
+let proximaVarreduraVazia = 0;
 function sincronizar() {
   const alvos = alvosDasEntidades();
+  // Sem nenhuma bandeira a manter nem conhecida, só se varre de vez em quando (sobras de antes do reinício).
+  if (!alvos.size && !entidades.size) {
+    if (system.currentTick < proximaVarreduraVazia) return;
+    proximaVarreduraVazia = system.currentTick + 600;
+  }
   const dimensoes = new Set(["minecraft:overworld", ...[...alvos.values()].map((a) => a.ponto.d)]);
   for (const d of dimensoes) {
     /** @type {Entity[]} */
@@ -840,6 +846,11 @@ const AURAS = {
     emitir(dim, P.CHAMA, roda(c, n * 0.4, 0.8, 0.4 + (n % 5) * 0.4), COR_AURA.violeta);
     emitir(dim, P.DRAGAO, acaso(c, 0.9, 0.2, 0.6));
     if (n % 2 === 0) emitir(dim, P.PORTAL, acaso(c, 0.9, 1, 2));
+  },
+  // Brilhos lilás e dourados (o sininho) em volta, girando devagar.
+  ditadora: (dim, c, n) => {
+    emitir(dim, P.CHAMA, roda(c, n * 0.4, 1, 2), COR_AURA.violeta);
+    if (n % 2 === 0) emitir(dim, P.CHAMA, acaso(c, 1.2, 1.4, 1.8), COR_AURA.ouro);
   },
 };
 

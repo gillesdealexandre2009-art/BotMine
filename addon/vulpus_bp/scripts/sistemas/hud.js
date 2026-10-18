@@ -2,7 +2,8 @@
 // Scoreboard lateral: o texto vai no title com FLAG_SIDEBAR e o RP (ui/vulpus/vulpus_hud.json) desenha a
 // caixa. A actionbar fica livre para os avisos normais. Protocolo: docs/spec/03_spec_fase2.md §7.
 import { system, world } from "@minecraft/server";
-import { online } from "../core/jogadores.js";
+import { online, TAG_SUMIDO } from "../core/jogadores.js";
+import { filtroLigadoPara } from "../core/filtro_tela.js";
 import { tituloLivre } from "../core/tela.js";
 import { dadosJogador } from "../core/db.js";
 import { direcao, registrarErro } from "../core/util.js";
@@ -16,17 +17,24 @@ import { infoSidebar } from "./ctf.js";
 import { CARGOS, cargoDe, ehKitsune } from "./identidade.js";
 import { apelidoDe, nomeExibido, temaNomeDe } from "./kitsune.js";
 import { infoNivel } from "./niveis.js";
+import { glitchHud } from "./arg.js";
+import { glitchHudIntervalo } from "./intervalo.js";
+import { linhasHud as linhasMinigame } from "./mg_motor.js";
 import { linhaSpleef } from "./spleef.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 
 /** Marca do title da sidebar (igual à do vulpus_hud.json; o verificar_ui.py confere). */
 export const FLAG_SIDEBAR = "§v§s§b§r";
+/** Marcador do filtro de câmera antiga, logo depois de FLAG_SIDEBAR (igual ao do vulpus_filtro.json e do vulpus_hud.json). */
+export const FLAG_FILTRO = "§v§f§i§l§r";
 
 /** De quantos em quantos ticks o loop olha cada jogador. */
 const TICKS_CICLO = 10;
 /** Intervalo mínimo entre dois envios com texto novo. */
 const TICKS_ENTRE_ENVIOS = 20;
+/** Intervalo mínimo quando só a linha de posição/direção mudou (andando: cada bloco novo seria um title novo). */
+const TICKS_ENTRE_ENVIOS_POSICAO = 30;
 /** Reenvio do mesmo texto (recupera a caixa depois de um rebuild do HUD, como trocar o GUI scale). */
 const TICKS_REENVIO = 200;
 /** Quanto tempo o "+N" fica aparecendo depois que o saldo muda. */
@@ -35,7 +43,7 @@ const TICKS_MUDANCA = 60;
 const TICKS_PRIMEIRO_ENVIO = 40;
 const TEMPOS = { fadeInDuration: 10, stayDuration: 70, fadeOutDuration: 20 };
 
-/** @type {Map<string, { texto: string, tick: number }>} id → último title enviado (só a flag = desligada) */
+/** @type {Map<string, { texto: string, chave: string, tick: number }>} id → último title enviado (só a flag = desligada); chave = o texto sem a linha de posição */
 const enviados = new Map();
 /** @type {Map<string, number>} id → tick a partir do qual a sidebar pode enviar */
 const esperas = new Map();
@@ -71,10 +79,17 @@ function mudancaRecente(player, caudas) {
  * @param {number} caudas
  * @param {number} mudanca
  * @param {number} quantosOnline
+ * @returns {{ texto: string, chave: string }}  chave = o texto sem a linha de posição e direção
  */
 function montar(player, caudas, mudanca, quantosOnline) {
+  const mg = linhasMinigame(player);
+  if (mg) {
+    const finais = textos.LINHAS_MINIGAME(mg, caudas, mudanca);
+    return { texto: FLAG_SIDEBAR + (filtroLigadoPara(player) ? FLAG_FILTRO : "") + finais.join("\n"), chave: finais.join("\n") };
+  }
   const { nivel, fracao, rank } = infoNivel(player);
   const { x, y, z } = player.location;
+  const rumo = direcao(player.getRotation().y);
   const cargo = cargoDe(player);
   const cla = claDe(player);
   const guerra = cla ? guerraDe(cla.id) : undefined;
@@ -110,18 +125,20 @@ function montar(player, caudas, mudanca, quantosOnline) {
     x,
     y,
     z,
-    direcao: direcao(player.getRotation().y),
+    direcao: rumo,
   });
-  return FLAG_SIDEBAR + linhas.join("\n");
+  const finais = glitchHudIntervalo(player, glitchHud(player, linhas));
+  const local = textos.LINHA_LOCAL(x, y, z, rumo);
+  return { texto: FLAG_SIDEBAR + (filtroLigadoPara(player) ? FLAG_FILTRO : "") + finais.join("\n"), chave: finais.filter((l) => l !== local).join("\n") };
 }
 
 /**
  * @param {Player} player
  * @param {string} texto
  */
-function enviar(player, texto) {
+function enviar(player, texto, chave = texto) {
   player.onScreenDisplay.setTitle(texto, TEMPOS);
-  enviados.set(player.id, { texto, tick: system.currentTick });
+  enviados.set(player.id, { texto, chave, tick: system.currentTick });
 }
 
 /**
@@ -141,19 +158,28 @@ function atualizar(player, quantosOnline) {
   if (!tituloLivre(player)) return;
   const ultimo = enviados.get(player.id);
   if (!hudLigada(player)) {
-    if (ultimo && ultimo.texto !== FLAG_SIDEBAR) enviar(player, FLAG_SIDEBAR);
+    // scoreboard desligado: só a flag (e o marcador do filtro, se ligado, para o filtro continuar sem a caixa)
+    const alvo = FLAG_SIDEBAR + (filtroLigadoPara(player) ? FLAG_FILTRO : "");
+    if (ultimo ? ultimo.texto !== alvo : alvo !== FLAG_SIDEBAR) enviar(player, alvo);
+    else if (ultimo && alvo !== FLAG_SIDEBAR && agora - ultimo.tick >= TICKS_REENVIO) enviar(player, alvo);
     return;
   }
-  const texto = montar(player, caudas, mudanca, quantosOnline);
+  const { texto, chave } = montar(player, caudas, mudanca, quantosOnline);
   const passou = ultimo ? agora - ultimo.tick : Infinity;
-  if (texto === ultimo?.texto ? passou >= TICKS_REENVIO : passou >= TICKS_ENTRE_ENVIOS) enviar(player, texto);
+  if (texto === ultimo?.texto) {
+    if (passou >= TICKS_REENVIO) enviar(player, texto, chave);
+    return;
+  }
+  const soPosicao = ultimo !== undefined && chave === ultimo.chave;
+  if (passou >= (soPosicao ? TICKS_ENTRE_ENVIOS_POSICAO : TICKS_ENTRE_ENVIOS)) enviar(player, texto, chave);
 }
 
 system.runInterval(() => {
   const jogadores = online();
+  const contagem = jogadores.filter((p) => !p.hasTag(TAG_SUMIDO)).length; // quem está "fora" não conta no online
   for (const player of jogadores) {
     try {
-      atualizar(player, jogadores.length);
+      atualizar(player, contagem);
     } catch (e) {
       registrarErro(`Sidebar de ${player.name}`, e);
     }

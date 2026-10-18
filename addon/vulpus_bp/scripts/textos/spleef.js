@@ -243,8 +243,6 @@ export const RECORDE_SEQUENCIA = "maior sequência";
 
 // ------------------------------------------------------------- staff
 
-export const TITULO_MINIGAMES = "Minigames (staff)";
-export const MINIGAMES_CORPO = "§7Arenas e configurações dos minigames.";
 export const TITULO_STAFF = "Spleef (staff)";
 export const TITULO_CONFIG = "Configurações do Spleef";
 

@@ -27,8 +27,8 @@ O que é conferido antes de empacotar:
   * o verificar_ui.py (se existir) não acusa erro. Se o jogo não estiver instalado, só avisa.
 
 Saída em dist/:
-  * Vulpus_BP.mcpack, Vulpus_RP.mcpack e Vulpus_Chat.mcpack: um zip por pack, com o
-    manifest.json na raiz;
+  * Vulpus_BP.mcpack, Vulpus_RP.mcpack, Vulpus_Chat.mcpack e Vulpus_Ponte.mcpack: um zip por pack, com o
+    manifest.json na raiz (o Vulpus_Ponte só serve no servidor dedicado e fica fora do .mcaddon);
   * Vulpus.mcaddon: um zip com as pastas vulpus_bp/, vulpus_rp/ e vulpus_chat_bp/ na raiz
     (cada uma com o seu manifest.json). Dois cliques nele e o Minecraft importa os três packs
     de uma vez; importar não ativa nada, e o chat só carrega num mundo com "APIs Beta".
@@ -50,7 +50,10 @@ ADDON = Path(__file__).resolve().parent.parent
 BP = ADDON / "vulpus_bp"
 RP = ADDON / "vulpus_rp"
 CHAT = ADDON / "vulpus_chat_bp"
-PACKS = ((BP, "Vulpus_BP"), (RP, "Vulpus_RP"), (CHAT, "Vulpus_Chat"))
+PONTE = ADDON / "vulpus_ponte_bp"
+PACKS = ((BP, "Vulpus_BP"), (RP, "Vulpus_RP"), (CHAT, "Vulpus_Chat"), (PONTE, "Vulpus_Ponte"))
+# Packs que só valem no servidor dedicado: ganham o .mcpack, mas não entram no .mcaddon de dois cliques.
+SO_SERVIDOR = {PONTE}
 DIST = ADDON / "dist"
 VERIFICAR_UI = ADDON / "tools" / "verificar_ui.py"
 PACKAGE_JSON = ADDON / "package.json"
@@ -231,6 +234,46 @@ def conferir_chat(jsons: dict[Path, object], r: Relatorio) -> dict[str, str]:
             f"package.json: {ALIAS_BETA} ('{alias}') não bate com o manifest do chat ({versao}); "
             f"use {PREFIXO_ALIAS}{versao}.<versão do jogo>-stable"
         )
+    return modulos
+
+
+def conferir_ponte(jsons: dict[Path, object], r: Relatorio) -> dict[str, str]:
+    """Confere o manifest do pack da ponte (só servidor dedicado). Devolve {módulo @minecraft: versão} dele."""
+    ponte = jsons.get(PONTE / "manifest.json")
+    if not isinstance(ponte, dict):
+        return {}
+    modulos: dict[str, str] = {}
+    try:
+        header = ponte["header"]
+        for d in ponte.get("dependencies", []):
+            if "module_name" in d:
+                modulos[d["module_name"]] = d["version"]
+            elif "uuid" in d:
+                r.erro("vulpus_ponte_bp/manifest.json: a ponte não pode depender de outro pack (tire a dependência por uuid)")
+        uuids = [header["uuid"]] + [m["uuid"] for m in ponte["modules"]]
+        outros: list[str] = []
+        for pack in (BP, RP, CHAT):
+            manifest = jsons.get(pack / "manifest.json")
+            if isinstance(manifest, dict):
+                outros += [manifest["header"]["uuid"]] + [m["uuid"] for m in manifest["modules"]]
+        if len(set(uuids)) != len(uuids) or set(uuids) & set(outros):
+            r.erro("vulpus_ponte_bp/manifest.json: UUID repetido (com ele mesmo ou com outro pack)")
+        for m in ponte["modules"]:
+            if m.get("type") == "script" and not (PONTE / m.get("entry", "")).is_file():
+                r.erro(f"vulpus_ponte_bp/manifest.json: a entrada do script ({m.get('entry')}) não existe")
+    except (KeyError, TypeError) as e:
+        r.erro(f"vulpus_ponte_bp/manifest.json incompleto: falta {e}")
+        return modulos
+    for necessario in ("@minecraft/server", "@minecraft/server-net", "@minecraft/server-admin"):
+        if necessario not in modulos:
+            r.erro(f"vulpus_ponte_bp/manifest.json: falta a dependência {necessario}")
+    if "beta" not in modulos.get("@minecraft/server", ""):
+        r.erro("vulpus_ponte_bp/manifest.json: @minecraft/server deveria ser beta (a ponte ouve o chat)")
+    dev = (ler_json(PACKAGE_JSON, r) or {}) if PACKAGE_JSON.is_file() else {}
+    dev = dev.get("devDependencies", {}) if isinstance(dev, dict) else {}
+    for nome in ("@minecraft/server-net", "@minecraft/server-admin"):
+        if not str(dev.get(nome, "")).startswith("1.0.0-beta."):
+            r.erro(f"package.json: falta {nome} 1.0.0-beta.<versão do jogo>-stable (os tipos da ponte)")
     return modulos
 
 
@@ -495,14 +538,15 @@ def zipar(destino: Path, entradas: list[tuple[Path, Path]]) -> None:
 
 
 def empacotar() -> list[Path]:
-    """Gera os três .mcpack e o .mcaddon em dist/."""
+    """Gera os .mcpack e o .mcaddon em dist/."""
     saidas = []
     tudo: list[tuple[Path, Path]] = []
     for pack, nome in PACKS:
         entradas = [(arq, arq.relative_to(pack)) for arq in arquivos(pack)]
         zipar(DIST / f"{nome}.mcpack", entradas)
         saidas.append(DIST / f"{nome}.mcpack")
-        tudo += [(arq, Path(pack.name) / interno) for arq, interno in entradas]
+        if pack not in SO_SERVIDOR:
+            tudo += [(arq, Path(pack.name) / interno) for arq, interno in entradas]
     zipar(DIST / "Vulpus.mcaddon", tudo)
     saidas.append(DIST / "Vulpus.mcaddon")
     return saidas
@@ -521,6 +565,7 @@ def main(argv: list[str] | None = None) -> int:
     modulos = conferir_manifests(jsons, r)
     conferir_scripts(BP, modulos, r)
     conferir_scripts(CHAT, conferir_chat(jsons, r), r)
+    conferir_scripts(PONTE, conferir_ponte(jsons, r), r)
     conferir_texturas(jsons, r)
     conferir_idiomas(jsons, r)
     conferir_entidades(jsons, r)

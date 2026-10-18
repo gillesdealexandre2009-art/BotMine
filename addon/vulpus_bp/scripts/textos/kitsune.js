@@ -19,6 +19,7 @@ export const CORPO = (exibido, conta, temApelido) =>
   ].join("\n");
 export const BOTAO_APELIDO = "Mudar apelido";
 export const BOTAO_COR = "Cor do nome";
+export const BOTAO_ABATE = "Efeito de abate";
 export const BOTAO_TIRAR = "Usar o nome da conta";
 export const TITULO_APELIDO = "Apelido";
 /** @param {number} min @param {number} max */
@@ -30,6 +31,10 @@ export const BOTAO_SEM_TEMA = (nome, atual) => `§f${nome}§r §7(sem tema)${atu
 /** @param {string} pintado @param {string} tema @param {boolean} atual */
 export const BOTAO_TEMA = (pintado, tema, atual) => `${pintado}§r §7(${tema})${atual ? " §a✔" : ""}`;
 
+/** @param {number} nivel */
+export const ANIMADO_TRAVADO = (nivel) => `As cores animadas são do selo Kitsune a partir do nível ${nivel}.`;
+/** @param {string} pintado @param {string} tema @param {number} nivel */
+export const BOTAO_ANIMADO_TRAVADO = (pintado, tema, nivel) => `§8[bloqueado] ${pintado}§r §8(${tema}: Kitsune nv ${nivel})`;
 export const SO_KITSUNE = "Isso é mimo do selo Kitsune. Sem o selo, o nome fica o da conta.";
 /** @param {number} min @param {number} max */
 export const APELIDO_TAMANHO = (min, max) => `O apelido precisa ter de ${min} a ${max} letras.`;

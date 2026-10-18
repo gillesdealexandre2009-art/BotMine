@@ -9,7 +9,7 @@ import { confirmar, Lista, perguntar } from "../core/forms.js";
 import { online, porId } from "../core/jogadores.js";
 import { ehStaff } from "../core/permissoes.js";
 import { erro, msg, registrarErro, rodarSeguro } from "../core/util.js";
-import { pintar, TEMAS_COR } from "../cores.js";
+import { pintar, temasDoGrupo } from "../cores.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/clas.js";
 import { saldo } from "./caudas.js";
@@ -739,7 +739,7 @@ async function menuCorCla(player, voltar) {
   });
   if (kitsune) {
     lista.cabecalho(textos.CABECALHO_TEMAS);
-    for (const [id, tema] of Object.entries(TEMAS_COR)) {
+    for (const [id, tema] of temasDoGrupo("comum")) {
       lista.botao(textos.BOTAO_TEMA_CLA(pintar(cla.tag, id) ?? cla.tag, tema.nome, cla.tema === id), ICONES.kitsune, async (p) => {
         acoes.mudarTemaCla(p, id);
         await voltar();

@@ -1,0 +1,6 @@
+Como refazer vulpus_rp/sounds/vulpus/ligacao.ogg a partir de ligacao_original.ogg (Git Bash, ffmpeg no PATH):
+
+ffmpeg -y -i docs/lore/audio/ligacao_original.ogg -filter_complex "[0:a]aresample=24000,highpass=f=380,lowpass=f=2900,volume=1.7,asoftclip=type=tanh,acrusher=bits=9:mix=0.45:mode=log:aa=0,acompressor=threshold=0.08:ratio=6:attack=5:release=80:makeup=2,volume='if(between(t,5.20,5.32)+between(t,9.80,9.91)+between(t,15.70,15.80)+between(t,19.40,19.52),0.12,1)':eval=frame,afade=t=in:st=0:d=1.2[v];anoisesrc=color=white:amplitude=0.05:sample_rate=24000:duration=24.5,highpass=f=500,lowpass=f=3200[hiss];aevalsrc='0.035*sin(2*PI*100*t)+0.02*sin(2*PI*300*t)':s=24000:d=24.5[hum];aevalsrc='if(lt(random(0),0.0011),(random(1)-0.5)*1.6,0)':s=24000:d=24.5,lowpass=f=3000[crack];[v][hiss][hum][crack]amix=inputs=4:weights=1 0.9 0.5 1:duration=first:normalize=0,alimiter=limit=0.89" -ac 1 -ar 24000 -c:a libvorbis -q:a 3 vulpus_rp/sounds/vulpus/ligacao.ogg
+
+O que cada parte faz: faixa de telefone (380-2900 Hz), distorção suave (tanh) + redução de bits, compressão pesada, 4 quedas curtas de sinal (em 5,2 s, 9,8 s, 15,7 s e 19,4 s), fade de entrada, chiado (ruído branco), zumbido de rede (100 e 300 Hz) e estalos aleatórios de linha.
+Para mais ou menos chiado: mude o peso 0.9 (chiado), 0.5 (zumbido) e o 1 do último (estalos) em weights.

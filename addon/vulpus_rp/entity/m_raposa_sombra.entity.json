@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:m_raposa_sombra",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/vulpus/entidades/m_raposa_sombra"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.m_raposa_sombra"
+      },
+      "animations": {
+        "andar": "animation.vulpus.m_raposa_sombra.andar",
+        "ataque": "animation.vulpus.m_raposa_sombra.ataque"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "andar": "query.modified_move_speed > 0.02 || true"
+          },
+          {
+            "ataque": "variable.attack_time > 0"
+          }
+        ],
+        "scale": "1.0"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.m_padrao"
+      ],
+      "spawn_egg": {
+        "base_color": "#3a2834",
+        "overlay_color": "#ffffff"
+      }
+    }
+  }
+}

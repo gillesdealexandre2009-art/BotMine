@@ -13,6 +13,7 @@ import { erro, limitar, ok, registrarErro, som } from "../core/util.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/leilao.js";
 import { adicionarCaudas, saldo } from "./caudas.js";
+import { emMinigame } from "./mg_estado.js";
 import {
   aoFicarPronto,
   aoResgatar,
@@ -920,6 +921,7 @@ async function confirmarItem(player, titulo, texto, sim) {
  * @param {Player} player @param {() => any} [voltar]
  */
 export async function menuLeilao(player, voltar) {
+  if (emMinigame(player)) return erro(player, textos.NO_MINIGAME);
   expirarVencidos();
   const cfg = config();
   const aqui = () => menuLeilao(player, voltar);
@@ -1184,6 +1186,7 @@ async function menuMeusAnuncios(player, voltar) {
  * @param {Player} player @param {() => any} [voltar]
  */
 export async function menuCaixa(player, voltar) {
+  if (emMinigame(player)) return erro(player, textos.NO_MINIGAME);
   expirarVencidos();
   const aqui = () => menuCaixa(player, voltar);
   const itens = caixaDe(player.id);

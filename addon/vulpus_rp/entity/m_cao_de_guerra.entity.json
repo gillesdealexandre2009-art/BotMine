@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:m_cao_de_guerra",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/vulpus/entidades/m_cao_de_guerra"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.m_cao_de_guerra"
+      },
+      "animations": {
+        "andar": "animation.vulpus.m_cao_de_guerra.andar",
+        "ataque": "animation.vulpus.m_cao_de_guerra.ataque"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "andar": "query.modified_move_speed > 0.02 || true"
+          },
+          {
+            "ataque": "variable.attack_time > 0"
+          }
+        ],
+        "scale": "1.0"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.m_padrao"
+      ],
+      "spawn_egg": {
+        "base_color": "#342e32",
+        "overlay_color": "#ffffff"
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "tsc -p jsconfig.json && tsc -p jsconfig.chat.json",
+    "check": "tsc -p jsconfig.json && tsc -p jsconfig.chat.json && tsc -p jsconfig.ponte.json",
     "texturas": "python tools/gerar_texturas.py",
     "glyphs": "python tools/gerar_glyphs.py",
     "temas": "python tools/gerar_temas.py",
@@ -15,7 +15,9 @@
   },
   "devDependencies": {
     "@minecraft/server": "2.10.0",
+    "@minecraft/server-admin": "1.0.0-beta.1.26.52-stable",
     "@minecraft/server-beta": "npm:@minecraft/server@2.11.0-beta.1.26.52-stable",
+    "@minecraft/server-net": "1.0.0-beta.1.26.52-stable",
     "@minecraft/server-ui": "2.2.0",
     "typescript": "^5.9.0"
   }

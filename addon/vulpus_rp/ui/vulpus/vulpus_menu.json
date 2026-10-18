@@ -23,8 +23,197 @@
             { "binding_name": "#title_text" },
             {
               "binding_type": "view",
-              "source_property_name": "((not ((#title_text - '§v§u§l§p') = #title_text)) and ((#title_text - '§v§u§l§p§0§r') = #title_text))",
+              "source_property_name": "((((not ((#title_text - '§v§u§l§p') = #title_text)) and ((#title_text - '§v§u§l§p§0§r') = #title_text)) and ((#title_text - '§v§u§l§p§2§r') = #title_text)) and ((#title_text - '§v§u§l§p§3§r') = #title_text))",
               "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "tabuleiro@vulpus_menu.grade_form": {
+          "size": [ 168, 200 ],
+          "$modelo_celula": "vulpus_menu.celula_grade_18",
+          "$grade_tam": [ 144, 144 ],
+          "$grade_alt": 144,
+          "$grade_dim": [ 8, 8 ],
+          "$grade_max": 64,
+          "$indice_extra": 64,
+          "bindings": [
+            { "binding_name": "#title_text" },
+            {
+              "binding_type": "view",
+              "source_property_name": "(not ((#title_text - '§v§u§l§p§2§r') = #title_text))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      },
+      {
+        "velhinha@vulpus_menu.grade_form": {
+          "size": [ 150, 176 ],
+          "$modelo_celula": "vulpus_menu.celula_grade_34",
+          "$grade_tam": [ 102, 102 ],
+          "$grade_alt": 102,
+          "$grade_dim": [ 3, 3 ],
+          "$grade_max": 9,
+          "$indice_extra": 9,
+          "bindings": [
+            { "binding_name": "#title_text" },
+            {
+              "binding_type": "view",
+              "source_property_name": "(not ((#title_text - '§v§u§l§p§3§r') = #title_text))",
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      }
+    ]
+  },
+
+  "grade_form": {
+    "type": "panel",
+    "layer": 2,
+    "$grade_tam|default": [ 176, 176 ],
+    "$grade_alt|default": 176,
+    "$modelo_celula|default": "vulpus_menu.celula_grade_18",
+    "$grade_dim|default": [ 8, 8 ],
+    "$grade_max|default": 64,
+    "$indice_extra|default": 64,
+    "property_bag": { "#visible": false },
+    "visible": "#visible",
+    "controls": [
+      { "quadro@vulpus_menu.quadro": {} },
+      {
+        "extra": {
+          "type": "stack_panel",
+          "orientation": "horizontal",
+          "size": [ 46, 16 ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "offset": [ 6, 5 ],
+          "layer": 7,
+          "collection_name": "form_buttons",
+          "controls": [
+            { "desistir@vulpus_menu.botao_extra": { "size": [ 46, 16 ], "collection_index": "$indice_extra" } }
+          ]
+        }
+      },
+      {
+        "miolo": {
+          "type": "panel",
+          "size": [ "100% - 12px", "100% - 32px" ],
+          "anchor_from": "top_middle",
+          "anchor_to": "top_middle",
+          "offset": [ 0, 25 ],
+          "layer": 3,
+          "controls": [
+            {
+              "texto@vulpus_menu.texto_grade": {
+                "anchor_from": "top_middle",
+                "anchor_to": "top_middle"
+              }
+            },
+            {
+              "grade": {
+                "type": "grid",
+                "size": "$grade_tam",
+                "anchor_from": "top_middle",
+                "anchor_to": "top_middle",
+                "offset": [ 0, 22 ],
+                "grid_dimensions": "$grade_dim",
+                "maximum_grid_items": "$grade_max",
+                "grid_item_template": "$modelo_celula",
+                "collection_name": "form_buttons"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+
+  "texto_grade": {
+    "type": "panel",
+    "size": [ "100%", 22 ],
+    "controls": [
+      {
+        "rotulo": {
+          "type": "label",
+          "text": "#form_text",
+          "size": [ "100%", "default" ],
+          "max_size": [ "100%", 22 ],
+          "anchor_from": "center",
+          "anchor_to": "center",
+          "text_alignment": "center",
+          "color": "$vp_creme",
+          "shadow": true,
+          "bindings": [ { "binding_name": "#form_text" } ]
+        }
+      }
+    ]
+  },
+
+  "celula_grade_18": {
+    "type": "panel",
+    "size": [ 18, 18 ],
+    "controls": [
+      { "icone@vulpus_menu.icone_celula": {} },
+      { "botao@vulpus_menu.botao_celula": {} }
+    ]
+  },
+
+  "celula_grade_34": {
+    "type": "panel",
+    "size": [ 34, 34 ],
+    "controls": [
+      { "icone@vulpus_menu.icone_celula": {} },
+      { "botao@vulpus_menu.botao_celula": {} }
+    ]
+  },
+
+  "icone_celula@vulpus_menu.icone": {
+    "size": [ "100%", "100%" ],
+    "layer": 2
+  },
+
+  "botao_celula": {
+    "type": "button",
+    "size": [ "100%", "100%" ],
+    "layer": 4,
+    "sound_name": "random.click",
+    "default_control": "default",
+    "hover_control": "hover",
+    "pressed_control": "default",
+    "locked_control": "",
+    "bindings": [
+      { "binding_type": "collection_details", "binding_collection_name": "form_buttons" }
+    ],
+    "button_mappings": [
+      { "from_button_id": "button.menu_select", "to_button_id": "button.form_button_click", "mapping_type": "pressed" },
+      { "from_button_id": "button.menu_ok", "to_button_id": "button.form_button_click", "mapping_type": "focused" }
+    ],
+    "controls": [
+      { "default": { "type": "panel", "size": [ "100%", "100%" ] } },
+      { "hover": { "type": "image", "texture": "textures/vulpus/xadrez/hover", "size": [ "100%", "100%" ] } }
+    ]
+  },
+
+  "botao_extra": {
+    "type": "panel",
+    "size": [ "100%", 20 ],
+    "controls": [
+      {
+        "conteudo@vulpus_menu.conteudo_slot": {
+          "controls": [
+            { "botao@vulpus_menu.botao": {} },
+            {
+              "rotulo@vulpus_menu.rotulo_botao": {
+                "layer": 4,
+                "size": [ "100%", "default" ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "text_alignment": "center"
+              }
             }
           ]
         }
@@ -478,7 +667,7 @@
       { "binding_name": "#title_text" },
       {
         "binding_type": "view",
-        "source_property_name": "(((((((#title_text - '§v§u§l§p§0§r') - '§v§u§l§p§1§r') - '§v§u§l§p') - '§v§b§r') - '§v§d§r') - '§v§9§r') - '§v§5§r')",
+        "source_property_name": "(((((((((#title_text - '§v§u§l§p§0§r') - '§v§u§l§p§1§r') - '§v§u§l§p§2§r') - '§v§u§l§p§3§r') - '§v§u§l§p') - '§v§b§r') - '§v§d§r') - '§v§9§r') - '§v§5§r')",
         "target_property_name": "#text"
       }
     ]

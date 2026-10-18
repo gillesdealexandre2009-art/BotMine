@@ -46,3 +46,5 @@ export const TP_TITULO_VOLTAR = "§7De volta!";
 export const TP_SUB_VOLTAR = "§8Ao seu último lugar";
 export const TP_SUB_TPA = "§7Visita entregue pelas caudas";
 export const TP_SUB_CLA = "§7Casa do clã, casa de todo mundo";
+export const TP_TITULO_RTP = "§bMundo aberto";
+export const TP_SUB_RTP = "§7Boa sorte lá fora, raposinha";

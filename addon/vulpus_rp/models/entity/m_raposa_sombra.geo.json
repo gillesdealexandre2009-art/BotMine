@@ -1,0 +1,539 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.vulpus.m_raposa_sombra",
+        "texture_width": 128,
+        "texture_height": 32,
+        "visible_bounds_width": 6,
+        "visible_bounds_height": 6,
+        "visible_bounds_offset": [
+          0,
+          1.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "raiz",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "corpo",
+          "pivot": [
+            0,
+            8.0,
+            0
+          ],
+          "parent": "raiz",
+          "cubes": [
+            {
+              "origin": [
+                -3.5,
+                5,
+                -6.0
+              ],
+              "size": [
+                7,
+                6,
+                12
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    16,
+                    0
+                  ],
+                  "uv_size": [
+                    7,
+                    6
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    24,
+                    0
+                  ],
+                  "uv_size": [
+                    7,
+                    6
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    12,
+                    6
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    45,
+                    0
+                  ],
+                  "uv_size": [
+                    12,
+                    6
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    7,
+                    12
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    8,
+                    0
+                  ],
+                  "uv_size": [
+                    7,
+                    12
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "cabeca",
+          "pivot": [
+            0,
+            10,
+            -6.0
+          ],
+          "parent": "raiz",
+          "cubes": [
+            {
+              "origin": [
+                -3.5,
+                7.0,
+                -11.0
+              ],
+              "size": [
+                7,
+                6,
+                6
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    58,
+                    0
+                  ],
+                  "uv_size": [
+                    7,
+                    6
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    66,
+                    0
+                  ],
+                  "uv_size": [
+                    7,
+                    6
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    74,
+                    0
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    81,
+                    0
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    88,
+                    0
+                  ],
+                  "uv_size": [
+                    7,
+                    6
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    96,
+                    0
+                  ],
+                  "uv_size": [
+                    7,
+                    6
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "pata_fe",
+          "pivot": [
+            2.5,
+            5,
+            -4.5
+          ],
+          "parent": "raiz",
+          "cubes": [
+            {
+              "origin": [
+                1.5,
+                0,
+                -6.0
+              ],
+              "size": [
+                2,
+                5,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    104,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    107,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    110,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    113,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    24,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    27,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "pata_fd",
+          "pivot": [
+            -2.5,
+            5,
+            -4.5
+          ],
+          "parent": "raiz",
+          "cubes": [
+            {
+              "origin": [
+                -3.5,
+                0,
+                -6.0
+              ],
+              "size": [
+                2,
+                5,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    116,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    119,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    122,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    125,
+                    0
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    30,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    33,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "pata_te",
+          "pivot": [
+            2.5,
+            5,
+            4.5
+          ],
+          "parent": "raiz",
+          "cubes": [
+            {
+              "origin": [
+                1.5,
+                0,
+                4.0
+              ],
+              "size": [
+                2,
+                5,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    3,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    6,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    9,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    36,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    39,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "pata_td",
+          "pivot": [
+            -2.5,
+            5,
+            4.5
+          ],
+          "parent": "raiz",
+          "cubes": [
+            {
+              "origin": [
+                -3.5,
+                0,
+                4.0
+              ],
+              "size": [
+                2,
+                5,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    15,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    18,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    21,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    5
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    42,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    45,
+                    13
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

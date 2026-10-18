@@ -126,6 +126,32 @@ São 5 temas. Cada um troca o painel, o cabeçalho, os botões (normal, mouse em
   2. em `package.json`, troque o `@minecraft/server-beta` para `npm:@minecraft/server@<versão beta nova>.<versão do jogo>-stable` e rode `npm install`;
   3. rode `npm run check` e `npm run build`. O build avisa se as duas versões não baterem.
 
+## A ponte com o Discord (pack Vulpus Ponte)
+Só vale no **servidor dedicado (BDS)**. O mundo no cliente (jogo comum) não tem rede para isso: lá a ponte simplesmente não existe e ninguém é bloqueado.
+
+**Como funciona.** O pack `vulpus_ponte_bp` é só um repassador: o addon principal pede por script event (`vulpus:ponte_req`), ele faz a chamada HTTP ao bot da Kiza e devolve a resposta em pedaços (`vulpus:ponte_res`). O endereço e o token ficam nos arquivos de segredo do servidor, nunca no repositório. Ele também vê o chat (evento beta) e repassa cada mensagem ao addon principal, e cala quem está com a tela preta.
+
+**O que vai e volta:**
+- do jogo para o Discord (canais do bot): mensagens, entradas, saídas (com a duração da sessão), mortes (com a causa e quem matou), **sequências de abates** (3, 5, 7, 10 e depois de 5 em 5, e quem encerra uma sequência), subidas de nível, conquistas, clãs que nascem e morrem e guerras que começam e terminam; a cada minuto, o status (quem está online) para o painel de IP;
+- do Discord para o jogo: o que se escreve no canal da ponte aparece no chat (`[Discord] Nome » texto`).
+- **Minigames ficam de fora** das mortes e das sequências de abates.
+
+**Vínculo obrigatório (login).** Com a ponte presente e `vinculoObrigatorio` ligado (painel da staff, grupo *Vínculo com o Discord e ponte do chat*), quem não ligou a conta fica com a **tela preta**, parado, protegido e com um **código** na tela; no Discord vale `/minecraft vincular`. Ao ligar, a tela volta e as **Caudas e o XP dos dois lugares são somados** e passam a ser os mesmos (a cada `vinculoSyncSeg` segundos o jogo manda o que ganhou e recebe o total do Discord; cada envio tem uma chave única, então um reenvio nunca soma duas vezes).
+- **Permanência:** o vínculo fica gravado no jogador (`dados.vinculo`) e no banco do bot. Quem já está ligado entra mesmo com o bot fora do ar; quem nunca ligou espera. Se o id do jogador mudar (mundo copiado, servidor novo), o addon recupera os dados pelo mesmo nome (`core/db.js`, *adotarDadosAntigos*) e o bot reconhece a conta pelo nome.
+- A staff pode desligar o bloqueio no painel (a ponte do chat tem chave própria) e desvincular alguém com `/minecraft desvincular` no Discord.
+
+**Subir de nível ficou mais difícil:** como o XP agora vem do jogo e do Discord, `xpPorMinuto` caiu de 3 para 2 e `xpDiaria` de 15 para 10 (os níveis de quem já jogou não mudam; a staff ajusta no painel).
+
+**Para ligar num servidor** (a hospedagem usa o mesmo formato):
+1. copie `vulpus_ponte_bp` para `development_behavior_packs/` e ponha o pack no `world_behavior_packs.json` do mundo (junto com o addon e o chat; o mundo precisa de "APIs Beta");
+2. crie a pasta `config/<uuid do MÓDULO de script do pack>/` (em `vulpus_ponte_bp/manifest.json`, `modules[0].uuid`) com três arquivos:
+   - `permissions.json`: `{ "allowed_modules": ["@minecraft/server", "@minecraft/server-net", "@minecraft/server-admin"] }`
+   - `variables.json`: `{ "ponte_url": "https://endereco-publico-do-bot" }`
+   - `secrets.json`: `{ "ponte_auth": "Bearer <o mesmo MC_BRIDGE_TOKEN do bot>" }`
+   (a pasta precisa ter o `permissions.json` próprio; sem ele o jogo recusa o pack);
+3. no bot, defina `MC_BRIDGE_TOKEN` e gere um domínio público (veja `cogs_minecraft/README.md`).
+Sem a configuração, o pack responde `sem_configuracao` e o addon segue como se a ponte não existisse (ninguém fica preso: só quem nunca ligou fica esperando se a ponte existir mas o bot não responder).
+
 ## Leilão
 
 Compra e venda de itens por Caudas, entre as pessoas do servidor. Abre pelo botão **Leilão** do menu ou por `/vulpus:leilao`.
@@ -545,7 +571,8 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 | `vulpus_bp/` | pack de comportamento: manifest, item do menu e scripts |
 | `vulpus_rp/` | pack de recursos: visual do menu e do placar, glyphs, texturas e textos |
 | `vulpus_chat_bp/` | pack do chat (precisa de "APIs Beta") |
-| `tools/build.py` | confere os três packs e gera `dist/` |
+| `vulpus_ponte_bp/` | pack da ponte com o Discord (só no servidor dedicado; precisa de "APIs Beta") |
+| `tools/build.py` | confere os packs e gera `dist/` (a ponte só como `.mcpack`, fora do `.mcaddon`) |
 | `tools/instalar_dev.py` | copia para o modo de desenvolvimento e ativa num mundo (`--chat` ativa o chat) |
 | `tools/verificar_ui.py` | confere o visual do menu e do placar contra o jogo instalado |
 | `tools/gerar_texturas.py` | refaz as texturas provisórias |

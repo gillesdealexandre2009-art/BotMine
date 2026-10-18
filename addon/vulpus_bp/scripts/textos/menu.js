@@ -21,6 +21,7 @@ export const LINHA_DICA = (dica) => `§7${dica}`;
 
 /** Sorteadas a cada abertura. Até ~34 caracteres (duas linhas na coluna de ~118px do Hub). */
 export const DICAS = [
+  "Abra cápsulas de pet no lobby!",
   "Sem se mexer, o teleporte sai.",
   "Diária todo dia = mais Caudas!",
   "Caiu longe? O Voltar te leva lá.",
@@ -42,6 +43,7 @@ export const DICAS = [
 
 // Rótulos dos slots (~70px de largura)
 export const SPAWN = "Spawn";
+export const LINHA_NOVATO = "§eNovo por aqui? §7Use §f/vulpus:comecar §7e ganhe Caudas com as missões.";
 export const CASAS = "Casas";
 /** @param {number} pedidos  recebidos e pendentes */
 export const TPA = (pedidos) => (pedidos > 0 ? `TPA (${pedidos})` : "TPA");
@@ -52,6 +54,7 @@ export const LEILAO = (itens) => (itens > 0 ? `Leilão (${itens})` : "Leilão");
 export const PERFIL = "Perfil";
 export const AJUSTES = "Ajustes";
 export const REGRAS = "Regras";
+export const MISC = "Miscelânea";
 export const STAFF = "Staff";
 export const DONO = "Dono";
 

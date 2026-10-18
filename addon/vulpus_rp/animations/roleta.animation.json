@@ -1,0 +1,1 @@
+{"format_version":"1.8.0","animations":{"animation.vulpus.roleta.roda":{"loop":true,"bones":{"roleta_roda":{"rotation":[0,0,"query.property('vulpus:ang')"]}}}}}

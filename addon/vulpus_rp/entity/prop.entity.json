@@ -1,0 +1,16 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:prop",
+      "materials": { "default": "entity_alphatest" },
+      "textures": { "default": "textures/vulpus/entidades/props" },
+      "geometry": { "default": "geometry.vulpus.prop" },
+      "animations": { "girar_y": "animation.vulpus.prop.girar_y" },
+      "scripts": {
+        "animate": [{ "girar_y": "query.property('vulpus:modelo') == 4" }]
+      },
+      "render_controllers": ["controller.render.vulpus.prop"]
+    }
+  }
+}

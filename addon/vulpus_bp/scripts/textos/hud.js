@@ -100,6 +100,18 @@ const LINHAS_CTF = (c) => {
  */
 const LINHA_CABECA = (valor) => `${glyph(G.CAVEIRA)} §cSua cabeça vale §6${formatarNumero(valor)}`;
 
+/** A linha de posição e direção (o loop da sidebar a reconhece para espaçar os envios quando só ela muda). */
+export const LINHA_LOCAL = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ z, /** @type {string} */ direcao) =>
+  `${glyph(G.LOCAL)} §f${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)} §7${direcao}`;
+
+/**
+ * Sidebar de quem está num minigame: as linhas do jogo (já com cor, até 28 caracteres visíveis) e as Caudas embaixo.
+ * @param {string[]} linhas
+ * @param {number} caudas
+ * @param {number} mudanca
+ */
+export const LINHAS_MINIGAME = (linhas, caudas, mudanca) => [...linhas.slice(0, 13), `${glyph(G.CAUDAS)} §6${formatarNumero(caudas)}${DESTAQUE(mudanca)}`];
+
 /**
  * As linhas da sidebar (até 28 caracteres visíveis cada): 6 fixas, mais nome Kitsune e cargo em cima, a
  * cabeça a prêmio depois das Caudas, o minigame depois do online e clã, guerra e bandeiras embaixo (até 14; o label do
@@ -117,7 +129,7 @@ export const LINHAS = ({ nome, cla, guerra, ctf, cabeca, minigame, rank, cargo, 
   ...(cabeca > 0 ? [LINHA_CABECA(cabeca)] : []),
   `${glyph(G.ONLINE)} §f${formatarNumero(online)} §7online`,
   ...(minigame ? [minigame] : []),
-  `${glyph(G.LOCAL)} §f${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)} §7${direcao}`,
+  LINHA_LOCAL(x, y, z, direcao),
   ...(cla ? [LINHA_CLA(cla)] : []),
   ...(guerra ? [LINHA_GUERRA(guerra)] : []),
   ...(ctf ? LINHAS_CTF(ctf) : []),

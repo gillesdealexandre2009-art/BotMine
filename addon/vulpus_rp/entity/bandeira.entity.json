@@ -26,17 +26,19 @@
         "k5": "textures/vulpus/entidades/bandeira_k_brasa",
         "k6": "textures/vulpus/entidades/bandeira_k_aurora",
         "k7": "textures/vulpus/entidades/bandeira_k_estelar",
-        "k8": "textures/vulpus/entidades/bandeira_k_sombra"
+        "k8": "textures/vulpus/entidades/bandeira_k_sombra",
+        "k9": "textures/vulpus/entidades/bandeira_k_ditadora"
       },
       "geometry": {
         "default": "geometry.vulpus.bandeira"
       },
       "animations": {
         "tremular": "animation.vulpus.bandeira.tremular",
+        "tremular_k": "animation.vulpus.bandeira.tremular_k",
         "kitsune": "animation.vulpus.bandeira.kitsune"
       },
       "scripts": {
-        "animate": ["tremular", { "kitsune": "query.property('vulpus:estilo') > 0" }]
+        "animate": [{ "tremular": "query.property('vulpus:estilo') == 0" }, { "tremular_k": "query.property('vulpus:estilo') > 0" }, { "kitsune": "query.property('vulpus:estilo') > 0" }]
       },
       "render_controllers": [
         "controller.render.vulpus.bandeira",

@@ -30,7 +30,7 @@ const QUEBRA_LINHA = /[\r\n]+/g;
 const glyph = (codigo) => `§f${codigo}§r`;
 
 /** Temas de cor (cópia de cores.js do BP, só o que pinta). */
-/** @type {Readonly<Record<string, { cores: string[], modo: "degrade" | "ciclo" }>>} */
+/** @type {Readonly<Record<string, { cores: string[], modo: "degrade" | "ciclo" | "onda" }>>} */
 const TEMAS_COR = Object.freeze({
   rosa: { cores: ["d"], modo: "degrade" },
   ciano: { cores: ["b"], modo: "degrade" },
@@ -50,22 +50,34 @@ const TEMAS_COR = Object.freeze({
   ametista: { cores: ["d", "5"], modo: "degrade" },
   lunar: { cores: ["f", "7", "b"], modo: "degrade" },
   brasa: { cores: ["6", "c", "4"], modo: "degrade" },
+  chamaviva: { cores: ["e", "6", "c", "4", "c", "6"], modo: "onda" },
+  ondadomar: { cores: ["f", "b", "3", "9", "3", "b"], modo: "onda" },
+  auroraboreal: { cores: ["a", "b", "9", "d", "9", "b"], modo: "onda" },
+  galaxia: { cores: ["5", "d", "9", "3", "9", "d"], modo: "onda" },
+  eletrico: { cores: ["e", "f", "b", "9", "b", "f"], modo: "onda" },
+  inauguracao: { cores: ["f", "b", "3", "9"], modo: "degrade" },
 });
 
 /**
  * Pinta o texto com o tema (igual ao pintar() do BP). Tema desconhecido: undefined.
  * @param {string} texto
  * @param {string} temaId
+ * @param {number} [fase]  só para temas "onda"
  * @returns {string | undefined}
  */
-export function pintar(texto, temaId) {
+export function pintar(texto, temaId, fase = 0) {
   if (!Object.prototype.hasOwnProperty.call(TEMAS_COR, temaId)) return undefined;
   const { cores, modo } = TEMAS_COR[temaId];
   const letras = [...texto];
   let saida = "";
   let anterior = "";
   letras.forEach((letra, i) => {
-    const cor = modo === "ciclo" ? cores[i % cores.length] : cores[Math.min(cores.length - 1, Math.floor((i * cores.length) / letras.length))];
+    const cor =
+      modo === "onda"
+        ? cores[(((i + Math.floor(fase)) % cores.length) + cores.length) % cores.length]
+        : modo === "ciclo"
+          ? cores[i % cores.length]
+          : cores[Math.min(cores.length - 1, Math.floor((i * cores.length) / letras.length))];
     if (cor !== anterior) saida += `§${cor}`;
     anterior = cor;
     saida += letra;
@@ -96,7 +108,7 @@ export function montarLinha(nome, identidade, mensagem) {
   const kitsune = identidade.kitsune ? ` ${glyph(G.KITSUNE)}` : "";
   const corNome = cargo ? cargo.cor : "§f";
   const visivel = identidade.apelido || nome;
-  const nomeFinal = pintar(visivel, identidade.tema) ?? corNome + visivel;
+  const nomeFinal = pintar(visivel, identidade.tema, Math.floor(Date.now() / 250)) ?? corNome + visivel;
   const cla = identidade.cla
     ? `§8[${pintar(identidade.cla.tag, identidade.cla.tema) ?? `§${identidade.cla.cor}${identidade.cla.tag}`}§8] `
     : "";

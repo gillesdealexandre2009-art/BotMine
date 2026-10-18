@@ -7,7 +7,7 @@
           "Array.panos": [
             "Texture.c0", "Texture.c1", "Texture.c2", "Texture.c3", "Texture.c4", "Texture.c5",
             "Texture.c6", "Texture.c7", "Texture.c8", "Texture.c9", "Texture.c10", "Texture.c11",
-            "Texture.k1", "Texture.k2", "Texture.k3", "Texture.k4", "Texture.k5", "Texture.k6", "Texture.k7", "Texture.k8"
+            "Texture.k1", "Texture.k2", "Texture.k3", "Texture.k4", "Texture.k5", "Texture.k6", "Texture.k7", "Texture.k8", "Texture.k9"
           ]
         }
       },
@@ -37,7 +37,7 @@
     "controller.render.vulpus.bandeira_kitsune": {
       "arrays": {
         "textures": {
-          "Array.estilos": ["Texture.k1", "Texture.k2", "Texture.k3", "Texture.k4", "Texture.k5", "Texture.k6", "Texture.k7", "Texture.k8"]
+          "Array.estilos": ["Texture.k1", "Texture.k2", "Texture.k3", "Texture.k4", "Texture.k5", "Texture.k6", "Texture.k7", "Texture.k8", "Texture.k9"]
         }
       },
       "geometry": "Geometry.default",
@@ -47,7 +47,7 @@
         }
       ],
       "textures": [
-        "Array.estilos[math.clamp(query.property('vulpus:estilo') - 1, 0, 7)]"
+        "Array.estilos[math.clamp(query.property('vulpus:estilo') - 1, 0, 8)]"
       ],
       "uv_anim": {
         "offset": [0.0, "math.mod(math.floor(query.life_time * 4), 4) / 4"],

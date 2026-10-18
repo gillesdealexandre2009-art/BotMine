@@ -453,6 +453,7 @@ export const ESTILOS_BANDEIRA_INFO = {
   aurora: { nome: "Aurora", desc: "aurora em degradê que muda de cor" },
   estelar: { nome: "Estelar", desc: "céu de estrelas cintilando e a constelação da raposa" },
   sombra: { nome: "Sombra", desc: "fumaça roxa e olhos de raposa acesos" },
+  ditadora: { nome: "Ditadora", desc: "orelhinhas de gata, coleira com sininho e onigiri, a pedido da própria Okayu" },
 };
 /** @param {string} estilo */
 const NOME_ESTILO = (estilo) => ESTILOS_BANDEIRA_INFO[estilo]?.nome ?? "Padrão";
@@ -467,7 +468,7 @@ export const ESTILO_CORPO = ({ cla, kitsune, quem }) =>
   [
     `§7Hoje: §f${cla.estiloBandeira ? NOME_ESTILO(cla.estiloBandeira) : "Padrão, na cor do clã"}${quem ? ` §8(escolhido por ${quem})` : ""}`,
     "",
-    `${glyph(G.KITSUNE)} §7Com o selo Kitsune dá para vestir a bandeira com um dos 8 estilos: pano próprio, orelhas e enfeite no mastro, aura em volta e animação. Só visual: no Capture the Flag tudo continua igual.`,
+    `${glyph(G.KITSUNE)} §7Com o selo Kitsune dá para vestir a bandeira com um dos 9 estilos: pano próprio, orelhas e enfeite no mastro, aura em volta e animação. Só visual: no Capture the Flag tudo continua igual.`,
     kitsune
       ? "§7Se quem escolheu perder o selo, a bandeira volta para a padrão."
       : "§c✖ Trancado: §7só quem tem o selo Kitsune (e pode editar o clã) escolhe. Sem isso, a bandeira fica na cor do clã.",

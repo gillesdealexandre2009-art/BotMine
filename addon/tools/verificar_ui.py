@@ -57,7 +57,7 @@ HUD_JS = ADDON / "vulpus_bp" / "scripts" / "sistemas" / "hud.js"
 CONFIG_JS = ADDON / "vulpus_bp" / "scripts" / "config.js"
 ITEM_TEXTURE = RP / "textures" / "item_texture.json"
 
-NS_MENU, NS_HUD = "vulpus_menu", "vulpus_hud"
+NS_MENU, NS_HUD, NS_FILTRO = "vulpus_menu", "vulpus_hud", "vulpus_filtro"
 # namespace nosso -> (arquivo, definição de onde o jogo monta a árvore)
 RAIZES = {NS_MENU: ("vulpus/vulpus_menu.json", "root"), NS_HUD: ("vulpus/vulpus_hud.json", "sidebar")}
 COLECAO = "form_buttons"
@@ -97,7 +97,7 @@ PECAS_TEMA = ("painel", "cabecalho", "botao", "botao_hover", "botao_press",
 # peças que um tema pega da pasta do Laranja (o Black usa a logo e o título originais)
 PECAS_EMPRESTADAS = {"black": ("logo", "titulo")}
 # layouts do root: nome -> flag que o título precisa ter
-VARIANTES = {"hub": "HUB", "lista": "LISTA"}
+VARIANTES = {"hub": "HUB", "lista": "LISTA", "tabuleiro": "TABULEIRO", "velhinha": "VELHINHA"}
 SLOTS_HUB = 11
 EXTENSOES_TEXTURA = (".png", ".tga", ".jpg", ".jpeg")
 PACKS_VANILLA = ("vanilla", "vanilla_base")
@@ -105,13 +105,14 @@ JOGO_PASTA = "XboxGames/Minecraft for Windows/Content/data"
 PARAR_FOCO = "FOCUS_OVERRIDE_STOP"
 DIRECOES_FOCO = ("focus_change_left", "focus_change_right", "focus_change_up", "focus_change_down")
 TOKENS_TEMA = tuple(token for _, token in TEMAS.values() if token)
-FLAGS_FORMS = ("BASE", "HUB", "LISTA") + TOKENS_TEMA
-TOKENS = TOKENS_TEMA + ("SIDEBAR",)
+FLAGS_FORMS = ("BASE", "HUB", "LISTA", "TABULEIRO", "VELHINHA") + TOKENS_TEMA
+TOKENS = TOKENS_TEMA + ("SIDEBAR", "FILTRO")
+FILTRO_HUD = f"{NS_FILTRO}.raiz"
 # arquivo nosso -> família de flags que ele pode usar
 FAMILIA_FLAGS = {"server_form.json": "menu", "vulpus/vulpus_menu.json": "menu",
-                 "hud_screen.json": "hud", "vulpus/vulpus_hud.json": "hud"}
+                 "hud_screen.json": "hud", "vulpus/vulpus_hud.json": "hud", "vulpus/vulpus_filtro.json": "hud"}
 # família -> flags dos scripts que o JSON dela usa
-FAMILIAS = {"menu": FLAGS_FORMS, "hud": ("SIDEBAR",)}
+FAMILIAS = {"menu": FLAGS_FORMS, "hud": ("SIDEBAR", "FILTRO")}
 
 SAIDA_OK, SAIDA_ERRO, SAIDA_SEM_VANILLA = 0, 1, 2
 
@@ -567,8 +568,8 @@ def checar_modificacao(cat: Catalogo, arquivo: str, vanilla: Definicao, mod, ond
         checar_factory_principal(cat, vanilla, valor, onde, rel)
     else:
         chaves = [chave for entrada in valor if isinstance(entrada, dict) for chave in entrada]
-        if len(chaves) != 1 or separar(chaves[0])[1] != SIDEBAR_HUD or valor[0][chaves[0]] != {}:
-            rel.erro(onde, f'esperado só {{ "vulpus_sidebar@{SIDEBAR_HUD}": {{}} }}')
+        if [separar(c)[1] for c in chaves] != [SIDEBAR_HUD, FILTRO_HUD] or any(e[c] != {} for e in valor for c in e):
+            rel.erro(onde, f'esperado só {{ "vulpus_sidebar@{SIDEBAR_HUD}": {{}} }} e {{ "vulpus_filtro@{FILTRO_HUD}": {{}} }}')
 
 
 def checar_factory_principal(cat: Catalogo, vanilla: Definicao, valor: list, onde: str, rel: Relatorio) -> None:
@@ -1540,6 +1541,11 @@ def flags_do_script(rel: Relatorio) -> dict[str, str]:
             flags["SIDEBAR"] = ler_string_js(achado.group(1))
         else:
             rel.erro("hud.js", 'não achei export const FLAG_SIDEBAR = "..."')
+        achado = re.search(rf"\bexport\s+const\s+FLAG_FILTRO\s*=\s*({LITERAL_JS})", texto)
+        if achado:
+            flags["FILTRO"] = ler_string_js(achado.group(1))
+        else:
+            rel.erro("hud.js", 'não achei export const FLAG_FILTRO = "..."')
     return flags
 
 
@@ -1569,7 +1575,7 @@ def checar_flags(literais: dict[str, set[str]], flags: dict[str, str], rel: Rela
         valor = flags.get(token)
         if valor is None:
             continue
-        arquivo, nome_js = ("hud.js", "FLAG_SIDEBAR") if token == "SIDEBAR" else ("forms.js", f"FLAG.{token}")
+        arquivo, nome_js = ("hud.js", "FLAG_" + token) if token in ("SIDEBAR", "FILTRO") else ("forms.js", f"FLAG.{token}")
         if not (FLAG_VALIDA.match(valor) and valor.endswith("§r")) or (base is not None and valor.startswith(base)):
             rel.erro(arquivo, f"{nome_js} deve ter só códigos §, terminar em §r e não começar com FLAG.BASE")
         for outro, valor_outro in flags.items():

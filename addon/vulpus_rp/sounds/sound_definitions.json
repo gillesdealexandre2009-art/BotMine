@@ -1,0 +1,530 @@
+{
+  "format_version": "1.14.0",
+  "sound_definitions": {
+    "vulpus.p_sino_vila_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sino_vila_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sino_vila_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sino_vila_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_passaro_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_passaro_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_passaro_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_passaro_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_passaro_3": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_passaro_3",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sino_feira_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sino_feira_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sino_feira_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sino_feira_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_pop_bolha_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_pop_bolha_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_pop_bolha_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_pop_bolha_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_ding_suave": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_ding_suave",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_victory_victory": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_victory_victory",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ]
+    },
+    "vulpus.p_gota_agua_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_gota_agua_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_gota_agua_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_gota_agua_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_gota_agua_3": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_gota_agua_3",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_dark_ambience_ambience_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_dark_ambience_ambience_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_dark_ambience_ambience_5": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_dark_ambience_ambience_5",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_ghost_breath_ghostbreath": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_ghost_breath_ghostbreath",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_vento_rajada_3": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_vento_rajada_3",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_vento_rajada_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_vento_rajada_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_rangido_madeira_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_rangido_madeira_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sussurro_curto_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sussurro_curto_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sussurro_curto_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sussurro_curto_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sussurro_curto_3": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sussurro_curto_3",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_rangido_madeira_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_rangido_madeira_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_rangido_madeira_3": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_rangido_madeira_3",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_passos_distantes_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_passos_distantes_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_passos_distantes_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_passos_distantes_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_dark_ambience_ambience_4": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_dark_ambience_ambience_4",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_lampada_falhando_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_lampada_falhando_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_lampada_falhando_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_lampada_falhando_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sino_suave_3": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sino_suave_3",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sino_suave_4": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sino_suave_4",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sino_suave_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sino_suave_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_sino_suave_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_sino_suave_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_apito_de_trem_distante": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_apito_de_trem_distante",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_apito_de_trem_distante_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_apito_de_trem_distante_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_apito_de_trem_distante_3": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_apito_de_trem_distante_3",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_buzina_dois_toques": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_buzina_dois_toques",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_clack_vagao_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_clack_vagao_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_clack_vagao_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_clack_vagao_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_flauta_distante_1": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_flauta_distante_1",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_flauta_distante_2": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_flauta_distante_2",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.p_flauta_distante_3": {
+      "category": "ambient",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/p_flauta_distante_3",
+          "volume": 1,
+          "load_on_low_memory": true
+        }
+      ],
+      "max_distance": 40,
+      "min_distance": 2
+    },
+    "vulpus.ligacao": {
+      "category": "neutral",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/ligacao",
+          "volume": 1,
+          "is3D": false,
+          "load_on_low_memory": true
+        }
+      ]
+    }
+  }
+}

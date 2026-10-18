@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:m_domador_sombrio",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/vulpus/entidades/m_domador_sombrio"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.m_domador_sombrio"
+      },
+      "animations": {
+        "andar": "animation.vulpus.m_domador_sombrio.andar",
+        "ataque": "animation.vulpus.m_domador_sombrio.ataque"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "andar": "query.modified_move_speed > 0.02 || true"
+          },
+          {
+            "ataque": "variable.attack_time > 0"
+          }
+        ],
+        "scale": "1.2"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.m_padrao"
+      ],
+      "spawn_egg": {
+        "base_color": "#aa1c28",
+        "overlay_color": "#ffffff"
+      }
+    }
+  }
+}

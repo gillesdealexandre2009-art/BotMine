@@ -1,0 +1,58 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.vulpus.abate": {
+      "arrays": {
+        "textures": {
+          "Array.temas": [
+            "Texture.caudas",
+            "Texture.sakura",
+            "Texture.lunar",
+            "Texture.espirito",
+            "Texture.brasa",
+            "Texture.aurora",
+            "Texture.estelar",
+            "Texture.sombra",
+            "Texture.ditadora"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.temas[math.clamp(query.property('vulpus:tema'), 0, 8)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "raiz": true
+        },
+        {
+          "f0_*": "query.property('vulpus:forma') == 0"
+        },
+        {
+          "f1_*": "query.property('vulpus:forma') == 1"
+        },
+        {
+          "f2_*": "query.property('vulpus:forma') == 2"
+        },
+        {
+          "f3_*": "query.property('vulpus:forma') == 3"
+        },
+        {
+          "f4_*": "query.property('vulpus:forma') == 4"
+        },
+        {
+          "f5_*": "query.property('vulpus:forma') == 5"
+        }
+      ],
+      "ignore_lighting": true
+    }
+  }
+}

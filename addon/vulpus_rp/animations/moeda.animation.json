@@ -1,0 +1,17 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.vulpus.moeda.girar": {
+      "loop": true,
+      "bones": {
+        "disco": { "rotation": ["math.mod(query.life_time * 1080, 360)", 0, 0] }
+      }
+    },
+    "animation.vulpus.prop.girar_y": {
+      "loop": true,
+      "bones": {
+        "moedao": { "rotation": [0, "math.mod(query.life_time * 50, 360)", 0] }
+      }
+    }
+  }
+}

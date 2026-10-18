@@ -35,7 +35,7 @@ const HORA_MS = 60 * 60 * 1000;
 /** Limites da base em partículas: 10 vezes, uma por segundo, até 24 blocos de quem pediu. */
 const VEZES_LIMITES = 10;
 const ALCANCE_LIMITES = 24;
-const PARTICULA_LIMITE = "minecraft:villager_happy";
+const PARTICULA_LIMITE = "minecraft:basic_flame_particle";
 /**
  * Itens que mudam o mundo quando usados num bloco (aliado com acesso só interage sem eles): ferramentas,
  * e itens que plantam ou colocam bloco sem ter o mesmo id do bloco (sementes, linha, placas, estandartes...).

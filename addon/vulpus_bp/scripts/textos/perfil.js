@@ -24,7 +24,7 @@ const CARGOS_CLA = Object.freeze({ lider: "Líder", vice: "Vice", oficial: "Ofic
  * @param {{ nome: string, conta: string | null, cla: { tag: string, nome: string, cargo: CargoCla } | null,
  *   online: boolean, selo: string, rank: Rank, nivel: number, xpNoNivel: number,
  *   xpParaProximo: number, cargo: InfoCargo | null, kitsune: boolean, caudas: number, tempo: number,
- *   primeira: number, sequencia: number, mortes: number, casas: number, limiteCasas: number }} info
+ *   primeira: number, sequencia: number, mortes: number, casas: number, limiteCasas: number, conquistas: string[] }} info
  */
 export const CORPO = (info) =>
   [
@@ -43,4 +43,5 @@ export const CORPO = (info) =>
     `§7Diária: §f${info.sequencia} ${info.sequencia === 1 ? "dia seguido" : "dias seguidos"}`,
     `§7Mortes: §f${formatarNumero(info.mortes)}`,
     `§7Casas: §f${info.casas}/${info.limiteCasas}`,
+    ...(info.conquistas.length ? ["", `§7Conquistas: ${info.conquistas.join(" ")}`] : []),
   ].join("\n");

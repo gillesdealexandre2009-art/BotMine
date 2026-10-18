@@ -6,6 +6,7 @@
 import { system, world } from "@minecraft/server";
 import { NIVEIS_CLA } from "../config.js";
 import { config, lerMundo, salvarMundo } from "../core/db.js";
+import { emitir } from "../core/eventos.js";
 import { diaBrasilia, registrarErro } from "../core/util.js";
 import { pintar, temaValido } from "../cores.js";
 import { G } from "../glyphs.js";
@@ -102,7 +103,7 @@ export const CORES_CLA = Object.freeze(["6", "e", "a", "b", "c", "d", "9", "5", 
  * Estilos Kitsune da bandeira (só visual; só quem tem o selo escolhe). A ordem é a das texturas do RP:
  * a propriedade vulpus:estilo da entidade é o índice + 1 (0 = a bandeira padrão na cor do clã).
  */
-export const ESTILOS_BANDEIRA = Object.freeze(["caudas", "sakura", "lunar", "espirito", "brasa", "aurora", "estelar", "sombra"]);
+export const ESTILOS_BANDEIRA = Object.freeze(["caudas", "sakura", "lunar", "espirito", "brasa", "aurora", "estelar", "sombra", "ditadora"]);
 /** Emblemas do clã, na ordem em que os níveis liberam (NIVEIS_CLA[].emblemas). */
 export const EMBLEMAS = Object.freeze([G.ESCUDO, G.BANDEIRA, G.TORRE, G.PATA, G.TROFEU]);
 
@@ -611,6 +612,7 @@ export function novoCla(fundador, dados) {
   clas.set(id, cla);
   reindexar();
   notificar(fundador ? [fundador.id] : []);
+  emitir("cla_criado", { cla_tag: cla.tag, cla_nome: cla.nome, fundador: fundador ? fundador.nome : "o Dono" });
   return cla;
 }
 
@@ -640,6 +642,7 @@ export function apagarCla(id) {
   clas.delete(id);
   reindexar();
   notificar(cla.membros.map((m) => m.id));
+  emitir("cla_extinto", { cla_tag: cla.tag, cla_nome: cla.nome, dias: Math.max(0, Math.floor((Date.now() - cla.criado) / 86_400_000)), membros: cla.membros.length });
   return cla;
 }
 

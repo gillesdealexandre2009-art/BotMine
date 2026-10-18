@@ -11,7 +11,7 @@ Saída:
     pano 28x16 em (0, 0): coluna 0 encosta no mastro; borda (lados finos do pano) em (30, 0);
     mastro 2x48 em (32, 0) e topo/fundo em (36, 0); pé 4x2 em (40, 0) e 4x4 em (40, 4);
     ponta 3x3 em (46, 0);
-- vulpus_rp/textures/vulpus/entidades/bandeira_k_<estilo>.png (128x128): os 8 estilos Kitsune, na ordem de
+- vulpus_rp/textures/vulpus/entidades/bandeira_k_<estilo>.png (128x128): os 9 estilos Kitsune, na ordem de
   ESTILOS_BANDEIRA (cla_dados.js); o render controller escolhe pela propriedade vulpus:estilo (índice + 1).
   Mapa no comentário da seção "bandeiras Kitsune" (o pano tem 4 quadros de animação);
 - vulpus_rp/textures/vulpus/ui/bandeira_<estilo>.png (16x16): ícone de cada estilo no menu do clã;
@@ -153,7 +153,7 @@ def icone() -> Image.Image:
     return img
 
 
-# ---------------------------------------------------------------- bandeiras Kitsune (8 estilos)
+# ---------------------------------------------------------------- bandeiras Kitsune (9 estilos)
 #
 # Textura 128x128 (o dobro da geometria 64x64: cada unidade de UV vira 2x2 px, o pano ganha detalhe).
 # Mapa em unidades de UV (multiplique por 2 para o pixel):
@@ -650,6 +650,122 @@ def enfeite_sombra() -> Tela:
     return t
 
 
+CORES_DITADORA = {
+    "O": (52, 36, 84), "H": (185, 164, 230), "D": (141, 116, 196), "S": (252, 228, 214), "P": (240, 150, 190),
+    "V": (139, 92, 246), "W": (255, 255, 255), "K": (24, 24, 30), "M": (246, 160, 170), "X": (61, 61, 71),
+    "C": (20, 20, 24), "Y": (124, 58, 237), "Z": (168, 85, 247),
+}
+OKAYU_ROSTO = [  # 17x22; a ponta das orelhas (linha 0) e o sininho são desenhados à parte, para animar
+    ".................",
+    ".OHHO.......OHHO.",
+    ".OHPHO.....OHPHO.",
+    "OHHPPHOOOOOHPPHHO",
+    "OHHHHHHHHHHHHHHHO",
+    "OHHHHHHHDHHHHHHHO",
+    "OHHHHSHHHHHSHHHHO",
+    "OHHHSSSHHHSSSHHHO",
+    "OHHSSSSSSSSSSSHHO",
+    "OHHSOOOSSSOOOSHHO",
+    "OHHSVVVSSSVVVSHHO",
+    "OHHSVWVSSSVWVSHHO",
+    "OHHSVVVSSSVVVSHHO",
+    "OHHSMMSSSSSMMSHHO",
+    "OHHSSSSSOSSSSSHHO",
+    "OHHHHSSSSSSSHHHHO",
+    "OHHHHKKKKKKKHHHHO",
+    "OHHXXXXXXXXXXXHHO",
+    "OHHXXCXXXXXCXXHHO",
+    "OHHXXCXXXXXCXXHHO",
+    "OHHYYYYYYYYYYYHHO",
+    "OOOZZZZZZZZZZZOOO",
+]
+assert all(len(linha) == 17 for linha in OKAYU_ROSTO)
+ONIGIRI = [
+    "....O....",
+    "...OWO...",
+    "..OWWWO..",
+    ".OWWWWWO.",
+    "OWWWWWWLO",
+    "OWWWWWWLO",
+    "OWKKKKKLO",
+    "OWKKKKKLO",
+    ".OOOOOOO.",
+]
+PATA = [".X.X.", "X.X.X", ".XXX.", "XXXXX", ".XXX."]
+
+
+def pano_ditadora(k: int) -> Tela:
+    # Fundo: degradê roxo-escuro para lilás; no meio o "quadro" amarelo com pegadas, como nas ilustrações dela.
+    t = fundo((52, 24, 98), (160, 124, 224))
+    amarelo, amarelo_escuro, borda = (246, 206, 70), (226, 168, 40), (176, 120, 20)
+    t.ret(9, 4, 38, 24, amarelo)
+    for y in range(4, 28, 4):
+        t.ret(9, y, 38, 1, misturar(amarelo, (255, 232, 130), 0.5))
+    for x in range(9, 47):
+        t.por(x, 4, borda)
+        t.por(x, 27, borda)
+    for y in range(4, 28):
+        t.por(9, y, borda)
+        t.por(46, y, borda)
+    for x0, y0 in ((12, 7), (13, 19), (38, 7)):
+        t.mascara(PATA, x0, y0, {"X": amarelo_escuro})
+    # Patinhas lilás no degradê, que pulam de lugar a cada quadro.
+    claro = (214, 190, 250)
+    for x0, y0, f in ((3, 6, 0), (50, 8, 1), (3, 19, 2), (50, 21, 3)):
+        if (f + k) % 4 != 3:
+            t.mascara(PATA, x0, y0, {"X": claro})
+    # Rosto da Okayu: orelhas mexendo, sininho balançando.
+    x0, y0 = 19, 4
+    t.mascara([linha.replace("G", "X") for linha in OKAYU_ROSTO], x0, y0, CORES_DITADORA)
+    for j, linha in enumerate(OKAYU_ROSTO):  # sombra do cabelo nas bordas
+        for i, ch in enumerate(linha):
+            if ch == "H" and (i in (1, 15) or (j == 4 and i % 3 == 0) or (j > 8 and i in (2, 14))):
+                t.por(x0 + i, y0 + j, CORES_DITADORA["D"])
+    esquerda = (1, 2) if k == 1 else (2, 3)
+    direita = (14, 15) if k == 3 else (13, 14)
+    for i in esquerda + direita:
+        t.por(x0 + i, y0, CORES_DITADORA["O"])
+    dx = (0, 1, 0, -1)[k]
+    for i, cor in ((7, "G"), (8, "W"), (9, "G")):
+        t.por(x0 + i + dx, y0 + 17, (244, 196, 48) if cor == "G" else (255, 244, 190))
+    t.por(x0 + 8 + dx, y0 + 18, (190, 140, 20))
+    t.por(x0 + 8, y0 + 16, (244, 196, 48))
+    # Onigiri e brilhinhos.
+    t.mascara(ONIGIRI, 37, 17, {"O": CORES_DITADORA["O"], "W": (255, 255, 255), "K": (24, 24, 30), "L": (206, 206, 224)})
+    for (x, y, f) in ((6, 4, 0), (52, 14, 2), (6, 27, 1), (47, 3, 3)):
+        if (f + k) % 4 == 0:
+            t.por(x, y, (255, 255, 255))
+            for ddx, ddy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                t.por(x + ddx, y + ddy, (230, 214, 255), 0.7)
+    moldura(t, (30, 14, 54), (244, 196, 48))
+    return t
+
+
+def enfeite_ditadora() -> Tela:
+    """Cabecinha de gata lilás com coleira e sininho."""
+    t = Tela(14, 14)
+    padrao = [
+        ".OO........OO.",
+        "OHHO......OHHO",
+        "OHPHOOOOOOHPHO",
+        "OHHPHHHHHHPHHO",
+        "OHHHHHHHHHHHHO",
+        "OHHHHHHHHHHHHO",
+        "OHHVVHHHHVVHHO",
+        "OHHVWHHHHWVHHO",
+        "OHHHHHHHHHHHHO",
+        "OHHHHHHHHHHHHO",
+        ".OHHHHHHHHHHO.",
+        "..OKKKKKKKKO..",
+        "....OKGGKO....",
+        ".....OGGO.....",
+    ]
+    cores = {"O": (52, 36, 84), "H": (185, 164, 230), "P": (240, 150, 190), "V": (139, 92, 246),
+             "W": (255, 255, 255), "K": (24, 24, 30), "G": (244, 196, 48)}
+    t.mascara(padrao, 0, 0, cores)
+    return t
+
+
 def sem_caudas(_k: int) -> Tela:
     return Tela(CW, CH)
 
@@ -672,6 +788,8 @@ ESTILOS = [
      ((42, 30, 72), (26, 20, 48), (255, 214, 90), (180, 130, 40)), ((255, 214, 90), (60, 40, 90), (255, 246, 210)), ((255, 252, 230), (255, 200, 70))),
     ("sombra", "Sombra", pano_sombra, sem_caudas, enfeite_sombra,
      ((32, 20, 42), (18, 12, 26), (156, 64, 226), (90, 30, 140)), ((90, 40, 130), (14, 6, 20), (200, 140, 255)), ((230, 180, 255), (140, 60, 220))),
+    ("ditadora", "Ditadora", pano_ditadora, sem_caudas, enfeite_ditadora,
+     ((43, 43, 51), (26, 26, 32), (244, 196, 48), (168, 126, 24)), ((185, 164, 230), (60, 40, 110), (255, 170, 200)), ((255, 236, 140), (168, 85, 247))),
 ]
 
 
@@ -745,7 +863,7 @@ def vista_kitsune(tex: Image.Image, estilo: tuple, quadro: int) -> Image.Image:
 
 
 def previa(texturas: list[Image.Image], kitsune: list[tuple[tuple, Image.Image]]) -> Image.Image:
-    """Em cima as 12 bandeiras das cores; embaixo os 8 estilos Kitsune montados, com os 4 quadros do pano."""
+    """Em cima as 12 bandeiras das cores; embaixo os 9 estilos Kitsune montados, com os 4 quadros do pano."""
     larg = PANO_L + 6
     cores = Image.new("RGBA", (larg * len(texturas) + 4, 56), (40, 40, 46, 255))
     for n, tex in enumerate(texturas):

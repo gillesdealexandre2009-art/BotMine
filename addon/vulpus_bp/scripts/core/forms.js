@@ -24,6 +24,8 @@ export const FLAG = Object.freeze({
   BASE: "§v§u§l§p",
   HUB: "§v§u§l§p§0§r",
   LISTA: "§v§u§l§p§1§r",
+  TABULEIRO: "§v§u§l§p§2§r",
+  VELHINHA: "§v§u§l§p§3§r",
   TEMA_BLACK: "§v§b§r",
   TEMA_SAKURA: "§v§d§r",
   TEMA_LUNAR: "§v§9§r",
@@ -68,6 +70,7 @@ export const TEMAS_PAINEL = Object.freeze({
  * @property {any} [padrao]
  * @property {number} [min]
  * @property {number} [max]
+ * @property {number} [casas]  "numero": casas decimais aceitas (padrão 0 = inteiro); o campo mostra e lê com vírgula
  * @property {string[]} [opcoes]
  */
 
@@ -293,6 +296,22 @@ export class Lista {
 }
 
 /**
+ * Grade de casas clicáveis (tabuleiro 8x8 ou 3x3), no estilo do baú. Cada célula é um botão só com ícone;
+ * o botão extra (opcional) vem depois das células. Devolve o índice clicado: 0..n-1 nas células, n no extra.
+ * Fechar o form devolve undefined.
+ * @param {Player} player
+ * @param {{ flag: "TABULEIRO" | "VELHINHA", titulo: string, corpo: string, icones: string[], extra?: string }} opcoes
+ * @returns {Promise<number | undefined>}
+ */
+export async function grade(player, { flag, titulo, corpo, icones, extra }) {
+  const form = new ActionFormData().title(prefixoTitulo(player, FLAG[flag]) + titulo).body(corpo);
+  for (const icone of icones) form.button("", icone);
+  if (extra !== undefined) form.button(extra);
+  const resposta = await mostrar(player, form);
+  return resposta?.canceled ? undefined : resposta?.selection;
+}
+
+/**
  * Pergunta de sim ou não numa Lista. Fechar (X/ESC) conta como não.
  * @param {Player} player
  * @param {{ titulo: string, texto: string, sim?: string, nao?: string }} opcoes
@@ -340,7 +359,7 @@ function adicionarCampo(form, campo) {
     case "numero": {
       const temFaixa = campo.min !== undefined && campo.max !== undefined;
       const rotulo = temFaixa ? `${campo.rotulo} §7(${campo.min} a ${campo.max})` : campo.rotulo;
-      form.textField(rotulo, temFaixa ? `${campo.min} a ${campo.max}` : "", { defaultValue: String(campo.padrao ?? "") });
+      form.textField(rotulo, temFaixa ? `${campo.min} a ${campo.max}` : "", { defaultValue: String(campo.padrao ?? "").replace(".", ",") });
       break;
     }
     case "alternar":
@@ -384,5 +403,6 @@ function lerNumero(campo, valor) {
     .replace(",", ".");
   const numero = Number(texto);
   if (texto === "" || !Number.isFinite(numero)) return campo.padrao;
-  return limitar(Math.round(numero), campo.min ?? -Infinity, campo.max ?? Infinity);
+  const fator = 10 ** Math.max(0, campo.casas ?? 0);
+  return limitar(Math.round(numero * fator) / fator, campo.min ?? -Infinity, campo.max ?? Infinity);
 }

@@ -19,7 +19,8 @@ import { menuLeilao, resumoCaixa } from "./leilao.js";
 import { nomeVisivel } from "./kitsune.js";
 import { infoNivel } from "./niveis.js";
 import { menuPerfil } from "./perfil.js";
-import { menuRegras } from "./regras.js";
+import { menuMisc } from "./misc.js";
+import { marcarMenu, ehNovato } from "./novato.js";
 import { irSpawn } from "./spawn.js";
 import { menuStaff } from "./staff.js";
 import { contarPedidos, menuTpa } from "./tpa.js";
@@ -41,6 +42,7 @@ function corpo(player) {
     textos.LINHA_RANK(selo(player), rank.nome, formatarNumero(nivel)),
     textos.LINHA_CAUDAS(formatarNumero(saldo(player))),
     textos.LINHA_ONLINE(online().length),
+    ...(ehNovato(player) ? [textos.LINHA_NOVATO] : []),
     textos.LINHA_DICA(dica),
   ].join("\n");
 }
@@ -63,6 +65,7 @@ function cantoHub(player, volta) {
  */
 export async function abrirMenu(player) {
   const volta = () => abrirMenu(player);
+  marcarMenu(player);
   const pedidos = contarPedidos(player);
   await new Hub()
     .titulo(textos.TITULO)
@@ -76,7 +79,7 @@ export async function abrirMenu(player) {
     .slot(6, { texto: textos.LEILAO(resumoCaixa(player).itens), icone: ICONES.leilao, acao: (p) => menuLeilao(p, volta) })
     .slot(7, { texto: rotuloHub(player), icone: ICONES.cla, acao: (p) => menuCla(p, volta) })
     .slot(8, { texto: textos.AJUSTES, icone: ICONES.ajustes, acao: (p) => menuAjustes(p, volta) })
-    .slot(9, { texto: textos.REGRAS, icone: ICONES.regras, acao: (p) => menuRegras(p, volta) })
+    .slot(9, { texto: textos.MISC, icone: ICONES.minigames, acao: (p) => menuMisc(p, volta) })
     .staff(cantoHub(player, volta))
     .abrir(player);
 }

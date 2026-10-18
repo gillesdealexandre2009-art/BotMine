@@ -1,0 +1,12 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.vulpus.alvo": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Texture.default"],
+      "part_visibility": [{ "*": true }, { "palito": "query.property('vulpus:palito')" }],
+      "ignore_lighting": true
+    }
+  }
+}

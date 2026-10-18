@@ -1,5 +1,5 @@
 // @ts-check
-// Spleef, lado da staff: Menu > Staff > Minigames > Spleef (marcar centro, raio, camadas, salvar, pontos, placar,
+// Spleef, lado da staff: Menu > Staff > Feira e minigames > Spleef (marcar centro, raio, camadas, salvar, pontos, placar,
 // configurações, resetar, começar e encerrar) e o comando /vulpus:spleef [ação], que também serve a quem joga.
 import { ICONES } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
@@ -78,21 +78,6 @@ function livreOk(player) {
   if (spleef.arenaLivre()) return true;
   erro(player, textos.DURANTE_PARTIDA);
   return false;
-}
-
-/**
- * Menu "Minigames" da staff (hoje só o Spleef; outros minigames entram aqui).
- * @param {Player} player
- * @param {() => any} [voltar]
- */
-export async function menuMinigamesStaff(player, voltar) {
-  if (!staffOk(player)) return;
-  const aqui = () => menuMinigamesStaff(player, voltar);
-  await new Lista(textos.TITULO_MINIGAMES)
-    .texto(textos.MINIGAMES_CORPO)
-    .botao(textos.BOTAO_SPLEEF, ICONES.spleef, (p) => menuSpleefStaff(p, aqui))
-    .voltar(voltar)
-    .abrir(player);
 }
 
 /**
@@ -355,7 +340,7 @@ function tirarPlacar(player) {
  * Configurações do Spleef (salva só o que mudou).
  * @param {Player} player
  */
-async function editarConfig(player) {
+export async function editarConfig(player) {
   if (!staffOk(player)) return;
   const atual = config();
   /** @type {import("../core/forms.js").Campo[]} */

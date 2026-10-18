@@ -184,8 +184,23 @@ export const CORPO = (times, guerras, donos) =>
     `§7Times: §f${times} §8• §7Guerras ativas: §f${guerras} §8• §7Donos: §f${donos}`,
     "§7Tudo aqui vale na hora, sem custo, e fica no Log do dono.",
   ].join("\n");
+export const SECAO_CLAS = "Clãs e guerras";
+export const SECAO_JOGADORES = "Jogadores";
+export const SECAO_ADMIN = "Administração";
 export const BOTAO_TIMES = "Times";
 export const BOTAO_GUERRAS = "Guerras";
+export const BOTAO_APELIDO = "Apelido de alguém";
+export const TITULO_APELIDO = "Apelido de alguém";
+export const ROTULO_APELIDO_JOGADOR = "Quem? (nome da conta)";
+export const ROTULO_APELIDO_NOVO = "Novo apelido (vazio = tirar)";
+export const APELIDO_LONGO = "Esse apelido é longo demais.";
+/** @param {string} nome @param {string} apelido */
+export const APELIDO_DEFINIDO = (nome, apelido) => `Apelido de ${nome} agora é "${apelido}".`;
+/** @param {string} nome */
+export const APELIDO_TIRADO = (nome) => `Apelido de ${nome} removido (volta o nome da conta).`;
+/** @param {string} apelido */
+export const APELIDO_MUDADO_AVISO = (apelido) => `§6Dono §8» §7Seu apelido agora é §f${apelido}§7.`;
+export const APELIDO_TIRADO_AVISO = "§6Dono §8» §7O apelido que um dono te deu foi removido.";
 export const BOTAO_DONOS = "Donos";
 export const BOTAO_LOG = "Log do dono";
 

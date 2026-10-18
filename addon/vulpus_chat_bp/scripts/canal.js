@@ -21,7 +21,7 @@ const APELIDO_MAX = 16;
 const LETRAS_APELIDO = /^[A-Za-z0-9À-ÖØ-öø-ÿ _.-]+$/;
 
 /**
- * cla = tag, cor e tema do clã (null sem clã); apelido e tema do nome só valem com o selo Kitsune ("" = nenhum).
+ * cla = tag, cor e tema do clã (null sem clã); o tema do nome só vale com o selo Kitsune; o apelido vale com o selo ou se um dono o pôs ("" = nenhum).
  * @typedef {{ nivel: number, rank: number, cargo: number, kitsune: boolean,
  *   cla: { tag: string, cor: string, tema: string } | null, apelido: string, tema: string }} Identidade
  */
@@ -84,10 +84,11 @@ export function lerTags(tags, kitsune) {
   for (const tag of tags) {
     const cla = TAG_CLA.exec(tag);
     if (cla) saida.cla = { tag: cla[1], cor: cla[2], tema: cla[3] ?? "" };
+    // O apelido vale sem selo também: o addon só põe a tag quando é de um dono (sem selo) ou de quem tem o selo.
+    if (tag.startsWith(TAG_NOME)) saida.apelido = decodificar(tag.slice(TAG_NOME.length));
     if (!kitsune) continue;
     const tema = TAG_TEMA.exec(tag);
     if (tema) saida.tema = tema[1];
-    if (tag.startsWith(TAG_NOME)) saida.apelido = decodificar(tag.slice(TAG_NOME.length));
   }
   return saida;
 }

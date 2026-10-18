@@ -1,0 +1,32 @@
+{
+  "format_version": "1.21.100",
+  "minecraft:block": {
+    "description": {
+      "identifier": "vulpus:branco_atravessavel",
+      "menu_category": {
+        "category": "construction",
+        "group": "minecraft:itemGroup.name.concrete"
+      }
+    },
+    "components": {
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:light_emission": 15,
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "vulpus_branco_puro",
+          "render_method": "opaque",
+          "ambient_occlusion": false,
+          "face_dimming": false
+        }
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.4
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 6
+      },
+      "minecraft:map_color": "#FFFFFF",
+      "minecraft:collision_box": false
+    }
+  }
+}

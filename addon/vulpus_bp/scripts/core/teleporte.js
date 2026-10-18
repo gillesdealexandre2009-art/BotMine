@@ -1,5 +1,6 @@
 // @ts-check
 // Teleporte com as regras do servidor: combate, recarga e espera parado (com contagem e efeitos).
+import { pontoEmZona } from "./arg_zona.js";
 import { Player, system, world } from "@minecraft/server";
 import { barra } from "../glyphs.js";
 import * as textos from "../textos/geral.js";
@@ -278,6 +279,11 @@ function concluir(player, destino, opcoes, preparado = false) {
       erro(player, textos.TP_SEM_DESTINO);
       return false;
     }
+    // o lugar do mistério da Vulpus não existe para o painel: ninguém é levado para lá (a staff pode)
+    if (pontoEmZona({ x: alvo.x, y: alvo.y, z: alvo.z, d: alvo.d }) && !ehStaff(player)) {
+      erro(player, textos.TP_SEM_DESTINO);
+      return false;
+    }
     const combate = restanteCombate(player);
     if (combate > 0) {
       erro(player, textos.TP_COMBATE(combate));
@@ -289,6 +295,7 @@ function concluir(player, destino, opcoes, preparado = false) {
       return false;
     }
     const origem = localDe(player);
+    const veioDoMisterio = pontoEmZona({ x: origem.x, y: origem.y, z: origem.z, d: origem.d });
     const dimOrigem = player.dimension;
     const posOrigem = player.location;
     if (!preparado) efeitos.preparar(player, opcoes.tema, true);
@@ -304,7 +311,7 @@ function concluir(player, destino, opcoes, preparado = false) {
     player.teleport({ x: alvo.x, y: alvo.y, z: alvo.z }, opcoesTp);
     ultimoTeleporte.set(player.id, system.currentTick);
     efeitos.saida(player, dimOrigem, posOrigem, opcoes.tema);
-    if (opcoes.salvarVoltar !== false) {
+    if (opcoes.salvarVoltar !== false && !veioDoMisterio) {
       editarJogador(player, (dados) => {
         dados.voltar = origem;
       });

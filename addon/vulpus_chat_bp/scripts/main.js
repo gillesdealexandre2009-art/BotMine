@@ -8,6 +8,8 @@ import { montarLinha, sanear } from "./formato.js";
 /** @typedef {import("@minecraft/server").ChatSendBeforeEvent} ChatSendBeforeEvent */
 /** @typedef {import("@minecraft/server").Player} Player */
 
+/** Igual a TAG_TRAVADO em vulpus_bp/scripts/core/ponte_estado.js. */
+const TAG_TRAVADO = "vulpus:travado";
 const SO_SIMBOLOS = "§7Essa mensagem só tinha símbolos especiais.";
 
 /**
@@ -27,6 +29,11 @@ function registrarErro(contexto, e) {
 function aoFalar(ev) {
   if (ev.cancel) return;
   try {
+    // tela preta do vínculo com o Discord (tag do pack principal): quem não ligou a conta não fala
+    if (ev.sender.hasTag(TAG_TRAVADO)) {
+      ev.cancel = true;
+      return;
+    }
     const identidade = lerIdentidade(ev.sender);
     if (!identidade) return;
     const mensagem = sanear(ev.message);

@@ -5,15 +5,19 @@
 import { Player } from "@minecraft/server";
 import { ICONES, TAG_KITSUNE } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
-import { dadosJogador, editarJogador, todosJogadores } from "../core/db.js";
+import { config, dadosJogador, editarJogador, todosJogadores } from "../core/db.js";
+import { ehDono } from "../core/dono.js";
 import { reduzir, temPalavrao } from "../core/filtro.js";
 import { Lista, perguntar } from "../core/forms.js";
 import { online, porId } from "../core/jogadores.js";
 import { ehStaff } from "../core/permissoes.js";
 import { erro, msg, ok, registrarErro } from "../core/util.js";
-import { pintar, TEMAS_COR, temaValido } from "../cores.js";
+import { pintar, TEMAS_COR, temasDoGrupo, temaValido } from "../cores.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/kitsune.js";
+import * as textosTempo from "../textos/kitsune_tempo.js";
+import { menuAbate } from "./abate.js";
+import { infoNivel } from "./niveis.js";
 
 export const APELIDO_MIN = 3;
 export const APELIDO_MAX = 16;
@@ -66,6 +70,9 @@ export function temSelo(player) {
  * @param {Player} player
  */
 export function apelidoDe(player) {
+  // O apelido posto por um dono vale para qualquer pessoa, com ou sem selo, e manda no apelido dela.
+  const doDono = dadosJogador(player).apelidoDono;
+  if (doDono && LETRAS_APELIDO.test(doDono)) return doDono;
   if (!temSelo(player)) return "";
   // Confere de novo: apelido salvo antes das regras de hoje (ou dado mexido) não aparece.
   const apelido = dadosJogador(player).apelido;
@@ -73,13 +80,41 @@ export function apelidoDe(player) {
 }
 
 /**
- * Tema do nome em uso ("" sem selo ou sem tema).
+ * Se a pessoa pode usar este tema: dono usa qualquer um; os comuns pedem o selo Kitsune, os animados o selo e o nível
+ * mínimo (config temaAnimadoNivel) e os de evento só valem para quem os desbloqueou.
+ * @param {Player} player
+ * @param {string} id
+ */
+export function podeUsarTema(player, id) {
+  if (!temaValido(id)) return false;
+  if (ehDono(player)) return true;
+  const grupo = TEMAS_COR[id].grupo;
+  if (grupo === "evento") return dadosJogador(player).coresExtras.includes(id);
+  if (grupo === "animado") return temSelo(player) && infoNivel(player).nivel >= config().temaAnimadoNivel;
+  return temSelo(player);
+}
+
+/**
+ * Tema do nome em uso ("" sem direito ou sem tema).
  * @param {Player} player
  */
 export function temaNomeDe(player) {
-  if (!temSelo(player)) return "";
   const tema = dadosJogador(player).temaNome;
-  return temaValido(tema) ? tema : "";
+  return podeUsarTema(player, tema) ? tema : "";
+}
+
+/**
+ * Desbloqueia um tema de evento (vale sem o selo Kitsune).
+ * @param {Player | string} alvo
+ * @param {string} tema
+ */
+export function desbloquearCor(alvo, tema) {
+  if (!temaValido(tema)) return;
+  editarJogador(alvo, (d) => {
+    if (!d.coresExtras.includes(tema)) d.coresExtras.push(tema);
+  });
+  const p = typeof alvo === "string" ? porId(alvo) : alvo;
+  avisarMudanca(p);
 }
 
 /**
@@ -94,10 +129,11 @@ export function nomeVisivel(player) {
  * Nome que aparece, pintado com o tema (ou com a cor padrão) e com §r no fim.
  * @param {Player} player
  * @param {string} [corPadrao]
+ * @param {number} [fase]  passo da animação (só temas animados)
  */
-export function nomeExibido(player, corPadrao = "§f") {
+export function nomeExibido(player, corPadrao = "§f", fase = 0) {
   const nome = nomeVisivel(player);
-  return `${pintar(nome, temaNomeDe(player)) ?? corPadrao + nome}§r`;
+  return `${pintar(nome, temaNomeDe(player), fase) ?? corPadrao + nome}§r`;
 }
 
 /** Só letras e números, sem acento (para comparar nomes parecidos). @param {string} texto */
@@ -177,17 +213,30 @@ export function tirarApelido(player) {
  * @returns {boolean}
  */
 export function definirTemaNome(player, tema) {
-  if (!temSelo(player)) {
-    erro(player, textos.SO_KITSUNE);
+  if (tema !== "" && !temaValido(tema)) return false;
+  if (tema !== "" && !podeUsarTema(player, tema)) {
+    erro(player, TEMAS_COR[tema].grupo === "animado" ? textos.ANIMADO_TRAVADO(config().temaAnimadoNivel) : textos.SO_KITSUNE);
     return false;
   }
-  if (tema !== "" && !temaValido(tema)) return false;
   editarJogador(player, (d) => {
     d.temaNome = tema;
   });
   avisarMudanca(player);
   ok(player, textos.TEMA_OK(nomeExibido(player)));
   return true;
+}
+
+/**
+ * Um dono põe (ou, com "", tira) o apelido de alguém, vale offline (pelo id). Quem chama já conferiu o dono
+ * e validou o texto (problemaApelido).
+ * @param {string} alvoId
+ * @param {string} apelido
+ */
+export function definirApelidoDoDono(alvoId, apelido) {
+  editarJogador(alvoId, (d) => {
+    d.apelidoDono = apelido;
+  });
+  avisarMudanca(porId(alvoId));
 }
 
 /**
@@ -218,21 +267,27 @@ export function resetarVisual(staff, alvoId) {
  * @param {() => any} [voltar]
  */
 export async function menuKitsune(player, voltar) {
-  if (!temSelo(player)) {
+  const corLiberada = ehDono(player) || dadosJogador(player).coresExtras.length > 0;
+  if (!temSelo(player) && !corLiberada) {
     await new Lista(textos.TITULO).texto(textos.SEM_SELO).voltar(voltar).abrir(player);
     return;
   }
   const aqui = () => menuKitsune(player, voltar);
-  const lista = new Lista(textos.TITULO)
-    .texto(textos.CORPO(nomeExibido(player), player.name, apelidoDe(player) !== ""))
-    .botao(textos.BOTAO_APELIDO, ICONES.apelido, async (p) => {
+  // selo com prazo (dado por um dono): mostra quando expira
+  const ate = player.getDynamicProperty("vulpus:kitsune_ate");
+  const aviso = typeof ate === "number" && ate > Date.now() ? `\n\n${textosTempo.LINHA_MENU(ate - Date.now(), ate)}` : "";
+  const lista = new Lista(textos.TITULO).texto(textos.CORPO(nomeExibido(player), player.name, apelidoDe(player) !== "") + aviso);
+  if (temSelo(player) || ehDono(player)) {
+    lista.botao(textos.BOTAO_APELIDO, ICONES.apelido, async (p) => {
       const resposta = await perguntar(p, textos.TITULO_APELIDO, [
         { tipo: "texto", rotulo: textos.ROTULO_APELIDO(APELIDO_MIN, APELIDO_MAX), dica: p.name, padrao: apelidoDe(p) },
       ]);
       if (resposta && resposta[0] !== "") definirApelido(p, resposta[0]);
       await aqui();
-    })
-    .botao(textos.BOTAO_COR, ICONES.tema, (p) => menuTemaNome(p, aqui));
+    });
+  }
+  lista.botao(textos.BOTAO_COR, ICONES.tema, (p) => menuTemaNome(p, aqui));
+  lista.botao(textos.BOTAO_ABATE, ICONES.ajustes, (p) => menuAbate(p, aqui));
   if (apelidoDe(player)) {
     lista.botao(textos.BOTAO_TIRAR, ICONES.nao, async (p) => {
       tirarApelido(p);
@@ -255,9 +310,20 @@ async function menuTemaNome(player, voltar) {
     definirTemaNome(p, "");
     await voltar();
   });
-  for (const [id, tema] of Object.entries(TEMAS_COR)) {
-    lista.botao(textos.BOTAO_TEMA(pintar(nome, id) ?? nome, tema.nome, id === atual), ICONES.tema, async (p) => {
+  const botaoTema = (/** @type {string} */ id, /** @type {string} */ nomeTema) =>
+    lista.botao(textos.BOTAO_TEMA(pintar(nome, id) ?? nome, nomeTema, id === atual), ICONES.tema, async (p) => {
       definirTemaNome(p, id);
+      await voltar();
+    });
+  if (temSelo(player) || ehDono(player)) for (const [id, tema] of temasDoGrupo("comum")) botaoTema(id, tema.nome);
+  for (const [id, tema] of temasDoGrupo("evento")) {
+    if (podeUsarTema(player, id)) botaoTema(id, tema.nome);
+  }
+  const nivelAnimado = config().temaAnimadoNivel;
+  for (const [id, tema] of temasDoGrupo("animado")) {
+    if (podeUsarTema(player, id)) botaoTema(id, `${tema.nome} • animado`);
+    else lista.botao(textos.BOTAO_ANIMADO_TRAVADO(pintar(nome, id) ?? nome, tema.nome, nivelAnimado), ICONES.nao, async (p) => {
+      erro(p, textos.ANIMADO_TRAVADO(nivelAnimado));
       await voltar();
     });
   }

@@ -1,0 +1,78 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.vulpus.m_mestre_feira.andar": {
+      "loop": true,
+      "bones": {
+        "perna_e": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * 70 * query.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "perna_d": {
+          "rotation": [
+            "-(math.cos(query.modified_distance_moved * 38.17) * 70 * query.modified_move_speed)",
+            0,
+            0
+          ]
+        },
+        "braco_e": {
+          "rotation": [
+            "-(math.cos(query.modified_distance_moved * 38.17) * 70 * query.modified_move_speed) * 0.7 + math.sin(query.life_time * 80) * 3",
+            0,
+            "2 + math.sin(query.life_time * 60) * 2"
+          ]
+        },
+        "braco_d": {
+          "rotation": [
+            "(math.cos(query.modified_distance_moved * 38.17) * 70 * query.modified_move_speed) * 0.7 + math.sin(query.life_time * 80 + 90) * 3",
+            0,
+            "-2 - math.sin(query.life_time * 60) * 2"
+          ]
+        },
+        "cabeca": {
+          "rotation": [
+            "math.sin(query.life_time * 40) * 2",
+            "query.target_y_rotation * 0.4",
+            0
+          ]
+        },
+        "corpo": {
+          "position": [
+            0,
+            "math.sin(query.life_time * 90) * 0.25",
+            0
+          ]
+        }
+      }
+    },
+    "animation.vulpus.m_mestre_feira.ataque": {
+      "loop": true,
+      "bones": {
+        "braco_e": {
+          "rotation": [
+            "-95 * math.sin(variable.attack_time * 180)",
+            0,
+            0
+          ]
+        },
+        "braco_d": {
+          "rotation": [
+            "-95 * math.sin(variable.attack_time * 180)",
+            0,
+            0
+          ]
+        },
+        "corpo": {
+          "rotation": [
+            "-12 * math.sin(variable.attack_time * 180)",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

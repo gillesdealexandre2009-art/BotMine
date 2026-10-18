@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:m_o_branco",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/vulpus/entidades/m_o_branco"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.m_o_branco"
+      },
+      "animations": {
+        "andar": "animation.vulpus.m_o_branco.andar",
+        "ataque": "animation.vulpus.m_o_branco.ataque"
+      },
+      "scripts": {
+        "animate": [
+          {
+            "andar": "query.modified_move_speed > 0.02 || true"
+          },
+          {
+            "ataque": "variable.attack_time > 0"
+          }
+        ],
+        "scale": "2.0"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.m_brilho"
+      ],
+      "spawn_egg": {
+        "base_color": "#f8f8fc",
+        "overlay_color": "#ffffff"
+      }
+    }
+  }
+}
