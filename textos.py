@@ -273,7 +273,7 @@ AJUDA_CAMPOS = {
     "diversao": (
         "🎮 Diversão",
         "`/mines jogar` — joguinho por diversão\n`/casamento pedir` — forme uma dupla de toca\n"
-        "`/aniversario definir` — ganhe parabéns e presente no seu dia",
+        "`/aniversario definir` — ganhe parabéns e presente no seu dia\n`/minecraft vincular` — liga sua conta do jogo à do Discord",
     ),
     "suporte": (
         "🎫 Suporte",
@@ -435,6 +435,12 @@ COMANDOS_CAMPOS = [
         "`/fidelidade`: seus bumps, boas-vindas, denúncias aprovadas e publicações, e o que falta para virar Helper\n"
         "Bateu tudo? Abra um tíquete em **🎖️ Solicitar rank** em {tickets}",
     ),
+    (
+        "⛏️ Servidor de Minecraft",
+        "`/minecraft vincular`: liga sua conta do jogo com o código da tela (também pelo botão em {login})\n"
+        "`/minecraft conta`: mostra a conta ligada, seu nível e suas {moeda}\n"
+        "IP e porta em {ip}",
+    ),
     ("ℹ️ Outros", "`/ajuda`: este resumo, onde você estiver\n`/status`: vê se eu estou acordada"),
 ]
 COMANDOS_RODAPE = "Me marque no chat se quiser conversar. Prometo responder. Talvez."
@@ -444,13 +450,18 @@ DUVIDAS_TITULO = "❓ Perguntas frequentes"
 DUVIDAS_DESC = "Antes de abrir um post novo, dá uma olhadinha aqui. Eu já respondi isso umas mil vezes. 🙄💛"
 DUVIDAS_CAMPOS = [
     (
-        "Quando o servidor de Minecraft abre?",
-        "Ele está sendo preparado. Quando tiver data, sai no canal de aviso, e os Kitsunes ficam sabendo primeiro.",
+        "Como entro no servidor de Minecraft?",
+        "O IP e a porta estão em {ip}. Na primeira vez a tela do jogo fica preta com um **código**: use `/minecraft vincular` "
+        "(ou o botão em {login}). Isso liga sua conta e junta suas {moeda} e seu XP dos dois lugares.",
     ),
     ("É Java ou Bedrock?", "**Bedrock** (celular, console e Windows)."),
     ("Como ganho {moeda}?", "`/daily` todo dia, respondendo a pergunta do dia, pegando drops no chat e no seu aniversário."),
     ("Para que servem as {moeda}?", "Jogos, união de toca e, no futuro, coisas decorativas. Nada de vantagem no jogo."),
-    ("Como subo de nível?", "Conversando! Cada mensagem rende XP, com um intervalo entre elas. Flood não adianta, espertinho."),
+    (
+        "Como subo de nível?",
+        "Conversando aqui e jogando no servidor! Cada mensagem rende XP, com um intervalo entre elas, e o tempo jogando também. "
+        "Flood não adianta, espertinho.",
+    ),
     (
         "Como funciona o ranking?",
         "Seu nível define seu **rank**:\n🌱 Filhote (0) → 🦊 Raposinha (5) → 🍂 Raposa Andarilha (10) → "
@@ -466,6 +477,10 @@ DUVIDAS_CAMPOS = [
         "Sim! Quem dá **/bump** ganha **1,5x XP por 2h**, e Kitsunes ganham **2x XP** sempre. "
         "Os bônus não somam: vale o maior.",
     ),
+    (
+        "Como ganho o cargo Sugestor?",
+        "Mandando uma **sugestão útil** que o dono aprove ou use no servidor ou no jogo. Aí o cargo {sugestor} é seu. 🌟",
+    ),
     ("Como mudo a cor do meu nome?", "No canal de cargos, no menu **Cores**."),
     ("Fui punido injustamente, e agora?", "Abra um tíquete e explique com calma. A staff revisa."),
     ("Como viro Kitsune?", "Dando boost no servidor. Está tudo no canal **seja-um-kitsune**."),
@@ -480,6 +495,20 @@ DUVIDAS_CAMPOS = [
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
+    (
+        "1.5.0",
+        "Ponte com o servidor",
+        [
+            "🔗 `/minecraft vincular` e `/minecraft conta`: ligue sua conta do jogo à do Discord (ou use o botão do canal de login)",
+            "🔐 Painel de **login** com botões e registro de entradas, saídas e vínculos em embeds",
+            "💬 **Ponte de chat**: o que acontece no servidor (mensagens, quem entra e sai, mortes e sequências de abates) aparece aqui, e o que você escreve no canal vai para o jogo",
+            "📖 **Histórico**: clãs que nascem e se despedem, guerras que começam e como terminam",
+            "🚪 Painel de **IP e porta** sempre atualizado, com quem está jogando agora",
+            "🦊 {moeda} e XP viram **um só** nos dois lugares. Subir de nível ficou mais difícil: cada mensagem rende menos XP",
+            "🟢 Um canal mostra quantas pessoas estão jogando agora",
+            "🌟 Cargo novo: {sugestor}, para quem sugeriu algo útil que foi aprovado ou usado pelo dono",
+        ],
+    ),
     (
         "1.4.0",
         "Caminho até Helper",
@@ -829,3 +858,160 @@ RANK_RECUSADO = (
     "🦊 Pedido recusado por {staff} por enquanto. Continue ajudando a toca e tente de novo mais tarde, {autor}!"
 )  # {staff} {autor}
 RANK_LOG = "🎖️ Pedido de rank {resultado}"  # {resultado}
+
+
+# --------------------------------------------------------------------------- ponte com o Minecraft
+MC_PONTE_MSG = "**{nome}** » {texto}"
+MC_VINCULO_OK = (
+    "🦊 Pronto! Sua conta do Discord agora está ligada a **{nome}**. Volte ao jogo: a tela preta some sozinha em alguns segundos. "
+    "Suas Caudas e seu XP do jogo e do Discord foram somados."
+)
+MC_VINCULO_INVALIDO = "Esse código não existe ou já venceu. Entre no jogo e use o código novo que aparece na tela."
+MC_VINCULO_MUITAS = "Muitas tentativas erradas. Espere uns minutos e tente de novo com o código da tela do jogo."
+MC_VINCULO_JA = "Sua conta já está ligada a **{nome}**. Para trocar, peça à staff para desvincular."
+MC_VINCULO_EM_USO = "A conta **{nome}** já está ligada a outra pessoa. Se for engano, chame a staff."
+MC_CONTA_NENHUMA = "{alvo} ainda não ligou uma conta do Minecraft. No jogo aparece um código; use `/minecraft vincular`."
+MC_CONTA_TITULO = "Conta do Minecraft"
+MC_CONTA_CORPO = "{alvo} joga como **{nome}**.\nNível **{nivel}** · {saldo} · {xp} XP"
+MC_DESVINCULO_OK = "Desvinculei {alvo} de **{nome}**. O saldo e o XP ficam no Discord; no jogo a pessoa precisará ligar de novo."
+MC_DESVINCULO_NADA = "{alvo} não tem conta do Minecraft ligada."
+
+
+# --------------------------------------------------------------------------- ponte com o Minecraft: eventos (embeds)
+MC_RODAPE = "Vulpus • Minecraft"
+MC_MSG_DISCORD_ANEXO = "[anexo]"
+MC_ENTROU_TITULO = "🟢 {nome} entrou"
+MC_ENTROU_DESC = "{nome} está jogando agora."
+MC_ENTROU_NOVO = "🎉 {nome} chegou pela primeira vez!"
+MC_SAIU_TITULO = "🔴 {nome} saiu"
+MC_SAIU_DESC = "{nome} saiu do servidor."
+MC_SAIU_SESSAO = "Jogou por **{tempo}**."
+MC_MORTE_TITULO = "☠️ {nome} morreu"
+MC_MORTE_FRASES = {
+    "pvp": ["**{v}** foi derrotado(a) por **{m}**.", "**{m}** venceu o duelo contra **{v}**.", "**{v}** perdeu a luta para **{m}**."],
+    "mob": ["**{v}** foi morto(a) por {m}.", "**{v}** não escapou de {m}.", "{m} acabou com **{v}**."],
+    "queda": ["**{v}** caiu de uma altura perigosa.", "**{v}** achou que dava pra pular dali.", "**{v}** conheceu o chão com força."],
+    "lava": ["**{v}** tentou nadar na lava.", "**{v}** virou churrasco na lava."],
+    "fogo": ["**{v}** queimou até o fim.", "**{v}** não apagou o fogo a tempo."],
+    "afogou": ["**{v}** ficou sem ar debaixo d'água.", "**{v}** se afogou."],
+    "vazio": ["**{v}** caiu no vazio.", "**{v}** deu um passo além do mundo."],
+    "explosao": ["**{v}** explodiu.", "**{v}** estava perto demais da explosão."],
+    "fome": ["**{v}** morreu de fome.", "**{v}** esqueceu de comer."],
+    "sufocou": ["**{v}** ficou preso(a) dentro de um bloco."],
+    "raio": ["**{v}** foi atingido(a) por um raio."],
+    "frio": ["**{v}** congelou."],
+    "magia": ["**{v}** caiu vítima de magia."],
+    "outro": ["**{v}** morreu.", "**{v}** não resistiu."],
+}
+MC_MORTE_LOCAL = "📍 {local}"
+MC_STREAK_TITULO = "🔥 {nome} está imparável"
+MC_STREAK_DESC = "**{nome}** está numa sequência de **{n}** abates sem morrer!"
+MC_STREAK_FIM_TITULO = "💥 Sequência encerrada"
+MC_STREAK_FIM_DESC = "**{matador}** acabou com a sequência de **{n}** abates de **{vitima}**."
+MC_NIVEL_TITULO = "⬆️ {nome} subiu de nível"
+MC_NIVEL_DESC = "**{nome}** chegou ao nível **{nivel}** · {rank}"
+MC_CONQUISTA_TITULO = "🏅 Conquista de {nome}"
+MC_CONQUISTA_DESC = "**{nome}** ganhou **{conquista}**."
+MC_CLA_CRIADO_TITULO = "🏰 Nasce um clã"
+MC_CLA_CRIADO_DESC = "**[{tag}] {nome}** foi fundado por **{fundador}**."
+MC_CLA_EXTINTO_TITULO = "🪦 Um clã se despede"
+MC_CLA_EXTINTO_DESC = "**[{tag}] {nome}** deixou de existir."
+MC_CLA_EXTINTO_VIDA = "Viveu por **{dias}** dia(s) · **{membros}** membro(s) no fim"
+MC_GUERRA_INICIO_TITULO = "⚔️ Começou uma guerra"
+MC_GUERRA_INICIO_DESC = "**[{a}]** declarou guerra a **[{b}]**."
+MC_GUERRA_APOSTA = "💰 Aposta: **{valor}**"
+MC_GUERRA_CTF = "🚩 Capture a bandeira ligado"
+MC_GUERRA_FIM_TITULO = "🏁 A guerra acabou"
+MC_GUERRA_FIM_VENCEU = "**[{vencedor}]** venceu **[{perdedor}]** por **{pa} × {pb}**."
+MC_GUERRA_FIM_EMPATE = "**[{a}]** e **[{b}]** empataram em **{pa} × {pb}**."
+MC_GUERRA_MOTIVOS = {"tempo": "acabou o tempo", "staff": "encerrada pela staff", "dono": "decidida pelo dono", "rendicao": "rendição", "dissolvido": "um clã se desfez", "cancelada": "cancelada pelo dono"}
+MC_GUERRA_PREMIO = "🏆 Prêmio: **{valor}**"
+MC_GUERRA_CACADOR = "🎯 Caçador da guerra: **{nome}** ({n} abates)"
+MC_GUERRA_CAPTURAS = "🚩 Capturas: **{a}** × **{b}**"
+MC_HISTORICO_TITULO = "📖 Histórico da Vulpus"
+
+# ---- login (canal log-in)
+MC_LOGIN_ENTROU_TITULO = "🔓 Login"
+MC_LOGIN_ENTROU_DESC = "**{nome}** entrou no servidor como {discord}."
+MC_LOGIN_SAIU_TITULO = "🔒 Logout"
+MC_LOGIN_SAIU_DESC = "**{nome}** saiu do servidor."
+MC_LOGIN_VINCULADO_TITULO = "🔗 Conta ligada"
+MC_LOGIN_VINCULADO_DESC = "{discord} ligou a conta **{nome}** do Minecraft."
+MC_LOGIN_DESVINCULADO_TITULO = "⛔ Conta desvinculada"
+MC_LOGIN_DESVINCULADO_DESC = "{discord} perdeu o vínculo com **{nome}**. Quem fez: {staff}."
+MC_LOGIN_FALHA_TITULO = "⚠️ Código recusado"
+MC_LOGIN_FALHA_DESC = "{discord} tentou um código que não existe ou venceu."
+MC_LOGIN_CAMPO_NIVEL = "Nível"
+MC_LOGIN_CAMPO_CAUDAS = "Caudas"
+MC_LOGIN_CAMPO_SESSAO = "Sessão"
+MC_LOGIN_CAMPO_DISCORD = "Discord"
+MC_LOGIN_CAMPO_MC = "Minecraft"
+
+# ---- painel do canal ip-e-porta
+MC_IP_TITULO = "🦊 Entre na Vulpus"
+MC_IP_DESC = "O servidor de **Minecraft Bedrock** da toca: celular, console e Windows. Copie o endereço, cole no jogo e venha jogar com a gente!"
+MC_IP_CAMPO_PRINCIPAL = "🌐 Servidor principal"
+MC_IP_CAMPO_ALTERNATIVO = "🔁 Servidor alternativo"
+MC_IP_VALOR = "```\nIP:    {ip}\nPorta: {porta}\n```"
+MC_IP_CAMPO_COMO = "📱 Como entrar"
+MC_IP_COMO = (
+    "1. Abra o Minecraft e vá em **Jogar → Servidores**\n"
+    "2. Toque em **Adicionar servidor** e preencha o **IP** e a **porta**\n"
+    "3. Entre. Na primeira vez a tela fica preta com um **código**\n"
+    "4. No Discord, use **/minecraft vincular** (ou o botão no canal {login}) e digite o código"
+)
+MC_IP_CAMPO_STATUS = "📊 Agora"
+MC_IP_STATUS_ON = "🟢 **Online** · **{n}/{max}** jogando"
+MC_IP_STATUS_ON_LISTA = "\n{lista}"
+MC_IP_STATUS_OFF = "🔴 **Fora do ar** ou sem resposta agora"
+MC_IP_STATUS_VAZIO = "\n*Ninguém por aqui ainda. Seja o primeiro!*"
+MC_IP_CAMPO_RAPIDO = "⚡ Entrada rápida"
+MC_IP_RAPIDO = (
+    "[Toque aqui para adicionar o servidor ao Minecraft]({link})\n"
+    "Se o link não abrir, copie e cole no navegador do celular ou do computador:\n```\n{link}\n```"
+)
+MC_IP_RAPIDO_ALT = "Servidor alternativo: [adicionar ao Minecraft]({link})"
+MC_ONLINE_NOME = "🟢 Online | ({n}) 🦊"
+MC_OFFLINE_NOME = "🔴 Offline | (0) 🦊"
+MC_IP_CAMPO_VERSAO = "🧩 Versão"
+MC_IP_VERSAO = "Minecraft **Bedrock**. Entre com a versão mais nova do jogo."
+MC_IP_RODAPE = "Atualizado a cada poucos minutos"
+
+# ---- painel do canal log-in
+MC_LOGINP_TITULO = "🔐 Login da Vulpus"
+MC_LOGINP_DESC = (
+    "Para jogar no servidor você precisa **ligar sua conta do Minecraft à do Discord**. É rápido, é uma vez só e "
+    "ainda **soma suas Caudas e seu XP** dos dois lugares!"
+)
+MC_LOGINP_CAMPO_PASSOS = "✅ Passo a passo"
+MC_LOGINP_PASSOS = (
+    "1. Entre no servidor ({ip}). A tela fica preta e aparece um **código de 6 letras**\n"
+    "2. Aqui neste canal, aperte **🔗 Vincular conta** e digite o código\n"
+    "3. Pronto! A tela volta sozinha e você já pode jogar"
+)
+MC_LOGINP_CAMPO_VANTAGENS = "✨ O que muda"
+MC_LOGINP_VANTAGENS = (
+    "• **Caudas e XP** são os mesmos no jogo e no Discord\n"
+    "• Seu **nível** vale nos dois lugares\n"
+    "• Suas mensagens do jogo aparecem no {chat}\n"
+    "• Sua conta fica protegida: ninguém joga com o seu nome sem passar por aqui"
+)
+MC_LOGINP_RODAPE = "Perdeu o código? Entre de novo no jogo para ver outro."
+MC_BOTAO_VINCULAR = "Vincular conta"
+MC_BOTAO_CONTA = "Minha conta"
+MC_BOTAO_AJUDA = "Como funciona"
+MC_MODAL_TITULO = "Ligar conta do Minecraft"
+MC_MODAL_CAMPO = "Código da tela do jogo"
+MC_MODAL_DICA = "Ex.: K7M2QX"
+MC_AJUDA_TITULO = "❓ Como funciona o login"
+MC_AJUDA_DESC = (
+    "• O **código** aparece na tela preta do jogo e vale **15 minutos**. Entrou de novo? Um código novo aparece.\n"
+    "• Uma conta do Minecraft para cada conta do Discord (e vice-versa).\n"
+    "• Se o jogo não responder, espere um pouco: ele tenta de novo sozinho.\n"
+    "• Trocou de nome no Xbox? Seu vínculo continua valendo.\n"
+    "• Algo errado? Abra um tíquete que a staff te ajuda."
+)
+MC_OK_TITULO = "🦊 Conta ligada!"
+MC_ERRO_TITULO = "⚠️ Não deu"
+MC_CONTA_SEM_TITULO = "🔗 Você ainda não ligou uma conta"
+MC_CONTA_SEM_DESC = "Entre no servidor, pegue o **código** da tela preta e use o botão **Vincular conta** aqui no canal."

@@ -112,8 +112,23 @@ Qualquer pessoa vê o quadro de qualquer outra (é motivador). Quando alguém da
 
 **Passo a passo da staff:** `/setup` → *Cargos base* → **Criar cargo Porteiro** e escolher o cargo **Helper** → *Publicações* → marcar os canais → *Publicar painéis* → **Tickets** (para aparecer o botão novo) → dar o Porteiro para quem recebe a galera → conferir `/configuracao`.
 
-## 8. Minecraft (depois)
-Nada foi implementado (`ENABLE_MINECRAFT=false`). Veja `cogs_minecraft/README.md` para onde plugar.
+## 8. Ponte com o servidor de Minecraft (v1.5.0)
+A Kiza conversa com o servidor por uma porta HTTP própria (`cogs_minecraft/ponte.py`), protegida por um segredo. O que ela faz:
+
+| Canal (chave do `/setup`) | O que aparece |
+|---|---|
+| 💬 chat-bridge (`mc_chat`) | mensagens, quem entra e sai, mortes e sequências de abates do jogo; o que se escreve ali vai para o jogo |
+| 🚪 ip-e-porta (`mc_ip`) | painel com os dois endereços, o passo a passo e quem está jogando agora (atualizado sozinho) |
+| 📖 histórico (`mc_historico`) | clãs que nascem e se despedem; guerras que começam e como terminam |
+| ✅ log-in (`mc_login`) | painel com botões (**Vincular conta**, **Minha conta**, **Como funciona**) e o registro de logins, logouts e vínculos |
+
+Sem configurar nada no `/setup`, ela usa os ids padrão de `config.MC_CANAIS_PADRAO`. Os painéis são publicados (ou editados) sozinhos; `/minecraft painel` (admin) força.
+
+**Vínculo (login).** No jogo, quem não ligou a conta fica com a tela preta e um código de 6 letras (vale 15 min). No Discord: `/minecraft vincular` ou o botão do canal de login. Uma conta do jogo por pessoa e vice-versa; 5 códigos errados em 10 min bloqueiam por um tempo. `/minecraft conta [membro]` mostra a conta ligada. Staff: `/minecraft desvincular membro` (o saldo e o XP ficam no Discord). O vínculo é reconhecido pelo id do jogador e, se o id mudar, pelo nome; nada é apagado numa atualização (tabelas `mc_*`, migração 5).
+
+**Caudas e XP são um só.** O saldo e o XP do Discord (`perfis`) são a verdade; o jogo manda a diferença desde a última soma com uma chave única por envio (reenviar não soma duas vezes) e recebe o total de volta. A primeira soma de uma conta nova junta os dois lados. Cada soma entra no livro-razão como `minecraft`. Como o XP agora vem de dois lugares, cada mensagem rende menos (`xp_min`/`xp_max` caíram de 15–25 para 8–14; os níveis existentes não mudam).
+
+**Para ligar:** variável `MC_BRIDGE_TOKEN` (segredo; sem ela a ponte não abre a porta) e um domínio público para o serviço no Railway. Detalhes e a lista de rotas em `cogs_minecraft/README.md`.
 
 ## 9. Problemas comuns
 - **Comandos não aparecem:** confira o convite (`applications.commands`); globais podem demorar; use `DEV_GUILD_ID` para testar.

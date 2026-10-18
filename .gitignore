@@ -32,3 +32,9 @@ Thumbs.db
 # addon do Minecraft
 addon/node_modules/
 addon/dist/
+
+# ferramentas de agente (config local do Claude Code)
+.claude/
+
+# fontes de áudio do addon (centenas de MB; ficam só no computador)
+addon/Sons/

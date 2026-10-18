@@ -85,3 +85,11 @@ kiza/
 - [x] /setup → Publicações (canais que contam); /configuracao mostra Porteiro, Helper e publicações
 - [x] Textos, /ajuda, vitrine de comandos, FAQ, changelog 1.4.0, README; testes em tests/test_fidelidade.py
 - [x] Revisão: anti-farm de boas-vindas (conta < 7 dias, quem volta, "bem-vindos" genérico só para os 3 últimos), publicações até 2/dia e desconto em 24 h com histórico, detalhe para a staff no /fidelidade, motivo obrigatório no /fidelidade-ajustar, decisão do pedido de rank gravada (sem clique duplo), Porteiro mencionável e sem cargo duplicado, mensagens apagadas só vão ao banco se forem de canal de publicação, avisos do cargo Helper no /configuracao
+
+### Bloco 6 — Ponte com o servidor de Minecraft (v1.5.0)
+- [x] Migração 5: `mc_vinculos`, `mc_codigos`, `mc_sync` (soma idempotente), `mc_chat`, `mc_historico`
+- [x] `cogs_minecraft/ponte.py`: servidor HTTP (aiohttp) com token, rotas de vínculo, soma, eventos, status e chat
+- [x] `cogs_minecraft/embeds.py`: embeds de entrada, saída, morte, sequência, nível, conquista, clãs, guerras, login e os painéis
+- [x] Comandos `/minecraft vincular`, `conta`, `desvincular` (staff) e `painel` (admin); painel de login com botões e modal
+- [x] Canais: chat-bridge, ip-e-porta, histórico e log-in (ids padrão em `config.MC_CANAIS_PADRAO`, `/setup` pode trocar)
+- [x] Textos, /ajuda, vitrine de comandos, FAQ, changelog 1.5.0, README; XP por mensagem menor; testes em tests/test_ponte_minecraft.py

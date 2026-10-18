@@ -226,3 +226,73 @@ ALTER TABLE tickets ADD COLUMN avaliacao TEXT;
 ALTER TABLE tickets ADD COLUMN avaliado_por INTEGER;
 """,
 ))
+
+
+# Ponte com o Minecraft: vínculo Discord <-> jogador, códigos de vínculo, livro de sincronização (idempotente) e fila do chat.
+MIGRACOES.append((
+    5,
+    """
+-- Um vínculo por pessoa e por conta do jogo. mc_id é o id do jogador no mundo (pode mudar se o mundo mudar: então a conta é
+-- reconhecida pelo nome e o id é atualizado); mc_nome_norm é o nome sem caixa nem espaços repetidos.
+CREATE TABLE mc_vinculos (
+    guild_id     INTEGER NOT NULL,
+    user_id      INTEGER NOT NULL,
+    mc_id        TEXT    NOT NULL,
+    mc_nome      TEXT    NOT NULL,
+    mc_nome_norm TEXT    NOT NULL,
+    vinculado_em INTEGER NOT NULL,
+    visto_em     INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, user_id)
+);
+CREATE UNIQUE INDEX ux_mc_vinculo_nome ON mc_vinculos (guild_id, mc_nome_norm);
+CREATE UNIQUE INDEX ux_mc_vinculo_id   ON mc_vinculos (guild_id, mc_id);
+
+-- Códigos que o jogo mostra na tela preta; a pessoa digita /minecraft vincular no Discord. Um código vivo por jogador.
+CREATE TABLE mc_codigos (
+    guild_id     INTEGER NOT NULL,
+    codigo       TEXT    NOT NULL,
+    mc_id        TEXT    NOT NULL,
+    mc_nome      TEXT    NOT NULL,
+    mc_nome_norm TEXT    NOT NULL,
+    criado_em    INTEGER NOT NULL,
+    expira_em    INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, codigo)
+);
+CREATE UNIQUE INDEX ux_mc_codigo_id ON mc_codigos (guild_id, mc_id);
+
+-- O jogo manda a diferença de Caudas e XP desde a última sincronização, com uma chave única por envio: reenviar a mesma
+-- chave (resposta perdida) não soma duas vezes. O saldo e o XP do Discord são a verdade; o jogo copia de volta.
+CREATE TABLE mc_sync (
+    guild_id   INTEGER NOT NULL,
+    mc_id      TEXT    NOT NULL,
+    chave      TEXT    NOT NULL,
+    user_id    INTEGER NOT NULL,
+    d_caudas   INTEGER NOT NULL,
+    d_xp       INTEGER NOT NULL,
+    saldo_apos INTEGER NOT NULL,
+    xp_apos    INTEGER NOT NULL,
+    criado_em  INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, mc_id, chave)
+);
+
+-- Mensagens do canal da ponte esperando o jogo buscar (o jogo guarda até onde leu).
+CREATE TABLE mc_chat (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id  INTEGER NOT NULL,
+    nome      TEXT    NOT NULL,
+    texto     TEXT    NOT NULL,
+    criado_em INTEGER NOT NULL
+);
+
+-- Quem vinculou, trocou ou desvinculou (para a staff conferir; nunca é apagado).
+CREATE TABLE mc_historico (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id  INTEGER NOT NULL,
+    user_id   INTEGER NOT NULL,
+    mc_id     TEXT,
+    mc_nome   TEXT,
+    evento    TEXT    NOT NULL,
+    criado_em INTEGER NOT NULL
+);
+""",
+))

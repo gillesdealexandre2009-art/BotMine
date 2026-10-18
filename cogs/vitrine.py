@@ -36,10 +36,14 @@ class Vitrine(commands.Cog):
             "tickets": ("tickets", "canal de tíquetes"),
             "duvidas": ("duvidas", "canal de dúvidas"),
         }
-        valores = {"moeda": config.MOEDA_NOME}
+        valores = {"moeda": config.MOEDA_NOME, "sugestor": f"<@&{config.CARGO_SUGESTOR_ID}>"}
         for campo, (chave, generico) in nomes.items():
             canal = await canal_da_funcao(self.bot, guild, chave, TEXTO_OU_FORUM)
             valores[campo] = canal.mention if canal else f"**{generico}**"
+        # canais da ponte com o Minecraft: o do /setup ou o padrão de config.MC_CANAIS_PADRAO
+        for campo, chave in (("login", "mc_login"), ("ip", "mc_ip")):
+            canal_id = await self.bot.banco.get_config_int(guild.id, f"canal_{chave}") or config.MC_CANAIS_PADRAO.get(chave)
+            valores[campo] = f"<#{canal_id}>" if canal_id else f"**{campo}**"
         return valores
 
     @staticmethod
@@ -111,7 +115,7 @@ class Vitrine(commands.Cog):
         canal = await canal_da_funcao(self.bot, guild, "changelog")
         if canal is None:
             return False, textos.SETUP_SEM_CANAL
-        valores = {"moeda": config.MOEDA_NOME}
+        valores = {"moeda": config.MOEDA_NOME, "sugestor": f"<@&{config.CARGO_SUGESTOR_ID}>"}
         for i, (versao, titulo, itens) in enumerate(reversed(textos.CHANGELOG)):
             e = embed(
                 textos.CHANGELOG_TITULO.format(versao=versao, titulo=titulo),

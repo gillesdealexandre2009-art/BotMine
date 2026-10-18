@@ -30,7 +30,7 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.4.0"
+VERSAO = "1.5.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -64,8 +64,29 @@ COGS_PADRAO = [
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
-# Ponte com o Minecraft: reservada. Nada é carregado além de um aviso (veja cogs_minecraft/README.md).
-ENABLE_MINECRAFT = _flag("ENABLE_MINECRAFT", False)
+# Ponte com o Minecraft (cogs_minecraft/ponte.py): liga o chat, o vínculo das contas e a sincronização de Caudas e XP.
+# Só abre a porta HTTP se MC_BRIDGE_TOKEN estiver definido (veja cogs_minecraft/README.md).
+ENABLE_MINECRAFT = _flag("ENABLE_MINECRAFT", True)
+# Canais da ponte quando o /setup não definiu nada (chave de CANAIS_CONFIG -> id do canal).
+MC_CANAIS_PADRAO = {
+    "mc_chat": 1549284652483616850,  # 💬・chat-bridge
+    "mc_ip": 1561048542976680107,  # 🚪・ip-e-porta
+    "mc_historico": 1549286294813806702,  # 📖・histórico
+    "mc_login": 1561363701435469897,  # ✅・log-in
+    "mc_online": 1561364244505829396,  # 🟢 Online | (N) 🦊 (o nome do canal mostra quantos jogam agora)
+}
+# Servidores de Minecraft Bedrock (painel do ip-e-porta). Troque aqui se mudar.
+MC_SERVIDORES = (
+    ("principal", "plus-01.bedhosting.com.br", 27151),
+    ("alternativo", "vulpus.bedrock.net.br", 27151),
+)
+MC_MAX_JOGADORES = _inteiro("MC_MAX_JOGADORES", 8)
+# Cargo dado a quem sugeriu algo útil que o dono aprovou ou usou.
+CARGO_SUGESTOR_ID = 1561367707914604594
+# O Discord só deixa renomear um canal 2 vezes a cada 10 minutos: o contador espera isto entre uma troca e outra.
+MC_CONTADOR_ESPERA = 330
+# O servidor manda o status a cada minuto; sem notícias por tanto tempo, o painel mostra "fora do ar".
+MC_STATUS_VALIDADE = 180
 
 # --------------------------------------------------------------------------- identidade visual
 COR_PRINCIPAL = 0xF28C38  # laranja-raposa
@@ -110,6 +131,11 @@ CANAIS_CONFIG = {
     "chat": "Chat principal (pergunta do dia, drops, conversa)",
     "perolas": "Pérolas (mural das mensagens mais curtidas)",
     "bump": "Bump (onde lembrar do /bump do DISBOARD; sem isso, uso o canal do último bump)",
+    "mc_chat": "Chat do Minecraft (ponte: mensagens, entradas, saídas, mortes e sequências do jogo)",
+    "mc_ip": "IP e porta do servidor de Minecraft (painel com status)",
+    "mc_historico": "Histórico da Vulpus (clãs e guerras do Minecraft)",
+    "mc_login": "Login do Minecraft (painel de vínculo e registro de entradas)",
+    "mc_online": "Contador de jogadores do Minecraft (o nome do canal vira \"🟢 Online | (N) 🦊\")",
 }
 # Se um desses canais não estiver no /setup, a Kiza procura um canal cujo nome contenha a palavra
 # (sem acento e sem maiúscula). Configurar no /setup sempre vence.
@@ -171,8 +197,9 @@ TIERS_VISIBILIDADE = {
 # --------------------------------------------------------------------------- ajustes numéricos por servidor
 # chave: (padrão, mínimo, máximo, descrição). Editáveis com /ajustes.
 AJUSTES = {
-    "xp_min": (15, 1, 500, "XP mínimo por mensagem"),
-    "xp_max": (25, 1, 500, "XP máximo por mensagem"),
+    # Menos XP por mensagem desde que o Minecraft também dá XP (o XP é um só: veja cogs_minecraft/ponte.py).
+    "xp_min": (8, 1, 500, "XP mínimo por mensagem"),
+    "xp_max": (14, 1, 500, "XP máximo por mensagem"),
     "xp_cooldown": (60, 5, 3600, "Segundos entre mensagens que rendem XP"),
     "xp_aviso_nivel": (1, 0, 1, "1 = avisa no chat quando alguém sobe de nível"),
     "kitsune_xp_pct": (100, 0, 500, "Bônus de XP do cargo Kitsune (%) — 100 = 2x"),
