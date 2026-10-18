@@ -9,7 +9,8 @@ import { TAG_SUMIDO, online } from "../core/jogadores.js";
 import { chamar, ponteViva } from "../core/ponte_cliente.js";
 import { travados } from "../core/ponte_estado.js";
 import { registrarErro } from "../core/util.js";
-import { emAmbienteEspecial } from "./eras_visual.js";
+import { pontoEmZona } from "../core/arg_zona.js";
+import { emMinigame } from "./mg_estado.js";
 
 const TICKS_VERIFICA = 60;
 /** Sem mudança relevante, ainda assim manda a cada tantos ticks (o bot usa isso como "o jogo está vivo"). */
@@ -23,10 +24,25 @@ let ultimo = new Map();
 let ultimoEnvio = -TICKS_REPETE;
 let emVoo = false;
 
+/**
+ * Pode conversar por proximidade aqui? Overworld, Nether e End valem (o bot só junta quem está na MESMA dimensão); ficam de fora as
+ * dimensões da Vulpus (Intervalo, minigames...), os minigames, as regiões do mistério e quem está sumido.
+ * @param {import("@minecraft/server").Player} p
+ */
+export function podeConversar(p) {
+  try {
+    if (p.hasTag(TAG_SUMIDO) || p.dimension.id.startsWith("vulpus:") || emMinigame(p)) return false;
+    const { x, y, z } = p.location;
+    return !pontoEmZona({ x, y, z, d: p.dimension.id });
+  } catch {
+    return false;
+  }
+}
+
 /** @param {import("@minecraft/server").Player} p */
 function ponto(p) {
   const { x, y, z } = p.location;
-  const livre = !p.hasTag(TAG_SUMIDO) && !emAmbienteEspecial(p);
+  const livre = podeConversar(p);
   return { id: p.id, nome: p.name, d: p.dimension.id, x: Math.round(x), y: Math.round(y), z: Math.round(z), livre };
 }
 
