@@ -88,6 +88,7 @@ COGS_PADRAO = [
     "missoes",
     "apoio",
     "convites",
+    "placares",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -117,8 +118,10 @@ MC_MAX_JOGADORES = _inteiro("MC_MAX_JOGADORES", 8)
 CARGO_KITSUNE_PADRAO = 1550348302065860649
 # Cargo dado a quem sugeriu algo útil que o dono aprovou ou usou.
 CARGO_SUGESTOR_ID = 1561367707914604594
-# Canal dos updates do Minecraft (usado quando "changelog_mc" não está no /setup)
+# Canal dos updates do Minecraft (canal fixo dos updates; não aparece no menu do /setup por causa do limite de 25 opções)
 CANAL_UPDATES_MC_ID = 1555314364838580307
+# Canal dos placares (usado quando "placares" não está no /setup)
+CANAL_PLACARES_ID = 1561554021989359616
 # O Discord só deixa renomear um canal 2 vezes a cada 10 minutos: o contador usa no máximo MC_CONTADOR_LIMITE trocas por
 # janela de MC_CONTADOR_JANELA segundos (a primeira de cada janela é imediata; a mudança que não couber espera a vez dela).
 MC_CONTADOR_JANELA = 600
@@ -164,7 +167,7 @@ CANAIS_CONFIG = {
     "kitsune": "Seja um Kitsune (vantagens do VIP)",
     "lore": "Lore (história da Kiza e da toca)",
     "changelog": "Changelog (novidades da Kiza)",
-    "changelog_mc": "Updates do Minecraft (changelog do jogo; sem isso, uso o canal de updates padrão)",
+    "placares": "Placares (ranking de call, maior sessão de jogo e mais tempo de jogo)",
     "comandos": "Comandos (guia dos comandos)",
     "duvidas": "Dúvidas (fórum ou texto: perguntas frequentes)",
     "chat": "Chat principal (pergunta do dia, drops, conversa)",
@@ -305,6 +308,7 @@ AJUSTES = {
     "doacao_min": (5, 1, 1000, "Menor doação por PIX, em reais"),
     "doacao_max": (500, 1, 10000, "Maior doação por PIX, em reais"),
     "pix_validade_min": (30, 5, 120, "Minutos que o PIX gerado vale"),
+    "placares_ligado": (1, 0, 1, "1 = placares de call e de tempo de jogo ligados"),
     "convite_ligado": (1, 0, 1, "1 = programa Convide um amigo ligado"),
     "convite_premio": (150, 0, 100000, "Caudas para quem convidou (por amigo que cumprir o caminho)"),
     "convite_premio_novato": (75, 0, 100000, "Caudas para o amigo que chegou"),

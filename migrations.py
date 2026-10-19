@@ -450,3 +450,27 @@ CREATE TABLE convidados (
 CREATE INDEX ux_convidados ON convidados (guild_id, convidante_id, status);
 """,
 ))
+
+
+# Placares: tempo em call (qualquer sala) e tempo de jogo no Minecraft (por nome do jogador, com ou sem conta ligada).
+MIGRACOES.append((
+    13,
+    """
+CREATE TABLE voz_tempo (
+    guild_id  INTEGER NOT NULL,
+    user_id   INTEGER NOT NULL,
+    minutos   INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (guild_id, user_id)
+);
+CREATE TABLE mc_tempo (
+    guild_id   INTEGER NOT NULL,
+    nome_norm  TEXT    NOT NULL,
+    nome       TEXT    NOT NULL,
+    total_s    INTEGER NOT NULL DEFAULT 0,
+    sessao_s   INTEGER NOT NULL DEFAULT 0,   -- sessão em andamento (ou a última)
+    maior_s    INTEGER NOT NULL DEFAULT 0,   -- maior sessão seguida de todas
+    visto_em   INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (guild_id, nome_norm)
+);
+""",
+))

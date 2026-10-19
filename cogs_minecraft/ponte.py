@@ -525,6 +525,7 @@ class Ponte(commands.Cog):
         gid = self.guild_id()
         if gid is not None:
             await self.bot.banco.set_config(gid, "mc_status", json.dumps(self.status))
+            await self.bot.banco.mc_tempo_registrar(gid, [(self.bot.banco.norm_mc(n), n) for n in nomes])
         await self._kitsunes_do_status(gid, corpo.get("kitsunes"))
         if mudou:
             self._depois_do_status()

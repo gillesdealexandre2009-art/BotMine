@@ -561,6 +561,8 @@ CHANGELOG = [
         [
             "🦊 `/convidar` te dá um **link pessoal**: quando quem entrar por ele ficar um tempo na toca, ligar a conta do Minecraft e chegar ao nível 3, vocês dois ganham {moeda}",
             "🏆 `/convites ranking` mostra quem mais trouxe amigos",
+            "📊 Canal de **placares** que se atualiza sozinho: mais tempo em call, maior jogada seguida e mais tempo de jogo",
+            "🟢 `/online` mostra quem está jogando Minecraft agora",
         ],
     ),
     (
@@ -1659,3 +1661,14 @@ MC_ONLINE_CONTAGEM = "**{n}/{max}** jogando agora"
 MC_ONLINE_LINHA = "• {nome} ({discord})"
 MC_ONLINE_VAZIO = "Ninguém por aqui agora (0/{max}). Seja o primeiro!"
 MC_ONLINE_OFF = "🔴 O servidor está **fora do ar** ou sem resposta agora."
+
+
+# --- Placares (#placares) ---
+PLACAR_VAZIO = "*Ainda ninguém na lista. Quem será o primeiro?*"
+PLACAR_RODAPE = "Atualiza sozinho a cada 10 minutos"
+PLACAR_VOZ_TITULO = "🎧 Mais tempo em call"
+PLACAR_VOZ_DESC = "Quem mais conversou nas calls do servidor (com gente na sala e sem estar ensurdecido)."
+PLACAR_SESSAO_TITULO = "⏱️ Maior jogada seguida"
+PLACAR_SESSAO_DESC = "A maior sequência de Minecraft sem sair do servidor."
+PLACAR_TOTAL_TITULO = "🕹️ Mais tempo de jogo"
+PLACAR_TOTAL_DESC = "Quem mais passou tempo jogando Minecraft na Vulpus, somando tudo."
