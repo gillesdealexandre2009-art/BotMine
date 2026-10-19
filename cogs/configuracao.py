@@ -54,6 +54,7 @@ PUBLICADORES = {
     "duvidas": ("Vitrine", "publicar_duvidas", "Dúvidas (FAQ)"),
     "doacoes": ("Apoio", "publicar_apoio", "Doações e metas"),
     "placares": ("Placares", "publicar_placares", "Placares"),
+    "mural_kitsune": ("KitsuneExtras", "publicar_mural", "Mural dos Kitsunes"),
 }
 
 
@@ -560,6 +561,7 @@ class SecaoPublicar(SecaoBase):
             ("duvidas", "Dúvidas", "❓"),
             ("doacoes", "Doações", "💖"),
             ("placares", "Placares", "🏆"),
+            ("mural_kitsune", "Mural Kitsune", "🦊"),
         ]
         for i, (chave, rotulo, emoji) in enumerate(vitrine):
             self.add_item(BotaoPublicar([chave], rotulo, emoji, discord.ButtonStyle.secondary, row=1 + i // 5))

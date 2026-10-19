@@ -89,6 +89,7 @@ COGS_PADRAO = [
     "apoio",
     "convites",
     "placares",
+    "kitsune_extras",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -308,6 +309,8 @@ AJUSTES = {
     "doacao_min": (5, 1, 1000, "Menor doação por PIX, em reais"),
     "doacao_max": (500, 1, 10000, "Maior doação por PIX, em reais"),
     "pix_validade_min": (30, 5, 120, "Minutos que o PIX gerado vale"),
+    "kitsune_sala_ligada": (1, 0, 1, "1 = sala de voz própria dos Kitsunes ligada"),
+    "kitsune_sala_max": (10, 1, 25, "Máximo de salas de voz Kitsune ao mesmo tempo"),
     "placares_ligado": (1, 0, 1, "1 = placares de call e de tempo de jogo ligados"),
     "convite_ligado": (1, 0, 1, "1 = programa Convide um amigo ligado"),
     "convite_premio": (150, 0, 100000, "Caudas para quem convidou (por amigo que cumprir o caminho)"),

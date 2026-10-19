@@ -84,21 +84,29 @@ class Placares(commands.Cog):
         await self.bot.wait_until_ready()
 
     # ------------------------------------------------------------------ montagem
-    def _nome_discord(self, guild: discord.Guild, user_id: int) -> str:
-        membro = guild.get_member(user_id)
-        return discord.utils.escape_markdown(membro.display_name) if membro else f"<@{user_id}>"
+    async def _kitsunes(self, guild: discord.Guild) -> set[int]:
+        """Quem tem o cargo Kitsune: ganha uma 🦊 do lado do nome nos placares (só enfeite)."""
+        cargo_id = await self.bot.banco.get_config_int(guild.id, "cargo_kitsune") or config.CARGO_KITSUNE_PADRAO
+        cargo = guild.get_role(cargo_id)
+        return {m.id for m in cargo.members} if cargo is not None else set()
 
-    async def _nome_do_jogador(self, guild: discord.Guild, nome_mc: str) -> str:
+    def _nome_discord(self, guild: discord.Guild, user_id: int, kitsunes: frozenset[int] | set[int] = frozenset()) -> str:
+        membro = guild.get_member(user_id)
+        nome = discord.utils.escape_markdown(membro.display_name) if membro else f"<@{user_id}>"
+        return f"🦊 {nome}" if user_id in kitsunes else nome
+
+    async def _nome_do_jogador(self, guild: discord.Guild, nome_mc: str, kitsunes: frozenset[int] | set[int] = frozenset()) -> str:
         vinculo = await self.bot.banco.mc_vinculo_por_nome(guild.id, nome_mc)
         if vinculo is not None:
-            return self._nome_discord(guild, int(vinculo["user_id"]))
+            return self._nome_discord(guild, int(vinculo["user_id"]), kitsunes)
         return discord.utils.escape_markdown(nome_mc)
 
     async def montar(self, guild: discord.Guild) -> dict[str, discord.Embed]:
         banco = self.bot.banco
-        voz = [(self._nome_discord(guild, int(r["user_id"])), tempo_em_call(int(r["minutos"]))) for r in await banco.voz_ranking(guild.id, TOP)]
-        sessao = [(await self._nome_do_jogador(guild, r["nome"]), duracao(int(r["maior_s"]))) for r in await banco.mc_tempo_ranking(guild.id, "maior_s", TOP)]
-        total = [(await self._nome_do_jogador(guild, r["nome"]), duracao(int(r["total_s"]))) for r in await banco.mc_tempo_ranking(guild.id, "total_s", TOP)]
+        kit = await self._kitsunes(guild)
+        voz = [(self._nome_discord(guild, int(r["user_id"]), kit), tempo_em_call(int(r["minutos"]))) for r in await banco.voz_ranking(guild.id, TOP)]
+        sessao = [(await self._nome_do_jogador(guild, r["nome"], kit), duracao(int(r["maior_s"]))) for r in await banco.mc_tempo_ranking(guild.id, "maior_s", TOP)]
+        total = [(await self._nome_do_jogador(guild, r["nome"], kit), duracao(int(r["total_s"]))) for r in await banco.mc_tempo_ranking(guild.id, "total_s", TOP)]
         return {
             "voz": embed(textos.PLACAR_VOZ_TITULO, textos.PLACAR_VOZ_DESC + "\n\n" + linhas_do_placar(voz), config.COR_PRINCIPAL),
             "sessao": embed(textos.PLACAR_SESSAO_TITULO, textos.PLACAR_SESSAO_DESC + "\n\n" + linhas_do_placar(sessao), config.COR_INFO),

@@ -139,7 +139,7 @@ def test_migracao_importa_bumps_antigos(tmp_path, monkeypatch):
         return versoes, resultado
 
     versoes, (a, b, c) = rodar(cenario)
-    assert versoes == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    assert versoes == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     assert (a, b) == (2, 1)
     assert c == {tipo: 0 for tipo in config.FIDELIDADE_TIPOS}
 

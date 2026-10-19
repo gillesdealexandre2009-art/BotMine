@@ -474,3 +474,30 @@ CREATE TABLE mc_tempo (
 );
 """,
 ))
+
+
+# Votações leves dos Kitsunes (só quem tem o selo vota; um voto por pessoa, que pode mudar até o fim).
+MIGRACOES.append((
+    14,
+    """
+CREATE TABLE votacoes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id    INTEGER NOT NULL,
+    canal_id    INTEGER NOT NULL,
+    mensagem_id INTEGER NOT NULL DEFAULT 0,
+    titulo      TEXT    NOT NULL,
+    opcoes      TEXT    NOT NULL,          -- JSON: lista de textos
+    criada_por  INTEGER NOT NULL,
+    criada_em   INTEGER NOT NULL,
+    encerra_em  INTEGER NOT NULL,
+    encerrada   INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX ix_votacoes_abertas ON votacoes (encerrada, encerra_em);
+CREATE TABLE votos (
+    votacao_id INTEGER NOT NULL,
+    user_id    INTEGER NOT NULL,
+    opcao      INTEGER NOT NULL,
+    PRIMARY KEY (votacao_id, user_id)
+);
+""",
+))

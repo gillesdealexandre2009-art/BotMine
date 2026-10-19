@@ -563,6 +563,7 @@ CHANGELOG = [
             "🏆 `/convites ranking` mostra quem mais trouxe amigos",
             "📊 Canal de **placares** que se atualiza sozinho: mais tempo em call, maior jogada seguida e mais tempo de jogo",
             "🟢 `/online` mostra quem está jogando Minecraft agora",
+            "🦊 **Mimos Kitsune** (só estilo, nada de vantagem): a **Toca Kitsune** com chat e sala de voz só sua (`/sala nome`), votações só para Kitsunes e o **mural dos Kitsunes**",
         ],
     ),
     (
@@ -1672,3 +1673,36 @@ PLACAR_SESSAO_TITULO = "⏱️ Maior jogada seguida"
 PLACAR_SESSAO_DESC = "A maior sequência de Minecraft sem sair do servidor."
 PLACAR_TOTAL_TITULO = "🕹️ Mais tempo de jogo"
 PLACAR_TOTAL_DESC = "Quem mais passou tempo jogando Minecraft na Vulpus, somando tudo."
+
+
+# --- Mimos dos Kitsunes (sala de voz, votações, mural) ---
+SO_KITSUNE = "Isso é um mimo só para **Kitsunes** 🦊. Veja como virar um no canal **seja-um-kitsune**."
+SALA_SEM_CARGO = "Não achei o cargo Kitsune. Configure o cargo no `/setup` primeiro."
+SALA_SEM_PERMISSAO = "Não consegui criar os canais. Me dê as permissões **Gerenciar canais**, **Gerenciar cargos** e **Mover membros** e tente de novo."
+SALA_CONFIGURADA = "Pronto! Criei a categoria **🦊 Toca Kitsune** (só Kitsunes veem) com um chat e a sala **➕ Criar sala Kitsune**: quem entra nela ganha uma sala de voz só sua."
+SALA_NOME_PADRAO = "Sala de {nome}"
+SALA_NOME_INVALIDO = "Esse nome não serve. Use letras, números ou emojis (até 40)."
+SALA_NOME_OK = "Pronto! Sua sala vai se chamar **{nome}**."
+SALA_LIMITE_OK = "Pronto! Limite de **{n}** pessoas na sua sala."
+VOTACAO_TITULO = "🗳️ {titulo}"
+VOTACAO_ABERTA = "Só **Kitsunes** votam. Você pode trocar o seu voto até acabar ({quando})."
+VOTACAO_ENCERRADA = "🔒 **Votação encerrada.** Obrigada por participar!"
+VOTACAO_RODAPE = "{total} voto(s) até agora"
+VOTACAO_OPCOES_INVALIDAS = "Preciso de **2 a 5 opções**, separadas por `;` e sem repetir."
+VOTACAO_CRIADA = "Votação **#{id}** aberta em {canal}."
+VOTACAO_NAO_ACHEI = "Não achei essa votação."
+VOTACAO_JA_ENCERRADA = "Essa votação já tinha acabado."
+VOTACAO_ENCERRADA_OK = "Votação **#{id}** encerrada."
+VOTACAO_SO_KITSUNE = "Só **Kitsunes** votam nas votações da toca 🦊."
+VOTACAO_ENCERROU = "Essa votação já acabou."
+VOTACAO_IGUAL = "Você já votou nessa opção."
+VOTACAO_VOTOU = "Voto registrado: **{opcao}**."
+VOTACAO_TROCOU = "Voto trocado para **{opcao}**."
+MURAL_TITULO = "🦊 Mural dos Kitsunes"
+MURAL_DESC = "**{n}** Kitsunes ajudam a toca a seguir de pé. Obrigada de coração!"
+MURAL_RODAPE = "Quer sair do mural? Use /mural sair"
+MURAL_VAZIO = "*Ainda não há Kitsunes no mural. Que tal ser o primeiro?*"
+MURAL_E_MAIS = " · e mais {n}"
+MURAL_AGRADECIMENTO = "🧡 Mais um mês começou! Obrigada aos **{n} Kitsunes** que ajudam a toca a seguir de pé. Vocês fazem tudo isso existir."
+MURAL_SAIU = "Pronto, tirei você do mural. Você continua Kitsune!"
+MURAL_VOLTOU = "Seu nome voltou para o mural dos Kitsunes 🦊"

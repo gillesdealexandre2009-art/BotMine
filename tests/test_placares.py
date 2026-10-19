@@ -89,12 +89,13 @@ def test_montar_mostra_nome_do_discord_para_quem_ligou_a_conta(tmp_path):
                 "INSERT INTO mc_vinculos (guild_id, user_id, mc_id, mc_nome, mc_nome_norm, vinculado_em, visto_em) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (G, 10, "mc10", "Ana", "ana", 1, 1),
             )
-            membros = {10: SimpleNamespace(display_name="AnaDiscord")}
-            guild = SimpleNamespace(id=G, get_member=lambda u: membros.get(u))
+            membros = {10: SimpleNamespace(id=10, display_name="AnaDiscord")}
+            cargo = SimpleNamespace(members=[membros[10]])
+            guild = SimpleNamespace(id=G, get_member=lambda u: membros.get(u), get_role=lambda rid: cargo)
             cog = Placares(SimpleNamespace(banco=banco))  # type: ignore[arg-type]
             e = await cog.montar(guild)  # type: ignore[arg-type]
             assert set(e) == {"voz", "sessao", "total"}
-            assert "AnaDiscord: **1h30**" in e["voz"].description
+            assert "🦊 AnaDiscord: **1h30**" in e["voz"].description  # Kitsune ganha a raposa do lado do nome
             assert "AnaDiscord" in e["total"].description and "Beto" in e["total"].description
         finally:
             await banco.fechar()

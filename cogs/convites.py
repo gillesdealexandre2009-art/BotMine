@@ -258,8 +258,12 @@ class Convites(commands.Cog):
         if not linhas:
             await interaction.response.send_message(textos.CONVITE_RANKING_VAZIO, ephemeral=True)
             return
+        cargo_id = await self.bot.banco.get_config_int(guild.id, "cargo_kitsune") or config.CARGO_KITSUNE_PADRAO
+        cargo = guild.get_role(cargo_id)
+        kit = {m.id for m in cargo.members} if cargo is not None else set()
         texto = "\n".join(
-            textos.CONVITE_RANKING_LINHA.format(pos=i, quem=f"<@{r['convidante_id']}>", pagos=r["pagos"]) for i, r in enumerate(linhas, 1)
+            textos.CONVITE_RANKING_LINHA.format(pos=i, quem=("🦊 " if int(r["convidante_id"]) in kit else "") + f"<@{r['convidante_id']}>", pagos=r["pagos"])
+            for i, r in enumerate(linhas, 1)
         )
         await interaction.response.send_message(embed=embed(textos.CONVITE_RANKING_TITULO, texto), ephemeral=True)
 
