@@ -16,14 +16,19 @@ const CARGO_MAXIMO = 3;
 const TAG_CLA = /^vulpus:cla:([A-Z0-9]{3}):([0-9a-g])(?::([a-z]{1,16}))?$/;
 const TAG_NOME = "vulpus:nome:";
 const TAG_TEMA = /^vulpus:tema:([a-z]{1,16})$/;
+/** "vulpus:msgcor:b": cor da mensagem do Kitsune (só uma das CORES_MENSAGEM vale; qualquer outra coisa é ignorada). */
+const TAG_MSGCOR = /^vulpus:msgcor:([0-9a-g])$/;
+/** As 8 cores que o Kitsune escolhe para a mensagem (cópia de CORES_MENSAGEM em vulpus_bp/scripts/sistemas/kitsune_extras.js). */
+const CORES_MENSAGEM = Object.freeze(["b", "a", "e", "d", "c", "6", "9", "3"]);
 const APELIDO_MAX = 16;
 /** Letras do apelido (cópia de LETRAS_APELIDO em vulpus_bp/scripts/sistemas/kitsune.js): latino, números, espaço e _ . - */
 const LETRAS_APELIDO = /^[A-Za-z0-9À-ÖØ-öø-ÿ _.-]+$/;
 
 /**
- * cla = tag, cor e tema do clã (null sem clã); o tema do nome só vale com o selo Kitsune; o apelido vale com o selo ou se um dono o pôs ("" = nenhum).
+ * cla = tag, cor e tema do clã (null sem clã); o tema do nome e o apelido valem quando o addon pôs a tag (selo Kitsune, tema de evento
+ * ou tema liberado para todos, ou apelido de um dono; "" = nenhum); msgCor = cor da mensagem (só com o selo; "" = branco).
  * @typedef {{ nivel: number, rank: number, cargo: number, kitsune: boolean,
- *   cla: { tag: string, cor: string, tema: string } | null, apelido: string, tema: string }} Identidade
+ *   cla: { tag: string, cor: string, tema: string } | null, apelido: string, tema: string, msgCor: string }} Identidade
  */
 
 /**
@@ -76,19 +81,22 @@ export function lerIdentidade(player) {
  * Clã, apelido e tema pelas tags de entidade. Apelido estranho (símbolos, § ou grande demais) é ignorado.
  * @param {string[]} tags
  * @param {boolean} kitsune
- * @returns {{ cla: { tag: string, cor: string, tema: string } | null, apelido: string, tema: string }}
+ * @returns {{ cla: { tag: string, cor: string, tema: string } | null, apelido: string, tema: string, msgCor: string }}
  */
 export function lerTags(tags, kitsune) {
-  /** @type {{ cla: { tag: string, cor: string, tema: string } | null, apelido: string, tema: string }} */
-  const saida = { cla: null, apelido: "", tema: "" };
+  /** @type {{ cla: { tag: string, cor: string, tema: string } | null, apelido: string, tema: string, msgCor: string }} */
+  const saida = { cla: null, apelido: "", tema: "", msgCor: "" };
   for (const tag of tags) {
     const cla = TAG_CLA.exec(tag);
     if (cla) saida.cla = { tag: cla[1], cor: cla[2], tema: cla[3] ?? "" };
     // O apelido vale sem selo também: o addon só põe a tag quando é de um dono (sem selo) ou de quem tem o selo.
     if (tag.startsWith(TAG_NOME)) saida.apelido = decodificar(tag.slice(TAG_NOME.length));
-    if (!kitsune) continue;
+    // O tema também vale sem selo (de evento, ou liberado para todos): o addon só põe a tag de quem pode usar.
     const tema = TAG_TEMA.exec(tag);
     if (tema) saida.tema = tema[1];
+    // A cor da mensagem é só do selo e só entre as fixas: o texto de quem fala nunca vira código de cor.
+    const cor = TAG_MSGCOR.exec(tag);
+    if (cor && kitsune && CORES_MENSAGEM.includes(cor[1])) saida.msgCor = cor[1];
   }
   return saida;
 }

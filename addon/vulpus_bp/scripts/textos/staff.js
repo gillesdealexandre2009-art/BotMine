@@ -78,6 +78,7 @@ export const GRUPO_MOEDA = "Cara ou coroa";
 export const GRUPO_MESAS = "Mesas de jogo";
 export const GRUPO_COMUNIDADE = "Canto comunitário";
 export const GRUPO_ERAS = "Eras";
+export const GRUPO_KITSUNE = "Kitsune: extras de estilo";
 export const GRUPO_GERAL = "Geral";
 /** Rótulos dos campos de configuração (as chaves são as de PADROES). */
 export const CAMPOS = {
@@ -220,6 +221,7 @@ export const CAMPOS = {
   masmDanoPct: "Masmorra: dificuldade dos ataques especiais dos inimigos, em % (60 = padrão; 100 = cheio; o andar 1 já sai mais fraco que o 5)",
   masmCaudasDia: "Masmorra: máximo de Caudas que cada pessoa ganha por dia (0 = nenhuma)",
   abateLigado: "Efeitos de abate dos Kitsune ligados (só visual)",
+  kitsuneChegadaFx: "Efeito de chegada e saída dos Kitsune ligado (só visual; cada Kitsune ainda pode desligar o dele)",
   abateMaxSimultaneos: "Abates: efeitos ao mesmo tempo no servidor (os que passarem do limite são pulados)",
   abateEsperaSeg: "Abates: espera mínima entre dois efeitos da mesma pessoa (s)",
   pegadinhasLigadas: "Pegadinhas do dono ligadas",

@@ -168,6 +168,8 @@ export const PADROES = {
   abateLigado: true,
   abateMaxSimultaneos: 6,
   abateEsperaSeg: 4,
+  // Efeito curto de chegada e saída dos Kitsune (só visual; cada pessoa ainda pode desligar o dela)
+  kitsuneChegadaFx: true,
   pegadinhasLigadas: true,
   pegadinhaHerobrineSeg: 25,
   musicaLigada: true,

@@ -406,6 +406,7 @@ const GRUPOS = [
   { id: "flor", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_FLOR, icone: ICONES.ajustes, chaves: ["florLigada", "florRaio", "florEsperaSeg", "florFalas"] },
   { id: "inauguracao", cat: textos.BOTAO_FEIRA, titulo: textos.GRUPO_INAUGURACAO, icone: ICONES.ajustes, chaves: ["inauguracaoLigada"] },
   { id: "eras", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ERAS, icone: ICONES.tempo, chaves: ["erasTinta"] },
+  { id: "kitsune", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_KITSUNE, icone: ICONES.apelido, chaves: ["kitsuneChegadaFx"] },
   { id: "geral", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao", "limiteMundo"] },
 ];
 

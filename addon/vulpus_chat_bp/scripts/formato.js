@@ -25,6 +25,8 @@ const CARGOS = Object.freeze({
 /** Faixa de uso privado do BMP, onde moram os glyphs (ninguém falsifica selo pelo chat). */
 const USO_PRIVADO = /[\uE000-\uF8FF]/g;
 const QUEBRA_LINHA = /[\r\n]+/g;
+/** Código de cor ou formatação digitado na mensagem (§ e a letra): ninguém pinta o próprio texto além do que o canal permite. */
+const CODIGO_COR = /§.?/g;
 
 /** Glyph com as cores originais. @param {string} codigo */
 const glyph = (codigo) => `§f${codigo}§r`;
@@ -50,11 +52,19 @@ const TEMAS_COR = Object.freeze({
   ametista: { cores: ["d", "5"], modo: "degrade" },
   lunar: { cores: ["f", "7", "b"], modo: "degrade" },
   brasa: { cores: ["6", "c", "4"], modo: "degrade" },
+  algodaodoce: { cores: ["d", "f", "b"], modo: "degrade" },
+  menta: { cores: ["a", "f", "b"], modo: "degrade" },
+  crepusculo: { cores: ["9", "5", "d", "c"], modo: "degrade" },
+  cereja: { cores: ["4", "c", "d"], modo: "degrade" },
+  outono: { cores: ["g", "6", "c", "4"], modo: "degrade" },
+  lagoa: { cores: ["3", "b", "a"], modo: "degrade" },
   chamaviva: { cores: ["e", "6", "c", "4", "c", "6"], modo: "onda" },
   ondadomar: { cores: ["f", "b", "3", "9", "3", "b"], modo: "onda" },
   auroraboreal: { cores: ["a", "b", "9", "d", "9", "b"], modo: "onda" },
   galaxia: { cores: ["5", "d", "9", "3", "9", "d"], modo: "onda" },
   eletrico: { cores: ["e", "f", "b", "9", "b", "f"], modo: "onda" },
+  petalas: { cores: ["f", "d", "5", "d", "f", "d"], modo: "onda" },
+  vagalume: { cores: ["2", "a", "e", "f", "e", "a"], modo: "onda" },
   inauguracao: { cores: ["f", "b", "3", "9"], modo: "degrade" },
 });
 
@@ -86,18 +96,19 @@ export function pintar(texto, temaId, fase = 0) {
 }
 
 /**
- * Tira glyphs colados e quebras de linha. Devolve "" se não sobrou nada além de espaço.
+ * Tira glyphs colados, códigos de cor (§) e quebras de linha. Devolve "" se não sobrou nada além de espaço.
  * @param {string} mensagem
  */
 export function sanear(mensagem) {
-  const limpa = mensagem.replace(USO_PRIVADO, "").replace(QUEBRA_LINHA, " ");
+  const limpa = mensagem.replace(USO_PRIVADO, "").replace(CODIGO_COR, "").replace(QUEBRA_LINHA, " ");
   return limpa.trim() === "" ? "" : limpa;
 }
 
 /**
  * "{selo}[ {kitsune}] §8[§e{nivel}§8] [§8[{TAG}§8] ]{nome}§8 » §f{mensagem}" (spec 03 §10.2 + spec 04).
  * O cargo substitui o rank no selo e pinta o nome; sem cargo, o nome fica branco. O apelido e o tema
- * Kitsune trocam o nome e a cor dele; a tag do clã vem com a cor (ou o tema) do clã.
+ * Kitsune trocam o nome e a cor dele; a tag do clã vem com a cor (ou o tema) do clã. A cor da mensagem
+ * (só Kitsune) é uma das 8 fixas do canal; o texto da mensagem não passa por nenhum código de cor.
  * @param {string} nome  nome da conta
  * @param {Identidade} identidade
  * @param {string} mensagem já saneada
@@ -112,5 +123,6 @@ export function montarLinha(nome, identidade, mensagem) {
   const cla = identidade.cla
     ? `§8[${pintar(identidade.cla.tag, identidade.cla.tema) ?? `§${identidade.cla.cor}${identidade.cla.tag}`}§8] `
     : "";
-  return `${selo}${kitsune} §8[§e${identidade.nivel}§8] ${cla}${nomeFinal}§8 » §f${mensagem}`;
+  const corMensagem = identidade.msgCor ? `§${identidade.msgCor}` : "§f";
+  return `${selo}${kitsune} §8[§e${identidade.nivel}§8] ${cla}${nomeFinal}§8 » ${corMensagem}${mensagem}`;
 }

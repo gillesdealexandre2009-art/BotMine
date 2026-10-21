@@ -16,6 +16,7 @@ import * as textos from "../textos/pets.js";
  * @property {Record<string, [number, number]>} own  id do pet → [nível, fragmentos]
  * @property {string[]} ativos  ids dos pets que seguem a pessoa (até petMaxAtivos)
  * @property {boolean} esconder  esconde os pets (o bônus continua; só Kitsune pode ligar)
+ * @property {string} vitrine  pet de vitrine (só Kitsune; só enfeite, sem nenhum bônus; "" = nenhum)
  * @property {number} fichas
  * @property {number} ab  aberturas no total
  * @property {number} pr  aberturas desde o último raro ou melhor
@@ -60,6 +61,7 @@ function normalizar(v) {
     own,
     ativos: [...new Set([...(Array.isArray(s.ativos) ? s.ativos : []), ...(typeof s.ativo === "string" ? [s.ativo] : [])])].filter((i) => typeof i === "string" && own[i]).slice(0, 4),
     esconder: s.esconder === true,
+    vitrine: typeof s.vitrine === "string" && own[s.vitrine] ? s.vitrine : "",
     fichas: n(s.fichas),
     ab: n(s.ab),
     pr: n(s.pr),

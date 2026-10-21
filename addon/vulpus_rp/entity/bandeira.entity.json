@@ -27,7 +27,10 @@
         "k6": "textures/vulpus/entidades/bandeira_k_aurora",
         "k7": "textures/vulpus/entidades/bandeira_k_estelar",
         "k8": "textures/vulpus/entidades/bandeira_k_sombra",
-        "k9": "textures/vulpus/entidades/bandeira_k_ditadora"
+        "k9": "textures/vulpus/entidades/bandeira_k_ditadora",
+        "k10": "textures/vulpus/entidades/bandeira_k_amanhecer",
+        "k11": "textures/vulpus/entidades/bandeira_k_mare",
+        "k12": "textures/vulpus/entidades/bandeira_k_nevasca"
       },
       "geometry": {
         "default": "geometry.vulpus.bandeira"

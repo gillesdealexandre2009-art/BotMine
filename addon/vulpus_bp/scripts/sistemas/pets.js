@@ -575,6 +575,102 @@ function alvoDoPet(player, i) {
   return { x: l.x - dx * 1.3 + dz * 0.9 * lado, y: l.y + 0.1, z: l.z - dz * 1.3 - dx * 0.9 * lado };
 }
 
+/**
+ * Cria (se precisar) e leva um pet até o alvo: teletransporte se está longe, passo suave se está perto.
+ * @param {Player} player
+ * @param {{ x: number, y: number, z: number }} j  posição da pessoa
+ * @param {string} chave  "dono:pet"
+ * @param {number} modelo
+ * @param {string} nome
+ * @param {{ x: number, y: number, z: number }} alvo
+ */
+function seguirPet(player, j, chave, modelo, nome, alvo) {
+  let ent = seguidores.get(chave);
+  const dim = player.dimension;
+  if (!ent?.isValid) {
+    ent = dim.spawnEntity(ENTIDADE, alvo);
+    ent.addTag(TAG_PET);
+    ent.setDynamicProperty("vulpus:dono", player.id);
+    seguidores.set(chave, ent);
+  }
+  if (ent.getProperty("vulpus:modelo") !== modelo) {
+    ent.setProperty("vulpus:modelo", modelo);
+    ent.nameTag = nome;
+  }
+  const p = ent.location;
+  const dist = Math.hypot(alvo.x - p.x, alvo.y - p.y, alvo.z - p.z);
+  const yaw = (Math.atan2(-(j.x - p.x), j.z - p.z) * 180) / Math.PI;
+  if (ent.dimension.id !== dim.id || dist > DISTANCIA_TELEPORTE) ent.teleport(alvo, { dimension: dim, rotation: { x: 0, y: yaw } });
+  else if (dist > 0.15) {
+    const k = Math.min(1, 0.3 + dist * 0.05);
+    ent.teleport({ x: p.x + (alvo.x - p.x) * k, y: p.y + (alvo.y - p.y) * k, z: p.z + (alvo.z - p.z) * k }, { dimension: dim, rotation: { x: 0, y: yaw } });
+  }
+}
+
+/** Posição do pet de vitrine: bem atrás da pessoa, no meio (os ativos ficam nos lados). @param {Player} player */
+function alvoVitrine(player) {
+  const l = player.location;
+  const yaw = (player.getRotation().y * Math.PI) / 180;
+  return { x: l.x + Math.sin(yaw) * 2.6, y: l.y + 0.1, z: l.z - Math.cos(yaw) * 2.6 };
+}
+
+/** O pet de vitrine da pessoa (só vale com o selo), ou undefined. @param {Player} player */
+export function vitrineDe(player) {
+  if (!temSelo(player)) return undefined;
+  const d = dadosPet(player);
+  return d.vitrine && d.own[d.vitrine] ? petPorId(d.vitrine) : undefined;
+}
+
+/**
+ * Escolhe (ou, com "", tira) o pet de vitrine. Só Kitsune e só um pet que a pessoa tem; é puramente visual.
+ * @param {Player} player
+ * @param {string} id
+ * @returns {boolean}
+ */
+export function definirVitrine(player, id) {
+  if (!temSelo(player)) {
+    erro(player, textos.VITRINE_SO_KITSUNE);
+    return false;
+  }
+  const d = dadosPet(player);
+  if (id !== "" && !d.own[id]) return false;
+  d.vitrine = id;
+  salvarPet(player);
+  msg(player, id ? textos.VITRINE_OK(petPorId(id)?.nome ?? id) : textos.VITRINE_TIRADA);
+  return true;
+}
+
+/**
+ * Menu do pet de vitrine: os pets que a pessoa tem e que não estão ativos (o ativo já aparece sozinho).
+ * @param {Player} player
+ * @param {() => any} [voltar]
+ */
+export async function menuVitrine(player, voltar) {
+  if (!temSelo(player)) {
+    erro(player, textos.VITRINE_SO_KITSUNE);
+    return voltar?.();
+  }
+  const aqui = () => menuVitrine(player, voltar);
+  const d = dadosPet(player);
+  const atual = vitrineDe(player);
+  const tela = new Lista(textos.TITULO_VITRINE).texto(textos.CORPO_VITRINE(atual ? atual.nome : ""));
+  const livres = textos.PETS.filter((p) => d.own[p.id] && !d.ativos.includes(p.id));
+  if (!livres.length) tela.rotulo(textos.VITRINE_SEM_PETS);
+  for (const pet of livres) {
+    tela.botao(textos.BOTAO_VITRINE_ITEM(raridade(pet.rar).cor, pet.nome), ICONES.perfil, async (p) => {
+      definirVitrine(p, pet.id);
+      await aqui();
+    });
+  }
+  if (atual) {
+    tela.botao(textos.BOTAO_VITRINE_TIRAR, ICONES.nao, async (p) => {
+      definirVitrine(p, "");
+      await aqui();
+    });
+  }
+  await tela.voltar(voltar).abrir(player);
+}
+
 system.runInterval(() => {
   try {
     const ligado = config().petsLigados;
@@ -587,28 +683,16 @@ system.runInterval(() => {
         const chave = `${player.id}:${a.pet.id}`;
         manter.add(chave);
         const modelo = modeloPet(a.pet);
-        let ent = seguidores.get(chave);
-        const alvo = alvoDoPet(player, i);
-        const dim = player.dimension;
-        if (!ent?.isValid) {
-          ent = dim.spawnEntity(ENTIDADE, alvo);
-          ent.addTag(TAG_PET);
-          ent.setDynamicProperty("vulpus:dono", player.id);
-          seguidores.set(chave, ent);
-        }
-        if (ent.getProperty("vulpus:modelo") !== modelo) {
-          ent.setProperty("vulpus:modelo", modelo);
-          ent.nameTag = `${raridade(a.pet.rar).cor}${a.pet.nome}`;
-        }
-        const p = ent.location;
-        const dist = Math.hypot(alvo.x - p.x, alvo.y - p.y, alvo.z - p.z);
-        const yaw = (Math.atan2(-(j.x - p.x), j.z - p.z) * 180) / Math.PI;
-        if (ent.dimension.id !== dim.id || dist > DISTANCIA_TELEPORTE) ent.teleport(alvo, { dimension: dim, rotation: { x: 0, y: yaw } });
-        else if (dist > 0.15) {
-          const k = Math.min(1, 0.3 + dist * 0.05);
-          ent.teleport({ x: p.x + (alvo.x - p.x) * k, y: p.y + (alvo.y - p.y) * k, z: p.z + (alvo.z - p.z) * k }, { dimension: dim, rotation: { x: 0, y: yaw } });
-        }
+        seguirPet(player, j, chave, modelo, `${raridade(a.pet.rar).cor}${a.pet.nome}`, alvoDoPet(player, i));
       });
+      // Pet de vitrine (Kitsune): só enfeite, fora de petsAtivos (nenhum bônus de XP, sorte, poção ou cura).
+      // Segue as mesmas regras dos outros (esconder, sumido, minigame, dimensões vulpus:*) e não repete um pet já ativo.
+      const vit = ligado && !escondido && !player.hasTag(TAG_SUMIDO) && !emMinigame(player) && !player.dimension.id.startsWith("vulpus:") ? vitrineDe(player) : undefined;
+      if (vit && !petsAtivos(player).some((a) => a.pet.id === vit.id)) {
+        const chave = `${player.id}:vit`;
+        manter.add(chave);
+        seguirPet(player, j, chave, modeloPet(vit), textos.NOME_VITRINE(raridade(vit.rar).cor, vit.nome), alvoVitrine(player));
+      }
       semPets(player.id, manter);
     }
   } catch (e) {

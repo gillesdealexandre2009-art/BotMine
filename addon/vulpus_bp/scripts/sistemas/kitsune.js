@@ -15,8 +15,10 @@ import { erro, msg, ok, registrarErro } from "../core/util.js";
 import { pintar, TEMAS_COR, temasDoGrupo, temaValido } from "../cores.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/kitsune.js";
+import * as textosAntecipado from "../textos/antecipado.js";
 import * as textosTempo from "../textos/kitsune_tempo.js";
 import { menuAbate } from "./abate.js";
+import { emAcessoAntecipado, haTemaLiberado, liberadoParaTodos, listarAntecipados, marcaDe } from "./cosmetico_antecipado.js";
 import { infoNivel } from "./niveis.js";
 
 export const APELIDO_MIN = 3;
@@ -41,8 +43,11 @@ export function aoMudarVisual(fn) {
   ouvintes.push(fn);
 }
 
-/** @param {Player | undefined} player */
-function avisarMudanca(player) {
+/**
+ * Avisa quem mostra o nome que o visual mudou (apelido, tema, cor da mensagem...).
+ * @param {Player | undefined} player
+ */
+export function avisarMudanca(player) {
   if (!player?.isValid) return;
   for (const ouvinte of ouvintes) {
     try {
@@ -81,7 +86,8 @@ export function apelidoDe(player) {
 
 /**
  * Se a pessoa pode usar este tema: dono usa qualquer um; os comuns pedem o selo Kitsune, os animados o selo e o nível
- * mínimo (config temaAnimadoNivel) e os de evento só valem para quem os desbloqueou.
+ * mínimo (config temaAnimadoNivel) e os de evento só valem para quem os desbloqueou. Tema marcado como acesso antecipado
+ * (cosmetico_antecipado.js) segue essas regras até a data; passada ela, todo mundo usa (sem selo e sem nível).
  * @param {Player} player
  * @param {string} id
  */
@@ -90,6 +96,7 @@ export function podeUsarTema(player, id) {
   if (ehDono(player)) return true;
   const grupo = TEMAS_COR[id].grupo;
   if (grupo === "evento") return dadosJogador(player).coresExtras.includes(id);
+  if (liberadoParaTodos(id)) return true;
   if (grupo === "animado") return temSelo(player) && infoNivel(player).nivel >= config().temaAnimadoNivel;
   return temSelo(player);
 }
@@ -215,7 +222,14 @@ export function tirarApelido(player) {
 export function definirTemaNome(player, tema) {
   if (tema !== "" && !temaValido(tema)) return false;
   if (tema !== "" && !podeUsarTema(player, tema)) {
-    erro(player, TEMAS_COR[tema].grupo === "animado" ? textos.ANIMADO_TRAVADO(config().temaAnimadoNivel) : textos.SO_KITSUNE);
+    erro(
+      player,
+      emAcessoAntecipado(tema) && !temSelo(player)
+        ? textosAntecipado.SO_KITSUNE_ATE(TEMAS_COR[tema].nome, marcaDe(tema))
+        : TEMAS_COR[tema].grupo === "animado"
+          ? textos.ANIMADO_TRAVADO(config().temaAnimadoNivel)
+          : textos.SO_KITSUNE,
+    );
     return false;
   }
   editarJogador(player, (d) => {
@@ -267,7 +281,7 @@ export function resetarVisual(staff, alvoId) {
  * @param {() => any} [voltar]
  */
 export async function menuKitsune(player, voltar) {
-  const corLiberada = ehDono(player) || dadosJogador(player).coresExtras.length > 0;
+  const corLiberada = ehDono(player) || dadosJogador(player).coresExtras.length > 0 || haTemaLiberado();
   if (!temSelo(player) && !corLiberada) {
     await new Lista(textos.TITULO).texto(textos.SEM_SELO).voltar(voltar).abrir(player);
     return;
@@ -305,17 +319,24 @@ export async function menuKitsune(player, voltar) {
 async function menuTemaNome(player, voltar) {
   const nome = nomeVisivel(player);
   const atual = temaNomeDe(player);
-  const lista = new Lista(textos.TITULO_COR).texto(textos.COR_ESCOLHA);
+  const lista = new Lista(textos.TITULO_COR).texto(textos.COR_ESCOLHA + (listarAntecipados().length ? `\n${textosAntecipado.DICA_MENU}` : ""));
   lista.botao(textos.BOTAO_SEM_TEMA(nome, atual === ""), ICONES.nao, async (p) => {
     definirTemaNome(p, "");
     await voltar();
   });
+  /** Aviso do acesso antecipado no botão do tema ("" se não foi marcado). @param {string} id */
+  const novidade = (id) => {
+    const ate = marcaDe(id);
+    return ate ? ` • ${liberadoParaTodos(id) ? textosAntecipado.SELO_LIVRE(ate) : textosAntecipado.SELO_NOVO(ate)}` : "";
+  };
   const botaoTema = (/** @type {string} */ id, /** @type {string} */ nomeTema) =>
-    lista.botao(textos.BOTAO_TEMA(pintar(nome, id) ?? nome, nomeTema, id === atual), ICONES.tema, async (p) => {
+    lista.botao(textos.BOTAO_TEMA(pintar(nome, id) ?? nome, nomeTema + novidade(id), id === atual), ICONES.tema, async (p) => {
       definirTemaNome(p, id);
       await voltar();
     });
-  if (temSelo(player) || ehDono(player)) for (const [id, tema] of temasDoGrupo("comum")) botaoTema(id, tema.nome);
+  for (const [id, tema] of temasDoGrupo("comum")) {
+    if (podeUsarTema(player, id)) botaoTema(id, tema.nome);
+  }
   for (const [id, tema] of temasDoGrupo("evento")) {
     if (podeUsarTema(player, id)) botaoTema(id, tema.nome);
   }

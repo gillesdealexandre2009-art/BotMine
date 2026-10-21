@@ -31,12 +31,21 @@ export const TEMAS_COR = Object.freeze({
   ametista: { nome: "Ametista", cores: ["d", "5"], modo: "degrade", oculto: true },
   lunar: { nome: "Lunar", cores: ["f", "7", "b"], modo: "degrade", oculto: true },
   brasa: { nome: "Brasa", cores: ["6", "c", "4"], modo: "degrade", oculto: true },
+  // novos, só de Kitsune (cada um com uma paleta que ainda não existia)
+  algodaodoce: { nome: "Algodão-doce", cores: ["d", "f", "b"], modo: "degrade" },
+  menta: { nome: "Menta", cores: ["a", "f", "b"], modo: "degrade" },
+  crepusculo: { nome: "Crepúsculo", cores: ["9", "5", "d", "c"], modo: "degrade" },
+  cereja: { nome: "Cereja", cores: ["4", "c", "d"], modo: "degrade" },
+  outono: { nome: "Outono", cores: ["g", "6", "c", "4"], modo: "degrade" },
+  lagoa: { nome: "Lagoa", cores: ["3", "b", "a"], modo: "degrade" },
   // animados (Kitsune nível 20; dono usa quando quiser)
   chamaviva: { nome: "Chama viva", cores: ["e", "6", "c", "4", "c", "6"], modo: "onda", grupo: "animado" },
   ondadomar: { nome: "Onda do mar", cores: ["f", "b", "3", "9", "3", "b"], modo: "onda", grupo: "animado" },
   auroraboreal: { nome: "Aurora boreal", cores: ["a", "b", "9", "d", "9", "b"], modo: "onda", grupo: "animado" },
   galaxia: { nome: "Galáxia", cores: ["5", "d", "9", "3", "9", "d"], modo: "onda", grupo: "animado" },
   eletrico: { nome: "Elétrico", cores: ["e", "f", "b", "9", "b", "f"], modo: "onda", grupo: "animado" },
+  petalas: { nome: "Pétalas ao vento", cores: ["f", "d", "5", "d", "f", "d"], modo: "onda", grupo: "animado" },
+  vagalume: { nome: "Vaga-lume", cores: ["2", "a", "e", "f", "e", "a"], modo: "onda", grupo: "animado" },
   // do Evento de inauguração: do branco ao azul
   inauguracao: { nome: "Céu da inauguração", cores: ["f", "b", "3", "9"], modo: "degrade", grupo: "evento" },
 });

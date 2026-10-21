@@ -11,7 +11,7 @@ Saída:
     pano 28x16 em (0, 0): coluna 0 encosta no mastro; borda (lados finos do pano) em (30, 0);
     mastro 2x48 em (32, 0) e topo/fundo em (36, 0); pé 4x2 em (40, 0) e 4x4 em (40, 4);
     ponta 3x3 em (46, 0);
-- vulpus_rp/textures/vulpus/entidades/bandeira_k_<estilo>.png (128x128): os 9 estilos Kitsune, na ordem de
+- vulpus_rp/textures/vulpus/entidades/bandeira_k_<estilo>.png (128x128): os 12 estilos Kitsune, na ordem de
   ESTILOS_BANDEIRA (cla_dados.js); o render controller escolhe pela propriedade vulpus:estilo (índice + 1).
   Mapa no comentário da seção "bandeiras Kitsune" (o pano tem 4 quadros de animação);
 - vulpus_rp/textures/vulpus/ui/bandeira_<estilo>.png (16x16): ícone de cada estilo no menu do clã;
@@ -766,6 +766,92 @@ def enfeite_ditadora() -> Tela:
     return t
 
 
+def pano_amanhecer(k: int) -> Tela:
+    t = fundo((255, 226, 170), (240, 120, 120))
+    moldura(t, (140, 50, 70), (255, 244, 214))
+    cx, cy = 28, 40
+    # Raios do sol que giram um pouquinho a cada quadro.
+    for i in range(9):
+        a = math.pi * (1.05 + 0.9 * i / 8) + k * 0.03
+        t.linha(cx, cy, cx + math.cos(a) * 50, cy + math.sin(a) * 50, (255, 240, 190), 0.35)
+    t.disco(cx, cy, 14 + (0, 1, 1, 0)[k], (255, 214, 110))
+    t.disco(cx, cy, 10, (255, 236, 160))
+    # Nuvens que andam para a ponta solta.
+    for x0, y0 in ((6, 10), (36, 7), (44, 24)):
+        x = 4 + (x0 + k * 3) % (PW - 14)
+        for dx, dy, r in ((0, 0, 2.4), (3, -1, 3), (6, 0, 2.4)):
+            t.disco(x + dx, y0 + dy, r, (255, 246, 236), 0.9)
+    t.ret(3, PH - 7, PW - 6, 4, (150, 60, 90))
+    raposa(t, 42, 16, (150, 52, 80), (255, 232, 200))
+    return t
+
+
+def enfeite_amanhecer() -> Tela:
+    t = Tela(14, 14)
+    for i in range(8):
+        a = i * math.pi / 4
+        t.linha(6.5 + math.cos(a) * 4, 6.5 + math.sin(a) * 4, 6.5 + math.cos(a) * 6.3, 6.5 + math.sin(a) * 6.3, (255, 190, 90))
+    t.disco(6.5, 6.5, 3.6, (255, 214, 110))
+    t.disco(6.5, 6.5, 2.2, (255, 244, 190))
+    return t
+
+
+def pano_mare(k: int) -> Tela:
+    t = fundo((120, 220, 240), (16, 70, 150))
+    moldura(t, (6, 36, 90), (210, 246, 255))
+    # Três faixas de onda que correm um quarto de ciclo por quadro.
+    for n, (base, cor) in enumerate(((16, (70, 170, 230)), (28, (40, 120, 200)), (42, (20, 80, 170)))):
+        for x in range(2, PW - 2):
+            y = base + math.sin((x + k * 14 * (1 if n % 2 == 0 else -1)) * math.pi / 28 * 2) * 3
+            t.ret(x, int(round(y)), 1, PH - int(round(y)) - 2, cor)
+            t.por(x, y, (230, 250, 255))
+    rnd = random.Random(23)
+    for _ in range(10):
+        x, y = rnd.randrange(6, PW - 6), rnd.randrange(8, PH - 8)
+        t.por((x + k * 6) % (PW - 8) + 4, y, (255, 255, 255), 0.8)
+    raposa(t, 8, 14, (230, 248, 255), (16, 70, 150))
+    return t
+
+
+def enfeite_mare() -> Tela:
+    t = Tela(14, 14)
+    for x in range(14):
+        y = 6 + math.sin(x * 0.9) * 2.4
+        t.ret(x, int(round(y)), 1, 14 - int(round(y)), (40, 130, 210))
+        t.por(x, y, (230, 250, 255))
+    t.disco(10.5, 3, 1.4, (255, 255, 255), 0.9)
+    return t
+
+
+def pano_nevasca(k: int) -> Tela:
+    t = fundo((226, 244, 255), (130, 176, 226))
+    moldura(t, (60, 100, 160), (255, 255, 255))
+    rnd = random.Random(31)
+    # Flocos que descem e andam de lado a cada quadro.
+    for i in range(26):
+        x0, y0 = rnd.randrange(3, PW - 3), rnd.randrange(3, PH - 3)
+        x = 3 + (x0 + k * 2 + (i % 3)) % (PW - 6)
+        y = 3 + (y0 + k * 5 + i) % (PH - 6)
+        grande = i % 6 == 0
+        t.por(x, y, (255, 255, 255))
+        if grande:
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                t.por(x + dx, y + dy, (240, 250, 255), 0.8)
+    t.ret(2, PH - 6, PW - 4, 3, (255, 255, 255), )
+    raposa(t, 42, 14, (255, 255, 255), (60, 100, 160), (170, 210, 245))
+    return t
+
+
+def enfeite_nevasca() -> Tela:
+    t = Tela(14, 14)
+    for i in range(6):
+        a = i * math.pi / 3
+        t.linha(6.5, 6.5, 6.5 + math.cos(a) * 6.2, 6.5 + math.sin(a) * 6.2, (225, 245, 255))
+        t.por(6.5 + math.cos(a) * 3.6, 6.5 + math.sin(a) * 3.6, (255, 255, 255))
+    t.disco(6.5, 6.5, 1.4, (255, 255, 255))
+    return t
+
+
 def sem_caudas(_k: int) -> Tela:
     return Tela(CW, CH)
 
@@ -790,6 +876,12 @@ ESTILOS = [
      ((32, 20, 42), (18, 12, 26), (156, 64, 226), (90, 30, 140)), ((90, 40, 130), (14, 6, 20), (200, 140, 255)), ((230, 180, 255), (140, 60, 220))),
     ("ditadora", "Ditadora", pano_ditadora, sem_caudas, enfeite_ditadora,
      ((43, 43, 51), (26, 26, 32), (244, 196, 48), (168, 126, 24)), ((185, 164, 230), (60, 40, 110), (255, 170, 200)), ((255, 236, 140), (168, 85, 247))),
+    ("amanhecer", "Amanhecer", pano_amanhecer, sem_caudas, enfeite_amanhecer,
+     ((120, 50, 70), (80, 30, 50), (255, 200, 110), (200, 120, 60)), ((255, 170, 110), (140, 50, 70), (255, 240, 210)), ((255, 236, 170), (255, 170, 80))),
+    ("mare", "Maré", pano_mare, sem_caudas, enfeite_mare,
+     ((20, 60, 120), (10, 36, 80), (160, 230, 255), (60, 140, 200)), ((120, 210, 240), (10, 50, 110), (230, 250, 255)), ((230, 250, 255), (70, 170, 230))),
+    ("nevasca", "Nevasca", pano_nevasca, sem_caudas, enfeite_nevasca,
+     ((190, 210, 235), (140, 165, 200), (255, 255, 255), (170, 200, 235)), ((245, 250, 255), (120, 160, 210), (190, 225, 250)), ((255, 255, 255), (170, 215, 250))),
 ]
 
 

@@ -14,6 +14,7 @@ import * as geral from "../textos/geral.js";
 import * as textos from "../textos/niveis.js";
 import { aoMudarCla, tagDe, tagPintada } from "./cla_dados.js";
 import { aoMudarVisual, apelidoDe, nomeExibido, resetarVisual, temaNomeDe } from "./kitsune.js";
+import { corMensagemDe, TAG_MSGCOR } from "./kitsune_extras.js";
 import { aoSubirNivel, infoNivel } from "./niveis.js";
 
 /** Ticks por "quadro" da onda de cores: o índice do quadro é tick / PASSO_ANIMACAO (a velocidade da onda). */
@@ -192,6 +193,7 @@ export function atualizarIdentidade(player) {
     cla ? `${TAG_CLA}${cla.tag}:${cla.cor}${cla.tema ? `:${cla.tema}` : ""}` : "",
     apelido ? TAG_NOME + encodeURIComponent(apelido) : "",
     temaNome ? TAG_TEMA + temaNome : "",
+    corMensagemDe(player) ? TAG_MSGCOR + corMensagemDe(player) : "",
   ]);
   const c = canalValido();
   if (!c) return;
@@ -206,7 +208,7 @@ export function atualizarIdentidade(player) {
  * @param {string[]} desejadas
  */
 function sincronizarTags(player, desejadas) {
-  const atuais = player.getTags().filter((t) => t.startsWith(TAG_CLA) || t.startsWith(TAG_NOME) || t.startsWith(TAG_TEMA));
+  const atuais = player.getTags().filter((t) => t.startsWith(TAG_CLA) || t.startsWith(TAG_NOME) || t.startsWith(TAG_TEMA) || t.startsWith(TAG_MSGCOR));
   for (const tag of atuais) if (!desejadas.includes(tag)) player.removeTag(tag);
   for (const tag of desejadas) if (tag && !atuais.includes(tag)) player.addTag(tag);
 }

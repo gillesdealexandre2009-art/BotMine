@@ -10,6 +10,8 @@ import { erro, msg } from "../core/util.js";
 import * as textosCla from "../textos/clas.js";
 import * as textos from "../textos/dono.js";
 import * as textosKT from "../textos/kitsune_tempo.js";
+import * as textosAntecipado from "../textos/antecipado.js";
+import { menuAntecipado } from "./cosmetico_antecipado.js";
 import * as textosArg from "../textos/arg.js";
 import * as textosEras from "../textos/eras.js";
 import * as textosPegadinhas from "../textos/pegadinhas.js";
@@ -75,6 +77,7 @@ export async function menuDono(player, voltar) {
       await aqui();
     })
     .botao(textosKT.BOTAO_PAINEL, ICONES.apelido, (p) => menuKitsuneTempo(p, aqui))
+    .botao(textosAntecipado.BOTAO_PAINEL, ICONES.tema, (p) => menuAntecipado(p, aqui))
     .botao(textosPegadinhas.BOTAO_PAINEL, ICONES.spawn, (p) => menuPegadinhas(p, aqui))
     .botao(textosArg.BOTAO_PAINEL, ICONES.spawn, (p) => menuArg(p, aqui))
     .cabecalho(textos.SECAO_ADMIN)
