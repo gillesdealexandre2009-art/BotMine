@@ -42,6 +42,9 @@ const aoPronto = [];
 /** @type {((id: string, itens: ItemStack[]) => void)[]} */
 const aoResgate = [];
 
+/** Onde fica o baú do armazém (para a limpeza automática passar longe), se já estiver registrado. */
+export const posicaoArmazem = () => (ponto ? { x: ponto.x, y: ponto.y, z: ponto.z, d: ponto.d } : undefined);
+
 /** Nome da estrutura de um lote. @param {string} id */
 export const nomeEstrutura = (id) => PREFIXO_ESTRUTURA + id;
 

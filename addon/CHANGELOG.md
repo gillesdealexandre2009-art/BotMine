@@ -4,6 +4,17 @@ Textos prontos para colar no canal de changelog do Discord. O changelog da Kiza 
 
 ---
 
+## 21/10/2026: O Último Outono de Hollow e limpeza automática
+
+🎃 Chegou o evento de Halloween: O Último Outono de Hollow! De 25 a 31 de outubro, uma casa, uma mata, um abrigo e uma ponte guardam uma história que alguém tentou esquecer. Comece pela casa perto do spawn, leia os registros que encontrar e junte as pistas (o seu diário de investigação fica em /vulpus:hollow). A história tem um desfecho triste (sem cenas gráficas); se não quiser acompanhar, tudo bem, o resto do servidor segue normal.
+
+• Quem terminar leva a tag Halloween 2026, o cargo exclusivo no Discord, uma conquista e o Relógio de Hollow (só enfeite).
+• As duas primeiras pessoas que terminarem ganham o selo Kitsune.
+
+🧹 Também chegou a limpeza automática: a cada 30 minutos o servidor avisa e limpa os itens soltos e os monstros do chão, para o jogo ficar mais leve. E o servidor agora reinicia sozinho às 00h e às 12h, com aviso antes.
+
+---
+
 ## 21/10/2026: Mimos novos dos Kitsunes
 
 🦊✨ Mimos novos para quem é Kitsune! Agora dá para guardar até 3 looks (apelido + cor do nome) e trocar com um toque, escolher um pet de vitrine só de enfeite para andar com você, pintar suas mensagens do chat com uma de 8 cores, ganhar um brilho e uma mensagem estilosa no chat quando entra e sai da toca, e vestir a bandeira do clã com 3 estilos novos (Amanhecer, Maré e Nevasca). Tem também 8 cores de nome novas, uma espiadinha na próxima Era da semana e, de vez em quando, cores novas que chegam primeiro para os Kitsunes e, depois de um tempo, ficam livres para todo mundo. Tudo só de estilo, sem nenhuma vantagem no jogo. 💜

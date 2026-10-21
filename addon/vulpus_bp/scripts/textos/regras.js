@@ -52,6 +52,7 @@ export const COMANDOS = [
   ["/vulpus:cacada", "abre o mural da Caçada"],
   ["/vulpus:recompensa <jogador> <valor>", "põe Caudas na cabeça de alguém"],
   ["/vulpus:spleef [entrar|sair|ranking]", "abre o Spleef (fila, ranking e recordes)"],
+  ["/vulpus:hollow", "abre o diário do evento de Halloween"],
   ["/vulpus:leilao", "abre o leilão"],
   ["/vulpus:vender <preço>", "anuncia o item da mão no leilão"],
   ["/vulpus:caixa", "abre a caixa de retirada do leilão"],

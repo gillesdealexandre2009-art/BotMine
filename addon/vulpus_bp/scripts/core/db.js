@@ -47,6 +47,7 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {string[]} coresExtras  temas de cor desbloqueados por eventos (valem sem o selo Kitsune)
  * @property {number[]} inauguracao  números (0 a 19) das raposinhas do Evento de inauguração já achadas
  * @property {{ cap: number, tent: number, ate: number, fim: boolean }} arg  mistério da Vulpus: capítulos alcançados (0 a 6), tentativas no terminal, bloqueio até (ms) e se já passou
+ * @property {{ lidos: string[], enigma: boolean, tentativas: number, conclusao: number, relogio: boolean }} hollow  evento Hollow: registros lidos (D01...), enigma resolvido, erros no enigma, posição de conclusão (0 = não concluiu) e se pegou o relógio
  * @property {Vinculo | null} vinculo  conta do Discord ligada (sistemas/vinculo.js); null = ainda não ligou
  * @property {SyncDiscord} sync  controle da soma de Caudas e XP com o Discord (sistemas/vinculo.js)
  */
@@ -125,6 +126,7 @@ function dadosNovos() {
     coresExtras: [],
     inauguracao: [],
     arg: { cap: 0, tent: 0, ate: 0, fim: false },
+    hollow: hollowNovo(),
     vinculo: null,
     sync: { baseC: 0, baseX: 0, pend: null },
   };
@@ -240,6 +242,7 @@ function completar(lido) {
     conquistas: listaTexto(lido.conquistas),
     coresExtras: listaTexto(lido.coresExtras),
     arg: argLido(lido.arg),
+    hollow: hollowLido(lido.hollow),
     vinculo: vinculoLido(lido.vinculo),
     sync: syncLido(lido.sync),
     inauguracao: Array.isArray(lido.inauguracao) ? [...new Set(/** @type {number[]} */ (lido.inauguracao).filter((n) => Number.isInteger(n) && n >= 0 && n < 100))] : base.inauguracao,
@@ -276,9 +279,28 @@ function argLido(v) {
   return v && typeof v === "object" ? { cap: Math.min(20, n(v.cap)), tent: n(v.tent), ate: n(v.ate), fim: v.fim === true } : { cap: 0, tent: 0, ate: 0, fim: false };
 }
 
+/** @returns {{ lidos: string[], enigma: boolean, tentativas: number, conclusao: number, relogio: boolean }} */
+function hollowNovo() {
+  return { lidos: [], enigma: false, tentativas: 0, conclusao: 0, relogio: false };
+}
+
+/** @param {any} v */
+function hollowLido(v) {
+  const base = hollowNovo();
+  if (!v || typeof v !== "object") return base;
+  const n = (/** @type {unknown} */ x) => (Number.isFinite(x) ? Math.max(0, Math.floor(/** @type {number} */ (x))) : 0);
+  return {
+    lidos: Array.isArray(v.lidos) ? [...new Set(v.lidos.filter((/** @type {unknown} */ t) => typeof t === "string" && /^D[0-9]{2}$/.test(t)))].slice(0, 40) : base.lidos,
+    enigma: v.enigma === true,
+    tentativas: Math.min(n(v.tentativas), 100000),
+    conclusao: Math.min(n(v.conclusao), 1000000),
+    relogio: v.relogio === true,
+  };
+}
+
 /** @param {any} v @returns {Vinculo | null} */
 function vinculoLido(v) {
-  if (!v || typeof v !== "object" || typeof v.discordId !== "string" || !/^d{5,25}$/.test(v.discordId)) return null;
+  if (!v || typeof v !== "object" || typeof v.discordId !== "string" || !/^\d{5,25}$/.test(v.discordId)) return null;
   return {
     discordId: v.discordId,
     nome: typeof v.nome === "string" ? v.nome.slice(0, 40) : "",

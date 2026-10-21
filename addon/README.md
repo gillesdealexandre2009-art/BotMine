@@ -358,6 +358,30 @@ Na torre redonda da ilha de minigames: todo mundo começa na camada de neve mais
 
 **Staff:** **Configurações** do Spleef (aberto ou fechado, pessoas para começar e máximo, contagens, tempo máximo, prêmios, partidas com prêmio por dia, XP, ferramenta, Eficiência, bolas de neve e a recarga), **Resetar a neve agora**, **Começar já** e **Encerrar a partida** (sem prêmios). Staff no **criativo** pode mexer na torre fora da partida; durante a partida, ninguém.
 
+## Evento Hollow (Halloween 2026)
+
+"O Último Outono de Hollow", de **25/10 a 31/10/2026** (Brasília): uma investigação com 17 registros (D01 a D17) escondidos no mundo. A história está em `textos/hollow_docs.js` (e em `evento-hollow/01-lore-completa.md`); o código fica em `sistemas/hollow.js` (jogador), `sistemas/hollow_staff.js` (painéis) e `textos/hollow.js` (textos de interface). O addon **nunca altera blocos**: a staff só diz em qual bloco cada registro mora.
+
+**Como montar (Menu > Staff > Evento Hollow, ou Configurações > Evento Hollow):**
+
+1. **Locais:** em pé em cada lugar, abra Locais e use "Marcar onde estou" para **Casa** (centro do vento e do mapa da casa), **Acampamento**, **Abrigo** e **Ponte**. Essas coordenadas substituem `{coord:...}` nos textos; sem marcar, o texto diz "[a staff ainda não marcou]".
+2. **Registros:** olhe para o bloco (baú, placa, porta, o que quiser; até 8 blocos de distância) e use Registros > D0X > "Marcar bloco que estou olhando". Um bloco por registro. Botão direito num bloco marcado abre o registro (a interação normal do bloco é cancelada só nele; a staff agachada mexe no bloco normalmente). "Ver o texto" é uma prévia que não conta como lido; "Ir até lá" teleporta.
+3. **Áudios (opcional):** links `http(s)://` para A1 a A4; aparecem no registro e no diário (🎧 Ouvir).
+4. **Datas e vento:** Datas (AAAA-MM-DD hh:mm, Brasília) e Vento da casa (ligado, raio, espera). Padrões: início 25/10 00:00, fim 31/10 23:59:59, raio 24, espera 120 s. Antes do início só a staff lê (para testar); depois do fim ainda dá para ler, mas não conclui nem ganha posição.
+
+**Quem joga:** `/vulpus:hollow` abre o diário (registros já lidos, "N de 17", Dica, áudios e, depois de concluir, o Relógio de Hollow). Registros com requisito mostram um aviso "trancado" sem o texto. O D13 (Mesa) pede a data (dia, mês, ano); errar não pune (espera de 3 s; dicas depois de 3 e 6 erros). **Concluir** = enigma resolvido + todos os registros chave + o D17, dentro da janela: dá a posição (1, 2, 3...), a tag `vulpus:halloween2026`, a conquista, a mensagem com o CVV e avisa o Discord (`hollow_conclusao`). Perto da Casa, o vento avisa uma vez por entrada (espera individual; o texto muda com os registros lidos; nada acontece sem a Casa marcada).
+
+**O dono:** em **Painel de Dono > Evento Hollow: vencedores** (ou Staff > Evento Hollow > Vencedores) vê quem concluiu e usa "Dar Kitsune (N dias)" nas **duas primeiras posições** (pede confirmação e marca "entregue"; a posição 3 em diante nunca recebe). Também: dias do selo (padrão 30), "Resetar progresso" de uma pessoa (testes; não mexe na lista de vencedores) e "Resetar vencedores" (confirmação dupla; quem já concluiu continua concluído, só as posições recomeçam do 1). Não existe atalho para simular conclusão.
+
+## Limpeza automática
+
+Reduz lag: a cada 30 min (5 a 120, configurável) nas horas cheias de Brasília (:00 e :30), não por tempo desde o boot. Avisa no chat e na actionbar (30 s, 10 s, contagem lenta 5 a 0 com 1,5 s entre números) e remove os **itens soltos** e os **mobs hostis** (família `monster`) do mundo normal, Nether e End, em lotes de 40 por tick. No fim: "Limpeza feita: N itens e M mobs removidos."
+
+- **Nunca** mexe em dimensões `vulpus:*` (lobby, minigames, Intervalo, Masmorra), em entidades `vulpus:*`, em item com nome, lore, trava ou `vulpus:*`, em mob nomeado, domesticado, com tag `vulpus*`, chefe (dragão, wither, warden, elder guardian) ou a menos de 8 blocos de uma pessoa, nem em zona do mistério (ARG) ou a 16 blocos do armazém do leilão. Item ilegível é pulado. A idade do item não é lida pela API, então item recém-largado não é poupado.
+- Sem jogadores online: adia 5 min, sem aviso. Limpezas que cairiam entre HH:55 e HH:05 de 23/00 e 11/12 (reinício às 00:00 e 12:00) são puladas; o aviso do reinício é da hospedagem.
+- Ao subir o servidor nunca limpa na hora: a primeira é a próxima hora marcada.
+- Painel: Staff > Configurações > Limpeza automática (ligar, intervalo, itens, mobs, próxima e última, "Limpar agora" com aviso de 10 s; o dono também tem "sem aviso"). Chaves: `limpezaLigada`, `limpezaIntervaloMin`, `limpezaItens`, `limpezaMobs`. Sem comando novo. Código: `sistemas/limpeza.js`, `limpeza_staff.js`, `textos/limpeza.js`.
+
 ## Comandos
 
 Os comandos funcionam com o `vulpus:` na frente e, na maioria, também sem ele (por exemplo, `/menu`). O `/hud` curto já é do jogo, então use sempre `/vulpus:hud`.

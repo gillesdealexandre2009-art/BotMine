@@ -677,7 +677,9 @@ system.runInterval(() => {
     for (const j of posicoesOnline()) {
       const player = j.p;
       const escondido = dadosPet(player).esconder && temSelo(player);
-      const ativos = ligado && !escondido && !player.hasTag(TAG_SUMIDO) && !emMinigame(player) && !player.dimension.id.startsWith("vulpus:") ? petsAtivos(player) : [];
+      // a mesma condição vale para os pets e para o de vitrine: confere uma vez só por pessoa
+      const mostra = ligado && !escondido && !player.hasTag(TAG_SUMIDO) && !emMinigame(player) && !player.dimension.id.startsWith("vulpus:");
+      const ativos = mostra ? petsAtivos(player) : [];
       const manter = new Set();
       ativos.forEach((a, i) => {
         const chave = `${player.id}:${a.pet.id}`;
@@ -687,8 +689,8 @@ system.runInterval(() => {
       });
       // Pet de vitrine (Kitsune): só enfeite, fora de petsAtivos (nenhum bônus de XP, sorte, poção ou cura).
       // Segue as mesmas regras dos outros (esconder, sumido, minigame, dimensões vulpus:*) e não repete um pet já ativo.
-      const vit = ligado && !escondido && !player.hasTag(TAG_SUMIDO) && !emMinigame(player) && !player.dimension.id.startsWith("vulpus:") ? vitrineDe(player) : undefined;
-      if (vit && !petsAtivos(player).some((a) => a.pet.id === vit.id)) {
+      const vit = mostra ? vitrineDe(player) : undefined;
+      if (vit && !ativos.some((a) => a.pet.id === vit.id)) {
         const chave = `${player.id}:vit`;
         manter.add(chave);
         seguirPet(player, j, chave, modeloPet(vit), textos.NOME_VITRINE(raridade(vit.rar).cor, vit.nome), alvoVitrine(player));

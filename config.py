@@ -202,6 +202,7 @@ CARGOS_BASE = {
     "porteiro": "Porteiro (marcado nas boas-vindas para a equipe receber quem chega)",
     "helper": "Helper (dado pela staff no tíquete Solicitar rank)",
     "apoiador": "Apoiador (quem já doou por PIX; a Kiza dá sozinha)",
+    "halloween": "Halloween (quem concluiu O Último Outono de Hollow; a Kiza dá sozinha)",
 }
 GRUPOS_CARGOS = {
     "cores": {"titulo": "🎨 Cores", "placeholder": "🎨 Escolha a cor do seu nome"},

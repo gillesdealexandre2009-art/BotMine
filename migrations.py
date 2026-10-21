@@ -509,3 +509,20 @@ ALTER TABLE perfis ADD COLUMN ativo_em INTEGER NOT NULL DEFAULT 0;
 CREATE INDEX idx_perfis_ativo ON perfis (guild_id, ativo_em);
 """,
 ))
+
+
+# Evento de Halloween "O Último Outono de Hollow": quem concluiu e em que ordem (uma linha por jogador).
+MIGRACOES.append((
+    16,
+    """
+CREATE TABLE hollow_conclusoes (
+    guild_id  INTEGER NOT NULL,
+    nome_norm TEXT    NOT NULL,
+    nome      TEXT    NOT NULL,
+    posicao   INTEGER NOT NULL,
+    quando    INTEGER NOT NULL,
+    user_id   INTEGER,
+    PRIMARY KEY (guild_id, nome_norm)
+);
+""",
+))

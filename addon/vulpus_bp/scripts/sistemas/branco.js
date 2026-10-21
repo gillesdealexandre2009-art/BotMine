@@ -33,9 +33,11 @@ function clarao(p) {
   }
 }
 
-/** @type {Map<string, { chave: string, ocupa: boolean, tick: number }>} última posição conferida de cada pessoa */
+/** @type {Map<string, { chave: string, ocupa: boolean, tick: number, parado: boolean, visto: number }>} última posição conferida de cada pessoa (parado = sem velocidade; visto = último tick em que olhei) */
 const conferido = new Map();
 const RECONFERIR = 10;
+/** De quantos em quantos ticks se confere quem está parado fora do bloco (quem anda continua todo tick). */
+const PASSO_PARADO = 2;
 
 /** O bloco na posição é o atravessável? @param {import("@minecraft/server").Player} p @param {number} x @param {number} y @param {number} z */
 function ehBloco(p, x, y, z) {
@@ -50,6 +52,9 @@ system.runInterval(() => {
   try {
     const agora = system.currentTick;
     for (const p of online()) {
+      const reg = conferido.get(p.id);
+      // quem está parado (e fora do bloco) só é conferido a cada 2 ticks: metade das leituras de cabeça/velocidade, sem mudar o que se vê
+      if (reg && reg.parado && !reg.ocupa && agora - reg.visto < PASSO_PARADO) continue;
       const c = p.getHeadLocation();
       // olha também onde a cabeça vai estar daqui a 2 ticks: o branco já está lá quando a câmera entra (sem o atraso de ver o mundo por dentro)
       let v = { x: 0, y: 0, z: 0 };
@@ -62,13 +67,19 @@ system.runInterval(() => {
       const fy = c.y + v.y * 2;
       const fz = c.z + v.z * 2;
       const chave = `${Math.floor(c.x)},${Math.floor(c.y)},${Math.floor(c.z)}|${Math.floor(fx)},${Math.floor(fy)},${Math.floor(fz)}`;
-      const ant = conferido.get(p.id);
+      const parado = v.x === 0 && v.y === 0 && v.z === 0;
+      const ant = reg;
       let ocupa;
       if (ant && ant.chave === chave && agora - ant.tick < RECONFERIR) {
         ocupa = ant.ocupa; // mesma célula: sem consultar o mundo de novo
       } else {
         ocupa = ehBloco(p, c.x, c.y, c.z) || ehBloco(p, fx, fy, fz);
-        conferido.set(p.id, { chave, ocupa, tick: agora });
+        conferido.set(p.id, { chave, ocupa, tick: agora, parado, visto: agora });
+      }
+      const atual = conferido.get(p.id);
+      if (atual) {
+        atual.parado = parado;
+        atual.visto = agora;
       }
       const estava = dentro.has(p.id);
       if (ocupa) clarao(p);

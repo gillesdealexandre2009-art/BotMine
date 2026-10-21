@@ -87,7 +87,7 @@ def validar_evento(bruto: Any) -> Optional[dict[str, Any]]:
     txt = lambda campo, lim=40: limpar_texto(bruto.get(campo, ""), lim)  # noqa: E731
     num = lambda campo, lim=1_000_000: max(0, _inteiro(bruto.get(campo, 0), lim) or 0)  # noqa: E731
     ev: dict[str, Any] = {"t": t}
-    if t in {"msg", "entrada", "saida", "morte", "streak", "streak_fim", "nivel", "conquista"}:
+    if t in {"msg", "entrada", "saida", "morte", "streak", "streak_fim", "nivel", "conquista", "hollow_conclusao"}:
         ev["nome"] = txt("nome")
         if not ev["nome"]:
             return None
@@ -121,6 +121,10 @@ def validar_evento(bruto: Any) -> Optional[dict[str, Any]]:
     elif t == "conquista":
         ev["conquista"] = txt("conquista", 60)
         if not ev["conquista"]:
+            return None
+    elif t == "hollow_conclusao":
+        ev["posicao"] = num("posicao", 1_000_000)
+        if ev["posicao"] < 1:
             return None
     elif t in {"cla_criado", "cla_extinto"}:
         ev["cla_tag"], ev["cla_nome"] = txt("cla_tag", 8), txt("cla_nome", 30)
@@ -530,6 +534,8 @@ class Ponte(commands.Cog):
             if ev is None:
                 continue
             ctx = await self.contexto_de(gid, ev["nome"], com_perfil=ev["t"] == "entrada") if "nome" in ev else Contexto()
+            if ev["t"] == "hollow_conclusao" and not await self.receber_hollow(gid, ev):
+                continue  # conclusão repetida: não avisa de novo
             if ev["t"] == "msg" and await self._falar_como_jogador(gid, ev, ctx):
                 enviados += 1
                 continue
@@ -923,6 +929,70 @@ class Ponte(commands.Cog):
         desejado = self.kitsune_vale(bool(estado["ativo"]), int(estado["ate"]), int(time.time() * 1000))
         if tem != desejado and await self._cargo_kitsune(depois.guild, depois, desejado, "Kitsune só pelo jogo: voltei ao que o servidor manda"):
             log.info("Cargo Kitsune de %s voltou ao que o jogo manda (%s)", depois, "tem" if desejado else "não tem")
+
+    # ------------------------------------------------------------------ Halloween (cargo de quem terminou Hollow)
+    halloween = app_commands.Group(name="halloween", description="(Staff) Evento de Halloween.", guild_only=True)
+
+    async def _dar_cargo_halloween(self, guild: discord.Guild, membro: discord.Member) -> str:
+        """Dá o cargo de Halloween (sem efeito se já tem). Devolve 'ok', 'ja', 'sem_config', 'sem_cargo' ou 'sem_permissao'; nunca levanta."""
+        try:
+            cargo_id = await self.bot.banco.get_config_int(guild.id, "cargo_halloween")
+            if not cargo_id:
+                return "sem_config"
+            cargo = guild.get_role(cargo_id)
+            if cargo is None:
+                log.warning("Cargo de Halloween %s não existe no servidor %s", cargo_id, guild.id)
+                return "sem_cargo"
+            if cargo in membro.roles:
+                return "ja"
+            await membro.add_roles(cargo, reason=textos.HALLOWEEN_CARGO_MOTIVO)
+            return "ok"
+        except discord.HTTPException:
+            log.warning("Não consegui dar o cargo de Halloween a %s", membro, exc_info=True)
+            return "sem_permissao"
+        except Exception:  # a ponte nunca cai por causa de cargo
+            log.exception("Erro ao dar o cargo de Halloween")
+            return "sem_permissao"
+
+    async def receber_hollow(self, guild_id: int, ev: dict[str, Any]) -> bool:
+        """Registra a conclusão e dá o cargo a quem tem vínculo. True se a conclusão era nova."""
+        vinculo = await self.bot.banco.mc_vinculo_por_nome(guild_id, ev["nome"])
+        user_id = int(vinculo["user_id"]) if vinculo is not None else None
+        nova = await self.bot.banco.hollow_registrar(guild_id, ev["nome"], int(ev["posicao"]), user_id)
+        guild = self.bot.get_guild(guild_id)
+        membro = guild.get_member(user_id) if guild is not None and user_id is not None else None
+        if guild is not None and membro is not None:
+            await self._dar_cargo_halloween(guild, membro)
+        return nova
+
+    @halloween.command(name="dar", description="(Staff) Dá o cargo de Halloween a quem não tem conta ligada.")
+    @app_commands.describe(membro="Quem recebe o cargo")
+    @exigir_nivel(config.NIVEL_STAFF)
+    async def halloween_dar(self, interaction: discord.Interaction, membro: discord.Member) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        r = await self._dar_cargo_halloween(guild, membro)
+        texto = {
+            "ok": textos.HALLOWEEN_DAR_OK,
+            "ja": textos.HALLOWEEN_DAR_JA_TEM,
+            "sem_config": textos.HALLOWEEN_SEM_CARGO,
+            "sem_cargo": textos.HALLOWEEN_CARGO_SUMIU,
+            "sem_permissao": textos.HALLOWEEN_SEM_PERMISSAO,
+        }[r].format(mencao=membro.mention)
+        await responder(interaction, texto, ephemeral=True)
+
+    @halloween.command(name="vencedores", description="(Staff) Quem já terminou O Último Outono de Hollow.")
+    @exigir_nivel(config.NIVEL_STAFF)
+    async def halloween_vencedores(self, interaction: discord.Interaction) -> None:
+        assert interaction.guild is not None
+        linhas = [
+            textos.HALLOWEEN_VENCEDORES_LINHA.format(
+                posicao=r["posicao"], nome=discord.utils.escape_markdown(r["nome"]), mencao=f" · <@{r['user_id']}>" if r["user_id"] else ""
+            )
+            for r in await self.bot.banco.hollow_lista(interaction.guild.id, 25)
+        ]
+        e = discord.Embed(title=textos.HALLOWEEN_VENCEDORES_TITULO, description="\n".join(linhas) or textos.HALLOWEEN_VENCEDORES_NADA, color=config.COR_PRINCIPAL)
+        await responder(interaction, embed=e, ephemeral=True)
 
     @grupo.command(name="kitsune", description="(Staff) Mostra quem é Kitsune pelo jogo e quem tem o cargo sem o selo.")
     @exigir_nivel(config.NIVEL_STAFF)

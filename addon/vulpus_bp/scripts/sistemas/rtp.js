@@ -397,7 +397,7 @@ const ESPACO_PONTO = 0.8;
 const ALTURA_LETREIRO = 12;
 const RAIO_LETREIRO = 9;
 const VER_LETREIRO = 96;
-const PASSO_LETREIRO = 2;
+const PASSO_LETREIRO = 3;
 /** As 4 faces (norte, leste, sul, oeste) apontam para fora, para dar para ler de qualquer lado. */
 const FACES = [
   { nx: 0, nz: -1 },
@@ -425,6 +425,18 @@ const PONTOS = (() => {
 const LARGURA_LETREIRO = (PALAVRA.length * 6 - 1) * ESPACO_PONTO;
 let faceDaVez = 0;
 
+/** Quem está de costas para o letreiro (mais de ~110 graus fora da direção do olhar) não o vê: não se desenha para essa pessoa. Sem direção do olhar, vale como "vê". @param {import("@minecraft/server").Player} p @param {number} dx @param {number} dy @param {number} dz posição da pessoa menos a base do letreiro */
+function olhaParaBase(p, dx, dy, dz) {
+  try {
+    const d = p.getViewDirection();
+    const dist = Math.hypot(dx, dy, dz);
+    if (dist < 4) return true; // colado nele: qualquer lado enxerga uma parte
+    return (-(d.x * dx + d.y * dy + d.z * dz)) / dist > -0.35;
+  } catch {
+    return true;
+  }
+}
+
 /** Uma face do letreiro por vez (para não estourar o limite de partículas do tick). */
 function desenharLetreiro() {
   const p = portalAtual();
@@ -441,7 +453,7 @@ function desenharLetreiro() {
         const dx = j.x - base.x;
         const dz = j.z - base.z;
         const dy = j.y - base.y;
-        return dx * f.nx + dz * f.nz > 0 && dx * dx + dy * dy + dz * dz <= r2;
+        return dx * f.nx + dz * f.nz > 0 && dx * dx + dy * dy + dz * dz <= r2 && olhaParaBase(j.p, dx, dy, dz);
       }),
     );
     if (vistas.length === 0) return;

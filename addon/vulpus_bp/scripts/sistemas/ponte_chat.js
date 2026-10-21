@@ -13,7 +13,7 @@ import * as textos from "../textos/vinculo.js";
 
 /** @typedef {{ t: string, [campo: string]: any }} EventoChat  evento para o Discord (os campos de cada tipo estão em cogs_minecraft/ponte.py, validar_evento) */
 
-const TIPOS = new Set(["msg", "entrada", "saida", "morte", "streak", "streak_fim", "nivel", "conquista", "cla_criado", "cla_extinto", "guerra_inicio", "guerra_fim"]);
+const TIPOS = new Set(["msg", "entrada", "saida", "morte", "streak", "streak_fim", "nivel", "conquista", "cla_criado", "cla_extinto", "guerra_inicio", "guerra_fim", "hollow_conclusao"]);
 
 const INTERVALO_TICKS = 40;
 const MAX_FILA = 150;

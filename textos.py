@@ -725,6 +725,11 @@ CHANGELOG = [
 # (chave única, título, texto pronto). O texto NÃO passa por .format (pode ter chaves). Espelha addon/CHANGELOG.md.
 CHANGELOG_MC = [
     (
+        "mc_2026_10_21_hollow",
+        "🎃 Minecraft · 21/10/2026: O Último Outono de Hollow e limpeza automática",
+        "🎃 Chegou o evento de Halloween: O Último Outono de Hollow! De 25 a 31 de outubro, uma casa, uma mata, um abrigo e uma ponte guardam uma história que alguém tentou esquecer. Comece pela casa perto do spawn, leia os registros que encontrar e junte as pistas (o seu diário de investigação fica em /vulpus:hollow). A história tem um desfecho triste (sem cenas gráficas); se não quiser acompanhar, tudo bem, o resto do servidor segue normal.\n\n• Quem terminar leva a tag Halloween 2026, o cargo exclusivo no Discord, uma conquista e o Relógio de Hollow (só enfeite).\n• As duas primeiras pessoas que terminarem ganham o selo Kitsune.\n\n🧹 Também chegou a limpeza automática: a cada 30 minutos o servidor avisa e limpa os itens soltos e os monstros do chão, para o jogo ficar mais leve. E o servidor agora reinicia sozinho às 00h e às 12h, com aviso antes.",
+    ),
+    (
         "mc_2026_10_21_mimos_kitsune",
         "🎮 Minecraft · 21/10/2026: Mimos novos dos Kitsunes",
         "🦊✨ Mimos novos para quem é Kitsune! Agora dá para guardar até 3 looks (apelido + cor do nome) e trocar com um toque, escolher um pet de vitrine só de enfeite para andar com você, pintar suas mensagens do chat com uma de 8 cores, ganhar um brilho e uma mensagem estilosa no chat quando entra e sai da toca, e vestir a bandeira do clã com 3 estilos novos (Amanhecer, Maré e Nevasca). Tem também 8 cores de nome novas, uma espiadinha na próxima Era da semana e, de vez em quando, cores novas que chegam primeiro para os Kitsunes e, depois de um tempo, ficam livres para todo mundo. Tudo só de estilo, sem nenhuma vantagem no jogo. 💜",
@@ -1448,6 +1453,19 @@ MC_KITSUNE_SEM_PRAZO = " sem prazo"
 MC_KITSUNE_FIM_TITULO = "🍂 Fim do Kitsune"
 MC_KITSUNE_FIM_EXPIROU = "O selo Kitsune de **{nome}** acabou."
 MC_KITSUNE_FIM_TIRADO = "**{nome}** não é mais Kitsune."
+MC_HOLLOW_CONCLUSAO_TITULO = "🎃 Hollow ficou para trás"
+MC_HOLLOW_CONCLUSAO_DESC = "**{nome}** terminou **O Último Outono de Hollow** (conclusão nº {posicao})."
+MC_HOLLOW_INICIO_TITULO = "🍂 O Último Outono de Hollow"
+MC_HOLLOW_INICIO_DESC = "O outono chegou ao servidor. Quem ousa?"
+HALLOWEEN_CARGO_MOTIVO = "Concluiu O Último Outono de Hollow"
+HALLOWEEN_DAR_OK = "🎃 {mencao} recebeu o cargo de Halloween."
+HALLOWEEN_DAR_JA_TEM = "🎃 {mencao} já tinha o cargo de Halloween."
+HALLOWEEN_SEM_CARGO = "Falta configurar o cargo de Halloween no `/setup` (Cargos base)."
+HALLOWEEN_CARGO_SUMIU = "Não achei o cargo de Halloween no servidor. Confira o `/setup`."
+HALLOWEEN_SEM_PERMISSAO = "Não consegui dar o cargo: ele precisa ficar abaixo do meu cargo e eu preciso de Gerenciar Cargos."
+HALLOWEEN_VENCEDORES_TITULO = "🎃 Quem terminou O Último Outono de Hollow"
+HALLOWEEN_VENCEDORES_LINHA = "**{posicao}.** {nome}{mencao}"
+HALLOWEEN_VENCEDORES_NADA = "Ninguém terminou ainda."
 MC_KITSUNE_CMD_TITULO = "🦊 Kitsune (quem manda é o jogo)"
 MC_KITSUNE_CMD_COM = "✅ Com o selo no jogo ({n})"
 MC_KITSUNE_CMD_LINHA = "{mencao} · {mc} · {prazo}"

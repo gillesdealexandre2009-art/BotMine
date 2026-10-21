@@ -514,3 +514,10 @@ A página lê o documento `painel/estado` do banco dela, que se atualiza com a f
   - não escrever código sem um sinal explícito;
   - não agendar tarefas nem rodar retomadas ou agentes pesados por conta própria;
   - quando ele disser "pare", parar tudo e esperar.
+
+## Desempenho (2026-10-21)
+
+- **Medição:** `C:\Users\gille\vt\mock\perf_ocioso.mjs` (8 jogadores no overworld, 4 no spawn, 3 Kitsune, 1 nome animado, 4 pets, Era ligada, proximidade/hud, sem minigame; 1200 ticks) conta chamadas de API por segundo e por arquivo (o mock atribui pela pilha; partículas de `core/efeitos.js` são creditadas a quem chamou). `perf_carga.mjs` continua valendo para a feira com 20 jogadores.
+- **Resultado:** o jogo ocioso é leve: ~620 chamadas/s sem o portal (cerca de 30 por tick, quase todas `hasTag`/`getHeadLocation`), e nenhum `runCommand` nem `setProperty` em jogo normal. O maior custo era o letreiro RTP (~500 partículas/s com gente no spawn).
+- **Mudanças:** `rtp.js` letreiro a cada 3 ticks (era 2) e só para quem não está de costas (>110 graus); `branco.js` confere quem está parado a cada 2 ticks (quem anda segue todo tick); `pets.js` calcula a condição "mostra pets" uma vez por pessoa. Total medido: 1125 -> 929 chamadas/s; partículas 541 -> 401/s.
+- **Conclusão:** o CPU dos scripts não explica sozinho o "travando"; ver view-distance/simulation-distance no server.properties.

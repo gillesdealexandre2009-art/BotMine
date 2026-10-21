@@ -149,6 +149,15 @@ def montar_conquista(ev: dict[str, Any], ctx: Contexto) -> discord.Embed:
     )
 
 
+def montar_hollow_conclusao(ev: dict[str, Any], ctx: Contexto) -> discord.Embed:
+    desc = textos.MC_HOLLOW_CONCLUSAO_DESC.format(nome=esc(ev["nome"]), posicao=ev.get("posicao", 0))
+    return _base(textos.MC_HOLLOW_CONCLUSAO_TITULO, desc, COR_CONQUISTA, ev["nome"], ctx)
+
+
+def montar_hollow_inicio() -> discord.Embed:
+    return _base(textos.MC_HOLLOW_INICIO_TITULO, textos.MC_HOLLOW_INICIO_DESC, COR_CONQUISTA)
+
+
 # ------------------------------------------------------------------ histórico
 def montar_cla_criado(ev: dict[str, Any], ctx: Contexto) -> discord.Embed:
     desc = textos.MC_CLA_CRIADO_DESC.format(tag=esc(ev["cla_tag"]), nome=esc(ev["cla_nome"]), fundador=esc(ev.get("fundador", "?")))
@@ -241,7 +250,7 @@ def montar_codigo_recusado(ctx: Contexto) -> discord.Embed:
 
 # ------------------------------------------------------------------ despacho
 TIPOS_EVENTO = frozenset(
-    {"msg", "entrada", "saida", "morte", "streak", "streak_fim", "nivel", "conquista", "cla_criado", "cla_extinto", "guerra_inicio", "guerra_fim"}
+    {"msg", "entrada", "saida", "morte", "streak", "streak_fim", "nivel", "conquista", "cla_criado", "cla_extinto", "guerra_inicio", "guerra_fim", "hollow_conclusao", "hollow_inicio"}
 )
 
 
@@ -272,6 +281,10 @@ def montar_evento(ev: dict[str, Any], ctx: Contexto, sorteio: random.Random = ra
         return [("mc_historico", None, montar_guerra_inicio(ev, ctx))]
     if t == "guerra_fim":
         return [("mc_historico", None, montar_guerra_fim(ev, ctx))]
+    if t == "hollow_conclusao":
+        return [("mc_chat", None, montar_hollow_conclusao(ev, ctx))]
+    if t == "hollow_inicio":
+        return [("mc_chat", None, montar_hollow_inicio())]
     return []
 
 

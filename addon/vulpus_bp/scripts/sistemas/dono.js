@@ -21,6 +21,8 @@ import * as acoes from "./dono_acoes.js";
 import * as kitsuneTempo from "./kitsune_tempo.js";
 import { menuArg } from "./arg.js";
 import { menuEras } from "./eras.js";
+import { menuHollowVencedores } from "./hollow_staff.js";
+import { BOTAO_PAINEL_DONO as BOTAO_HOLLOW_DONO } from "../textos/hollow.js";
 import { menuPegadinhas } from "./pegadinhas.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -82,6 +84,7 @@ export async function menuDono(player, voltar) {
     .botao(textosArg.BOTAO_PAINEL, ICONES.spawn, (p) => menuArg(p, aqui))
     .cabecalho(textos.SECAO_ADMIN)
     .botao(textosEras.BOTAO_PAINEL, ICONES.tempo, (p) => menuEras(p, aqui))
+    .botao(BOTAO_HOLLOW_DONO, ICONES.dono, (p) => menuHollowVencedores(p, aqui))
     .botao(textos.BOTAO_DONOS, ICONES.dono, (p) => menuDonos(p, aqui))
     .botao(textos.BOTAO_LOG, ICONES.historico, (p) => menuLog(p, aqui))
     .voltar(voltar)
