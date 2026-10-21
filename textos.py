@@ -727,7 +727,7 @@ CHANGELOG_MC = [
     (
         "mc_2026_10_21_mimos_kitsune",
         "🎮 Minecraft · 21/10/2026: Mimos novos dos Kitsunes",
-        "🦊✨ Mimos novos para quem é Kitsune! Agora dá para guardar até 3 looks (apelido + cor do nome) e trocar com um toque, escolher um pet de vitrine só de enfeite para andar com você, pintar suas mensagens do chat com uma de 8 cores, ganhar um brilho de chegada e saída quando entra e sai da toca, e vestir a bandeira do clã com 3 estilos novos (Amanhecer, Maré e Nevasca). Tem também 8 cores de nome novas, uma espiadinha na próxima Era da semana e, de vez em quando, cores novas que chegam primeiro para os Kitsunes e, depois de um tempo, ficam livres para todo mundo. Tudo só de estilo, sem nenhuma vantagem no jogo. 💜",
+        "🦊✨ Mimos novos para quem é Kitsune! Agora dá para guardar até 3 looks (apelido + cor do nome) e trocar com um toque, escolher um pet de vitrine só de enfeite para andar com você, pintar suas mensagens do chat com uma de 8 cores, ganhar um brilho e uma mensagem estilosa no chat quando entra e sai da toca, e vestir a bandeira do clã com 3 estilos novos (Amanhecer, Maré e Nevasca). Tem também 8 cores de nome novas, uma espiadinha na próxima Era da semana e, de vez em quando, cores novas que chegam primeiro para os Kitsunes e, depois de um tempo, ficam livres para todo mundo. Tudo só de estilo, sem nenhuma vantagem no jogo. 💜",
     ),
     (
         "mc_2026_10_18_proximidade",

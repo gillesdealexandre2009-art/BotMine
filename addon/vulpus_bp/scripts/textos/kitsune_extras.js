@@ -8,6 +8,19 @@ export const SO_KITSUNE = "Isso é mimo do selo Kitsune.";
 export const BOTAO_CHEGADA = (ligado) => `Efeito de chegada e saída: ${ligado ? "§aligado" : "§cdesligado"}`;
 /** @param {boolean} ligado */
 export const CHEGADA_MUDOU = (ligado) => (ligado ? "Seu efeito de chegada e saída está ligado." : "Seu efeito de chegada e saída está desligado.");
+/** Frases de chegada e de saída no chat (o nome já vem pintado com o tema da pessoa). @type {((nome: string) => string)[]} */
+export const FRASES_CHEGADA = [
+  (n) => `§d✦ §7A raposa ${n} §7chegou na toca! §d✦`,
+  (n) => `§6🦊 §7Uma cauda brilhante surgiu: ${n} §7entrou!`,
+  (n) => `§b✧ §7${n} §7apareceu entre as pétalas. Bem-vinda(o)! §b✧`,
+  (n) => `§e☄ §7O luar trouxe ${n} §7de volta à Vulpus!`,
+];
+/** @type {((nome: string) => string)[]} */
+export const FRASES_SAIDA = [
+  (n) => `§d✦ §7${n} §7voltou para a toca. Até já! §d✦`,
+  (n) => `§6🦊 §7${n} §7sumiu num brilho de luar.`,
+  (n) => `§b✧ §7As pétalas levaram ${n} §7embora. Volte logo! §b✧`,
+];
 export const CHEGADA_SEM_SERVIDOR = "§7(A staff desligou esses efeitos por enquanto; sua escolha fica guardada.)";
 
 // ---------------------------------------------------------------- looks

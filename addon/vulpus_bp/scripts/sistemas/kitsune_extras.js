@@ -91,6 +91,24 @@ function tocar(dimId, pos, chegada) {
 }
 
 /**
+ * Manda a frase estilosa de chegada ou saída no chat (para todos). Não vale para quem está sumido.
+ * @param {Player} player
+ * @param {boolean} chegada
+ * @param {boolean} [adiar]  manda no tick seguinte (usado na saída, em modo restrito)
+ */
+function frase(player, chegada, adiar = false) {
+  try {
+    if (!config().kitsuneChegadaMsg || player.hasTag(TAG_SUMIDO)) return;
+    const lista = chegada ? textos.FRASES_CHEGADA : textos.FRASES_SAIDA;
+    const texto = lista[Math.floor(Math.random() * lista.length)](nomeExibido(player));
+    if (adiar) system.run(() => world.sendMessage(texto));
+    else world.sendMessage(texto);
+  } catch (e) {
+    registrarErro("Mensagem de chegada Kitsune", e);
+  }
+}
+
+/**
  * Toca (se puder) o efeito de chegada ou saída da pessoa.
  * @param {Player} player
  * @param {boolean} chegada
@@ -98,10 +116,12 @@ function tocar(dimId, pos, chegada) {
  */
 export function efeitoChegada(player, chegada) {
   try {
-    if (!player.isValid || !chegadaLigada(player) || !lugarLivre(player)) return false;
+    if (!player.isValid || !chegadaLigada(player)) return false;
     const agora = Date.now();
     if (agora - (ultimoFx.get(player.id) ?? 0) < ESPERA_FX_MS) return false;
     ultimoFx.set(player.id, agora);
+    frase(player, chegada);
+    if (!lugarLivre(player)) return false;
     tocar(player.dimension.id, { ...player.location }, chegada);
     return true;
   } catch (e) {
@@ -117,10 +137,12 @@ world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
 // Na saída o jogador ainda existe no evento "antes": confere agora e toca no tick seguinte (o "antes" é modo restrito).
 world.beforeEvents.playerLeave?.subscribe(({ player }) => {
   try {
-    if (!chegadaLigada(player) || !lugarLivre(player)) return;
+    if (!chegadaLigada(player)) return;
     const agora = Date.now();
     if (agora - (ultimoFx.get(player.id) ?? 0) < ESPERA_FX_MS) return;
     ultimoFx.set(player.id, agora);
+    frase(player, false, true);
+    if (!lugarLivre(player)) return;
     const dimId = player.dimension.id;
     const pos = { ...player.location };
     system.run(() => tocar(dimId, pos, false));

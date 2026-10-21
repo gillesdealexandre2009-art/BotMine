@@ -170,6 +170,8 @@ export const PADROES = {
   abateEsperaSeg: 4,
   // Efeito curto de chegada e saída dos Kitsune (só visual; cada pessoa ainda pode desligar o dela)
   kitsuneChegadaFx: true,
+  // Mensagem estilosa no chat quando um Kitsune chega ou sai (junto do efeito; só visual)
+  kitsuneChegadaMsg: true,
   pegadinhasLigadas: true,
   pegadinhaHerobrineSeg: 25,
   musicaLigada: true,

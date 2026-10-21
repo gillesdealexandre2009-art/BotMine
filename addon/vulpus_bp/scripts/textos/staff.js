@@ -221,6 +221,7 @@ export const CAMPOS = {
   masmDanoPct: "Masmorra: dificuldade dos ataques especiais dos inimigos, em % (60 = padrão; 100 = cheio; o andar 1 já sai mais fraco que o 5)",
   masmCaudasDia: "Masmorra: máximo de Caudas que cada pessoa ganha por dia (0 = nenhuma)",
   abateLigado: "Efeitos de abate dos Kitsune ligados (só visual)",
+  kitsuneChegadaMsg: "Mensagem estilosa no chat quando um Kitsune chega ou sai (só visual; vale para quem deixou o efeito ligado)",
   kitsuneChegadaFx: "Efeito de chegada e saída dos Kitsune ligado (só visual; cada Kitsune ainda pode desligar o dele)",
   abateMaxSimultaneos: "Abates: efeitos ao mesmo tempo no servidor (os que passarem do limite são pulados)",
   abateEsperaSeg: "Abates: espera mínima entre dois efeitos da mesma pessoa (s)",
