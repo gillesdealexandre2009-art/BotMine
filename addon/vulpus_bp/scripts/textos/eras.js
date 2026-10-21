@@ -233,6 +233,12 @@ export const SECAO_VER = "Ver";
 export const SECAO_DECIDIR = "Decisões do dono";
 export const BOTAO_LISTA = "As 20 Eras";
 export const BOTAO_PREVIA = "Ver uma Era (prévia, só para você)";
+/** @param {boolean} semEra */
+export const BOTAO_SEM_ERA = (semEra) => `Efeitos da Era em mim: ${semEra ? "§cdesligados" : "§aligados"}
+§7só para você (ótimo para construir)`;
+/** @param {boolean} semEra */
+export const SEM_ERA_MUDOU = (semEra) =>
+  semEra ? "Os efeitos da Era estão desligados só para você (sem neblina, bônus nem efeitos)." : "Os efeitos da Era voltaram para você.";
 export const BOTAO_RESTAURAR = "Voltar à Era oficial";
 export const BOTAO_VALIDAR = "Validar o catálogo";
 export const BOTAO_INICIAR = "Iniciar ou reagendar a temporada";
