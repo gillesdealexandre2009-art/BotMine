@@ -170,6 +170,7 @@ AUTOMOD_MOTIVOS = {
     "link": "links não são permitidos neste servidor",
     "mencoes": "muitas menções de uma vez não são permitidas",
 }
+AUTOMOD_APP_MOTIVO = "Automod: flood com app externo"
 AUTOMOD_TIMEOUT_MOTIVO = "Automod: infrações repetidas ({motivo})"  # {motivo}
 RAID_LIGADO = "🚨 Modo raid **ligado**. Novos membros serão barrados até você desligar com `/raid desligar`."
 RAID_DESLIGADO = "✅ Modo raid **desligado**. A entrada de novos membros voltou ao normal."
@@ -555,6 +556,22 @@ DUVIDAS_CAMPOS = [
 
 # (versão, título, novidades). O mais novo primeiro. Cada versão vira uma mensagem própria no changelog.
 CHANGELOG = [
+    (
+        "1.13.0",
+        "Engajamento e XP por voz",
+        [
+            "🎙️ **XP por voz**: quem fica em call agora ganha XP a cada minuto (ajuste `xp_voz`)",
+            "👻 **Aviso de inatividade**: toda segunda a Kiza verifica quem sumiu e manda um lembrete carinhoso por DM",
+            "⬇️ **Rebaixamento opcional**: se ligado, quem ficar inativo perde o cargo de Membro (ajuste `inatividade_rebaixar`)",
+        ],
+    ),
+    (
+        "1.12.1",
+        "Barreira contra apps de raid",
+        [
+            "🛡️ Apps instalados na conta de alguém (que não dá para banir) agora são vigiados: se floodarem, a Kiza **apaga o flood**, dá **timeout em quem usou o app** e avisa a staff nos logs",
+        ],
+    ),
     (
         "1.12.0",
         "Convide um amigo",

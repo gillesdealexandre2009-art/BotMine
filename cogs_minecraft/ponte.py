@@ -55,6 +55,11 @@ CONTROLE = re.compile(r"[\x00-\x1f\x7f]")
 COR_JOGO = re.compile(r"§.")
 CAUSA_VALIDA = re.compile(r"^[a-z_]{1,20}$")
 TEMPO_FALHA_CODIGO = 60  # no máximo um aviso de código recusado por pessoa a cada minuto, no canal de login
+MAX_CLAS_STATUS = 60
+# Resumo público do site (/site/resumo): montado no máximo uma vez por minuto, por mais visitas que cheguem (não martela o banco)
+RESUMO_SITE_TTL = 60
+RESUMO_SITE_TOP = 5
+CORS_SITE = {"Access-Control-Allow-Origin": "*"}
 
 
 def limpar_texto(texto: Any, limite: int) -> str:
@@ -142,6 +147,22 @@ def validar_evento(bruto: Any) -> Optional[dict[str, Any]]:
     return ev
 
 
+def validar_clas(bruto: Any) -> Optional[list[dict[str, Any]]]:
+    """Resumo dos clãs que o jogo manda junto do status. None se não veio (addon antigo) ou não é lista."""
+    if not isinstance(bruto, list):
+        return None
+    clas: list[dict[str, Any]] = []
+    for item in bruto[:MAX_CLAS_STATUS]:
+        if not isinstance(item, dict):
+            continue
+        tag, nome = limpar_texto(item.get("tag", ""), 8), limpar_texto(item.get("nome", ""), 30)
+        membros = max(0, _inteiro(item.get("membros"), 1000) or 0)
+        if not tag or not nome or membros < 1:
+            continue
+        clas.append({"tag": tag, "nome": nome, "membros": membros, "nivel": max(1, _inteiro(item.get("nivel"), 100) or 1)})
+    return clas
+
+
 class PainelLoginView(discord.ui.View):
     """Botões do painel do canal de login (persistente: continua valendo depois de um reinício)."""
 
@@ -205,6 +226,8 @@ class Ponte(commands.Cog):
         self._webhooks: dict[int, discord.Webhook] = {}  # webhook do chat-bridge por servidor (falar como o jogador)
         self._mexendo: dict[int, float] = {}  # pessoas cujo cargo Kitsune o próprio bot está mudando agora (monotonic até quando)
         self._tarefas: set[asyncio.Task] = set()  # tarefas soltas (atualizar painel e contador depois de um status)
+        self._resumo_site: Optional[tuple[float, dict[str, Any]]] = None  # (monotonic de quando montou, resumo)
+        self._resumo_trava = asyncio.Lock()
 
     # ------------------------------------------------------------------ ciclo de vida do servidor HTTP
     def criar_app(self) -> web.Application:
@@ -219,6 +242,7 @@ class Ponte(commands.Cog):
                 web.post("/mc/prox", self.rota_prox),
                 web.get("/mc/chat", self.rota_chat),
                 web.post("/pix/webhook", self.rota_pix),
+                web.get("/site/resumo", self.rota_site_resumo),
             ]
         )
         return app
@@ -361,6 +385,8 @@ class Ponte(commands.Cog):
     @web.middleware
     async def _autenticar(self, request: web.Request, handler):  # type: ignore[no-untyped-def]
         if request.path == "/pix/webhook":  # o aviso do Mercado Pago não tem o nosso token: quem confere é o cog de apoio, na API
+            return await handler(request)
+        if request.path == "/site/resumo" and request.method == "GET":  # o site público lê sem token: só leitura, só dados públicos
             return await handler(request)
         enviado = request.headers.get("Authorization", "")
         esperado = f"Bearer {self.token}"
@@ -526,6 +552,12 @@ class Ponte(commands.Cog):
         if gid is not None:
             await self.bot.banco.set_config(gid, "mc_status", json.dumps(self.status))
             await self.bot.banco.mc_tempo_registrar(gid, [(self.bot.banco.norm_mc(n), n) for n in nomes])
+        # clãs e guerras do addon (opcionais – addons antigos não mandam)
+        clas = validar_clas(corpo.get("clas"))
+        guerras = _inteiro(corpo.get("guerras"), 10_000)
+        if clas is not None:
+            self.status["clas"] = clas
+            self.status["guerras"] = guerras or 0
         await self._kitsunes_do_status(gid, corpo.get("kitsunes"))
         if mudou:
             self._depois_do_status()
@@ -545,6 +577,77 @@ class Ponte(commands.Cog):
         mensagens = await banco.mc_chat_desde(gid, desde, 10)
         ultimo = mensagens[-1]["id"] if mensagens else desde
         return web.json_response({"ok": True, "ultimo": ultimo, "mensagens": mensagens})
+
+    # ------------------------------------------------------------------ resumo público para o site
+    async def rota_site_resumo(self, request: web.Request) -> web.Response:
+        """GET /site/resumo — dados públicos para o site, sem token. Cache de 60 s em memória."""
+        try:
+            resumo = await self._montar_resumo()
+            return web.json_response(resumo, headers=CORS_SITE)
+        except Exception:
+            log.exception("Erro ao montar resumo do site")
+            return web.json_response({"ok": False, "erro": "interno"}, status=503, headers=CORS_SITE)
+
+    async def _montar_resumo(self) -> dict[str, Any]:
+        agora = time.monotonic()
+        if self._resumo_site and agora - self._resumo_site[0] < RESUMO_SITE_TTL:
+            return self._resumo_site[1]
+        async with self._resumo_trava:
+            # outra corrotina pode ter preenchido enquanto esperava a trava
+            if self._resumo_site and time.monotonic() - self._resumo_site[0] < RESUMO_SITE_TTL:
+                return self._resumo_site[1]
+            resumo = await self._resumo_fresco()
+            self._resumo_site = (time.monotonic(), resumo)
+            return resumo
+
+    async def _resumo_fresco(self) -> dict[str, Any]:
+        gid = self.guild_id()
+        st = self.status or {}
+        ts_status = st.get("ts", 0)
+        online = ts_status > 0 and (time.time() - ts_status) < config.MC_STATUS_VALIDADE
+
+        todos_nomes = st.get("online", []) if online else []
+        jogando = todos_nomes[:12]  # no máximo 12 nicks no JSON público
+        maximo = st.get("max", config.MC_MAX_JOGADORES) if online else 0
+
+        enderecos = [{"nome": n, "host": h, "porta": p} for n, h, p in config.MC_SERVIDORES]
+
+        # clãs (do último status, enviados pelo addon)
+        clas_bruto = st.get("clas")
+        clas = None
+        guerras = 0
+        if isinstance(clas_bruto, list) and clas_bruto:
+            clas = sorted(clas_bruto, key=lambda c: c.get("membros", 0), reverse=True)[:RESUMO_SITE_TOP]
+            guerras = st.get("guerras", 0)
+
+        # rankings do banco — uma query por vez para não sobrecarregar
+        rank_tempo = []
+        rank_nivel = []
+        if gid is not None:
+            banco = self.bot.banco
+            try:
+                linhas_tempo = await banco.mc_tempo_ranking(gid, "total_s", RESUMO_SITE_TOP)
+                rank_tempo = [{"nome": r["nome"], "horas": round(r["total_s"] / 3600, 1)} for r in linhas_tempo]
+            except Exception:
+                log.exception("Resumo: falha ao buscar ranking de tempo")
+            try:
+                linhas_nivel = await banco.mc_nivel_ranking(gid, RESUMO_SITE_TOP)
+                rank_nivel = [
+                    {"nome": r["nome"], "nivel": nivel_por_xp(r["xp"])[0], "rank": nivel_por_xp(r["xp"])[1]}
+                    for r in linhas_nivel
+                ]
+            except Exception:
+                log.exception("Resumo: falha ao buscar ranking de nível")
+
+        return {
+            "ok": True,
+            "servidor": {"online": online, "jogando": len(todos_nomes), "max": maximo, "nicks": jogando},
+            "enderecos": enderecos,
+            "clas": {"ativos": len(clas_bruto) if isinstance(clas_bruto, list) else 0, "guerras": guerras, "top": clas} if clas else None,
+            "ranking_tempo": rank_tempo or None,
+            "ranking_nivel": rank_nivel or None,
+            "atualizado": int(ts_status) if ts_status else None,
+        }
 
     # ------------------------------------------------------------------ nível subiu pelo jogo: cargos e prêmio como no Discord
     async def _depois_do_xp(self, guild_id: int, user_id: int, antes: int, depois: int) -> None:

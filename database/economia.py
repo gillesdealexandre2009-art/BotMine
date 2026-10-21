@@ -41,6 +41,26 @@ class EconomiaMixin:
             await conn.execute("UPDATE perfis SET xp = ? WHERE guild_id = ? AND user_id = ?", (xp, guild_id, user_id))
         return xp
 
+    # ------------------------------------------------------------------ atividade (engajamento)
+    async def marcar_ativo(self, guild_id: int, user_id: int, ts: int | None = None) -> None:
+        """Atualiza ativo_em com o timestamp atual. Cria o perfil se não existir."""
+        ts = agora() if ts is None else ts
+        async with self._tx() as conn:
+            await self._garantir(conn, guild_id, user_id)
+            await conn.execute(
+                "UPDATE perfis SET ativo_em = MAX(ativo_em, ?) WHERE guild_id = ? AND user_id = ?",
+                (ts, guild_id, user_id),
+            )
+
+    async def inativos(self, guild_id: int, antes_de: int, limite: int = 200):
+        """Perfis com ativo_em < antes_de (e que já tenham ativo_em > 0, ignorando quem nunca foi marcado)."""
+        return await self._todos(  # type: ignore[attr-defined]
+            "SELECT user_id, xp, ativo_em FROM perfis "
+            "WHERE guild_id = ? AND ativo_em > 0 AND ativo_em < ? "
+            "ORDER BY ativo_em LIMIT ?",
+            (guild_id, antes_de, limite),
+        )
+
     async def top(self, guild_id: int, coluna: str, limite: int = 10):
         if coluna not in ("xp", "saldo"):
             raise ValueError("coluna inválida")

@@ -9,6 +9,8 @@ import { travados } from "../core/ponte_estado.js";
 import { nomeDimensao, registrarErro } from "../core/util.js";
 import { config } from "../core/db.js";
 import { listar as selosComPrazo } from "./kitsune_tempo.js";
+import { todosClas } from "./cla_dados.js";
+import { guerrasAtuais } from "./cla_guerra.js";
 import { emMinigame } from "./mg_estado.js";
 import { aoSubirNivel } from "./niveis.js";
 
@@ -125,7 +127,15 @@ async function enviarStatus() {
       .filter((p) => !travados.has(p.id))
       .map((p) => p.name);
     // os selos Kitsune com prazo vão junto (também de quem está offline): o cargo do Discord segue o jogo
-    await chamar("POST", "/mc/status", { online: nomes, kitsunes: selosComPrazo().map((c) => ({ nome: c.nome, ate: c.ate })) });
+    const clas = todosClas()
+      .filter((c) => c.membros.length > 0)
+      .map((c) => ({ tag: c.tag, nome: c.nome, membros: c.membros.length, nivel: c.nivel }));
+    await chamar("POST", "/mc/status", {
+      online: nomes,
+      kitsunes: selosComPrazo().map((c) => ({ nome: c.nome, ate: c.ate })),
+      clas,
+      guerras: guerrasAtuais().length,
+    });
   } catch (e) {
     registrarErro("Ponte: status", e);
   } finally {

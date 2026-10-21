@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vulpus — a toca das raposas no Minecraft Bedrock</title>
+<meta name="description" content="Vulpus: servidor de Minecraft Bedrock brasileiro com plataforma própria, a Kiza (uma IA que lembra de você) e uma regra que não se dobra: nada que dá vantagem se compra.">
+<meta name="theme-color" content="#0b0d22">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Vulpus — a toca das raposas no Minecraft Bedrock">
+<meta property="og:description" content="Servidor Bedrock com plataforma própria, uma IA que lembra de você e zero pay-to-win. Toda cauda se conquista.">
+<meta property="og:image" content="https://gillesdealexandre2009-art.github.io/BotMine/img/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..600,50;1,9..144,300..600,50&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600&text=%E7%8B%90%E7%81%AB%E3%81%AE%E5%B7%A3&display=swap">
+<link rel="preload" as="image" href="img/hero-floresta.webp" imagesrcset="img/hero-floresta-960.webp 960w, img/hero-floresta.webp 1672w" imagesizes="100vw" fetchpriority="high">
+<link rel="stylesheet" href="css/style.css?v=20261021b">
+<script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="g-cauda" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="-76">
+      <stop offset="0" stop-color="#d9622a"/><stop offset=".55" stop-color="#ff9a3c"/><stop offset=".8" stop-color="#ffd7a8"/><stop offset="1" stop-color="#fffaf2"/>
+    </linearGradient>
+  </defs>
+  <symbol id="cauda" viewBox="-14 -78 28 80" overflow="visible"><path d="M0 0C-8-14-12-36-6-56C-3-66 3-74 9-76C5-66 8-54 9-42C10-24 6-10 0 0Z"/></symbol>
+  <symbol id="i-raposa" viewBox="0 0 64 64">
+    <polygon points="5,4 25,17 11,31" fill="#F28C38"/><polygon points="59,4 39,17 53,31" fill="#F28C38"/>
+    <polygon points="10,10 22,18 13,27" fill="#2b1a22"/><polygon points="54,10 42,18 51,27" fill="#2b1a22"/>
+    <polygon points="11,31 25,17 39,17 53,31 32,59" fill="#F28C38"/>
+    <polygon points="11,31 32,59 21,44 18,36" fill="#FFB36B"/><polygon points="53,31 32,59 43,44 46,36" fill="#FFB36B"/>
+    <polygon points="11,31 18,36 32,44 32,59" fill="#EEF0FB"/><polygon points="53,31 46,36 32,44 32,59" fill="#DDE0F3"/>
+    <polygon points="28,54 32,59 36,54 32,51" fill="#1b1020"/>
+    <ellipse cx="23" cy="33" rx="2.6" ry="3.4" fill="#1b1020"/><ellipse cx="41" cy="33" rx="2.6" ry="3.4" fill="#1b1020"/>
+  </symbol>
+  <symbol id="i-seta" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-baixo" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-copiar" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-elo" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-trofeu" viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v4M8 21h8"/></symbol>
+  <symbol id="i-carta" viewBox="0 0 24 24"><path d="M4 7l8 6 8-6"/><rect x="3" y="5" width="18" height="14" rx="2"/></symbol>
+  <symbol id="i-alvo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".5"/></symbol>
+</svg>
+
+<div class="grao" aria-hidden="true"></div>
+
+<!-- ======================= NAVEGAÇÃO ======================= -->
+<nav class="topo" id="topo" aria-label="Principal">
+  <div class="wrap">
+    <a class="marca" href="#inicio" aria-label="Vulpus, início"><svg width="28" height="28" aria-hidden="true"><use href="#i-raposa"/></svg><span>Vulpus</span></a>
+    <div class="links">
+      <a href="#lenda">A lenda</a>
+      <a href="#toca">A toca</a>
+      <a href="#kiza">Kiza</a>
+      <a href="#colecao">Coleção</a>
+      <a href="#kitsune">Kitsune</a>
+      <a href="#entrar">Como entrar</a>
+    </div>
+    <a class="btn btn-fogo btn-sm js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord</a>
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+  </div>
+</nav>
+<div class="menu-mobile" id="menu" aria-hidden="true">
+  <a href="#lenda">A lenda</a><a href="#toca">A toca</a><a href="#kiza">Kiza</a><a href="#colecao">Coleção</a><a href="#kitsune">Kitsune</a><a href="#entrar">Como entrar</a>
+  <a class="btn btn-fogo js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord</a>
+</div>
+
+<!-- leque das nove caudas (progresso da página) -->
+<aside class="leque" id="leque" aria-label="Progresso: caudas acesas">
+  <svg viewBox="0 0 160 100" id="lequeSvg" role="img" aria-labelledby="lequeLeg"></svg>
+  <p id="lequeLeg"><b id="lequeN">1</b>/9 <span id="lequeNome">Início</span></p>
+</aside>
+<div class="aviso-caudas" id="avisoCaudas" role="status" aria-live="polite">
+  <img src="img/humor-feliz.webp" width="44" height="49" alt="">
+  <p><b>Nove caudas.</b> Agora você conhece a toca inteira.</p>
+</div>
+
+<main>
+<!-- ======================= 1 · INÍCIO ======================= -->
+<header class="hero secao" id="inicio" data-nome="Início">
+  <canvas class="fogo" id="fogo" aria-hidden="true"></canvas>
+  <div class="hero-arte" id="heroArte"><img src="img/hero-floresta.webp" srcset="img/hero-floresta-960.webp 960w, img/hero-floresta.webp 1672w" sizes="100vw" width="1672" height="941" alt="Kiza, a raposa-mascote da Vulpus, sentada numa floresta de blocos à noite, com lanternas acesas e a lua cheia ao fundo" fetchpriority="high"></div>
+  <p class="kanji" aria-hidden="true">狐火の巣</p>
+  <div class="wrap hero-conteudo">
+    <p class="kicker"><span class="vivo"></span>Minecraft Bedrock · Brasil</p>
+    <h1>Uma toca <em>acesa</em> na floresta de blocos.</h1>
+    <p class="lead">A Vulpus é um servidor de Minecraft Bedrock com plataforma própria, uma IA que lembra de cada jogador e uma regra que não se dobra: nada que dá vantagem se compra.</p>
+    <div class="acoes">
+      <a class="btn btn-fogo js-convite" href="#" target="_blank" rel="noopener">Entrar na toca <svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-seta"/></svg></a>
+      <a class="btn btn-fantasma" href="#lenda">Ler a lenda</a>
+    </div>
+    <ul class="selos">
+      <li>Celular, console e Windows</li>
+      <li>Sem pay-to-win</li>
+      <li>Bot, ponte e addons próprios</li>
+    </ul>
+    <!-- painel ao vivo: aparece quando a API responde -->
+    <div class="painel-vivo" id="painelVivo" hidden>
+      <div class="pv-cabecalho">
+        <div class="pv-status">
+          <span class="vivo"></span>
+          <b id="pvJogando">0</b><span> jogando agora</span>
+        </div>
+        <div class="pv-meta">
+          <span class="pv-meta-item" id="pvClas" hidden><svg class="ic" width="13" height="13" aria-hidden="true"><use href="#i-escudo"/></svg><b id="pvClasN">0</b> clãs</span>
+          <span class="pv-meta-item" id="pvGuerras" hidden><svg class="ic" width="13" height="13" aria-hidden="true"><use href="#i-alvo"/></svg><b id="pvGuerrasN">0</b> guerras</span>
+        </div>
+      </div>
+      <div class="pv-corpo">
+        <div class="pv-coluna">
+          <p class="pv-rotulo"><svg class="ic" width="12" height="12" aria-hidden="true"><use href="#i-cubo"/></svg>Online</p>
+          <div class="pv-nicks" id="pvNicks"></div>
+        </div>
+        <div class="pv-coluna" id="pvColClas" hidden>
+          <p class="pv-rotulo"><svg class="ic" width="12" height="12" aria-hidden="true"><use href="#i-escudo"/></svg>Clãs</p>
+          <ul class="pv-clas" id="pvClasLista"></ul>
+        </div>
+        <div class="pv-coluna" id="pvColTop" hidden>
+          <p class="pv-rotulo"><svg class="ic" width="12" height="12" aria-hidden="true"><use href="#i-trofeu"/></svg>Top horas</p>
+          <ol class="pv-top" id="pvTopLista"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+  <a class="rolar" href="#lenda"><span>Role para acender a primeira cauda</span><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-baixo"/></svg></a>
+  <svg class="montanhas" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+<defs><linearGradient id="nevoa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a7b8ff" stop-opacity="0"/><stop offset="1" stop-color="#a7b8ff" stop-opacity=".10"/></linearGradient></defs>
+<path fill="#262b62" d="M-40,320 L-40,162 Q-40,162 -5,167 Q30,171 65,175 Q100,179 135,181 Q170,183 205,181 Q240,178 275,170 Q310,162 345,154 Q380,146 415,149 Q450,152 485,160 Q520,168 555,171 Q590,173 625,167 Q660,161 695,153 Q730,144 765,140 Q800,136 835,138 Q870,139 905,142 Q940,144 975,141 Q1010,139 1045,133 Q1080,126 1115,126 Q1150,126 1185,135 Q1220,144 1255,153 Q1290,162 1325,162 Q1360,162 1395,161 Q1430,159 1465,169 L1500,179 L1500,320 Z"/>
+<rect x="0" y="102" width="1440" height="218" fill="url(#nevoa)"/>
+<path fill="#1d2150" d="M-40,320 L-40,142 Q-40,142 -10,150 Q20,158 50,158 Q80,157 110,159 Q140,161 170,167 Q200,173 230,174 Q260,174 290,179 Q320,184 350,195 Q380,206 410,208 Q440,211 470,208 Q500,204 530,205 Q560,205 590,203 Q620,202 650,197 Q680,192 710,192 Q740,192 770,199 Q800,207 830,214 Q860,222 890,223 Q920,225 950,218 Q980,211 1010,198 Q1040,185 1070,174 Q1100,163 1130,157 Q1160,150 1190,147 Q1220,143 1250,145 Q1280,147 1310,153 Q1340,160 1370,159 Q1400,157 1430,141 L1460,125 L1460,320 Z"/>
+<rect x="0" y="125" width="1440" height="195" fill="url(#nevoa)"/>
+<path fill="#161940" d="M-40,320 L-40,234 Q-40,234 -14,224 Q12,214 38,213 Q64,213 90,216 Q116,220 142,218 Q168,216 194,213 Q220,210 246,211 Q272,212 298,212 Q324,213 350,213 Q376,212 402,212 Q428,213 454,214 Q480,215 506,218 Q532,221 558,221 Q584,221 610,217 Q636,213 662,213 Q688,213 714,213 Q740,213 766,207 Q792,201 818,192 Q844,183 870,181 Q896,180 922,189 Q948,197 974,206 Q1000,215 1026,219 Q1052,222 1078,228 Q1104,234 1130,241 Q1156,247 1182,243 Q1208,240 1234,230 Q1260,220 1286,215 Q1312,211 1338,213 Q1364,216 1390,212 Q1416,208 1442,191 L1468,174 L1468,320 Z"/>
+<rect x="0" y="163" width="1440" height="157" fill="url(#nevoa)"/>
+<path fill="#10132f" d="M-40,320 L-40,268 Q-40,268 -18,270 Q4,273 26,265 Q48,258 70,250 Q92,242 114,244 Q136,245 158,239 Q180,233 202,232 Q224,231 246,243 Q268,256 290,260 Q312,263 334,260 Q356,257 378,259 Q400,262 422,257 Q444,253 466,243 Q488,233 510,229 Q532,225 554,221 Q576,216 598,213 Q620,210 642,217 Q664,223 686,240 Q708,257 730,261 Q752,264 774,247 Q796,230 818,229 Q840,228 862,243 Q884,258 906,257 Q928,256 950,245 Q972,235 994,234 Q1016,233 1038,242 Q1060,251 1082,256 Q1104,261 1126,255 Q1148,249 1170,239 Q1192,230 1214,231 Q1236,232 1258,238 Q1280,243 1302,238 Q1324,233 1346,237 Q1368,242 1390,247 Q1412,252 1434,247 Q1456,241 1478,254 L1500,266 L1500,320 Z"/>
+<rect x="0" y="199" width="1440" height="121" fill="url(#nevoa)"/>
+<path fill="#0b0d22" d="M-40,320 L-40,302 Q-40,302 -23,298 Q-6,293 11,289 Q28,285 45,281 Q62,277 79,276 Q96,274 113,276 Q130,278 147,279 Q164,281 181,282 Q198,282 215,284 Q232,286 249,290 Q266,294 283,296 Q300,298 317,296 Q334,295 351,291 Q368,288 385,287 Q402,285 419,285 Q436,285 453,283 Q470,282 487,279 Q504,277 521,275 Q538,274 555,274 Q572,275 589,278 Q606,282 623,288 Q640,293 657,295 Q674,296 691,293 Q708,290 725,286 Q742,282 759,278 Q776,275 793,273 Q810,272 827,275 Q844,277 861,282 Q878,287 895,288 Q912,290 929,289 Q946,288 963,289 Q980,290 997,291 Q1014,292 1031,292 Q1048,292 1065,291 Q1082,290 1099,289 Q1116,288 1133,286 Q1150,285 1167,283 Q1184,282 1201,281 Q1218,281 1235,282 Q1252,283 1269,285 Q1286,287 1303,287 Q1320,287 1337,287 Q1354,287 1371,288 Q1388,289 1405,289 Q1422,288 1439,283 Q1456,278 1473,269 L1490,261 L1490,320 Z"/>
+</svg>
+</header>
+
+<!-- ======================= 2 · A LENDA ======================= -->
+<section class="lenda secao" id="lenda" data-nome="A lenda">
+  <div class="wrap">
+    <header class="cab cab-centro rev">
+      <p class="sobre"><svg width="14" height="18" aria-hidden="true"><use href="#cauda"/></svg>Cauda II · A lenda</p>
+      <h2>Toda kitsune tem nove caudas. <em>Kiza nasceu com uma.</em></h2>
+    </header>
+    <div class="livro rev" id="livro" role="region" aria-roledescription="carrossel" aria-label="A lenda de Kiza Misuchi">
+      <figure class="arco" id="arco" aria-hidden="true">
+        <img class="on" src="img/hero-kiza.webp" width="900" height="724" alt="" loading="lazy">
+        <img src="img/kiza-mapa.webp" width="720" height="579" alt="" loading="lazy">
+        <img src="img/kiza-boasvindas.webp" width="720" height="579" alt="" loading="lazy">
+        <img src="img/kiza-presente.webp" width="720" height="579" alt="" loading="lazy">
+        <img src="img/kiza-kitsune.webp" width="720" height="579" alt="" loading="lazy">
+      </figure>
+      <div class="pagina">
+        <div class="capitulos" id="capitulos" aria-live="polite">
+          <article class="capitulo ativo" id="cap1" aria-label="Capítulo I">
+            <span class="romano" aria-hidden="true">I</span>
+            <p class="cap-num">Capítulo I</p>
+            <h3>A raposa de uma cauda só</h3>
+            <p class="cap-txt">Dizem que toda kitsune ganha uma cauda nova a cada grande história que vive. Kiza Misuchi nasceu com uma só, e odiava isso. As outras raposas tinham nove, brilhantes, e ela tinha... uma. Branquinha. Meio despenteada.</p>
+          </article>
+          <article class="capitulo" id="cap2" aria-label="Capítulo II" aria-hidden="true">
+            <span class="romano" aria-hidden="true">II</span>
+            <p class="cap-num">Capítulo II</p>
+            <h3>A floresta de blocos</h3>
+            <p class="cap-txt">Cansada de esperar histórias caírem do céu, Kiza andou até achar uma floresta estranha, feita de blocos. Lá, as pessoas construíam casas, castelos e coisas que nem tinham nome. E cada coisa criada contava uma história.</p>
+          </article>
+          <article class="capitulo" id="cap3" aria-label="Capítulo III" aria-hidden="true">
+            <span class="romano" aria-hidden="true">III</span>
+            <p class="cap-num">Capítulo III</p>
+            <h3>A toca</h3>
+            <p class="cap-txt">Kiza cavou uma toca no meio da floresta e a chamou de <strong>Vulpus</strong>. Não para guardar tesouros, mas para guardar <strong>gente</strong>. Quem chegasse e criasse algo junto deixava um pouquinho de história por lá.</p>
+          </article>
+          <article class="capitulo" id="cap4" aria-label="Capítulo IV" aria-hidden="true">
+            <span class="romano" aria-hidden="true">IV</span>
+            <p class="cap-num">Capítulo IV</p>
+            <h3>As Caudas</h3>
+            <p class="cap-txt">Cada história contada na toca vira uma <strong>Cauda</strong>. É por isso que você ganha Caudas conversando, jogando e aparecendo. Kiza diz que não liga, mas conta todas, uma por uma, toda noite.</p>
+          </article>
+          <article class="capitulo" id="cap5" aria-label="Capítulo V" aria-hidden="true">
+            <span class="romano" aria-hidden="true">V</span>
+            <p class="cap-num">Capítulo V</p>
+            <h3>As pérolas</h3>
+            <p class="cap-txt">Os momentos mais bonitos da toca viram <strong>pérolas</strong> e ficam guardados para sempre. Se a Kiza um dia ganhar suas nove caudas, vai ser por causa de quem está lendo isto. Ela nunca vai admitir em voz alta, claro.</p>
+          </article>
+        </div>
+        <div class="livro-nav">
+          <div class="marcas" id="marcas"><button type="button" data-cap="0" aria-label="Ir para o capítulo I" aria-current="true"><svg width="19" height="26" aria-hidden="true"><use href="#cauda"/></svg></button><button type="button" data-cap="1" aria-label="Ir para o capítulo II"><svg width="19" height="26" aria-hidden="true"><use href="#cauda"/></svg></button><button type="button" data-cap="2" aria-label="Ir para o capítulo III"><svg width="19" height="26" aria-hidden="true"><use href="#cauda"/></svg></button><button type="button" data-cap="3" aria-label="Ir para o capítulo IV"><svg width="19" height="26" aria-hidden="true"><use href="#cauda"/></svg></button><button type="button" data-cap="4" aria-label="Ir para o capítulo V"><svg width="19" height="26" aria-hidden="true"><use href="#cauda"/></svg></button></div>
+          <div class="livro-botoes">
+            <button class="btn-redondo" id="capAnt" type="button" aria-label="Capítulo anterior" disabled><svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-seta"/></svg></button>
+            <button class="btn btn-fogo btn-sm" id="capProx" type="button"><span>Próximo capítulo</span><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-seta"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 3 · O PRINCÍPIO ======================= -->
+<section class="manifesto secao" id="principio" data-nome="O princípio">
+  <div class="wrap">
+    <p class="sobre"><svg width="14" height="18" aria-hidden="true"><use href="#cauda"/></svg>Cauda III · O princípio</p>
+    <p class="manifesto-texto" id="manifestoTexto">Aqui, ninguém compra vantagem. Cada Cauda vem de uma conversa, de uma construção, de um dia em que você apareceu. Quem apoia paga o servidor, não a vitória.</p>
+    <p class="assinatura">Toda cauda se conquista.</p>
+    <ol class="tres">
+      <li class="rev"><span>01</span><h3>Sem pay-to-win</h3><p>Apoio dá estilo e reconhecimento no Discord. Poder dentro do jogo, nunca.</p></li>
+      <li class="rev" style="--i:1"><span>02</span><h3>Feito à mão</h3><p>Bot, ponte e addons desenvolvidos para a Vulpus. Nada comprado pronto.</p></li>
+      <li class="rev" style="--i:2"><span>03</span><h3>Gente antes de número</h3><p>Moderação presente, regras claras e uma IA que sabe quem você é.</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ======================= 4 · A TOCA ======================= -->
+<section class="toca secao" id="toca" data-nome="A toca">
+  <div class="wrap">
+    <header class="cab cab-centro rev">
+      <p class="sobre"><svg width="14" height="18" aria-hidden="true"><use href="#cauda"/></svg>Cauda IV · A toca</p>
+      <h2>Discord e jogo, <em>uma coisa só.</em></h2>
+      <p>Uma plataforma construída para a Vulpus: o que você faz em um lugar conta no outro.</p>
+    </header>
+
+    <div class="bento">
+      <article class="peca p-ponte rev">
+        <div class="peca-txt">
+          <p class="peca-rot"><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-elo"/></svg>Ponte</p>
+          <h3>O chat do servidor aparece no Discord. E o contrário também.</h3>
+          <p>Vincule a conta uma vez e Caudas, XP e conversa passam a ser os mesmos nos dois lugares.</p>
+        </div>
+        <div class="ponte-mock" aria-hidden="true">
+          <div class="mc"><p><span class="mc-n">&lt;luma&gt;</span> alguém tem ferro sobrando?</p><p class="mc-sis">pedro entrou no jogo</p><p><span class="mc-n">&lt;pedro&gt;</span> tenho, passa na base</p></div>
+          <div class="seta-ponte"><i></i><i></i></div>
+          <div class="dc"><div class="dc-msg"><b>luma</b><span>alguém tem ferro sobrando?</span></div><div class="dc-msg sis">→ pedro entrou no jogo</div><div class="dc-msg"><b>pedro</b><span>tenho, passa na base</span></div></div>
+        </div>
+      </article>
+
+      <article class="peca p-drop rev" style="--i:1">
+        <p class="peca-rot">Caudas</p>
+        <div class="embed">
+          <b>Caudas perdidas apareceram!</b>
+          <span>Quem pegar primeiro leva <strong>74 Caudas</strong>.</span>
+          <button class="pegar" id="pegar" type="button">Pegar</button>
+        </div>
+        <p>Ganhe no <code>/daily</code>, na pergunta do dia, nas missões e nos drops do chat. Aos sábados, em dobro.</p>
+      </article>
+
+      <article class="peca p-placar rev" style="--i:2" id="pecaPlacar">
+        <p class="peca-rot"><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-trofeu"/></svg>Placares</p>
+        <h3>Ranking ao vivo</h3>
+        <div class="placar-tabs" id="placarTabs">
+          <button type="button" class="ativo" data-tab="horas">Horas</button>
+          <button type="button" data-tab="nivel">Nível</button>
+          <button type="button" data-tab="clas">Clãs</button>
+        </div>
+        <ol class="placar" id="placarLista" aria-label="Placar ao vivo"></ol>
+        <small class="placar-vazio" id="placarVazio" hidden>Sem dados no momento</small>
+      </article>
+
+      <article class="peca p-seg rev">
+        <p class="peca-rot"><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-escudo"/></svg>Segurança</p>
+        <h3>Moderação que não dorme</h3>
+        <p>Tickets, registro de casos, automod e proteção contra raids, inclusive de apps externos.</p>
+        <div class="log"><span class="log-p"></span>App externo em flood · timeout aplicado · 23 mensagens apagadas</div>
+      </article>
+
+      <article class="peca p-convite rev" style="--i:1">
+        <p class="peca-rot"><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-carta"/></svg>Convites</p>
+        <h3>Trouxe um amigo? Os dois ganham.</h3>
+        <p><code>/convidar</code> gera seu link pessoal. Quando o amigo chega ao nível 3 com a conta vinculada, Caudas para os dois.</p>
+      </article>
+
+      <article class="peca p-missao rev" style="--i:2">
+        <p class="peca-rot"><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-alvo"/></svg>Todo dia</p>
+        <h3>Três missões, um bônus</h3>
+        <ul class="missoes">
+          <li class="ok">Converse no servidor</li>
+          <li class="ok">Acerte uma pergunta do /quiz</li>
+          <li>Reaja a 6 mensagens</li>
+        </ul>
+        <small>Mais <code>/quiz</code> e <code>/forca</code> de Minecraft.</small>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 5 · KIZA ======================= -->
+<section class="kiza secao" id="kiza" data-nome="Kiza">
+  <div class="wrap kiza-grid">
+    <div class="kiza-info">
+      <header class="cab">
+        <p class="sobre"><svg width="14" height="18" aria-hidden="true"><use href="#cauda"/></svg>Cauda V · Kiza</p>
+        <h2>Uma IA que <em>lembra de você.</em></h2>
+        <p>Mascote e alma da toca. Conversa com o contexto do chat, ajuda com Minecraft, desenha sob pedido e guarda o que você contar, até você pedir para esquecer.</p>
+      </header>
+      <div class="ficha rev">
+        <div class="retrato"><img id="retrato" src="img/humor-normal.webp" width="130" height="144" alt="Rosto da Kiza: normal"></div>
+        <div>
+          <p class="ficha-nome">Kiza Misuchi</p>
+          <p class="ficha-sub">18 anos · uma cauda · humor: <b id="humorNome">normal</b></p>
+          <div class="humores" role="group" aria-label="Humores da Kiza">
+            <button type="button" data-h="normal" aria-pressed="true"><img src="img/humor-normal.webp" width="130" height="144" alt="Normal"></button>
+            <button type="button" data-h="feliz"><img src="img/humor-feliz.webp" width="130" height="144" alt="Feliz" loading="lazy"></button>
+            <button type="button" data-h="piscando"><img src="img/humor-piscando.webp" width="130" height="144" alt="Piscando" loading="lazy"></button>
+            <button type="button" data-h="surpresa"><img src="img/humor-surpresa.webp" width="130" height="144" alt="Surpresa" loading="lazy"></button>
+            <button type="button" data-h="envergonhada"><img src="img/humor-envergonhada.webp" width="130" height="144" alt="Envergonhada" loading="lazy"></button>
+            <button type="button" data-h="lado"><img src="img/humor-lado.webp" width="130" height="144" alt="De lado" loading="lazy"></button>
+            <button type="button" data-h="bravo"><img src="img/humor-bravo.webp" width="130" height="144" alt="Brava" loading="lazy"></button>
+            <button type="button" data-h="triste"><img src="img/humor-triste.webp" width="130" height="144" alt="Triste" loading="lazy"></button>
+          </div>
+        </div>
+      </div>
+      <p class="nota">Sua memória é sua: <code>/memoria esquecer</code> apaga tudo o que ela sabe sobre você.</p>
+    </div>
+
+    <div class="chat rev" style="--i:1">
+      <div class="chat-topo"><span class="hash">#</span>toca-geral<span class="chat-on"><i></i>Kiza online</span></div>
+      <div class="chat-msgs" id="chatMsgs" aria-live="polite">
+        <div class="cm"><div class="av">L</div><div><b>luma</b><p>kiza, me indica um bioma bonito pra construir</p></div></div>
+        <div class="cm"><div class="av av-k"><img src="img/humor-feliz.webp" width="40" height="40" alt=""></div><div><b class="k">Kiza <span class="tag">APP</span></b><p>bosque de cerejeiras. tudo rosa, e a madeira combina com quase qualquer telhado</p></div></div>
+        <div class="cm"><div class="av av-k"><img src="img/humor-piscando.webp" width="40" height="40" alt=""></div><div><b class="k">Kiza <span class="tag">APP</span></b><p>e você? pode perguntar, eu não mordo. quase nunca.</p></div></div>
+      </div>
+      <div class="digitando" id="digitando"><i></i><i></i><i></i><span>Kiza está digitando</span></div>
+      <div class="chat-perguntas">
+        <p>Pergunte para ela</p>
+        <div class="chips" id="chips">
+          <button type="button" data-p="0">onde acho axolote?</button>
+          <button type="button" data-p="1">lembra do meu gato?</button>
+          <button type="button" data-p="2">desenha você olhando as estrelas</button>
+          <button type="button" data-p="3">você é uma IA?</button>
+          <button type="button" data-p="4">qual sua cor favorita?</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 6 · COLEÇÃO ======================= -->
+<section class="colecao secao" id="colecao" data-nome="Coleção">
+  <div class="wrap colecao-grid">
+    <div class="cartas" aria-label="Figurinhas da Vulpus">
+      <div class="carta tilt c1"><img src="img/carta-comum.webp" width="543" height="724" alt="Figurinha comum nº 1: Kiza Sonolenta" loading="lazy"><i class="holo"></i></div>
+      <div class="carta tilt c2"><img src="img/carta-rara.webp" width="543" height="724" alt="Figurinha rara nº 2: Creeper Tímido" loading="lazy"><i class="holo"></i></div>
+      <div class="carta c3 trancada" role="img" aria-label="Figurinha épica, ainda trancada"><span>?</span><small>Épica</small></div>
+    </div>
+    <div>
+      <header class="cab">
+        <p class="sobre"><svg width="14" height="18" aria-hidden="true"><use href="#cauda"/></svg>Cauda VI · Coleção</p>
+        <h2>Um pacote por dia. <em>O álbum é seu.</em></h2>
+        <p>Abra uma figurinha grátis por dia com <code>/figurinha abrir</code>, complete o álbum e vá atrás das raras. Ilustrações originais, pagas só com Caudas.</p>
+      </header>
+      <ul class="raridades rev"><li class="r1">Comum</li><li class="r2">Rara</li><li class="r3">Épica</li><li class="r4">Lendária</li></ul>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="trilha rev" aria-label="Ranks da toca">
+      <p class="trilha-rot">Do Filhote às Nove Caudas</p>
+      <ol>
+        <li><b>Filhote</b><span>Nível 0</span></li>
+        <li><b>Raposinha</b><span>Nível 5</span></li>
+        <li><b>Raposa Andarilha</b><span>Nível 10</span></li>
+        <li><b>Raposa Lunar</b><span>Nível 15</span></li>
+        <li class="topo-rank"><b>Raposa de Nove Caudas</b><span>Nível 20</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 7 · KITSUNE ======================= -->
+<section class="kitsune secao" id="kitsune" data-nome="Kitsune">
+  <div class="wrap kitsune-grid">
+    <div class="cartao-wrap">
+      <div class="cartao tilt" aria-hidden="true">
+        <i class="holo"></i>
+        <svg class="cartao-raposa" width="40" height="40"><use href="#i-raposa"/></svg>
+        <p class="cartao-tipo">Membro apoiador</p>
+        <p class="cartao-nome">Kitsune</p>
+        <div class="cartao-pe"><span>Vulpus</span><span>狐</span></div>
+      </div>
+    </div>
+    <div>
+      <header class="cab">
+        <p class="sobre"><svg width="14" height="18" aria-hidden="true"><use href="#cauda"/></svg>Cauda VII · Kitsune</p>
+        <h2>Apoie a toca. <em>Ganhe estilo, não poder.</em></h2>
+      </header>
+      <div class="plano rev">
+        <p class="preco">R$ 15<small>por mês</small></p>
+        <p class="plano-sub">1, 3, 6 ou 12 meses, por PIX com <code>/kitsune</code>. Pagou, o selo e o cargo chegam sozinhos.</p>
+        <ul class="beneficios">
+          <li><svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-check"/></svg>Selo e cargo Kitsune, dentro e fora do jogo</li>
+          <li><svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-check"/></svg>Toca Kitsune: chat e sala de voz só sua</li>
+          <li><svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-check"/></svg>Votações exclusivas e mural dos Kitsunes</li>
+          <li><svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-check"/></svg>Raposa ao lado do nome nos placares</li>
+        </ul>
+      </div>
+      <div class="nunca rev" style="--i:1">
+        <p><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-x"/></svg>Nunca: vantagem no jogo, itens comprados ou caixa-surpresa paga.</p>
+      </div>
+      <p class="doar rev" style="--i:2">Prefere só ajudar? <code>/doar</code> aceita qualquer valor a partir de R$ 5, com metas públicas, mural de apoiadores e opção anônima.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 8 · O CAMINHO ======================= -->
+<section class="caminho secao" id="caminho" data-nome="O caminho">
+  <div class="wrap">
+    <header class="cab cab-centro rev">
+      <p class="sobre"><svg width="14" height="18" aria-hidden="true"><use href="#cauda"/></svg>Cauda VIII · O caminho</p>
+      <h2>O que já está aceso, <em>e o que vem.</em></h2>
+    </header>
+    <div class="constelacao">
+      <div class="etapa acesa rev">
+        <p class="etapa-rot">Já aceso</p>
+        <ul>
+          <li>Servidor Bedrock com addons próprios: menu, casas, TPA, RTP, caçadas e spleef</li>
+          <li>Clãs com bases e bandeiras, guerras e histórico</li>
+          <li>Ponte de chat e contas vinculadas entre Discord e jogo</li>
+          <li>Kiza com IA, memória, humor e desenhos</li>
+          <li>Caudas, níveis, ranks, missões, quiz e figurinhas</li>
+          <li>Kitsune por PIX, doações com metas e Toca Kitsune</li>
+          <li>Convites, placares automáticos e proteção contra raids</li>
+        </ul>
+      </div>
+      <div class="etapa rev" style="--i:1">
+        <p class="etapa-rot">No horizonte</p>
+        <ul>
+          <li>Figurinhas épicas e lendárias, e trocas entre membros</li>
+          <li>Eventos sazonais e chefões</li>
+          <li>Perfis de jogador e rankings públicos neste site</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 9 · ENTRAR ======================= -->
+<section class="entrar secao" id="entrar" data-nome="A entrada">
+  <div class="wrap">
+    <header class="cab cab-centro rev">
+      <p class="sobre"><svg width="14" height="18" aria-hidden="true"><use href="#cauda"/></svg>Cauda IX · A entrada</p>
+      <h2>Quatro passos <em>até a toca.</em></h2>
+    </header>
+    <ol class="passos">
+      <li class="rev"><span class="n">1</span><h3>Entre no Discord</h3><p>Aceite as regras e o resto da toca se abre.</p></li>
+      <li class="rev" style="--i:1"><span class="n">2</span><h3>Pegue o endereço</h3><p>IP e porta ficam no canal <b>ip-e-porta</b>, com quem está online agora.</p>
+        <button class="copiar" id="copiarIp" type="button" hidden><span id="ipTexto"></span><svg class="ic" width="16" height="16" aria-hidden="true"><use href="#i-copiar"/></svg></button></li>
+      <li class="rev" style="--i:2"><span class="n">3</span><h3>Adicione no jogo</h3><p>Minecraft → <b>Jogar</b> → <b>Servidores</b> → <b>Adicionar servidor</b>.</p></li>
+      <li class="rev" style="--i:3"><span class="n">4</span><h3>Vincule a conta</h3><p>Na primeira entrada aparece um código. Digite com <code>/minecraft vincular</code>.</p></li>
+    </ol>
+
+    <div class="faq rev">
+      <h3 class="faq-tit">Perguntas frequentes</h3>
+      <details><summary>Em quais aparelhos dá para jogar?</summary><p>No Minecraft Bedrock: celular, console e Windows.</p></details>
+      <details><summary>Ser Kitsune dá alguma vantagem no jogo?</summary><p>Não. O Kitsune dá selo, cargo e espaços exclusivos no Discord. A vantagem no jogo é de quem joga.</p></details>
+      <details><summary>Por que preciso vincular a conta?</summary><p>Para Caudas, XP e conversa serem os mesmos no Discord e no servidor. Sem vínculo, o jogo não sabe quem você é.</p></details>
+      <details><summary>Como funciona o pagamento?</summary><p>Por PIX, direto no Discord com <code>/kitsune</code> ou <code>/doar</code>. Confirmado o pagamento, tudo chega automaticamente.</p></details>
+      <details><summary>O que a Kiza guarda sobre mim?</summary><p>Só fatos duradouros que você mesmo contar, como um apelido ou o nome do seu pet. Nada de dados sensíveis. <code>/memoria esquecer</code> apaga tudo.</p></details>
+      <details><summary>Como falo com a staff?</summary><p>Abra um ticket no Discord. A equipe responde por lá.</p></details>
+    </div>
+  </div>
+
+  <div class="final">
+    <div class="final-arte" aria-hidden="true"><img src="img/kiza-boasvindas.webp" width="720" height="579" alt="" loading="lazy"></div>
+    <div class="wrap final-txt rev">
+      <h2>A toca está <em>acesa.</em></h2>
+      <p>Falta só você para a próxima cauda.</p>
+      <a class="btn btn-fogo btn-grande js-convite" href="#" target="_blank" rel="noopener">Entrar no Discord <svg class="ic" width="18" height="18" aria-hidden="true"><use href="#i-seta"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- vídeos: só aparece quando houver ID em CONFIG.videos -->
+<section class="videos-sec" id="videos" hidden>
+  <div class="wrap"><header class="cab cab-centro"><h2>Veja <em>funcionando.</em></h2></header><div class="videos" id="listaVideos"></div></div>
+</section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap">
+    <div class="rod-marca">
+      <a class="marca" href="#inicio"><svg width="28" height="28" aria-hidden="true"><use href="#i-raposa"/></svg><span>Vulpus</span></a>
+      <p>Servidor de Minecraft Bedrock e comunidade brasileira.</p>
+      <p class="anubis">Mantido pela equipe <b>Anúbis</b></p>
+    </div>
+    <nav aria-label="Rodapé"><h4>A toca</h4><a href="#lenda">A lenda</a><a href="#toca">Plataforma</a><a href="#kiza">Kiza</a><a href="#colecao">Coleção</a></nav>
+    <nav aria-label="Participar"><h4>Participar</h4><a class="js-convite" href="#" target="_blank" rel="noopener">Discord</a><a href="#entrar">Como entrar</a><a href="#kitsune">Kitsune</a><a href="#caminho">O caminho</a></nav>
+    <p class="legal">Vulpus não é afiliado, aprovado ou patrocinado pela Mojang Studios nem pela Microsoft. Minecraft é marca da Mojang. Kiza Misuchi é personagem original da Vulpus.</p>
+  </div>
+</footer>
+
+<script src="js/main.js?v=20261021b"></script>
+</body>
+</html>

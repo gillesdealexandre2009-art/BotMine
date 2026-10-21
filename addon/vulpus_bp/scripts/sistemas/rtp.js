@@ -22,6 +22,13 @@ const OVERWORLD = "minecraft:overworld";
 /** Áreas de carregamento que a versão antiga do RTP criava (limpa no começo, se sobraram). */
 const PREFIXO_AREA = "vulpus_rtp_";
 
+/** Nome da ticking area temporária de preload (uma por vez). */
+const AREA_PRELOAD = "vulpus_rtp_pre";
+/** Ticks de espera para os chunks carregarem antes de teleportar. */
+const TICKS_PRELOAD = 60;
+/** Raio da ticking area de preload (em chunks, 1 = 1 chunk ao redor do centro). */
+const RAIO_PRELOAD = 2;
+
 const RAIO_PADRAO = 2;
 const RAIO_MAX = 8;
 /** Diferença de altura que ainda conta como "dentro" do portal. */
@@ -173,19 +180,55 @@ function sortearDestino() {
 }
 
 /**
- * Leva a pessoa para um ponto sorteado, no alto, e começa a queda protegida.
+ * Remove a ticking area de preload (silencioso se não existir).
+ */
+function limparPreload() {
+  try {
+    world.getDimension(OVERWORLD).runCommand(`tickingarea remove ${AREA_PRELOAD}`);
+  } catch {
+    // não existia
+  }
+}
+
+/**
+ * Cria uma ticking area temporária no destino para forçar o carregamento dos chunks,
+ * espera TICKS_PRELOAD e só então teleporta. Se o jogador sair ou ficar inválido, limpa tudo.
  * @param {Player} player
  * @param {boolean} semEspera
  * @returns {boolean}
  */
 function levar(player, semEspera) {
   const destino = sortearDestino();
-  return teleportar(player, destino, {
-    nome: textos.DESTINO,
-    tema: "rtp",
-    semEspera,
-    aoChegar: (p) => descer(p, destino.y),
-  });
+  const dim = world.getDimension(OVERWORLD);
+  const bx = Math.floor(destino.x);
+  const bz = Math.floor(destino.z);
+
+  limparPreload();
+  try {
+    dim.runCommand(`tickingarea add circle ${bx} 64 ${bz} ${RAIO_PRELOAD} ${AREA_PRELOAD} true`);
+  } catch (e) {
+    registrarErro("Preload do RTP", e);
+    return teleportar(player, destino, {
+      nome: textos.DESTINO,
+      tema: "rtp",
+      semEspera,
+      aoChegar: (p) => descer(p, destino.y),
+    });
+  }
+
+  player.onScreenDisplay.setActionBar(textos.PREPARANDO);
+
+  system.runTimeout(() => {
+    limparPreload();
+    if (!player.isValid) return;
+    teleportar(player, destino, {
+      nome: textos.DESTINO,
+      tema: "rtp",
+      semEspera,
+      aoChegar: (p) => descer(p, destino.y),
+    });
+  }, TICKS_PRELOAD);
+  return true;
 }
 
 /**
@@ -482,9 +525,10 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   ignorados.delete(playerId);
 });
 
-// Áreas de carregamento que sobraram da versão antiga do RTP (que procurava chão seguro).
+// Áreas de carregamento que sobraram (versão antiga + preload que não foi limpo).
 system.runTimeout(() => {
   const dim = world.getDimension(OVERWORLD);
+  limparPreload();
   for (let i = 1; i <= 80; i++) {
     try {
       dim.runCommand(`tickingarea remove ${PREFIXO_AREA}${i}`);

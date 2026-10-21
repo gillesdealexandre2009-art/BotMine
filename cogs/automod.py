@@ -36,6 +36,7 @@ class Automod(commands.Cog):
         self.bot = bot
         self._mensagens: defaultdict[tuple[int, int], deque[tuple[float, str]]] = defaultdict(deque)
         self._strikes: defaultdict[tuple[int, int], deque[float]] = defaultdict(deque)
+        self._apps: defaultdict[tuple[int, int], deque[float]] = defaultdict(deque)
 
     # ------------------------------------------------------------------ detecção
     async def _detectar(self, mensagem: discord.Message) -> Optional[str]:
@@ -66,6 +67,9 @@ class Automod(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, mensagem: discord.Message) -> None:
+        if mensagem.guild is not None and not isinstance(mensagem.author, discord.Member):
+            await self._checar_app_externo(mensagem)
+            return
         if mensagem.guild is None or mensagem.author.bot or not isinstance(mensagem.author, discord.Member):
             return
         if await nivel_do_membro(self.bot, mensagem.author) >= config.NIVEL_STAFF:
@@ -73,6 +77,59 @@ class Automod(commands.Cog):
         motivo = await self._detectar(mensagem)
         if motivo is not None:
             await self._punir(mensagem, motivo)
+
+    # ------------------------------------------------------------------ apps externos
+    async def _checar_app_externo(self, mensagem: discord.Message) -> None:
+        """App instalado na conta de alguém (não é membro): não dá para banir o app, pune quem o usou."""
+        guild, banco = mensagem.guild, self.bot.banco
+        assert guild is not None
+        meta = getattr(mensagem, "interaction_metadata", None)
+        usuario = getattr(meta, "user", None)
+        if usuario is None or usuario.bot or await banco.ajuste(guild.id, "automod_antispam") != 1:
+            return
+        membro = guild.get_member(usuario.id)
+        if membro is not None and await nivel_do_membro(self.bot, membro) >= config.NIVEL_STAFF:
+            return
+        chave = (guild.id, usuario.id)
+        agora = time.monotonic()
+        janela = await banco.ajuste(guild.id, "automod_spam_janela")
+        historico = self._apps[chave]
+        historico.append(agora)
+        while historico and agora - historico[0] > janela:
+            historico.popleft()
+        if len(historico) <= await banco.ajuste(guild.id, "automod_spam_msgs"):
+            return
+        historico.clear()
+
+        duracao = await banco.ajuste(guild.id, "automod_timeout_min") * 60
+        resultado = "sem timeout (não está no servidor ou faltou permissão)"
+        if membro is not None:
+            try:
+                await membro.timeout(timedelta(seconds=duracao), reason=textos.AUTOMOD_APP_MOTIVO)
+                await registrar_caso(
+                    self.bot, guild, "automod", membro.id, self.bot.user.id, textos.AUTOMOD_APP_MOTIVO, duracao  # type: ignore[union-attr]
+                )
+                resultado = f"timeout de {duracao // 60} min"
+            except discord.HTTPException:
+                log.warning("Automod não conseguiu aplicar timeout em %s", membro.id, exc_info=True)
+        apagadas = 0
+        try:  # limpa o flood do app
+            apagadas = len(await mensagem.channel.purge(  # type: ignore[union-attr]
+                limit=50,
+                check=lambda m: m.author.id == mensagem.author.id
+                and (discord.utils.utcnow() - m.created_at).total_seconds() < 120,
+            ))
+        except discord.HTTPException:
+            pass
+        e = embed(
+            "🤖 App externo em flood",
+            f"{usuario.mention} (`{usuario.id}`) usou **{mensagem.author.name}** para floodar {mensagem.channel.mention}.",  # type: ignore[union-attr]
+            config.COR_ERRO,
+        )
+        e.add_field(name="Ação", value=f"{resultado}; {apagadas} mensagens apagadas")
+        e.add_field(name="Dica", value="Tire **Usar aplicativos externos** do @everyone.", inline=False)
+        e.timestamp = discord.utils.utcnow()
+        await enviar_log(self.bot, guild, "logs_mod", embed=e)
 
     # ------------------------------------------------------------------ ação
     async def _punir(self, mensagem: discord.Message, motivo: str) -> None:

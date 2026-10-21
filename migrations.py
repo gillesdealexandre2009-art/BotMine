@@ -501,3 +501,11 @@ CREATE TABLE votos (
 );
 """,
 ))
+
+MIGRACOES.append((
+    15,
+    """
+ALTER TABLE perfis ADD COLUMN ativo_em INTEGER NOT NULL DEFAULT 0;
+CREATE INDEX idx_perfis_ativo ON perfis (guild_id, ativo_em);
+""",
+))

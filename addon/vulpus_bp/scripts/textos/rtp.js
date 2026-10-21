@@ -28,6 +28,8 @@ export const PORTAL_INEXISTENTE = "Não existe portal de saída marcado.";
 /** Texto flutuante em cima do portal (duas linhas). */
 export const PORTAL_TEXTO = "§6§l✦ PORTAL DO MUNDO ABERTO ✦\n§7Pise aqui para sair do lobby\n§e/vulpus:rtp §7a qualquer hora";
 
+export const PREPARANDO = "§eProcurando um lugar seguro... §7os chunks estão carregando";
+
 /** @param {number} blocos */
 export const QUEDA = (blocos) => `§6Altitude §8» §e${blocos} blocos §8| §7caindo devagar, protegida pelas caudas`;
 

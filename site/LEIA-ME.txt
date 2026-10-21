@@ -1,0 +1,18 @@
+SITE DO VULPUS (v3: "a lenda das nove caudas")
+==============================================
+Estrutura: index.html + css/style.css + js/main.js + img/ (tudo estático, sem build).
+
+CONCEITO
+  A página conta a lenda da Kiza (nasceu com uma cauda, ganha uma a cada história).
+  São 9 seções e cada uma acende uma cauda no leque do canto da tela; no fim aparece "Nove caudas".
+  Noite índigo, fogo de raposa (kitsunebi) no topo, títulos em Fraunces e texto em Instrument Sans (Google Fonts).
+
+CONFIGURAR (js/main.js, no topo, bloco "CONFIGURE AQUI"):
+  convite  -> link do Discord (troca todos os botões "Entrar no Discord")
+  ip/porta -> preenchido, o passo 2 de "Como entrar" ganha um botão "copiar endereço"
+  videos   -> IDs do YouTube; a seção de vídeos só aparece quando houver pelo menos um
+
+TESTAR: rode um servidor local na pasta (ex.: python -m http.server 8080) e abra http://127.0.0.1:8080
+PUBLICAR: GitHub Pages (branch gh-pages) ou Cloudflare Pages (arraste esta pasta).
+A versão anterior está em ../site_v2 e a primeira em ../site_v1.
+As fontes em fonts/ (Fredoka e Silkscreen) eram da v2 e não são mais usadas.

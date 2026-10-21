@@ -62,7 +62,7 @@ async def montar(tmp_path, membros=()):
         get_cog=lambda _nome: None,
     )
     ponte = Ponte(bot)  # type: ignore[arg-type]
-    canais = {chave: CanalFalso() for chave in ("mc_chat", "mc_ip", "mc_historico", "mc_login", "mc_log")}
+    canais = {chave: CanalFalso() for chave in ("mc_chat", "mc_ip", "mc_historico", "mc_login", "mc_log", "mc_online")}
 
     async def canal_mc(_gid, chave):
         return canais[chave]
@@ -692,3 +692,145 @@ def test_vinculo_avisa_se_a_fusao_ja_aconteceu(tmp_path):
 
     antes, depois = rodar(cenario)
     assert antes["ja_somou"] is False and depois["ja_somou"] is True
+
+
+# ========================== /site/resumo ==========================
+
+def test_resumo_site_e_publico_com_cors(tmp_path):
+    """GET /site/resumo não exige token e traz Access-Control-Allow-Origin."""
+
+    async def cenario():
+        _banco, _ponte, cliente, _canais = await montar(tmp_path)
+        try:
+            r = await cliente.get("/site/resumo")  # sem AUTH!
+            dados = await r.json()
+            return r.status, r.headers.get("Access-Control-Allow-Origin"), dados
+        finally:
+            await cliente.close()
+            await _banco.fechar()
+
+    status, cors, dados = rodar(cenario)
+    assert status == 200
+    assert cors == "*"
+    assert dados["ok"] is True
+    # sem status de jogo, servidor aparece offline
+    assert dados["servidor"]["online"] is False
+    assert dados["clas"] is None
+    assert dados["ranking_tempo"] is None
+
+
+def test_resumo_com_status_e_clas(tmp_path):
+    """Depois de um /mc/status com clãs, o resumo mostra server online, clãs e rankings."""
+
+    async def cenario():
+        banco, ponte, cliente, _canais = await montar(tmp_path)
+        try:
+            # vincula um jogador para que mc_nivel_ranking tenha dados
+            await vincular(banco, cliente, USER_A, mc_id="mc-a", nome="Fox")
+            await banco.adicionar_xp(G, USER_A, 500)
+
+            clas = [
+                {"tag": "ANB", "nome": "Anúbis", "membros": 5, "nivel": 3},
+                {"tag": "SOL", "nome": "Solar", "membros": 2, "nivel": 1},
+            ]
+            r = await cliente.post(
+                "/mc/status",
+                json={"online": ["Fox", "Wolf"], "max": 10, "clas": clas, "guerras": 1},
+                headers=AUTH,
+            )
+            assert r.status == 200
+
+            res = await cliente.get("/site/resumo")
+            dados = await res.json()
+            return dados
+        finally:
+            await cliente.close()
+            await banco.fechar()
+
+    dados = rodar(cenario)
+    assert dados["ok"] is True
+    sv = dados["servidor"]
+    assert sv["online"] is True
+    assert sv["jogando"] == 2
+    assert "Fox" in sv["nicks"]
+    # clãs ordenados por membros
+    assert dados["clas"]["ativos"] == 2
+    assert dados["clas"]["guerras"] == 1
+    assert dados["clas"]["top"][0]["tag"] == "ANB"
+    # endereços
+    assert len(dados["enderecos"]) >= 1
+    # ranking de nível (Fox vinculado com 500 xp)
+    assert dados["ranking_nivel"] is not None
+    assert dados["ranking_nivel"][0]["nome"] == "Fox"
+
+
+def test_resumo_cache_nao_repete_consulta(tmp_path):
+    """Duas chamadas seguidas devolvem o mesmo objeto (cache de 60 s)."""
+
+    async def cenario():
+        banco, ponte, cliente, _canais = await montar(tmp_path)
+        try:
+            r1 = await (await cliente.get("/site/resumo")).json()
+            r2 = await (await cliente.get("/site/resumo")).json()
+            return r1, r2
+        finally:
+            await cliente.close()
+            await banco.fechar()
+
+    r1, r2 = rodar(cenario)
+    assert r1 == r2
+
+
+def test_resumo_rotas_autenticadas_continuam_protegidas(tmp_path):
+    """Mesmo com /site/resumo público, as outras rotas continuam exigindo token."""
+
+    async def cenario():
+        _banco, _ponte, cliente, _canais = await montar(tmp_path)
+        try:
+            saude = await cliente.get("/mc/saude")  # sem AUTH
+            status = await cliente.post("/mc/status", json={"online": []})  # sem AUTH
+            return saude.status, status.status
+        finally:
+            await cliente.close()
+            await _banco.fechar()
+
+    s1, s2 = rodar(cenario)
+    assert s1 == 401
+    assert s2 == 401
+
+
+def test_validar_clas_sanitiza_e_recusa():
+    from cogs_minecraft.ponte import validar_clas
+
+    # None se não é lista
+    assert validar_clas("texto") is None
+    assert validar_clas(None) is None
+    # filtra inválidos
+    resultado = validar_clas([
+        {"tag": "OK", "nome": "Bom", "membros": 3, "nivel": 2},
+        {"tag": "", "nome": "Sem tag", "membros": 1, "nivel": 1},  # tag vazia
+        {"tag": "X", "nome": "Zero", "membros": 0, "nivel": 1},  # 0 membros
+        "lixo",
+    ])
+    assert resultado is not None
+    assert len(resultado) == 1
+    assert resultado[0]["tag"] == "OK"
+
+
+def test_resumo_nicks_limitados_a_12(tmp_path):
+    """O resumo corta a lista de nicks em 12."""
+
+    async def cenario():
+        banco, ponte, cliente, _canais = await montar(tmp_path)
+        try:
+            nomes = [f"P{i}" for i in range(20)]
+            await cliente.post("/mc/status", json={"online": nomes, "max": 30}, headers=AUTH)
+            dados = await (await cliente.get("/site/resumo")).json()
+            return dados
+        finally:
+            await cliente.close()
+            await banco.fechar()
+
+    dados = rodar(cenario)
+    assert len(dados["servidor"]["nicks"]) == 12
+    assert dados["servidor"]["jogando"] == 20

@@ -62,6 +62,17 @@ class PlacaresMixin:
                     (nome, total, sessao, maior, ts, guild_id, norm),
                 )
 
+    async def mc_nivel_ranking(self, guild_id: int, limite: int = 10):
+        """Top jogadores por XP, com nick do Minecraft (via mc_vinculos). Retorna nome e xp."""
+        return await self._todos(  # type: ignore[attr-defined]
+            "SELECT v.mc_nome AS nome, p.xp "
+            "FROM perfis p "
+            "JOIN mc_vinculos v ON v.guild_id = p.guild_id AND v.user_id = p.user_id "
+            "WHERE p.guild_id = ? AND p.xp > 0 "
+            "ORDER BY p.xp DESC, p.user_id LIMIT ?",
+            (guild_id, limite),
+        )
+
     async def mc_tempo_ranking(self, guild_id: int, coluna: str, limite: int = 10):
         if coluna not in {"total_s", "maior_s"}:
             raise ValueError("coluna inválida")

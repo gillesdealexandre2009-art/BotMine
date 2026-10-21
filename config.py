@@ -30,7 +30,7 @@ def _inteiro(nome: str, padrao: int) -> int:
         return padrao
 
 
-VERSAO = "1.12.0"
+VERSAO = "1.13.0"
 
 # --------------------------------------------------------------------------- ambiente
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -90,6 +90,7 @@ COGS_PADRAO = [
     "convites",
     "placares",
     "kitsune_extras",
+    "engajamento",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -311,6 +312,10 @@ AJUSTES = {
     "pix_validade_min": (30, 5, 120, "Minutos que o PIX gerado vale"),
     "kitsune_sala_ligada": (1, 0, 1, "1 = sala de voz própria dos Kitsunes ligada"),
     "kitsune_sala_max": (10, 1, 25, "Máximo de salas de voz Kitsune ao mesmo tempo"),
+    "xp_voz": (6, 0, 500, "XP por minuto em call de voz (0 = desliga; cooldown de 60 s, mesmas regras da fidelidade)"),
+    "inatividade_dias": (30, 7, 180, "Dias sem atividade para considerar alguém inativo"),
+    "inatividade_aviso": (1, 0, 1, "1 = avisa por DM quem está inativo (toda segunda-feira)"),
+    "inatividade_rebaixar": (0, 0, 1, "1 = remove o cargo de Membro de quem for avisado (volta a Visitante)"),
     "placares_ligado": (1, 0, 1, "1 = placares de call e de tempo de jogo ligados"),
     "convite_ligado": (1, 0, 1, "1 = programa Convide um amigo ligado"),
     "convite_premio": (150, 0, 100000, "Caudas para quem convidou (por amigo que cumprir o caminho)"),
