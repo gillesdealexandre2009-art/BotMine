@@ -39,6 +39,8 @@ import { menuFeiraStaff } from "./feira_staff.js";
 import { menuMusicaStaff } from "./musica_staff.js";
 import { menuXrayStaff } from "./xray.js";
 import { menuObras } from "./obras.js";
+import { menuHollowStaff } from "./hollow_staff.js";
+import { menuLimpezaStaff } from "./limpeza_staff.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {import("../core/db.js").Config} Config */
@@ -175,6 +177,7 @@ const FAIXAS = {
   xrayPct: [1, 100],
   florRaio: [1, 16],
   florEsperaSeg: [0, 3600],
+  limpezaIntervaloMin: [5, 120],
   argTentativas: [1, 50],
   argEsperaMin: [0, 1440],
   argGlitchPct: [0, 60],
@@ -406,6 +409,9 @@ const GRUPOS = [
   { id: "flor", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_FLOR, icone: ICONES.ajustes, chaves: ["florLigada", "florRaio", "florEsperaSeg", "florFalas"] },
   { id: "inauguracao", cat: textos.BOTAO_FEIRA, titulo: textos.GRUPO_INAUGURACAO, icone: ICONES.ajustes, chaves: ["inauguracaoLigada"] },
   { id: "eras", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ERAS, icone: ICONES.tempo, chaves: ["erasTinta"] },
+  { id: "hollow", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_HOLLOW, icone: ICONES.tempo, chaves: [], abrir: (p) => menuHollowStaff(p) },
+  { id: "limpeza", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_LIMPEZA, icone: ICONES.apagar, chaves: [], abrir: (p) => menuLimpezaStaff(p) },
+  { id: "kitsune", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_KITSUNE, icone: ICONES.apelido, chaves: ["kitsuneChegadaFx", "kitsuneChegadaMsg"] },
   { id: "geral", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao", "limiteMundo"] },
 ];
 
@@ -529,6 +535,7 @@ export async function menuStaff(player, voltar) {
     .botao(textos.BOTAO_CLAS_GUERRAS, ICONES.cla, (p) => menuClasGuerras(p, aqui))
     .botao(textos.BOTAO_MUNDO, ICONES.mundo, (p) => menuMundo(p, aqui))
     .botao(textos.BOTAO_OBRAS, ICONES.mundo, (p) => menuObras(p, aqui))
+    .botao(textos.BOTAO_HOLLOW, ICONES.tempo, (p) => menuHollowStaff(p, aqui))
     .botao(textos.BOTAO_CONFIG, ICONES.ajustes, (p) => menuConfig(p, aqui))
     .botao(textos.BOTAO_ITEM, ICONES.nova, (p) => {
       if (garantirItem(p) === "tinha") msg(p, textos.ITEM_JA_TEM);

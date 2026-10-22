@@ -42,13 +42,26 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {string} apelido  nome de exibição (só vale com o selo Kitsune; "" = o nome da conta)
  * @property {string} apelidoDono  apelido posto por um dono (vale mesmo sem selo e manda no apelido da pessoa; "" = nenhum)
  * @property {string} temaNome  tema de cor do nome (cores.js; vale com o selo Kitsune, com o desbloqueio do evento ou para dono; "" = sem tema)
+ * @property {ExtrasKitsune} extras  mimos extras do selo Kitsune (chegada e saída, looks salvos, cor da mensagem; só valem com o selo)
  * @property {string[]} conquistas  ids das conquistas ganhas (sistemas/conquistas.js)
  * @property {string[]} coresExtras  temas de cor desbloqueados por eventos (valem sem o selo Kitsune)
  * @property {number[]} inauguracao  números (0 a 19) das raposinhas do Evento de inauguração já achadas
  * @property {{ cap: number, tent: number, ate: number, fim: boolean }} arg  mistério da Vulpus: capítulos alcançados (0 a 6), tentativas no terminal, bloqueio até (ms) e se já passou
+ * @property {{ lidos: string[], enigma: boolean, tentativas: number, conclusao: number, relogio: boolean, cofre: boolean, tentativasCofre: number }} hollow  evento Hollow: registros lidos (D01..., P1...), enigma resolvido, erros no enigma, cofre do abrigo aberto, erros no cofre, posição de conclusão (0 = não concluiu) e se pegou o relógio
  * @property {Vinculo | null} vinculo  conta do Discord ligada (sistemas/vinculo.js); null = ainda não ligou
  * @property {SyncDiscord} sync  controle da soma de Caudas e XP com o Discord (sistemas/vinculo.js)
  */
+
+/**
+ * Mimos extras do selo Kitsune (sistemas/kitsune_extras.js). Tudo só visual. Perdeu o selo: os dados ficam, mas deixam de valer.
+ * @typedef {object} ExtrasKitsune
+ * @property {boolean} chegada  efeito de chegada e saída ligado para esta pessoa
+ * @property {({ apelido: string, tema: string } | null)[]} looks  até MAX_LOOKS looks salvos (apelido + tema do nome; null = espaço vazio)
+ * @property {string} msgCor  código § (1 caractere) da cor da mensagem no chat ("" = branco padrão)
+ */
+
+/** Quantos looks um Kitsune guarda. */
+export const MAX_LOOKS = 3;
 
 /**
  * @typedef {object} Vinculo
@@ -108,13 +121,20 @@ function dadosNovos() {
     apelido: "",
     apelidoDono: "",
     temaNome: "",
+    extras: extrasNovos(),
     conquistas: [],
     coresExtras: [],
     inauguracao: [],
     arg: { cap: 0, tent: 0, ate: 0, fim: false },
+    hollow: hollowNovo(),
     vinculo: null,
     sync: { baseC: 0, baseX: 0, pend: null },
   };
+}
+
+/** @returns {ExtrasKitsune} */
+function extrasNovos() {
+  return { chegada: true, looks: Array.from({ length: MAX_LOOKS }, () => null), msgCor: "" };
 }
 
 /** @param {Player | string} alvo */
@@ -218,12 +238,38 @@ function completar(lido) {
     apelido: typeof lido.apelido === "string" ? lido.apelido.slice(0, 16) : base.apelido,
     apelidoDono: typeof lido.apelidoDono === "string" ? lido.apelidoDono.slice(0, 16) : base.apelidoDono,
     temaNome: typeof lido.temaNome === "string" ? lido.temaNome.slice(0, 16) : base.temaNome,
+    extras: extrasLidos(lido.extras),
     conquistas: listaTexto(lido.conquistas),
     coresExtras: listaTexto(lido.coresExtras),
     arg: argLido(lido.arg),
+    hollow: hollowLido(lido.hollow),
     vinculo: vinculoLido(lido.vinculo),
     sync: syncLido(lido.sync),
     inauguracao: Array.isArray(lido.inauguracao) ? [...new Set(/** @type {number[]} */ (lido.inauguracao).filter((n) => Number.isInteger(n) && n >= 0 && n < 100))] : base.inauguracao,
+  };
+}
+
+/**
+ * Extras do Kitsune: campo que falta ou veio estranho (dado antigo ou mexido à mão) ganha o padrão; look com texto fora do formato
+ * (apelido com símbolos, tema que não é só letras) vira espaço vazio.
+ * @param {any} v
+ * @returns {ExtrasKitsune}
+ */
+function extrasLidos(v) {
+  const base = extrasNovos();
+  if (!v || typeof v !== "object") return base;
+  const looks = base.looks.map((_, i) => {
+    const l = Array.isArray(v.looks) ? v.looks[i] : undefined;
+    if (!l || typeof l !== "object") return null;
+    const apelido = typeof l.apelido === "string" ? l.apelido : "";
+    const tema = typeof l.tema === "string" ? l.tema : "";
+    if ([...apelido].length > 16 || !/^[A-Za-z0-9À-ÖØ-öø-ÿ _.-]*$/.test(apelido) || !/^[a-z]{0,16}$/.test(tema)) return null;
+    return apelido === "" && tema === "" ? null : { apelido, tema };
+  });
+  return {
+    chegada: booleano(v.chegada, base.chegada),
+    looks,
+    msgCor: typeof v.msgCor === "string" && /^[0-9a-g]$/.test(v.msgCor) ? v.msgCor : "",
   };
 }
 
@@ -233,9 +279,30 @@ function argLido(v) {
   return v && typeof v === "object" ? { cap: Math.min(20, n(v.cap)), tent: n(v.tent), ate: n(v.ate), fim: v.fim === true } : { cap: 0, tent: 0, ate: 0, fim: false };
 }
 
+/** @returns {{ lidos: string[], enigma: boolean, tentativas: number, conclusao: number, relogio: boolean, cofre: boolean, tentativasCofre: number }} */
+function hollowNovo() {
+  return { lidos: [], enigma: false, tentativas: 0, conclusao: 0, relogio: false, cofre: false, tentativasCofre: 0 };
+}
+
+/** @param {any} v */
+function hollowLido(v) {
+  const base = hollowNovo();
+  if (!v || typeof v !== "object") return base;
+  const n = (/** @type {unknown} */ x) => (Number.isFinite(x) ? Math.max(0, Math.floor(/** @type {number} */ (x))) : 0);
+  return {
+    lidos: Array.isArray(v.lidos) ? [...new Set(v.lidos.filter((/** @type {unknown} */ t) => typeof t === "string" && /^[DP][0-9]{1,2}$/.test(t)))].slice(0, 40) : base.lidos,
+    enigma: v.enigma === true,
+    tentativas: Math.min(n(v.tentativas), 100000),
+    conclusao: Math.min(n(v.conclusao), 1000000),
+    relogio: v.relogio === true,
+    cofre: v.cofre === true,
+    tentativasCofre: Math.min(n(v.tentativasCofre), 100000),
+  };
+}
+
 /** @param {any} v @returns {Vinculo | null} */
 function vinculoLido(v) {
-  if (!v || typeof v !== "object" || typeof v.discordId !== "string" || !/^d{5,25}$/.test(v.discordId)) return null;
+  if (!v || typeof v !== "object" || typeof v.discordId !== "string" || !/^\d{5,25}$/.test(v.discordId)) return null;
   return {
     discordId: v.discordId,
     nome: typeof v.nome === "string" ? v.nome.slice(0, 40) : "",

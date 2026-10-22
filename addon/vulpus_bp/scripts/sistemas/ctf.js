@@ -852,6 +852,21 @@ const AURAS = {
     emitir(dim, P.CHAMA, roda(c, n * 0.4, 1, 2), COR_AURA.violeta);
     if (n % 2 === 0) emitir(dim, P.CHAMA, acaso(c, 1.2, 1.4, 1.8), COR_AURA.ouro);
   },
+  // Faíscas douradas e rosadas subindo, como a luz do sol nascendo.
+  amanhecer: (dim, c, n) => {
+    emitir(dim, P.CHAMA, acaso(c, 1.3, 0.4, 2.4), n % 2 ? COR_AURA.ouro : COR_AURA.rosa);
+    emitir(dim, P.CHAMA, roda(c, n * 0.3, 1, 0.3 + (n % 6) * 0.45), COR_AURA.laranja);
+  },
+  // Gotas azuis em ondas em volta da base.
+  mare: (dim, c, n) => {
+    emitir(dim, P.CHAMA, roda(c, n * 0.5, 1.1, 0.2 + Math.abs(Math.sin(n * 0.4)) * 1.2), COR_AURA.azul);
+    emitir(dim, P.CHAMA, roda(c, n * 0.5 + Math.PI, 1.1, 0.2 + Math.abs(Math.cos(n * 0.4)) * 1.2), COR_AURA.prata);
+  },
+  // Flocos brancos caindo do alto.
+  nevasca: (dim, c) => {
+    emitir(dim, P.FAISCA, acaso(c, 1.4, 3, 0.8));
+    emitir(dim, P.FAISCA, acaso(c, 1.4, 2, 1.2));
+  },
 };
 
 let rodadaAura = 0;

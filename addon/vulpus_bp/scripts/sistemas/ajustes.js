@@ -8,9 +8,11 @@ import { config, dadosJogador, editarJogador, TEMAS_MENU } from "../core/db.js";
 import { Lista, podeUsarTema, temaDoPainel } from "../core/forms.js";
 import { erro, ok } from "../core/util.js";
 import * as textos from "../textos/ajustes.js";
+import * as textosExtras from "../textos/kitsune_extras.js";
 import { menuAbate } from "./abate.js";
 import { menuKitsune, temSelo } from "./kitsune.js";
-import { alternarEsconderPets, menuColecao, petsEscondidos } from "./pets.js";
+import { alternarChegada, menuCorMensagem, menuLooks, nomeCorMensagem } from "./kitsune_extras.js";
+import { alternarEsconderPets, menuColecao, menuVitrine, petsEscondidos, vitrineDe } from "./pets.js";
 import { alternarMusica } from "./musica.js";
 import { alternarPegadinhas } from "./pegadinhas.js";
 
@@ -174,6 +176,13 @@ export async function menuCantoKitsune(player, voltar) {
     await aqui();
   }));
   tela.botao(textos.BOTAO_CANTO_PETS_COLECAO, ICONES.perfil, (p) => menuColecao(p, aqui));
+  tela.botao(textosExtras.BOTAO_VITRINE(vitrineDe(player)?.nome ?? ""), ICONES.perfil, so((p) => menuVitrine(p, aqui)));
+  tela.botao(textosExtras.BOTAO_LOOKS, ICONES.apelido, (p) => menuLooks(p, aqui));
+  tela.botao(textosExtras.BOTAO_COR_MSG(nomeCorMensagem(player)), ICONES.tema, so((p) => menuCorMensagem(p, aqui)));
+  tela.botao(textosExtras.BOTAO_CHEGADA(dadosJogador(player).extras.chegada), ICONES.kitsune, so(async (p) => {
+    alternarChegada(p);
+    await aqui();
+  }));
   await tela.voltar(voltar).abrir(player);
 }
 

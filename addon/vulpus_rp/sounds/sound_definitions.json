@@ -765,6 +765,50 @@
       ],
       "max_distance": 64,
       "min_distance": 48
+    },
+    "vulpus.hollow_a1": {
+      "category": "neutral",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/hollow_a1",
+          "volume": 1,
+          "is3D": false,
+          "load_on_low_memory": true
+        }
+      ]
+    },
+    "vulpus.hollow_a2": {
+      "category": "neutral",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/hollow_a2",
+          "volume": 1,
+          "is3D": false,
+          "load_on_low_memory": true
+        }
+      ]
+    },
+    "vulpus.hollow_a3": {
+      "category": "neutral",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/hollow_a3",
+          "volume": 1,
+          "is3D": false,
+          "load_on_low_memory": true
+        }
+      ]
+    },
+    "vulpus.hollow_a4": {
+      "category": "neutral",
+      "sounds": [
+        {
+          "name": "sounds/vulpus/hollow_a4",
+          "volume": 1,
+          "is3D": false,
+          "load_on_low_memory": true
+        }
+      ]
     }
   }
 }

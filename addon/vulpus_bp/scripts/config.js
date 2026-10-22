@@ -168,6 +168,10 @@ export const PADROES = {
   abateLigado: true,
   abateMaxSimultaneos: 6,
   abateEsperaSeg: 4,
+  // Efeito curto de chegada e saída dos Kitsune (só visual; cada pessoa ainda pode desligar o dela)
+  kitsuneChegadaFx: true,
+  // Mensagem estilosa no chat quando um Kitsune chega ou sai (junto do efeito; só visual)
+  kitsuneChegadaMsg: true,
   pegadinhasLigadas: true,
   pegadinhaHerobrineSeg: 25,
   musicaLigada: true,
@@ -271,6 +275,21 @@ export const PADROES = {
   spleefEficiencia: 5,
   spleefBolas: true,
   spleefRecargaBola: 3,
+  // Evento de Halloween "O Último Outono de Hollow" (editados em Staff > Evento Hollow). Datas em ms (25/10 00:00 a 31/10 23:59:59, Brasília).
+  hollowLigado: true,
+  hollowInicio: Date.UTC(2026, 9, 25, 3, 0, 0),
+  hollowFim: Date.UTC(2026, 10, 1, 2, 59, 59),
+  hollowKitsuneDias: 30,
+  // Código de 4 dígitos do cofre do abrigo (os papelzinhos P1..P4 mostram um dígito cada).
+  hollowCofreCodigo: "2147",
+  hollowVentoLigado: true,
+  hollowVentoRaio: 24,
+  hollowVentoEsperaSeg: 120,
+  // Limpeza automática (itens soltos e mobs hostis), editada em Staff > Configurações > Limpeza automática.
+  limpezaLigada: true,
+  limpezaIntervaloMin: 30,
+  limpezaItens: true,
+  limpezaMobs: true,
 };
 
 /**

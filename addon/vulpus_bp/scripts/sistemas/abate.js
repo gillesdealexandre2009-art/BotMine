@@ -381,7 +381,7 @@ export async function menuAbate(player, voltar) {
   };
   const lista = new Lista(textos.TITULO).texto(textos.CORPO(textos.NOME_ESCOLHA(atual)));
   lista.botao(textos.BOTAO_OPCAO(textos.BOTAO_AUTO, textos.DESC_AUTO, atual === "auto"), ICONES.tema, escolher("auto", true));
-  for (const t of ESTILOS_BANDEIRA) {
+  for (const t of ESTILOS_BANDEIRA.filter((x) => VISUAL[x])) {
     lista.botao(textos.BOTAO_OPCAO(textos.NOME_TEMA(t), textos.DESCRICOES[t] ?? "", atual === t), ICONES.tema, escolher(t, true));
   }
   lista.botao(textos.BOTAO_PREVIA, ICONES.ajustes, async (p) => {

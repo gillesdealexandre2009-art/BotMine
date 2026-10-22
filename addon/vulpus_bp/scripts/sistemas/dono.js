@@ -10,6 +10,8 @@ import { erro, msg } from "../core/util.js";
 import * as textosCla from "../textos/clas.js";
 import * as textos from "../textos/dono.js";
 import * as textosKT from "../textos/kitsune_tempo.js";
+import * as textosAntecipado from "../textos/antecipado.js";
+import { menuAntecipado } from "./cosmetico_antecipado.js";
 import * as textosArg from "../textos/arg.js";
 import * as textosEras from "../textos/eras.js";
 import * as textosPegadinhas from "../textos/pegadinhas.js";
@@ -19,6 +21,8 @@ import * as acoes from "./dono_acoes.js";
 import * as kitsuneTempo from "./kitsune_tempo.js";
 import { menuArg } from "./arg.js";
 import { menuEras } from "./eras.js";
+import { menuHollowVencedores } from "./hollow_staff.js";
+import { BOTAO_PAINEL_DONO as BOTAO_HOLLOW_DONO } from "../textos/hollow.js";
 import { menuPegadinhas } from "./pegadinhas.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -75,10 +79,12 @@ export async function menuDono(player, voltar) {
       await aqui();
     })
     .botao(textosKT.BOTAO_PAINEL, ICONES.apelido, (p) => menuKitsuneTempo(p, aqui))
+    .botao(textosAntecipado.BOTAO_PAINEL, ICONES.tema, (p) => menuAntecipado(p, aqui))
     .botao(textosPegadinhas.BOTAO_PAINEL, ICONES.spawn, (p) => menuPegadinhas(p, aqui))
     .botao(textosArg.BOTAO_PAINEL, ICONES.spawn, (p) => menuArg(p, aqui))
     .cabecalho(textos.SECAO_ADMIN)
     .botao(textosEras.BOTAO_PAINEL, ICONES.tempo, (p) => menuEras(p, aqui))
+    .botao(BOTAO_HOLLOW_DONO, ICONES.dono, (p) => menuHollowVencedores(p, aqui))
     .botao(textos.BOTAO_DONOS, ICONES.dono, (p) => menuDonos(p, aqui))
     .botao(textos.BOTAO_LOG, ICONES.historico, (p) => menuLog(p, aqui))
     .voltar(voltar)

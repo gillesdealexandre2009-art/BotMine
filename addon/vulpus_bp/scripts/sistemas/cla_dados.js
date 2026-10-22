@@ -103,7 +103,7 @@ export const CORES_CLA = Object.freeze(["6", "e", "a", "b", "c", "d", "9", "5", 
  * Estilos Kitsune da bandeira (só visual; só quem tem o selo escolhe). A ordem é a das texturas do RP:
  * a propriedade vulpus:estilo da entidade é o índice + 1 (0 = a bandeira padrão na cor do clã).
  */
-export const ESTILOS_BANDEIRA = Object.freeze(["caudas", "sakura", "lunar", "espirito", "brasa", "aurora", "estelar", "sombra", "ditadora"]);
+export const ESTILOS_BANDEIRA = Object.freeze(["caudas", "sakura", "lunar", "espirito", "brasa", "aurora", "estelar", "sombra", "ditadora", "amanhecer", "mare", "nevasca"]);
 /** Emblemas do clã, na ordem em que os níveis liberam (NIVEIS_CLA[].emblemas). */
 export const EMBLEMAS = Object.freeze([G.ESCUDO, G.BANDEIRA, G.TORRE, G.PATA, G.TROFEU]);
 

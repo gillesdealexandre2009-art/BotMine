@@ -26,7 +26,8 @@ import {
 import { eraDe, ERAS, TOTAL_ERAS, validarCatalogo } from "./eras_catalogo.js";
 import { validarEventos } from "./eras_eventos.js";
 import "./eras_mecanicas.js";
-import { atualizarTodos, definirPrevia, emAmbienteEspecial, eventoVisual, jaApresentada, limparPrevia, limparTodos, marcarApresentada, temPrevia } from "./eras_visual.js";
+import { temSelo } from "./kitsune.js";
+import { aplicar, atualizarTodos, definirPrevia, emAmbienteEspecial, TAG_SEM_ERA, eventoVisual, jaApresentada, limparPrevia, limparTodos, marcarApresentada, temPrevia } from "./eras_visual.js";
 
 /** @typedef {() => any} Volta */
 
@@ -301,8 +302,33 @@ export async function menuEra(player, voltar) {
       });
     }
   }
+  // Kitsune (e dono) lê a próxima Era em texto; só com a temporada ativa e se houver próxima.
+  if (s.fase === "ativa" && s.proxima && (temSelo(player) || ehDono(player))) {
+    lista.botao(textos.BOTAO_PROXIMA_KITSUNE(s.proxima), ICONES.tempo, (p) => menuProximaEra(p, aqui));
+  }
+  if (ehDono(player)) {
+    const sem = player.hasTag(TAG_SEM_ERA);
+    lista.botao(textos.BOTAO_SEM_ERA(sem), ICONES.dono, async (p) => {
+      if (sem) p.removeTag(TAG_SEM_ERA);
+      else p.addTag(TAG_SEM_ERA);
+      aplicar(p);
+      ok(p, textos.SEM_ERA_MUDOU(!sem));
+      await aqui();
+    });
+  }
   if (ehDono(player)) lista.botao(textos.BOTAO_PAINEL, ICONES.dono, (p) => menuEras(p, aqui));
   await lista.voltar(voltar).abrir(player);
+}
+
+/**
+ * Prévia em texto da próxima Era (mimo do selo Kitsune). Confere de novo ao abrir: sem selo, sem temporada ou sem próxima, não mostra.
+ * @param {Player} player
+ * @param {Volta} voltar
+ */
+export async function menuProximaEra(player, voltar) {
+  const s = situacao();
+  if (s.fase !== "ativa" || !s.proxima || !(temSelo(player) || ehDono(player))) return voltar();
+  await new Lista(textos.TITULO_PROXIMA_KITSUNE).texto(textos.CORPO_PROXIMA_KITSUNE(s.proxima, s.fimEra)).voltar(voltar).abrir(player);
 }
 
 /**

@@ -233,6 +233,12 @@ export const SECAO_VER = "Ver";
 export const SECAO_DECIDIR = "Decisões do dono";
 export const BOTAO_LISTA = "As 20 Eras";
 export const BOTAO_PREVIA = "Ver uma Era (prévia, só para você)";
+/** @param {boolean} semEra */
+export const BOTAO_SEM_ERA = (semEra) => `Efeitos da Era em mim: ${semEra ? "§cdesligados" : "§aligados"}
+§7só para você (ótimo para construir)`;
+/** @param {boolean} semEra */
+export const SEM_ERA_MUDOU = (semEra) =>
+  semEra ? "Os efeitos da Era estão desligados só para você (sem neblina, bônus nem efeitos)." : "Os efeitos da Era voltaram para você.";
 export const BOTAO_RESTAURAR = "Voltar à Era oficial";
 export const BOTAO_VALIDAR = "Validar o catálogo";
 export const BOTAO_INICIAR = "Iniciar ou reagendar a temporada";
@@ -247,3 +253,25 @@ export const TITULO_PREVIA = "Prévia de uma Era";
 export const CONFIRMAR_ENCERRAR = "Encerrar a temporada agora? Nenhuma Era vai valer até você iniciar outra. Ninguém perde nada do que já ganhou.";
 /** @param {number} n @param {string} nome @param {boolean} atual */
 export const BOTAO_ERA = (n, nome, atual) => `${atual ? "§l§6* " : ""}Era ${n}: ${nome}`;
+
+// ---------------------------------------------------------------- prévia da próxima Era (só texto, mimo do selo Kitsune)
+/** @param {Perfil} p */
+export const BOTAO_PROXIMA_KITSUNE = (p) => `Próxima Era (prévia): ${p.nome}`;
+export const TITULO_PROXIMA_KITSUNE = "§l§6Próxima Era (prévia)";
+/**
+ * Nome, descrição, efeitos (o que dá e o que cobra) e quando começa. Sem neblina nem visual: é só leitura.
+ * @param {Perfil} era
+ * @param {number} inicioMs
+ */
+export const CORPO_PROXIMA_KITSUNE = (era, inicioMs) =>
+  [
+    `§6Era ${era.numero}: §e${era.nome}`,
+    `§7Começa em §f${formatarDataHora(inicioMs)} §7(Brasília), daqui a §f${duracaoCurta(inicioMs - Date.now())}§7.`,
+    "",
+    `§f${era.descricao}`,
+    "",
+    "§6Regras da Era",
+    ...linhasMecanicas(era),
+    "",
+    "§8Mimo do selo Kitsune: só leitura, não muda nada no jogo.",
+  ].join("\n");

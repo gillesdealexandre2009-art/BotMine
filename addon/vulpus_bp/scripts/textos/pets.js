@@ -233,3 +233,26 @@ export const ROTULO_QTD = "Quantas fichas";
 export const NINGUEM_ONLINE = "§cNinguém online para receber.";
 /** @param {number} n @param {string} nome */
 export const FICHAS_DADAS = (n, nome) => `§a${n} ficha(s) entregue(s) a §e${nome}§a.`;
+
+// ---------------------------------------------------------------- pet de vitrine (mimo do selo Kitsune, só visual)
+/** @param {string} atual */
+export const BOTAO_VITRINE = (atual) => `Pet de vitrine\n§7${atual || "nenhum"}`;
+export const TITULO_VITRINE = "Pet de vitrine";
+/** @param {string} atual */
+export const CORPO_VITRINE = (atual) =>
+  [
+    "§7Escolha um pet seu para andar junto de você só de enfeite, além dos pets ativos.",
+    "§fSem bônus, sem sorte, sem cura: é puramente visual.",
+    `§7Agora: §f${atual || "nenhum"}`,
+    "§8Some junto com os pets quando você os esconde ou entra em minigame.",
+  ].join("\n");
+export const VITRINE_SEM_PETS = "§7Você ainda não tem pets fora da lista de ativos. Guarde um pet ativo ou abra mais cápsulas.";
+/** @param {string} cor @param {string} nome */
+export const BOTAO_VITRINE_ITEM = (cor, nome) => `${cor}${nome}`;
+export const BOTAO_VITRINE_TIRAR = "Tirar o pet de vitrine";
+/** @param {string} nome */
+export const VITRINE_OK = (nome) => `${nome} agora é seu pet de vitrine.`;
+export const VITRINE_TIRADA = "Pet de vitrine guardado.";
+export const VITRINE_SO_KITSUNE = "O pet de vitrine é mimo do selo Kitsune.";
+/** @param {string} cor @param {string} nome */
+export const NOME_VITRINE = (cor, nome) => `${cor}${nome} §d✦`;

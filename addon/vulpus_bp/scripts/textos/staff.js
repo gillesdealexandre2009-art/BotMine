@@ -78,6 +78,10 @@ export const GRUPO_MOEDA = "Cara ou coroa";
 export const GRUPO_MESAS = "Mesas de jogo";
 export const GRUPO_COMUNIDADE = "Canto comunitário";
 export const GRUPO_ERAS = "Eras";
+export const GRUPO_HOLLOW = "Evento Hollow (Halloween)";
+export const BOTAO_HOLLOW = "Evento Hollow";
+export const GRUPO_LIMPEZA = "Limpeza automática";
+export const GRUPO_KITSUNE = "Kitsune: extras de estilo";
 export const GRUPO_GERAL = "Geral";
 /** Rótulos dos campos de configuração (as chaves são as de PADROES). */
 export const CAMPOS = {
@@ -220,6 +224,20 @@ export const CAMPOS = {
   masmDanoPct: "Masmorra: dificuldade dos ataques especiais dos inimigos, em % (60 = padrão; 100 = cheio; o andar 1 já sai mais fraco que o 5)",
   masmCaudasDia: "Masmorra: máximo de Caudas que cada pessoa ganha por dia (0 = nenhuma)",
   abateLigado: "Efeitos de abate dos Kitsune ligados (só visual)",
+  hollowLigado: "Evento Hollow ligado",
+  hollowInicio: "Evento Hollow: início (ms)",
+  hollowFim: "Evento Hollow: fim (ms)",
+  hollowCofreCodigo: "Evento Hollow: código do cofre (4 dígitos)",
+  hollowKitsuneDias: "Evento Hollow: dias de Kitsune dos 2 primeiros",
+  hollowVentoLigado: "Evento Hollow: vento da casa ligado",
+  hollowVentoRaio: "Evento Hollow: raio do vento (blocos)",
+  hollowVentoEsperaSeg: "Evento Hollow: espera entre ventos (s)",
+  limpezaLigada: "Limpeza automática ligada",
+  limpezaIntervaloMin: "Limpeza automática: intervalo (min, de 5 a 120)",
+  limpezaItens: "Limpeza automática: remover itens soltos",
+  limpezaMobs: "Limpeza automática: remover mobs hostis",
+  kitsuneChegadaMsg: "Mensagem estilosa no chat quando um Kitsune chega ou sai (só visual; vale para quem deixou o efeito ligado)",
+  kitsuneChegadaFx: "Efeito de chegada e saída dos Kitsune ligado (só visual; cada Kitsune ainda pode desligar o dele)",
   abateMaxSimultaneos: "Abates: efeitos ao mesmo tempo no servidor (os que passarem do limite são pulados)",
   abateEsperaSeg: "Abates: espera mínima entre dois efeitos da mesma pessoa (s)",
   pegadinhasLigadas: "Pegadinhas do dono ligadas",

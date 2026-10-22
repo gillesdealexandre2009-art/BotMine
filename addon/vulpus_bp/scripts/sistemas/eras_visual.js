@@ -66,9 +66,13 @@ function avisarUmaVez(chave, contexto, e) {
   registrarErro(contexto, e);
 }
 
+/** Tag do dono que tira a Era só dele (para construir sem neblina, efeitos nem bônus). */
+export const TAG_SEM_ERA = "vulpus:sem_era";
+
 /** Está num ambiente que tem a própria neblina (ou nenhuma) e por isso não recebe a da Era? @param {Player} p */
 export function emAmbienteEspecial(p) {
   try {
+    if (p.hasTag(TAG_SEM_ERA)) return true;
     if (p.dimension.id !== OVERWORLD) return true;
     const { x, y, z } = p.location;
     if (pontoEmZona({ x, y, z, d: p.dimension.id })) return true;

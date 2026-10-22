@@ -5,6 +5,7 @@
 export const CONQUISTAS = Object.freeze({
   cheguedo: { nome: "Chegou cedo hein!", cor: "§b" },
   branco: { nome: "Desperto no Branco", cor: "§f" },
+  hollow: { nome: "O Último Outono", cor: "§6" },
   passos: { nome: "Raposinha Esperta", cor: "§6" },
 });
 
