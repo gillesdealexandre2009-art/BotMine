@@ -54,6 +54,7 @@ export async function menuHollowStaff(player, voltar) {
         casa: !!hollow.lerLocais().casa,
         concluidos: hollow.lerConclusoes().length,
         ventoLigado: c.hollowVentoLigado,
+        cofres: hollow.lerCofres().length,
       }),
     )
     .botao(textos.BOTAO_LIGAR(c.hollowLigado), ICONES.ajustes, async (p) => {
@@ -68,6 +69,11 @@ export async function menuHollowStaff(player, voltar) {
     })
     .botao(textos.BOTAO_LOCAIS, ICONES.spawn, (p) => menuLocais(p, aqui))
     .botao(textos.BOTAO_REGISTROS, ICONES.historico, (p) => menuRegistros(p, aqui))
+    .botao(textos.BOTAO_COFRES, ICONES.ajustes, (p) => menuCofres(p, aqui))
+    .botao(textos.BOTAO_CODIGO, ICONES.ajustes, async (p) => {
+      await editarCodigo(p);
+      await aqui();
+    })
     .botao(textos.BOTAO_AUDIOS, ICONES.ajustes, async (p) => {
       await editarAudios(p);
       await aqui();
@@ -152,6 +158,98 @@ async function editarAudios(player) {
   hollow.salvarAudios(novo);
   if (invalido) erro(player, textos.AUDIO_INVALIDO);
   else ok(player, textos.AUDIOS_SALVOS);
+}
+
+// ------------------------------------------------------------------------------------ cofres
+/** @param {Player} player */
+async function editarCodigo(player) {
+  if (!staffOk(player)) return;
+  const r = await perguntar(player, textos.TITULO_CODIGO, [{ tipo: "texto", rotulo: textos.ROTULO_CODIGO_NOVO, padrao: hollow.codigoCofre() }]);
+  if (!r || !staffOk(player)) return;
+  const codigo = String(r[0]).replace(/\s/g, "");
+  if (!/^[0-9]{4}$/.test(codigo)) return erro(player, textos.CODIGO_INVALIDO);
+  salvarConfig({ hollowCofreCodigo: codigo });
+  ok(player, textos.CODIGO_SALVO(codigo));
+}
+
+/**
+ * Marca o bloco que a staff olha como cofre (vários permitidos).
+ * @param {Player} player
+ * @returns {boolean}
+ */
+export function marcarCofreOlhando(player) {
+  if (!staffOk(player)) return false;
+  const bloco = hollow.blocoOlhado(player);
+  if (!bloco) {
+    erro(player, textos.SEM_BLOCO);
+    return false;
+  }
+  if (bloco.isAir) {
+    erro(player, textos.BLOCO_AR);
+    return false;
+  }
+  const ponto = { d: bloco.dimension.id, x: bloco.location.x, y: bloco.location.y, z: bloco.location.z };
+  const lista = hollow.lerCofres();
+  if (lista.some((p) => p.d === ponto.d && p.x === ponto.x && p.y === ponto.y && p.z === ponto.z)) {
+    erro(player, textos.COFRE_JA_MARCADO);
+    return false;
+  }
+  const dono = Object.entries(hollow.lerPontos()).find(([, p]) => p.d === ponto.d && p.x === ponto.x && p.y === ponto.y && p.z === ponto.z);
+  if (dono) {
+    erro(player, textos.JA_USADO(dono[0]));
+    return false;
+  }
+  if (lista.length >= 50) {
+    erro(player, textos.COFRE_LIMITE);
+    return false;
+  }
+  hollow.salvarCofres([...lista, ponto]);
+  ok(player, textos.COFRE_MARCADO(`${formatarCoords(ponto)} (${nomeDimensao(ponto.d)})`));
+  return true;
+}
+
+/**
+ * @param {Player} player
+ * @param {Volta} voltar
+ */
+async function menuCofres(player, voltar) {
+  if (!staffOk(player)) return;
+  const aqui = () => menuCofres(player, voltar);
+  const lista = new Lista(textos.TITULO_COFRES).texto(textos.CORPO_COFRES);
+  lista.botao(textos.BOTAO_MARCAR_COFRE, ICONES.nova, async (p) => {
+    marcarCofreOlhando(p);
+    await aqui();
+  });
+  hollow.lerCofres().forEach((ponto, i) => {
+    lista.botao(textos.BOTAO_COFRE(i + 1, ponto), ICONES.spawn, (p) => menuCofre(p, i, aqui));
+  });
+  await lista.voltar(voltar).abrir(player);
+}
+
+/**
+ * @param {Player} player
+ * @param {number} i
+ * @param {Volta} voltar
+ */
+async function menuCofre(player, i, voltar) {
+  if (!staffOk(player)) return;
+  const ponto = hollow.lerCofres()[i];
+  if (!ponto) return voltar();
+  await new Lista(textos.BOTAO_COFRE(i + 1, ponto))
+    .texto(`§7${nomeDimensao(ponto.d)}`)
+    .botao(textos.BOTAO_IR, ICONES.spawn, async (p) => {
+      if (!staffOk(p)) return;
+      irPara(p, ponto);
+    })
+    .botao(textos.BOTAO_REMOVER, ICONES.apagar, async (p) => {
+      if (!staffOk(p)) return;
+      const atual = hollow.lerCofres();
+      hollow.salvarCofres(atual.filter((_, k) => k !== i));
+      ok(p, textos.COFRE_REMOVIDO);
+      await voltar();
+    })
+    .voltar(voltar)
+    .abrir(player);
 }
 
 // ------------------------------------------------------------------------------------ locais
@@ -308,6 +406,10 @@ export function marcarOlhando(player, id) {
   }
   const ponto = { d: bloco.dimension.id, x: bloco.location.x, y: bloco.location.y, z: bloco.location.z };
   const todos = hollow.lerPontos();
+  if (hollow.lerCofres().some((p) => p.d === ponto.d && p.x === ponto.x && p.y === ponto.y && p.z === ponto.z)) {
+    erro(player, textos.COFRE_JA_MARCADO);
+    return false;
+  }
   const dono = Object.entries(todos).find(([outro, p]) => outro !== id && p.d === ponto.d && p.x === ponto.x && p.y === ponto.y && p.z === ponto.z);
   if (dono) {
     erro(player, textos.JA_USADO(dono[0]));
@@ -407,7 +509,7 @@ async function resetarJogador(player) {
   if (!(await confirmar(player, { titulo: textos.TITULO_RESETAR_JOGADOR, texto: textos.CONFIRMA_RESETAR_JOGADOR(pessoa.nome) }))) return;
   if (!ehDono(player)) return;
   editarJogador(pessoa.id, (d) => {
-    d.hollow = { lidos: [], enigma: false, tentativas: 0, conclusao: 0, relogio: false };
+    d.hollow = { lidos: [], enigma: false, tentativas: 0, conclusao: 0, relogio: false, cofre: false, tentativasCofre: 0 };
   });
   const online = porId(pessoa.id);
   if (online?.isValid) {

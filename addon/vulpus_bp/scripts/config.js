@@ -280,6 +280,8 @@ export const PADROES = {
   hollowInicio: Date.UTC(2026, 9, 25, 3, 0, 0),
   hollowFim: Date.UTC(2026, 10, 1, 2, 59, 59),
   hollowKitsuneDias: 30,
+  // Código de 4 dígitos do cofre do abrigo (os papelzinhos P1..P4 mostram um dígito cada).
+  hollowCofreCodigo: "2147",
   hollowVentoLigado: true,
   hollowVentoRaio: 24,
   hollowVentoEsperaSeg: 120,

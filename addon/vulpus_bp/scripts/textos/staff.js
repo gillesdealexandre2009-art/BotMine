@@ -227,6 +227,7 @@ export const CAMPOS = {
   hollowLigado: "Evento Hollow ligado",
   hollowInicio: "Evento Hollow: início (ms)",
   hollowFim: "Evento Hollow: fim (ms)",
+  hollowCofreCodigo: "Evento Hollow: código do cofre (4 dígitos)",
   hollowKitsuneDias: "Evento Hollow: dias de Kitsune dos 2 primeiros",
   hollowVentoLigado: "Evento Hollow: vento da casa ligado",
   hollowVentoRaio: "Evento Hollow: raio do vento (blocos)",

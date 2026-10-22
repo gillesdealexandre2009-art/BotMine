@@ -36,6 +36,13 @@
 - **Reutiliza:** a dungeon existente `[VERIFICAR qual sala é a mais isolada]`. Uma única sala basta: o fundo do abrigo serve de "arquivo" com a Mesa.
 - **Adicionar:** prateleiras com papéis (estantes), caixa de ferramentas, mesa grande com muitos papéis (Mesa de Hollow, um lectern ou mesa de cartografia).
 - **Registros:** D10 (jornal, item frame ou placa), D11 (ingresso), D12 (registro de ocorrência) e **D13 = a Mesa**.
+- **O cofre:** um baú, barril ou ender chest (só visual) numa sala do Abrigo, marcado em Evento Hollow > Cofres. Pode marcar **mais de um bloco** (ex.: um baú e um barril ao lado): todos abrem o mesmo formulário. D10, D11 e D12 moram em blocos próprios (estante, item frame, placa) e só abrem depois do cofre.
+- **Os 4 papelzinhos (P1 a P4):** esconda em **lugares onde ninguém olharia**, marcando cada um em Evento Hollow > Registros. Sugestões de esconderijos:
+  - P1: atrás de uma estante, num botão ou placa escondida perto da entrada do Abrigo.
+  - P2: embaixo de uma cama ou num barril no canto mais escuro.
+  - P3: num vaso ou pote (decorated pot, flower pot) em outra sala, ou sobre uma viga alta.
+  - P4: perto do fim: no corredor da Mesa, dentro de um item frame invisível ou numa placa de um canto.
+  - Pode espalhar também pela Casa e pelo Acampamento (o D09 só diz "onde só eu procuraria"), mas mantenha todos alcançáveis a pé e sem destruir blocos.
 - **Atmosfera:** pouca luz, ar parado, sem monstros por perto (se a dungeon tiver mobs, o evento só exige que a sala da Mesa esteja segura).
 
 ## 4. A Ponte · `[COORDENADAS DA PONTE]`

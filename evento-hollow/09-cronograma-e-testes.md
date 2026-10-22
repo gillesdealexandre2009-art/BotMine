@@ -26,7 +26,8 @@ Hoje: 21/10/2026 (quarta). Lançamento: 25/10 (domingo). Prioridade: **escopo m�
 ### Antes de testar
 - [ ] Packs instalados e atualizados (BP, RP e chat).
 - [ ] Locais marcados (casa, acampamento, abrigo, ponte).
-- [ ] Os 17 registros marcados (nenhum "vazio" no painel).
+- [ ] Os 17 registros e os 4 papelzinhos (P1 a P4) marcados (nenhum "vazio" no painel).
+- [ ] Cofre(s) marcado(s) em Evento Hollow > Cofres e código conferido em "Código do cofre" (padrão 2147).
 - [ ] Cargo de Halloween configurado no `/setup` e abaixo do cargo da Kiza.
 - [ ] Janela do evento ajustada para o teste (e restaurada depois).
 
@@ -38,6 +39,16 @@ Hoje: 21/10/2026 (quarta). Lançamento: 25/10 (domingo). Prioridade: **escopo m�
 - [ ] **Chuta a data errada** 7 vezes: recebe as 2 dicas, sem bloqueio.
 - [ ] **Acerta a data** (31/10/2019): destrava a Ponte e o mapa.
 - [ ] **Releitura:** o diário mostra de novo o texto e o link do áudio.
+
+### Cofre do Abrigo
+- [ ] **Antes de abrir o cofre:** D10, D11 e D12 mostram "Está dentro de uma caixa trancada..." sem o texto.
+- [ ] **Código errado:** nada acontece, sem punição; 3 s entre tentativas; dicas depois de 3 e 6 erros.
+- [ ] **Código certo:** mostra "Clique. A caixa abre..." e D10 a D12 passam a abrir; reabrir mostra só "A caixa já está aberta."
+- [ ] **Vários blocos de cofre** abrem o mesmo formulário.
+- [ ] **Papelzinhos:** cada um mostra o dígito certo; o diário mostra "Papelzinhos: X de 4" e eles não entram no "N de 17".
+- [ ] **Trocar o código** no painel muda os papelzinhos na hora; o código antigo deixa de abrir.
+- [ ] **Fora de ordem:** a Mesa (D13) abre sem o cofre; o ano só aparece no jornal (D10).
+- [ ] Depois de ler o D09 e antes de abrir o cofre, o botão **Dica** fala dos papelzinhos e do cofre.
 
 ### Vento
 - [ ] Aparece ao entrar no raio.

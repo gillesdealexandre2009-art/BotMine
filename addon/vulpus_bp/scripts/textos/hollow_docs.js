@@ -8,10 +8,10 @@
 /**
  * @typedef {Object} Registro
  * @property {string} id            código único (D01...D17)
- * @property {"casa"|"sotao"|"acampamento"|"abrigo"|"mesa"|"ponte"} local  onde o registro fica
+ * @property {"casa"|"sotao"|"acampamento"|"abrigo"|"mesa"|"ponte"|"escondido"} local  onde o registro fica
  * @property {string} titulo
  * @property {string} texto
- * @property {string[]} requer      ids de registros que precisam ter sido lidos antes (e/ou "enigma" = cronologia resolvida)
+ * @property {string[]} requer      ids de registros que precisam ter sido lidos antes (e/ou "enigma" = cronologia resolvida, "cofre" = cofre do abrigo aberto)
  * @property {boolean} chave        conta para a conclusão do evento
  * @property {string} [audio]       id do áudio (A1...A4) para o link configurado pela staff
  * @property {string} trancado      texto mostrado enquanto os requisitos não foram cumpridos (sem spoiler)
@@ -151,15 +151,16 @@ export const REGISTROS = [
     texto:
       "Guardei o que eu não consigo carregar no abrigo da colheita, debaixo da colina.\n\n" +
       "Abrigo: {coord:abrigo}\n\n" +
-      "Lá tem papéis de uma pessoa que passou por aqui. Não são meus. Não precisa ler. Mas guardei por via das dúvidas.",
+      "Lá tem papéis de uma pessoa que passou por aqui. Não são meus. Não precisa ler. Mas guardei por via das dúvidas.\n\n" +
+      "Os papéis estão trancados numa caixa de quatro números. Deixei cada número num papelzinho, em lugares onde só eu procuraria.",
   },
   {
     id: "D10",
     local: "abrigo",
     titulo: "Recorte de jornal",
     chave: true,
-    requer: [],
-    trancado: "",
+    requer: ["cofre"],
+    trancado: "Está dentro de uma caixa trancada. Procure o cofre do abrigo e o código.",
     texto:
       "GAZETA DE SALGUEIRAL\n1º de novembro de 2019\n\n" +
       "CAMINHONETE CAI DA PONTE DO SALGUEIRAL DURANTE A TEMPESTADE\n\n" +
@@ -173,8 +174,8 @@ export const REGISTROS = [
     local: "abrigo",
     titulo: "Ingresso da Festa da Colheita",
     chave: true,
-    requer: [],
-    trancado: "",
+    requer: ["cofre"],
+    trancado: "Está dentro de uma caixa trancada. Procure o cofre do abrigo e o código.",
     texto:
       "FESTA DA COLHEITA DE SALGUEIRAL\nEdição de outono\n\n" +
       "Entrada família (5 pessoas)\n" +
@@ -188,8 +189,8 @@ export const REGISTROS = [
     local: "abrigo",
     titulo: "Registro de ocorrência",
     chave: true,
-    requer: [],
-    trancado: "",
+    requer: ["cofre"],
+    trancado: "Está dentro de uma caixa trancada. Procure o cofre do abrigo e o código.",
     texto:
       "REGISTRO DE OCORRÊNCIA\n\n" +
       "Local: Ponte do Salgueiral\n" +
@@ -274,6 +275,42 @@ export const REGISTROS = [
       "Eu apaguei a luz da varanda.\n\n" +
       "Hollow",
   },
+  {
+    id: "P1",
+    local: "escondido",
+    titulo: "Papelzinho (1ª parte)",
+    chave: false,
+    requer: [],
+    trancado: "",
+    texto: "Um papelzinho dobrado, com a letra do Hollow:\n\n\"Primeira parte: {digito1}\"\n\nGuardei onde ninguém tropeça.",
+  },
+  {
+    id: "P2",
+    local: "escondido",
+    titulo: "Papelzinho (2ª parte)",
+    chave: false,
+    requer: [],
+    trancado: "",
+    texto: "Um papelzinho dobrado, com a letra do Hollow:\n\n\"Segunda parte: {digito2}\"\n\nEscondi onde a luz não chega.",
+  },
+  {
+    id: "P3",
+    local: "escondido",
+    titulo: "Papelzinho (3ª parte)",
+    chave: false,
+    requer: [],
+    trancado: "",
+    texto: "Um papelzinho dobrado, com a letra do Hollow:\n\n\"Terceira parte: {digito3}\"\n\nDeixei onde o vento passa e a mão não.",
+  },
+  {
+    id: "P4",
+    local: "escondido",
+    titulo: "Papelzinho (4ª parte)",
+    chave: false,
+    requer: [],
+    trancado: "",
+    texto: "Um papelzinho dobrado, com a letra do Hollow:\n\n\"Quarta parte: {digito4}\"\n\nEsta eu guardei perto do fim.",
+  },
 ];
 
 /** O enigma da Mesa de Hollow: a data em que a família "se perdeu" (dia, mês, ano). */
@@ -307,3 +344,16 @@ export const VENTO = Object.freeze([
   { ate: 6, texto: "O vento volta, mais frio, com cheiro de folhas molhadas. Parece que a casa estava esperando alguém." },
   { ate: 99, texto: "Dessa vez o vento não passa por você. Ele para, como quem escuta." },
 ]);
+
+/**
+ * O cofre do abrigo: guarda os papéis D10, D11 e D12. O código (4 dígitos) é configurável pela staff; os papelzinhos P1..P4
+ * mostram um dígito cada ({digito1}...{digito4} viram o código em vigor na hora da leitura).
+ */
+export const COFRE = Object.freeze({
+  id: "cofre",
+  codigoPadrao: "2147",
+  dicas: [
+    { depois: 3, texto: "Cada papelzinho que você encontrar tem uma parte do código: primeira, segunda, terceira e quarta." },
+    { depois: 6, texto: "O código tem 4 números, um por papelzinho. Procure em lugares onde ninguém olharia." },
+  ],
+});

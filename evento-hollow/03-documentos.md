@@ -32,6 +32,20 @@
 
 ---
 
+## O cofre do abrigo
+
+- **Código padrão:** `2147` (a staff pode trocar em Evento Hollow > Código do cofre; os papelzinhos mudam sozinhos).
+- **Guarda:** D10, D11 e D12 (trancados até abrir o cofre).
+- **Como abre:** botão direito num bloco marcado como cofre; formulário com o código de 4 números. Sem punição por erro (espera de 3 s).
+- **Dicas:**
+  - depois de 3 erros: Cada papelzinho que você encontrar tem uma parte do código: primeira, segunda, terceira e quarta.
+  - depois de 6 erros: O código tem 4 números, um por papelzinho. Procure em lugares onde ninguém olharia.
+- **Texto de sucesso:** Clique. A caixa abre. Dentro, papéis dobrados: um jornal, um ingresso, um registro. Agora você consegue lê-los.
+- **Já aberto:** A caixa já está aberta.
+- **Papelzinhos P1 a P4:** não contam para o "N de 17" nem para a conclusão; o diário mostra "Papelzinhos: X de 4". Em cada texto, `{digito1}` a `{digito4}` viram o dígito correspondente do código em vigor.
+
+---
+
 ## D01 · Bilhete na mesa da cozinha
 
 - **Local:** A Casa (térreo)
@@ -238,16 +252,19 @@ Guardei o que eu não consigo carregar no abrigo da colheita, debaixo da colina.
 Abrigo: {coord:abrigo}
 
 Lá tem papéis de uma pessoa que passou por aqui. Não são meus. Não precisa ler. Mas guardei por via das dúvidas.
+
+Os papéis estão trancados numa caixa de quatro números. Deixei cada número num papelzinho, em lugares onde só eu procuraria.
 ```
 
-## D10 · Recorte de jornal
+## D10 · Recorte de jornal 🔒
 
 - **Local:** O Abrigo (dungeon existente)
 - **Conta para a conclusão:** sim
-- **Dependências:** nenhuma
+- **Dependências:** cofre do abrigo aberto
 - **Momento narrativo:** Choque contido: um jornal coberto a caneta.
 - **Informação revelada:** O ano (2019) e que um jovem de 16 anos sobreviveu.
 - **Próxima pista:** Ler o ingresso e o registro.
+- **Texto enquanto trancado:** Está dentro de uma caixa trancada. Procure o cofre do abrigo e o código.
 
 **Texto completo:**
 
@@ -266,14 +283,15 @@ Um jovem de 16 anos foi localizado na margem, em estado de choque, e levado ao h
 [restante do texto coberto a caneta preta]
 ```
 
-## D11 · Ingresso da Festa da Colheita
+## D11 · Ingresso da Festa da Colheita 🔒
 
 - **Local:** O Abrigo (dungeon existente)
 - **Conta para a conclusão:** sim
-- **Dependências:** nenhuma
+- **Dependências:** cofre do abrigo aberto
 - **Momento narrativo:** Comoção: um ingresso com letra de criança no verso.
 - **Informação revelada:** Dia e mês (31 OUT).
 - **Próxima pista:** Chegar à Mesa de Hollow.
+- **Texto enquanto trancado:** Está dentro de uma caixa trancada. Procure o cofre do abrigo e o código.
 
 **Texto completo:**
 
@@ -289,14 +307,15 @@ PAGO
 "O Hollow ganha o último pedaço!"
 ```
 
-## D12 · Registro de ocorrência
+## D12 · Registro de ocorrência 🔒
 
 - **Local:** O Abrigo (dungeon existente)
 - **Conta para a conclusão:** sim
-- **Dependências:** nenhuma
+- **Dependências:** cofre do abrigo aberto
 - **Momento narrativo:** O mundo vira: ocupantes 5, sobrevivente 1.
 - **Informação revelada:** A hora (21h47) bate com o relógio da casa.
 - **Próxima pista:** Resolver a cronologia na Mesa.
+- **Texto enquanto trancado:** Está dentro de uma caixa trancada. Procure o cofre do abrigo e o código.
 
 **Texto completo:**
 
@@ -437,5 +456,81 @@ O casaco está dobrado aqui, na grade. Era o que a mãe mandou eu levar. Se algu
 Eu apaguei a luz da varanda.
 
 Hollow
+```
+
+## P1 · Papelzinho (1ª parte)
+
+- **Local:** Escondido no Abrigo (papelzinho do cofre)
+- **Conta para a conclusão:** não
+- **Dependências:** nenhuma
+- **Momento narrativo:** Curiosidade: um papelzinho dobrado, com a letra do Hollow.
+- **Informação revelada:** Primeiro dígito do código do cofre.
+- **Próxima pista:** Procurar os outros papelzinhos e o cofre.
+
+**Texto completo:**
+
+```
+Um papelzinho dobrado, com a letra do Hollow:
+
+"Primeira parte: {digito1}"
+
+Guardei onde ninguém tropeça.
+```
+
+## P2 · Papelzinho (2ª parte)
+
+- **Local:** Escondido no Abrigo (papelzinho do cofre)
+- **Conta para a conclusão:** não
+- **Dependências:** nenhuma
+- **Momento narrativo:** Curiosidade: o segundo papelzinho.
+- **Informação revelada:** Segundo dígito do código do cofre.
+- **Próxima pista:** Procurar o terceiro e o quarto.
+
+**Texto completo:**
+
+```
+Um papelzinho dobrado, com a letra do Hollow:
+
+"Segunda parte: {digito2}"
+
+Escondi onde a luz não chega.
+```
+
+## P3 · Papelzinho (3ª parte)
+
+- **Local:** Escondido no Abrigo (papelzinho do cofre)
+- **Conta para a conclusão:** não
+- **Dependências:** nenhuma
+- **Momento narrativo:** Curiosidade: o terceiro papelzinho.
+- **Informação revelada:** Terceiro dígito do código do cofre.
+- **Próxima pista:** Procurar o quarto.
+
+**Texto completo:**
+
+```
+Um papelzinho dobrado, com a letra do Hollow:
+
+"Terceira parte: {digito3}"
+
+Deixei onde o vento passa e a mão não.
+```
+
+## P4 · Papelzinho (4ª parte)
+
+- **Local:** Escondido no Abrigo (papelzinho do cofre)
+- **Conta para a conclusão:** não
+- **Dependências:** nenhuma
+- **Momento narrativo:** Resolução: o último papelzinho.
+- **Informação revelada:** Quarto dígito do código do cofre.
+- **Próxima pista:** Abrir o cofre e ler os papéis do abrigo.
+
+**Texto completo:**
+
+```
+Um papelzinho dobrado, com a letra do Hollow:
+
+"Quarta parte: {digito4}"
+
+Esta eu guardei perto do fim.
 ```
 

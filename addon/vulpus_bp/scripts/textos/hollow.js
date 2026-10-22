@@ -39,7 +39,20 @@ export const DICA_CONCLUIDO = "Você já reconstruiu a história. O resto é só
 
 /** Nome do local que falta (só o lugar, nunca o texto). @param {string[]} locais */
 export const FALTA_LOCAL = (locais) => `§7Você sente que ainda falta algo em: §f${locais.join(", ")}§7.`;
-export const NOME_LOCAL = Object.freeze({ casa: "Casa", sotao: "Casa", acampamento: "Acampamento", abrigo: "Abrigo", mesa: "Abrigo", ponte: "Ponte" });
+export const NOME_LOCAL = Object.freeze({ escondido: "Abrigo", casa: "Casa", sotao: "Casa", acampamento: "Acampamento", abrigo: "Abrigo", mesa: "Abrigo", ponte: "Ponte" });
+
+export const DICA_COFRE = "Os papéis do abrigo estão trancados. Procure papelzinhos escondidos e um cofre.";
+/** @param {number} x @param {number} total */
+export const LINHA_PAPELZINHOS = (x, total) => `§7Papelzinhos: §f${x} de ${total}`;
+
+// ------------------------------------------------------------------ cofre
+export const TITULO_COFRE = "O cofre";
+export const ROTULO_CODIGO = "Código (4 números)";
+export const COFRE_INVALIDO = "O código tem 4 números.";
+export const COFRE_ESPERA = "Espere um instante antes de tentar de novo.";
+export const COFRE_ERRADO = "§7Nada acontece. O código não é esse.";
+export const COFRE_ABERTO = "§7A caixa já está aberta.";
+export const COFRE_SUCESSO = "§aClique. A caixa abre. Dentro, papéis dobrados: um jornal, um ingresso, um registro. Agora você consegue lê-los.";
 
 // ------------------------------------------------------------------ enigma
 export const TITULO_ENIGMA = "A data";
@@ -73,11 +86,11 @@ export const SOM_VENTO = "ambient.cave";
 export const SO_STAFF = "Só a staff pode fazer isso.";
 export const SO_DONO = "Só um dono pode fazer isso.";
 export const TITULO_STAFF = "Evento Hollow";
-/** @param {{ ligado: boolean, inicio: string, fim: string, pontos: number, total: number, casa: boolean, concluidos: number, ventoLigado: boolean }} i */
+/** @param {{ ligado: boolean, inicio: string, fim: string, pontos: number, total: number, casa: boolean, concluidos: number, ventoLigado: boolean, cofres: number }} i */
 export const CORPO_STAFF = (i) =>
   [
     `§7Evento: ${i.ligado ? "§aligado" : "§cdesligado"}§7 · de §f${i.inicio}§7 a §f${i.fim}§7 (Brasília)`,
-    `§7Registros marcados: §f${i.pontos} de ${i.total}`,
+    `§7Registros e papelzinhos marcados: §f${i.pontos} de ${i.total} §7· cofres marcados: §f${i.cofres}`,
     `§7Casa (centro do vento): ${i.casa ? "§amarcada" : "§cnão marcada"}§7 · vento ${i.ventoLigado ? "§aligado" : "§cdesligado"}`,
     `§7Pessoas que concluíram: §f${i.concluidos}`,
   ].join("\n");
@@ -87,6 +100,23 @@ export const BOTAO_DATAS = "Datas do evento";
 export const BOTAO_LOCAIS = "Locais";
 export const BOTAO_REGISTROS = "Registros";
 export const BOTAO_AUDIOS = "Áudios";
+export const BOTAO_COFRES = "Cofres";
+export const BOTAO_CODIGO = "Código do cofre";
+export const TITULO_COFRES = "Cofres do abrigo";
+export const CORPO_COFRES = "§7Marque quantos blocos quiser: todos abrem o mesmo cofre (o código vale para todos). Nunca altero o bloco.";
+export const BOTAO_MARCAR_COFRE = "Marcar bloco que estou olhando";
+/** @param {number} n @param {{ x: number, y: number, z: number }} p */
+export const BOTAO_COFRE = (n, p) => `Cofre ${n}: ${formatarCoords(p)}`;
+/** @param {string} coords */
+export const COFRE_MARCADO = (coords) => `Cofre marcado em ${coords}.`;
+export const COFRE_REMOVIDO = "Cofre removido.";
+export const COFRE_JA_MARCADO = "Esse bloco já é um cofre.";
+export const COFRE_LIMITE = "Já há cofres demais marcados (50).";
+export const TITULO_CODIGO = "Código do cofre";
+export const ROTULO_CODIGO_NOVO = "Código (4 números; muda os papelzinhos)";
+export const CODIGO_INVALIDO = "O código precisa ter exatamente 4 números.";
+/** @param {string} c */
+export const CODIGO_SALVO = (c) => `Código do cofre: ${c}. Os papelzinhos já mostram os novos dígitos.`;
 export const BOTAO_VENTO = "Vento da casa";
 export const BOTAO_VENCEDORES = "Vencedores (dono)";
 export const BOTAO_RESETAR_JOGADOR = "Resetar progresso de uma pessoa (dono)";

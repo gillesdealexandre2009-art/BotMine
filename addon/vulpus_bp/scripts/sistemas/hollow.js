@@ -15,7 +15,7 @@ import { Lista, perguntar } from "../core/forms.js";
 import { online, TAG_SUMIDO } from "../core/jogadores.js";
 import { ehStaff } from "../core/permissoes.js";
 import { erro, formatarCoords, msg, nomeDimensao, registrarErro, rodarSeguro, som } from "../core/util.js";
-import { ENIGMA, MENSAGENS, REGISTROS, VENTO } from "../textos/hollow_docs.js";
+import { COFRE, ENIGMA, MENSAGENS, REGISTROS, VENTO } from "../textos/hollow_docs.js";
 import * as textos from "../textos/hollow.js";
 import { darConquista } from "./conquistas.js";
 import { emMinigame } from "./mg_estado.js";
@@ -28,6 +28,7 @@ import { emMinigame } from "./mg_estado.js";
 const CHAVE_PONTOS = "vulpus:hollow:pontos";
 const CHAVE_LOCAIS = "vulpus:hollow:locais";
 const CHAVE_AUDIOS = "vulpus:hollow:audios";
+const CHAVE_COFRES = "vulpus:hollow:cofres";
 const CHAVE_CONCLUSOES = "vulpus:hollow:conclusoes";
 /** Tag de quem concluiu (só lembrança, sem efeito no jogo). */
 export const TAG_HALLOWEEN = "vulpus:halloween2026";
@@ -45,6 +46,8 @@ const PASSO_VENTO = 20;
 const ABRINDO_TICKS = 10;
 const ALCANCE_MARCAR = 8;
 const MAX_CONCLUSOES = 300;
+const MAX_COFRES = 50;
+const ESPERA_COFRE_TICKS = 60;
 const MAX_LINK = 200;
 
 /** @type {Record<string, Ponto> | undefined} */
@@ -56,6 +59,58 @@ let indice = new Map();
 export function recarregar() {
   pontos = undefined;
   indice = new Map();
+  cofres = undefined;
+  indiceCofres = new Set();
+}
+
+/** @type {Ponto[] | undefined} */
+let cofres;
+/** @type {Set<string>} */
+let indiceCofres = new Set();
+
+/** Papelzinhos (P1...) não contam entre os registros "N de 17". @param {string} id */
+export const ehPapelzinho = (id) => /^P[0-9]$/.test(id);
+/** Os registros da história (sem os papelzinhos). */
+export const PRINCIPAIS = REGISTROS.filter((r) => !ehPapelzinho(r.id));
+export const PAPELZINHOS = REGISTROS.filter((r) => ehPapelzinho(r.id));
+
+/**
+ * Blocos que abrem o cofre (qualquer quantidade; todos abrem o mesmo formulário).
+ * @returns {Ponto[]}
+ */
+export function lerCofres() {
+  if (cofres) return cofres;
+  const bruto = lerMundo(CHAVE_COFRES, []);
+  /** @type {Ponto[]} */
+  const lista = [];
+  const visto = new Set();
+  for (const p of Array.isArray(bruto) ? bruto : []) {
+    if (!ehPonto(p)) continue;
+    const ponto = { d: p.d, x: Math.floor(p.x), y: Math.floor(p.y), z: Math.floor(p.z) };
+    if (visto.has(chaveBloco(ponto)) || lista.length >= MAX_COFRES) continue;
+    visto.add(chaveBloco(ponto));
+    lista.push(ponto);
+  }
+  cofres = lista;
+  indiceCofres = visto;
+  return cofres;
+}
+
+/**
+ * @param {Ponto[]} novo
+ * @returns {boolean}
+ */
+export function salvarCofres(novo) {
+  const ok = salvarMundo(CHAVE_COFRES, novo);
+  cofres = undefined;
+  indiceCofres = new Set();
+  return ok;
+}
+
+/** Código do cofre em vigor (4 dígitos; configuração quebrada volta ao padrão). */
+export function codigoCofre() {
+  const c = String(config().hollowCofreCodigo);
+  return /^[0-9]{4}$/.test(c) ? c : COFRE.codigoPadrao;
 }
 
 /** @param {any} p */
@@ -186,18 +241,19 @@ export function estadoEvento(agora = Date.now()) {
 /** @param {string} id */
 export const registroPorId = (id) => REGISTROS.find((r) => r.id === id);
 
-/** Troca {coord:casa} etc. pelas coordenadas marcadas pela staff. @param {string} texto */
+/** Troca {coord:casa} etc. pelas coordenadas da staff e {digito1}...{digito4} pelo código do cofre. @param {string} texto */
 export function resolverCoords(texto) {
   const locais = lerLocais();
-  return texto.replace(/\{coord:(\w+)\}/g, (_, nome) => {
+  const codigo = codigoCofre();
+  return texto.replace(/\{digito([1-4])\}/g, (_, n) => codigo[Number(n) - 1]).replace(/\{coord:(\w+)\}/g, (_, nome) => {
     const p = locais[nome];
     if (!p) return textos.SEM_COORD;
     return formatarCoords(p) + (p.d === "minecraft:overworld" ? "" : ` (${nomeDimensao(p.d)})`);
   });
 }
 
-/** @param {{ lidos: string[], enigma: boolean }} d @param {Registro} reg */
-const cumpre = (d, reg) => reg.requer.every((r) => (r === "enigma" ? d.enigma : d.lidos.includes(r)));
+/** @param {{ lidos: string[], enigma: boolean, cofre: boolean }} d @param {Registro} reg */
+const cumpre = (d, reg) => reg.requer.every((r) => (r === "enigma" ? d.enigma : r === "cofre" ? d.cofre : d.lidos.includes(r)));
 
 /** Registros chave que ainda faltam (sem o último). @param {{ lidos: string[] }} d */
 const faltamChave = (d) => REGISTROS.filter((r) => r.chave && r.id !== ID_FINAL && !d.lidos.includes(r.id));
@@ -294,6 +350,41 @@ export async function abrirRegistro(player, id, voltar) {
   if (reg.id === ID_MESA) await enigma(player);
   if (novo) await telaConclusao(player, novo.posicao);
   else if (reg.id === ID_FINAL && !jaTinha && estadoEvento() === "depois") msg(player, MENSAGENS.encerrado);
+}
+
+// ------------------------------------------------------------------------------------ cofre do abrigo
+/** Tick da última resposta de cada pessoa no cofre. @type {Map<string, number>} */
+const ultimaCofre = new Map();
+
+/**
+ * O cofre do abrigo: pede o código de 4 dígitos. Acertar libera D10, D11 e D12; errar só conta (dicas com 3 e 6 erros, sem punição).
+ * @param {Player} player
+ */
+export async function abrirCofre(player) {
+  if (!podeLer(player)) return;
+  if (dadosJogador(player).hollow.cofre) {
+    await new Lista(textos.TITULO_COFRE).texto(textos.COFRE_ABERTO).botao(textos.BOTAO_FECHAR, ICONES.sim).abrir(player);
+    return;
+  }
+  if (system.currentTick - (ultimaCofre.get(player.id) ?? -1e9) < ESPERA_COFRE_TICKS) return erro(player, textos.COFRE_ESPERA);
+  const r = await perguntar(player, textos.TITULO_COFRE, [{ tipo: "texto", rotulo: textos.ROTULO_CODIGO, dica: "0000" }]);
+  if (!r) return;
+  const tentado = String(r[0]).replace(/\s/g, "");
+  if (!/^[0-9]{4}$/.test(tentado)) return erro(player, textos.COFRE_INVALIDO);
+  ultimaCofre.set(player.id, system.currentTick);
+  if (tentado === codigoCofre()) {
+    editarJogador(player, (j) => {
+      j.hollow.cofre = true;
+    });
+    msg(player, textos.COFRE_SUCESSO);
+    await new Lista(textos.TITULO_COFRE).texto(textos.COFRE_SUCESSO).botao(textos.BOTAO_FECHAR, ICONES.sim).abrir(player);
+    return;
+  }
+  const erros = editarJogador(player, (j) => {
+    j.hollow.tentativasCofre += 1;
+  }).hollow.tentativasCofre;
+  msg(player, textos.COFRE_ERRADO);
+  for (const dica of COFRE.dicas) if (erros >= dica.depois) msg(player, `§e${dica.texto}`);
 }
 
 // ------------------------------------------------------------------------------------ enigma da mesa
@@ -435,7 +526,7 @@ export function pegarRelogio(player) {
 // ------------------------------------------------------------------------------------ diário
 /**
  * A dica do botão: uma frase, da etapa mais avançada para a menos, sem spoiler.
- * @param {{ lidos: string[], enigma: boolean, conclusao: number }} d
+ * @param {{ lidos: string[], enigma: boolean, conclusao: number, cofre?: boolean }} d
  */
 export function textoDica(d) {
   const leu = (/** @type {string[]} */ ids) => ids.some((i) => d.lidos.includes(i));
@@ -446,6 +537,7 @@ export function textoDica(d) {
   else if (leu(["D05", "D06", "D07", "D08", "D09"])) frase = textos.DICA_ACAMPAMENTO;
   else if (leu(["D03", "D04"])) frase = textos.DICA_SOTAO;
   else if (leu(["D01", "D02"])) frase = textos.DICA_CASA;
+  if (!d.conclusao && d.lidos.includes("D09") && !d.cofre) frase += `\n${textos.DICA_COFRE}`;
   if (d.conclusao === 0 && d.enigma && d.lidos.includes("D14") && d.lidos.includes("D16")) {
     const faltam = faltamChave(d);
     if (faltam.length) frase += `\n${textos.FALTA_LOCAL(locaisQueFaltam(faltam))}`;
@@ -464,7 +556,9 @@ export async function abrirDiario(player) {
   const st = estadoEvento();
   const audios = lerAudios();
   /** @type {string[]} */
-  const linhas = [textos.LINHA_PROGRESSO(d.lidos.filter((id) => registroPorId(id)).length, REGISTROS.length)];
+  const linhas = [textos.LINHA_PROGRESSO(d.lidos.filter((id) => registroPorId(id) && !ehPapelzinho(id)).length, PRINCIPAIS.length)];
+  const achados = d.lidos.filter(ehPapelzinho).length;
+  if (achados > 0) linhas.push(textos.LINHA_PAPELZINHOS(achados, PAPELZINHOS.length));
   if (d.conclusao > 0) linhas.push(textos.LINHA_CONCLUIDO(d.conclusao));
   if (st === "depois") linhas.push(textos.LINHA_ENCERRADO);
   if (st === "antes") linhas.push(textos.LINHA_AINDA_NAO);
@@ -502,9 +596,12 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     if (!ev.isFirstEvent) return;
     const b = ev.block;
     lerPontos();
-    if (indice.size === 0) return;
-    const id = indice.get(chaveBloco({ d: b.dimension.id, x: b.location.x, y: b.location.y, z: b.location.z }));
-    if (!id || estadoEvento() === "desligado") return;
+    lerCofres();
+    if (indice.size === 0 && indiceCofres.size === 0) return;
+    const chave = chaveBloco({ d: b.dimension.id, x: b.location.x, y: b.location.y, z: b.location.z });
+    const id = indice.get(chave);
+    const ehCofre = !id && indiceCofres.has(chave);
+    if ((!id && !ehCofre) || estadoEvento() === "desligado") return;
     if (ev.player.isSneaking && staffOuDono(ev.player)) return; // a staff agachada mexe no bloco normalmente
     ev.cancel = true;
     const player = ev.player;
@@ -512,7 +609,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     if (agora - (ultimaAbertura.get(player.id) ?? -1e9) < ABRINDO_TICKS) return;
     ultimaAbertura.set(player.id, agora);
     system.run(() => {
-      if (player.isValid) rodarSeguro(player, "Hollow: registro", (p) => abrirRegistro(p, id));
+      if (player.isValid) rodarSeguro(player, "Hollow: registro", (p) => (id ? abrirRegistro(p, id) : abrirCofre(p)));
     });
   } catch (e) {
     registrarErro("Hollow: interação", e);
@@ -540,7 +637,7 @@ function elegivelVento(p) {
  */
 function soprar(player) {
   try {
-    const n = dadosJogador(player).hollow.lidos.length;
+    const n = dadosJogador(player).hollow.lidos.filter((id) => !ehPapelzinho(id)).length;
     const tier = VENTO.find((v) => n <= v.ate) ?? VENTO[VENTO.length - 1];
     const texto = `§7§o${tier.texto}`;
     player.sendMessage(texto);
