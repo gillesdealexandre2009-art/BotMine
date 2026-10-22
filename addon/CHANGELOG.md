@@ -4,6 +4,15 @@ Textos prontos para colar no canal de changelog do Discord. O changelog da Kiza 
 
 ---
 
+## 22/10/2026: RTP mais seguro
+
+🦊 O RTP agora carrega os chunks do destino antes de te teleportar — chega de morrer caindo no vazio porque o chão não existia ainda!
+
+- O terreno é preparado uns **3 segundos antes** de você chegar, então tudo já está carregado quando a queda começa.
+- Se por algum motivo não der (limite de áreas ativas), funciona como antes — com a proteção de queda lenta.
+
+---
+
 ## 18/10/2026: Chat de voz por proximidade
 
 Olá, pessoal! 🎧 Agora dá para conversar com quem está perto de você, direto na call do Discord:
