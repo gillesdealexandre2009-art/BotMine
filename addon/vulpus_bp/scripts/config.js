@@ -275,9 +275,9 @@ export const PADROES = {
   spleefEficiencia: 5,
   spleefBolas: true,
   spleefRecargaBola: 3,
-  // Evento de Halloween "O Último Outono de Hollow" (editados em Staff > Evento Hollow). Datas em ms (25/10 00:00 a 31/10 23:59:59, Brasília).
+  // Evento de Halloween "O Último Outono de Hollow" (editados em Staff > Evento Hollow). Datas em ms (23/10 00:00 a 31/10 23:59:59, Brasília).
   hollowLigado: true,
-  hollowInicio: Date.UTC(2026, 9, 25, 3, 0, 0),
+  hollowInicio: Date.UTC(2026, 9, 23, 3, 0, 0),
   hollowFim: Date.UTC(2026, 10, 1, 2, 59, 59),
   hollowKitsuneDias: 30,
   // Código de 4 dígitos do cofre do abrigo (os papelzinhos P1..P4 mostram um dígito cada).
