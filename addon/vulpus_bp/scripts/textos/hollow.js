@@ -82,6 +82,12 @@ export const RELOGIO_NAO_AINDA = "O relógio só é entregue a quem concluiu a i
 /** Som discreto do vento (vanilla). */
 export const SOM_VENTO = "ambient.cave";
 
+// ------------------------------------------------------------------ áudios das leituras (sons do resource pack)
+/** @param {string} audio  A1..A4 */
+export const SOM_AUDIO = (audio) => `vulpus.hollow_${audio.toLowerCase()}`;
+export const BOTAO_OUVIR = "🎧 Ouvir a leitura";
+export const BOTAO_PARAR = "Parar o áudio";
+
 // ------------------------------------------------------------------ painel da staff
 export const SO_STAFF = "Só a staff pode fazer isso.";
 export const SO_DONO = "Só um dono pode fazer isso.";

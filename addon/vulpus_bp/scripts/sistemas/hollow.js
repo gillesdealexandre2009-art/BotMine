@@ -290,6 +290,29 @@ function marcarLido(player, id) {
 const linkDoRegistro = (reg) => (reg.audio ? lerAudios()[reg.audio] : undefined);
 
 /**
+ * Toca a leitura (som do resource pack, igual para quem ouve). Respeita o ajuste de sons da pessoa.
+ * @param {Player} player
+ * @param {string} audio  A1..A4
+ */
+function tocarAudio(player, audio) {
+  try {
+    pararAudio(player, audio);
+    som(player, textos.SOM_AUDIO(audio), { volume: 1 });
+  } catch (e) {
+    registrarErro("Hollow: áudio", e);
+  }
+}
+
+/** @param {Player} player @param {string} audio */
+function pararAudio(player, audio) {
+  try {
+    player.runCommand(`stopsound @s ${textos.SOM_AUDIO(audio)}`);
+  } catch {
+    // sem som tocando: nada a parar
+  }
+}
+
+/**
  * Mostra o texto do registro (sem marcar nada).
  * @param {Player} player
  * @param {Registro} reg
@@ -299,6 +322,17 @@ async function mostrarTexto(player, reg, voltar) {
   const link = linkDoRegistro(reg);
   const corpo = `§f${resolverCoords(reg.texto)}` + (link ? textos.LINHA_AUDIO_REGISTRO(link) : "");
   const lista = new Lista(reg.titulo).texto(corpo);
+  const audio = reg.audio;
+  if (audio) {
+    lista.botao(textos.BOTAO_OUVIR, ICONES.musica ?? ICONES.historico, async (p) => {
+      tocarAudio(p, audio);
+      await mostrarTexto(p, reg, voltar);
+    });
+    lista.botao(textos.BOTAO_PARAR, ICONES.nao, async (p) => {
+      pararAudio(p, audio);
+      await mostrarTexto(p, reg, voltar);
+    });
+  }
   if (!voltar) lista.botao(textos.BOTAO_FECHAR, ICONES.nao);
   await lista.voltar(voltar).abrir(player);
 }
@@ -344,6 +378,8 @@ export async function abrirRegistro(player, id, voltar) {
   }
   if (d.lidos.length === 0) msg(player, MENSAGENS.inicio);
   const jaTinha = d.lidos.includes(reg.id);
+  // Primeira vez que lê um registro com leitura em áudio (A2 vale para o D05 e o D07: toca só no primeiro): já começa a tocar.
+  if (reg.audio && !jaTinha && !REGISTROS.some((r) => r.audio === reg.audio && d.lidos.includes(r.id))) tocarAudio(player, reg.audio);
   if (reg.id !== ID_MESA || d.enigma) marcarLido(player, reg.id);
   const novo = tentarConcluir(player);
   await mostrarTexto(player, reg, reg.id === ID_MESA && !d.enigma ? undefined : voltar);
@@ -651,7 +687,9 @@ function soprar(player) {
 system.runInterval(() => {
   try {
     const cfg = config();
-    if (!cfg.hollowVentoLigado || estadoEvento() !== "aberto") return;
+    const st = estadoEvento();
+    // Antes do início só a staff e o dono sentem o vento (para testar o local da casa).
+    if (!cfg.hollowVentoLigado || (st !== "aberto" && st !== "antes")) return;
     const casa = lerLocais().casa;
     if (!casa) return;
     const agora = system.currentTick;
@@ -659,7 +697,7 @@ system.runInterval(() => {
     for (const p of online()) {
       let e = vento.get(p.id);
       if (!e) vento.set(p.id, (e = { dentro: false, ultimo: -1e9 }));
-      if (!elegivelVento(p) || p.dimension.id !== casa.d) {
+      if (!elegivelVento(p) || p.dimension.id !== casa.d || (st === "antes" && !staffOuDono(p))) {
         e.dentro = false;
         continue;
       }
