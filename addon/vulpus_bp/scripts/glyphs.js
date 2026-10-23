@@ -34,6 +34,7 @@ export const G = Object.freeze({
   TROFEU: "\uE234",
   GUERRA: "\uE235",
   CAVEIRA: "\uE236",
+  VASSOURA: "\uE237",
   TITULO: "\uE300\uE301\uE302\uE303\uE304",
 });
 

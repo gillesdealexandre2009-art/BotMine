@@ -1,12 +1,16 @@
 // @ts-check
 // Textos da limpeza automática (sistemas/limpeza.js e limpeza_staff.js). Tudo curto, em pt-BR.
+// O ícone da vassoura é o glyph próprio do resource pack (o emoji de vassoura não aparece no jogo).
+import { G, glyph } from "../glyphs.js";
 
-export const AVISO_30 = "§e✦ Limpeza do servidor em §f30 segundos§e: itens soltos e mobs hostis serão removidos.";
-export const AVISO_10 = "§e✦ Limpeza em §f10 segundos§e. Guarde o que estiver no chão!";
+const V = glyph(G.VASSOURA);
+
+export const AVISO_30 = `§e${V}§e Limpeza do servidor em §f30 segundos§e: itens soltos e mobs hostis serão removidos.`;
+export const AVISO_10 = `§e${V}§e Limpeza em §f10 segundos§e. Guarde o que estiver no chão!`;
 /** @param {number} n */
-export const CONTAGEM = (n) => (n > 0 ? `§e✦ Limpeza em §f${n}` : "§a✦ Limpando...");
+export const CONTAGEM = (n) => (n > 0 ? `§e${V}§e Limpeza em §f${n}` : `§a${V}§a Limpando...`);
 /** @param {number} itens @param {number} mobs */
-export const RESULTADO = (itens, mobs) => `§a✦ Limpeza feita: §f${itens} §aitens e §f${mobs} §amobs removidos.`;
+export const RESULTADO = (itens, mobs) => `§a${V}§a Limpeza feita: §f${itens} §aitens e §f${mobs} §amobs removidos.`;
 
 // Painel da staff
 export const TITULO = "Limpeza automática";

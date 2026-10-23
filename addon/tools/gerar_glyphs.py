@@ -434,6 +434,17 @@ www.wss
 .w.w.s.
 """
 
+# Limpeza (linha 3, coluna 7): vassoura do aviso da limpeza automática.
+VASSOURA = """
+......m
+.....m.
+....m..
+...nn..
+..yyYy.
+.yYyYy.
+yYyYy..
+"""
+
 # (linha, coluna) na folha E2 -> nome da constante em glyphs.js
 ICONES: dict[tuple[int, int], str] = {
     (0, 0): "BROTO",
@@ -466,6 +477,7 @@ ICONES: dict[tuple[int, int], str] = {
     (3, 4): "TROFEU",
     (3, 5): "GUERRA",
     (3, 6): "CAVEIRA",
+    (3, 7): "VASSOURA",
 }
 
 DESENHOS = {
@@ -499,6 +511,7 @@ DESENHOS = {
     "TROFEU": TROFEU,
     "GUERRA": GUERRA,
     "CAVEIRA": CAVEIRA,
+    "VASSOURA": VASSOURA,
 }
 
 SEM_CONTORNO = {"BARRA_CHEIA", "BARRA_VAZIA"}
