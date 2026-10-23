@@ -4,6 +4,24 @@
   "texture_data": {
     "vulpus_menu": {
       "textures": "textures/vulpus/itens/menu"
+    },
+    "vulpus_fragmento_alma": {
+      "textures": "textures/vulpus/itens/fragmento_alma"
+    },
+    "vulpus_ausente_helmet": {
+      "textures": "textures/vulpus/itens/ausente_helmet"
+    },
+    "vulpus_ausente_chestplate": {
+      "textures": "textures/vulpus/itens/ausente_chestplate"
+    },
+    "vulpus_ausente_leggings": {
+      "textures": "textures/vulpus/itens/ausente_leggings"
+    },
+    "vulpus_ausente_boots": {
+      "textures": "textures/vulpus/itens/ausente_boots"
+    },
+    "vulpus_varinha_lamento": {
+      "textures": "textures/vulpus/itens/varinha_lamento"
     }
   }
 }

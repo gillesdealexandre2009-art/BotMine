@@ -80,7 +80,11 @@ export const GRUPO_COMUNIDADE = "Canto comunitário";
 export const GRUPO_ERAS = "Eras";
 export const GRUPO_HOLLOW = "Evento Hollow (Halloween)";
 export const BOTAO_HOLLOW = "Evento Hollow";
-export const GRUPO_LIMPEZA = "Limpeza automática";
+export const GRUPO_ECOS = "Ecos dos Ausentes (evento)";
+export const BOTAO_ECOS = "Ecos dos Ausentes";
+export const BOTAO_IR_ECOS = "Ir para Ecos";
+export const GRUPO_ECOS_EQUIP = "Ecos dos Ausentes: equipamentos";
+export const GRUPO_LIMPEZA ="Limpeza automática";
 export const GRUPO_KITSUNE = "Kitsune: extras de estilo";
 export const GRUPO_GERAL = "Geral";
 /** Rótulos dos campos de configuração (as chaves são as de PADROES). */
@@ -232,6 +236,17 @@ export const CAMPOS = {
   hollowVentoLigado: "Evento Hollow: vento da casa ligado",
   hollowVentoRaio: "Evento Hollow: raio do vento (blocos)",
   hollowVentoEsperaSeg: "Evento Hollow: espera entre ventos (s)",
+  ecosLigado: "Ecos dos Ausentes: evento ligado",
+  ecosInicio: "Ecos dos Ausentes: início da janela (ms; edite pelo painel do evento)",
+  ecosFim: "Ecos dos Ausentes: fim da janela (ms; edite pelo painel do evento)",
+  ecosTetoCriaturas: "Ecos dos Ausentes: teto de criaturas vivas na dimensão",
+  ecosReaparecerSeg: "Ecos dos Ausentes: espera para uma criatura reaparecer (s)",
+  ecosDanoMin: "Ecos dos Ausentes: dano mínimo para ganhar o fragmento de uma elite ou chefe",
+  ecosEquipLigado: "Ecos dos Ausentes: varinha e conjunto ligados (desligado = itens ficam sem habilidade, continuam existindo)",
+  ecosVaraDano: "Ecos dos Ausentes: dano da varinha Lamento em mobs (2 = 1 coração)",
+  ecosVaraRecargaSeg: "Ecos dos Ausentes: recarga da varinha, em segundos",
+  ecosVaraPvp: "Ecos dos Ausentes: varinha pode ferir jogadores",
+  ecosBonusConjunto: "Ecos dos Ausentes: bônus do conjunto completo (sem dano de queda + brilho)",
   limpezaLigada: "Limpeza automática ligada",
   limpezaIntervaloMin: "Limpeza automática: intervalo (min, de 5 a 120)",
   limpezaItens: "Limpeza automática: remover itens soltos",

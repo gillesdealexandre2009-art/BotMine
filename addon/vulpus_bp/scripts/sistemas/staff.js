@@ -40,6 +40,7 @@ import { menuMusicaStaff } from "./musica_staff.js";
 import { menuXrayStaff } from "./xray.js";
 import { menuObras } from "./obras.js";
 import { menuHollowStaff } from "./hollow_staff.js";
+import { irParaEcos, menuEcosStaff } from "./ecos_staff.js";
 import { menuLimpezaStaff } from "./limpeza_staff.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -172,6 +173,11 @@ const FAIXAS = {
   mgEsperaSaidaSeg: [0, 600],
   abateMaxSimultaneos: [1, 20],
   abateEsperaSeg: [0, 60],
+  ecosVaraDano: [1, 40],
+  ecosVaraRecargaSeg: [1, 60],
+  ecosTetoCriaturas: [0, 60],
+  ecosReaparecerSeg: [10, 3600],
+  ecosDanoMin: [1, 100],
   xrayMinerios: [2, 50],
   xrayJanelaMin: [2, 60],
   xrayPct: [1, 100],
@@ -410,6 +416,8 @@ const GRUPOS = [
   { id: "inauguracao", cat: textos.BOTAO_FEIRA, titulo: textos.GRUPO_INAUGURACAO, icone: ICONES.ajustes, chaves: ["inauguracaoLigada"] },
   { id: "eras", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ERAS, icone: ICONES.tempo, chaves: ["erasTinta"] },
   { id: "hollow", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_HOLLOW, icone: ICONES.tempo, chaves: [], abrir: (p) => menuHollowStaff(p) },
+  { id: "ecos", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ECOS, icone: ICONES.tempo, chaves: [], abrir: (p) => menuEcosStaff(p) },
+  { id: "ecos_equip", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ECOS_EQUIP, icone: ICONES.ajustes, chaves: ["ecosEquipLigado", "ecosVaraDano", "ecosVaraRecargaSeg", "ecosVaraPvp", "ecosBonusConjunto"] },
   { id: "limpeza", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_LIMPEZA, icone: ICONES.apagar, chaves: [], abrir: (p) => menuLimpezaStaff(p) },
   { id: "kitsune", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_KITSUNE, icone: ICONES.apelido, chaves: ["kitsuneChegadaFx", "kitsuneChegadaMsg"] },
   { id: "geral", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao", "limiteMundo"] },
@@ -536,6 +544,8 @@ export async function menuStaff(player, voltar) {
     .botao(textos.BOTAO_MUNDO, ICONES.mundo, (p) => menuMundo(p, aqui))
     .botao(textos.BOTAO_OBRAS, ICONES.mundo, (p) => menuObras(p, aqui))
     .botao(textos.BOTAO_HOLLOW, ICONES.tempo, (p) => menuHollowStaff(p, aqui))
+    .botao(textos.BOTAO_ECOS, ICONES.tempo, (p) => menuEcosStaff(p, aqui))
+    .botao(textos.BOTAO_IR_ECOS, ICONES.spawn, (p) => irParaEcos(p))
     .botao(textos.BOTAO_CONFIG, ICONES.ajustes, (p) => menuConfig(p, aqui))
     .botao(textos.BOTAO_ITEM, ICONES.nova, (p) => {
       if (garantirItem(p) === "tinha") msg(p, textos.ITEM_JA_TEM);

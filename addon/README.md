@@ -384,6 +384,37 @@ Reduz lag: a cada 30 min (5 a 120, configurável) nas horas cheias de Brasília 
 - Ao subir o servidor nunca limpa na hora: a primeira é a próxima hora marcada.
 - Painel: Staff > Configurações > Limpeza automática (ligar, intervalo, itens, mobs, próxima e última, "Limpar agora" com aviso de 10 s; o dono também tem "sem aviso"). Chaves: `limpezaLigada`, `limpezaIntervaloMin`, `limpezaItens`, `limpezaMobs`. Sem comando novo. Código: `sistemas/limpeza.js`, `limpeza_staff.js`, `textos/limpeza.js`.
 
+## Ecos dos Ausentes: equipamentos permanentes
+
+Itens que continuam existindo depois do evento (2/11/2026), negociáveis no leilão. **IDs nunca mudam:** `vulpus:fragmento_alma`, `vulpus:ausente_helmet`, `vulpus:ausente_chestplate`, `vulpus:ausente_leggings`, `vulpus:ausente_boots`, `vulpus:varinha_lamento`.
+
+- **Receitas** (mesa de trabalho, só fragmentos): capacete 5 (`F.F/FFF`), peitoral 9 (3x3 cheio), calças 7 (`FFF/FF./F.F`), botas 5 (`.F./F.F/F.F`), varinha 8 (`.FF/FFF/FFF`). Total 34. Ficam em `vulpus_bp/recipes/`.
+- **Armadura:** proteção 3/8/6/3 (= 20, como a netherita), durabilidade 509/740/694/601 (~+25%), encantável, reparável com fragmento. A tag `minecraft:is_armor` faz o leilão listar como "armaduras".
+- **Varinha Lamento:** raio espectral de 20 blocos, dano mágico só em mobs (jogadores só com `ecosVaraPvp`), recarga de 4 s, 1 de durabilidade por uso (400). Não funciona em minigame nem nas dimensões `vulpus:*` (exceto `vulpus:ecos`).
+- **Conjunto completo (Passo dos Ausentes):** sem dano de queda e brilho discreto. Nada de combate, nada ligado a doação.
+- **Configuração:** Staff > Configurações > "Ecos dos Ausentes: equipamentos" (`ecosEquipLigado`, `ecosVaraDano`, `ecosVaraRecargaSeg`, `ecosVaraPvp`, `ecosBonusConjunto`).
+- **Desligar sem invalidar os itens:** `ecosEquipLigado` desligado tira só as habilidades; itens, receitas e leilão seguem iguais. O conteúdo temporário do evento (dimensão, criaturas, janela de 24 h) tem controles próprios e não mexe nestes arquivos.
+- **Arte:** `python tools/gerar_ecos_itens.py` refaz ícones, camadas de armadura, itens, attachables, receitas, `item_texture.json` e textos .lang.
+- **Teste:** `teste_ecos_equip.mjs` no mock.
+
+## Ecos dos Ausentes: evento
+
+Evento do Dia de Finados: uma dimensão própria (`vulpus:ecos`) aberta por **exatamente 24 h**, padrão **2/11/2026 00:05 a 3/11/2026 00:05** (Brasília). A pessoa atravessa um portal, conversa com os ecos da vila de Névoa-Velha, resolve enigmas, enfrenta algumas criaturas e junta até **16 Fragmentos de Alma** (13 objetivos, E01 a E13). Os fragmentos são o item permanente da seção acima. A história e as falas estão em `textos/ecos_docs.js` (e em `evento-ecos/01-historia.md`). Guia completo para o dono: `evento-ecos/03-implementacao.md`; testes e cronograma: `evento-ecos/04-checklist.md`.
+
+**Arquivos:** `sistemas/ecos.js` (janela, entrada/saída, objetivos, criaturas, morte e reaparecimento), `sistemas/ecos_staff.js` (painel), `sistemas/ecos_dimensao.js` (dimensão, construção do mapa, fog, sons), `sistemas/ecos_mapa.js` (o mapa das 4 áreas), `textos/ecos.js` e `textos/ecos_docs.js`; criaturas em `vulpus_bp/entities/ecos_*.json`, `vulpus_rp/entity/ecos_*.entity.json`, geradas por `python tools/gerar_ecos_criaturas.py` (texturas por script, geometria do próprio jogo, sem drops e sem XP). Sem comando novo: tudo pelo painel (Staff > Ecos dos Ausentes, ou Configurações > Ecos dos Ausentes).
+
+- **Janela:** tudo vem de datas absolutas (`ecosInicio`, `ecosFim`, em ms; o dono edita pelo painel). Reiniciar o servidor não reinicia o cronômetro. O estado (antes, aberto, depois) e os avisos já dados ficam gravados no mundo, só para não repetir avisos. A conferência é a cada 5 s: abre sozinha (aviso geral e aviso na dimensão), avisa 1 h, 10 min e 1 min antes do fim e, ao fechar, devolve ao spawn quem estiver lá e some com as criaturas. Fechar é só bloquear o acesso: a dimensão não é apagada. Staff e dono entram sempre (modo teste: falas funcionam, nada é recompensado fora da janela). Quem aparecer lá por outro meio (tp) fora da janela volta ao spawn na próxima conferência.
+- **Construir o mapa** (uma vez, antes do evento): Painel > Construir mapa. Roda aos poucos (10 ms por tick), com três áreas de ticking temporárias que são soltas no fim; se o servidor reiniciar no meio, o mesmo botão vira "Continuar construção" e retoma da última fase pronta. Nunca roda com a janela aberta. **Reconstruir** (só o dono, confirmação dupla) apaga e refaz tudo.
+- **Portais:** a staff marca com o bloco olhado a **entrada** (no spawn; a pessoa clica) e a **saída** (dentro da dimensão). Chegada: o Limiar (coordenadas do mapa). Botão "Ir para Ecos" no menu da staff.
+- **Objetivos:** um bloco marcado por objetivo (E01 a E13); clicar abre as falas, uma página por tela. Enigmas: opção errada só dá a pista e deixa tentar de novo. Cada objetivo dá os fragmentos **uma vez por pessoa** (`dadosJogador.ecos`, validado ao ler). `requer` mostra um texto neutro ("nada responde ainda"). Segredos (E03, E07, E11) são blocos comuns; elites e chefes vêm das criaturas.
+- **Criaturas:** `vulpus:ecos_errante` (comum), `ecos_sentinela` (elite, paga E09 ou E10 conforme o ponto), `ecos_memoria` (E12, muda de nome e partículas) e `ecos_testemunho` (E13; ao 50% de vida invoca 2 errantes e o fog da arena pesa). Pontos de aparição marcados pela staff (tipo, máximo vivo, objetivo da sentinela), **teto global** `ecosTetoCriaturas` (14), reaparecimento lento `ecosReaparecerSeg` (90 s). Quem causou ao menos `ecosDanoMin` (4) de dano leva o fragmento do objetivo quando ela morre, uma vez por pessoa. Nada cai das criaturas.
+- **Memória (E12) e Testemunho (E13):** clicar na criatura abre a conversa antes de lutar. E12: as duas respostas certas concluem sem luta; lutar também conclui. E13: soltar, guardar ou lutar dão os mesmos 3 fragmentos; muda só a última fala e o selo (`ecos_soltar` "Descanso", `ecos_guardar` "Memória", `ecos_lutar` "Vigília"), todos "Ecos dos Ausentes: ...".
+- **Morrer lá dentro:** reaparece na entrada do Limiar. Os fragmentos entregues pelo evento já nascem com `keepOnDeath`; além disso o script tira uma foto de `vulpus:fragmento_alma` e `vulpus:ausente_*` a cada 5 s (e a cada dano) e devolve o que faltar no reaparecimento, recolhendo o que caiu no chão perto da morte (limitação: se o chão não estiver carregado, o item solto some em 5 min).
+- **Atmosfera:** fog por área (`vulpus_rp/fogs/ecos_*`), visão noturna leve, sons só do jogo (`ambient.cave`, lamentos distantes de `mob.vex.ambient`, baixos e espaçados), partículas leves. Só roda com gente na dimensão.
+- **Dono:** datas, reconstruir o mapa e resetar o progresso de uma pessoa (confirmação; os fragmentos no inventário ficam).
+- **Configuração:** `ecosLigado`, `ecosInicio`, `ecosFim`, `ecosTetoCriaturas`, `ecosReaparecerSeg`, `ecosDanoMin`.
+- **Teste:** `teste_ecos.mjs` no mock.
+
 ## Comandos
 
 Os comandos funcionam com o `vulpus:` na frente e, na maioria, também sem ele (por exemplo, `/menu`). O `/hud` curto já é do jogo, então use sempre `/vulpus:hud`.

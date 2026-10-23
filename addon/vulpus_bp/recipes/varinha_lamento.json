@@ -1,0 +1,30 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "vulpus:varinha_lamento"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " FF",
+      "FFF",
+      "FFF"
+    ],
+    "key": {
+      "F": {
+        "item": "vulpus:fragmento_alma"
+      }
+    },
+    "unlock": [
+      {
+        "item": "vulpus:fragmento_alma"
+      }
+    ],
+    "result": {
+      "item": "vulpus:varinha_lamento",
+      "count": 1
+    }
+  }
+}

@@ -285,6 +285,19 @@ export const PADROES = {
   hollowVentoLigado: true,
   hollowVentoRaio: 24,
   hollowVentoEsperaSeg: 120,
+  // Ecos dos Ausentes: equipamentos permanentes (sistemas/ecos_equip.js; Staff > Configurações > Ecos dos Ausentes: equipamentos).
+  ecosEquipLigado: true,
+  ecosVaraDano: 6,
+  ecosVaraRecargaSeg: 4,
+  ecosVaraPvp: false,
+  ecosBonusConjunto: true,
+  // Ecos dos Ausentes: o evento (Staff > Ecos dos Ausentes). Janela de exatamente 24 h, em ms (2/11/2026 00:05 a 3/11/2026 00:05, Brasília).
+  ecosLigado: true,
+  ecosInicio: Date.UTC(2026, 10, 2, 3, 5, 0),
+  ecosFim: Date.UTC(2026, 10, 3, 3, 5, 0),
+  ecosTetoCriaturas: 14,
+  ecosReaparecerSeg: 90,
+  ecosDanoMin: 4,
   // Limpeza automática (itens soltos e mobs hostis), editada em Staff > Configurações > Limpeza automática.
   limpezaLigada: true,
   limpezaIntervaloMin: 30,

@@ -48,6 +48,7 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {number[]} inauguracao  números (0 a 19) das raposinhas do Evento de inauguração já achadas
  * @property {{ cap: number, tent: number, ate: number, fim: boolean }} arg  mistério da Vulpus: capítulos alcançados (0 a 6), tentativas no terminal, bloqueio até (ms) e se já passou
  * @property {{ lidos: string[], enigma: boolean, tentativas: number, conclusao: number, relogio: boolean, cofre: boolean, tentativasCofre: number }} hollow  evento Hollow: registros lidos (D01..., P1...), enigma resolvido, erros no enigma, cofre do abrigo aberto, erros no cofre, posição de conclusão (0 = não concluiu) e se pegou o relógio
+ * @property {{ feitos: string[], frag: number, escolha: string, entrou: boolean }} ecos  evento Ecos dos Ausentes: objetivos concluídos (E01...), fragmentos já ganhos, escolha final ("", "soltar", "guardar" ou "lutar") e se já entrou na dimensão
  * @property {Vinculo | null} vinculo  conta do Discord ligada (sistemas/vinculo.js); null = ainda não ligou
  * @property {SyncDiscord} sync  controle da soma de Caudas e XP com o Discord (sistemas/vinculo.js)
  */
@@ -127,6 +128,7 @@ function dadosNovos() {
     inauguracao: [],
     arg: { cap: 0, tent: 0, ate: 0, fim: false },
     hollow: hollowNovo(),
+    ecos: ecosNovo(),
     vinculo: null,
     sync: { baseC: 0, baseX: 0, pend: null },
   };
@@ -243,6 +245,7 @@ function completar(lido) {
     coresExtras: listaTexto(lido.coresExtras),
     arg: argLido(lido.arg),
     hollow: hollowLido(lido.hollow),
+    ecos: ecosLido(lido.ecos),
     vinculo: vinculoLido(lido.vinculo),
     sync: syncLido(lido.sync),
     inauguracao: Array.isArray(lido.inauguracao) ? [...new Set(/** @type {number[]} */ (lido.inauguracao).filter((n) => Number.isInteger(n) && n >= 0 && n < 100))] : base.inauguracao,
@@ -297,6 +300,24 @@ function hollowLido(v) {
     relogio: v.relogio === true,
     cofre: v.cofre === true,
     tentativasCofre: Math.min(n(v.tentativasCofre), 100000),
+  };
+}
+
+/** @returns {{ feitos: string[], frag: number, escolha: string, entrou: boolean }} */
+function ecosNovo() {
+  return { feitos: [], frag: 0, escolha: "", entrou: false };
+}
+
+/** Progresso do evento Ecos dos Ausentes: dado que falta ou veio estranho ganha o padrão. @param {any} v */
+function ecosLido(v) {
+  const base = ecosNovo();
+  if (!v || typeof v !== "object") return base;
+  const frag = Number.isFinite(v.frag) ? Math.max(0, Math.min(99, Math.floor(v.frag))) : 0;
+  return {
+    feitos: Array.isArray(v.feitos) ? [...new Set(v.feitos.filter((/** @type {unknown} */ t) => typeof t === "string" && /^E[0-9]{2}$/.test(t)))].slice(0, 30) : base.feitos,
+    frag,
+    escolha: v.escolha === "soltar" || v.escolha === "guardar" || v.escolha === "lutar" ? v.escolha : "",
+    entrou: v.entrou === true,
   };
 }
 

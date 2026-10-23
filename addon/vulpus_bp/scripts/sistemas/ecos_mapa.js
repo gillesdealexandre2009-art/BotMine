@@ -228,29 +228,45 @@ function helpers(p) {
 
 // ══════════════════════════════════════════════════ gerador principal
 
-/** @param {Pincel} p @param {(f: number, txt: string) => void} progresso */
-export function* construir(p, progresso) {
+/** Nomes das fases da obra, na ordem. A construção é retomável: quem terminou uma fase não a refaz. */
+export const FASES_MAPA = ["Limpando e base", "O Limiar", "Portão", "A Vila Silenciosa", "Passagem", "O Arquivo das Almas", "Corredor final", "O Último Testemunho"];
+
+/** Onde a pessoa chega ao entrar (coordenadas relativas à origem; é o mesmo ponto "spawn" do Limiar). */
+export const CHEGADA = Object.freeze({ x: 12, y: 1, z: 32 });
+
+/**
+ * @param {Pincel} p
+ * @param {(f: number, txt: string) => void} progresso
+ * @param {number} [desde]  primeira fase a fazer (as anteriores já estão prontas)
+ * @param {(fase: number) => void} [fasePronta]  chamado ao terminar cada fase
+ */
+export function* construir(p, progresso, desde = 0, fasePronta = () => {}) {
   const h = helpers(p);
-  const { F, S, ar } = h;
-
-  progresso(0, "Limpando");
-  for (let y = CAIXA.y2; y >= CAIXA.y1; y -= 4) {
-    F(CAIXA.x1, Math.max(y - 3, CAIXA.y1), CAIXA.z1, CAIXA.x2, y, CAIXA.z2, M.ar);
-    yield;
+  const { F } = h;
+  /** @type {[number, () => Generator<any, void, any>][]} fração do progresso ao começar a fase, gerador */
+  const fases = [
+    [0, function* () {
+      for (let y = CAIXA.y2; y >= CAIXA.y1; y -= 4) {
+        F(CAIXA.x1, Math.max(y - 3, CAIXA.y1), CAIXA.z1, CAIXA.x2, y, CAIXA.z2, M.ar);
+        yield;
+      }
+      F(CAIXA.x1, CAIXA.y1, CAIXA.z1, CAIXA.x2, CAIXA.y1, CAIXA.z2, M.bedrock);
+      F(CAIXA.x1, CAIXA.y1 + 1, CAIXA.z1, CAIXA.x2, -2, CAIXA.z2, M.barrier);
+      yield;
+    }],
+    [0.05, () => limiar(h)],
+    [0.22, () => portao(h)],
+    [0.25, () => vila(h)],
+    [0.55, () => passagem(h)],
+    [0.58, () => arquivo(h)],
+    [0.80, () => corredorFinal(h)],
+    [0.83, () => arena(h)],
+  ];
+  for (let i = Math.max(0, desde); i < fases.length; i++) {
+    progresso(fases[i][0], FASES_MAPA[i]);
+    yield* fases[i][1]();
+    fasePronta(i + 1);
   }
-
-  progresso(0.03, "Base");
-  F(CAIXA.x1, CAIXA.y1, CAIXA.z1, CAIXA.x2, CAIXA.y1, CAIXA.z2, M.bedrock);
-  F(CAIXA.x1, CAIXA.y1 + 1, CAIXA.z1, CAIXA.x2, -2, CAIXA.z2, M.barrier);
-  yield;
-
-  progresso(0.05, "O Limiar");         yield* limiar(h);
-  progresso(0.22, "Portão");           yield* portao(h);
-  progresso(0.25, "A Vila Silenciosa"); yield* vila(h);
-  progresso(0.55, "Passagem");         yield* passagem(h);
-  progresso(0.58, "O Arquivo das Almas"); yield* arquivo(h);
-  progresso(0.80, "Corredor final");   yield* corredorFinal(h);
-  progresso(0.83, "O Último Testemunho"); yield* arena(h);
   progresso(1, "Concluído");
 }
 
@@ -261,7 +277,7 @@ export function* construir(p, progresso) {
 // ════════════════════════════════════════════════════════════════════════════
 
 function* limiar(h) {
-  const { F, S, ar, arte, pendente, posteSoul, pilar, mosaico } = h;
+  const { F, S, ar, arte, pendente, posteSoul, pilar, mosaico, moldura } = h;
 
   // ── terreno base: grama com variação ──
   F(0, -1, 0, 65, -1, 65, M.terra);

@@ -6,6 +6,10 @@ export const CONQUISTAS = Object.freeze({
   cheguedo: { nome: "Chegou cedo hein!", cor: "§b" },
   branco: { nome: "Desperto no Branco", cor: "§f" },
   hollow: { nome: "O Último Outono", cor: "§6" },
+  // Ecos dos Ausentes: o mesmo selo, com o título mudando pela escolha final (soltar, guardar ou lutar).
+  ecos_soltar: { nome: "Ecos dos Ausentes: Descanso", cor: "§b" },
+  ecos_guardar: { nome: "Ecos dos Ausentes: Memória", cor: "§d" },
+  ecos_lutar: { nome: "Ecos dos Ausentes: Vigília", cor: "§c" },
   passos: { nome: "Raposinha Esperta", cor: "§6" },
 });
 

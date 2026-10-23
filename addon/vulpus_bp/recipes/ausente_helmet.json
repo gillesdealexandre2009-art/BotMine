@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "vulpus:ausente_helmet"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "F F",
+      "FFF"
+    ],
+    "key": {
+      "F": {
+        "item": "vulpus:fragmento_alma"
+      }
+    },
+    "unlock": [
+      {
+        "item": "vulpus:fragmento_alma"
+      }
+    ],
+    "result": {
+      "item": "vulpus:ausente_helmet",
+      "count": 1
+    }
+  }
+}

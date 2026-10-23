@@ -1,0 +1,75 @@
+# Ecos dos Ausentes: implementação e como montar o mundo
+
+Versão básica ("o básico, depois melhora"). O código está todo no addon; nada é preciso editar à mão. O dono monta tudo pelo painel dentro do jogo.
+
+## Arquivos
+
+| Arquivo (em `addon/`) | Para quê |
+|---|---|
+| `vulpus_bp/scripts/sistemas/ecos.js` | janela de 24 h, avisos, entrada e saída, objetivos e falas, fragmentos, criaturas, morte e reaparecimento |
+| `vulpus_bp/scripts/sistemas/ecos_staff.js` | painel Staff > Ecos dos Ausentes |
+| `vulpus_bp/scripts/sistemas/ecos_dimensao.js` | dimensão `vulpus:ecos`, construção do mapa, fog por região, sons e partículas |
+| `vulpus_bp/scripts/sistemas/ecos_mapa.js` | o mapa procedural das 4 áreas (Limiar, Vila, Arquivo, Arena) |
+| `vulpus_bp/scripts/textos/ecos.js` | textos de interface (painel, avisos, botões) |
+| `vulpus_bp/scripts/textos/ecos_docs.js` | história, falas, perguntas, fragmentos por objetivo e mensagens da janela |
+| `vulpus_bp/scripts/textos/conquistas.js` | selos `ecos_soltar`, `ecos_guardar`, `ecos_lutar` |
+| `vulpus_bp/entities/ecos_*.json`, `vulpus_rp/entity/ecos_*.entity.json` | as 4 criaturas (BP e cliente) |
+| `vulpus_bp/loot_tables/vulpus/ecos_vazio.json` | tabela de loot vazia (nada cai) |
+| `vulpus_rp/textures/vulpus/entidades/ecos_*.png` | texturas (geradas) |
+| `vulpus_rp/fogs/ecos_*.json` | fog de cada área |
+| `tools/gerar_ecos_criaturas.py` | refaz texturas e definições das criaturas |
+| `vulpus_bp/scripts/core/db.js` | campo `ecos` do progresso de cada pessoa (validado ao ler) |
+| `vulpus_bp/scripts/config.js` | `ecosLigado`, `ecosInicio`, `ecosFim`, `ecosTetoCriaturas`, `ecosReaparecerSeg`, `ecosDanoMin` |
+
+Dados no mundo (propriedades dinâmicas): `vulpus:ecos:construido`, `:progresso` (fases do mapa prontas), `:fase` (antes/aberto/depois + avisos dados), `:portais`, `:pontos` (objetivos), `:criaturas` (pontos de aparição), `:origem`. Progresso de cada pessoa: dentro do dado do jogador, campo `ecos` (`feitos`, `frag`, `escolha`, `entrou`).
+
+## Como a janela funciona
+
+- Tudo é calculado de `ecosInicio` e `ecosFim` (ms); **reiniciar o servidor não reinicia o cronômetro**. O estado gravado no mundo serve só para não repetir avisos.
+- A cada 5 s o script confere: abre sozinho (mensagem geral no chat de todos e aviso na dimensão), avisa 1 h, 10 min e 1 min antes, e ao fechar devolve ao spawn quem estiver lá e remove as criaturas. A dimensão não é apagada.
+- Fora da janela só staff e dono entram (para testar). Quem aparecer na dimensão por outro meio volta ao spawn.
+- Desligar `Ecos ligado` no painel tem o mesmo efeito de fechar.
+
+## Painel (Staff > Ecos dos Ausentes, ou Configurações > Ecos dos Ausentes)
+
+Mostra: estado, janela, tempo que falta, mapa (construído ou fases prontas), portais, objetivos marcados, pontos de criatura, criaturas vivas / teto, pessoas lá dentro, quantos **já entraram**, **fragmentos distribuídos** (soma) e quantos concluíram o final. Botões:
+
+| Botão | Quem | O que faz |
+|---|---|---|
+| Ir para Ecos | staff | teletransporta ao Limiar (também no menu principal da staff) |
+| Ligar / Desligar o evento | staff | `ecosLigado` |
+| Construir mapa / Continuar construção | staff | constrói em fases, só fora da janela; retoma se o servidor reiniciar |
+| Portais de entrada e saída | staff | marcar o bloco olhado, ir, remover |
+| Objetivos E01 a E13 | staff | lista com coordenadas ou `[vazio]`; marcar, ver as falas (prévia), ir, remover |
+| Criaturas | staff | adicionar ponto onde estou (tipo, quantas ao mesmo tempo, objetivo da sentinela), teto global, espera para reaparecer, dano mínimo, remover todas agora |
+| Atualizar números | staff | reabre o painel |
+| Datas da janela | **dono** | início e fim (AAAA-MM-DD hh:mm, Brasília); avisa se não forem 24 h |
+| Reconstruir mapa | **dono** | apaga e refaz, com confirmação dupla; recusa com a janela aberta |
+| Resetar progresso de uma pessoa | **dono** | zera objetivos, escolha, selos (fragmentos no inventário ficam) |
+
+## Passo a passo para o dono montar o mundo
+
+1. **Instalar os packs** (BP e RP) no servidor da BedHosting e **reiniciar** o servidor. A dimensão `vulpus:ecos` só é registrada na partida do servidor. Confira com um `/reload` ou no log: nada de erro vermelho do Vulpus.
+2. **Construir o mapa** (fora da janela, com pouca gente online): Staff > Ecos dos Ausentes > **Construir mapa**. A barra de ação mostra a fase e a porcentagem (8 fases). Leva alguns minutos. Se o servidor reiniciar no meio, o botão vira "Continuar construção". No final aparece "Mapa dos Ecos construído". Se aparecer a contagem de "blocos que não puderam ser colocados", veja o Content Log.
+3. **Conhecer o lugar:** botão **Ir para Ecos** (staff). Chega-se ao Limiar em (10012, 81, 10032). Passeie pelas 4 áreas.
+4. **Portais:** no spawn, escolha um bloco (um portal bonito, um ladrilho, uma placa) e, olhando para ele, use Portais > **Entrada** > Marcar o bloco que estou olhando. Dentro da dimensão, no Limiar (perto da chegada), faça igual com **Saída**. Clicar no bloco de entrada leva à dimensão; o de saída leva ao spawn. Staff agachada mexe nos blocos normalmente.
+5. **Objetivos:** vá a cada lugar sugerido (`01-historia.md`), olhe o bloco (a até 8 blocos) e use Objetivos > E0X > **Marcar o bloco que estou olhando**. Um bloco por objetivo; o bloco não é alterado. Use **Ver as falas** para conferir o texto e **Ir até lá** para voltar. Para E09 e E10 o bloco é só a dica; o fragmento vem da Sentinela (passo 6).
+6. **Criaturas:** em pé onde a criatura deve nascer, Criaturas > **Adicionar ponto onde estou**. Sugestão básica:
+   - 2 a 3 pontos de **Errante** (máx. 2 ou 3) em cada área;
+   - 1 ponto de **Sentinela** com objetivo **E09** e outro com **E10** (no Arquivo, perto dos altares);
+   - 1 ponto de **Memória Partida** (E12) no fim do Arquivo;
+   - 1 ponto de **Último Testemunho** (E13) no centro da arena.
+   O **teto global** (padrão 14) limita o total vivo na dimensão; o reaparecimento é lento (padrão 90 s). As criaturas só nascem com gente por perto e só durante a janela (ou com a staff lá dentro, para testar).
+7. **Testar** (veja `04-checklist.md`): o modo teste da staff mostra as falas fora da janela e não grava nada. Para testar de verdade com uma conta normal, o dono muda as datas para daqui a alguns minutos, joga e depois usa **Resetar progresso** nas contas de teste.
+8. **Datas finais:** Datas da janela: início `2026-11-02 00:05`, fim `2026-11-03 00:05` (já são o padrão). Confira se o painel mostra "24 h".
+9. **Abrir e fechar:** não precisa fazer nada. O evento abre sozinho às 00:05 de 2/11 e fecha às 00:05 de 3/11. Para fechar antes, desligue o evento (todos voltam ao spawn). Os reinícios agendados desse dia devem estar desligados (o dono já fez).
+10. **Depois do evento:** desligue o evento (ou deixe fechado). Fragmentos, armadura e varinha continuam existindo (ver `02-equipamentos.md`).
+
+## Como o jogo se comporta (para quem for dar suporte)
+
+- **Fragmentos:** entregues por objetivo, uma vez por pessoa. Inventário cheio: caem no chão aos pés da pessoa, e a conta já foi gravada.
+- **Morte lá dentro:** a pessoa reaparece na entrada do Limiar (se a janela estiver aberta). Os fragmentos entregues têm `keepOnDeath`; além disso, o script tira uma "foto" dos fragmentos e das peças `ausente_*` a cada 5 s e a cada dano e devolve o que faltar.
+- **Qualquer caminho de luta:** quem causou dano mínimo à elite, à Memória ou ao Testemunho até ela morrer leva o fragmento, uma vez por pessoa. Precisa estar online e a janela aberta.
+- **Reinício do servidor no meio:** as criaturas somem e voltam pelo ciclo; o progresso das pessoas e a janela continuam.
+- **Lag:** nada roda por tick; os ciclos são de 100 ticks e só trabalham quando alguém está na dimensão. A construção usa 10 ms por tick e solta as áreas de ticking no fim. O `limpeza.js` ignora dimensões `vulpus:*`.
+- **Limitação conhecida:** o conjunto de fragmentos soltos no chão ao morrer só é recolhido se o chão estiver carregado (perto de quem morreu, está); o resto vale a foto.

@@ -1,0 +1,181 @@
+// @ts-check
+// Equipamento permanente "Ecos dos Ausentes": varinha Lamento (raio espectral) e bônus do conjunto completo "Passo dos Ausentes"
+// (sem dano de queda e um brilho discreto). Os itens em si são data-driven (vulpus_bp/items, recipes) e continuam existindo e valendo
+// no leilão mesmo com o evento desligado: aqui só ficam as habilidades, que a staff liga/desliga em ecosEquipLigado.
+import { EntityDamageCause, EquipmentSlot, GameMode, system, world } from "@minecraft/server";
+import { config } from "../core/db.js";
+import { online, TAG_SUMIDO } from "../core/jogadores.js";
+import { msg, registrarErro } from "../core/util.js";
+import * as textos from "../textos/ecos_equip.js";
+import { emMinigame } from "./mg_estado.js";
+
+/** @typedef {import("@minecraft/server").Player} Player */
+
+export const ITEM_FRAGMENTO = "vulpus:fragmento_alma";
+export const ITEM_VARINHA = "vulpus:varinha_lamento";
+export const PECAS = {
+  [EquipmentSlot.Head]: "vulpus:ausente_helmet",
+  [EquipmentSlot.Chest]: "vulpus:ausente_chestplate",
+  [EquipmentSlot.Legs]: "vulpus:ausente_leggings",
+  [EquipmentSlot.Feet]: "vulpus:ausente_boots",
+};
+/** Dimensão do evento, onde a varinha vale mesmo sendo "vulpus:*". */
+const DIM_ECOS = "vulpus:ecos";
+export const ALCANCE = 20;
+/** De quantos em quantos ticks o brilho do conjunto é conferido (nada roda a cada tick). */
+const VARREDURA_TICKS = 40;
+/** Entidades que o raio ignora (nem tudo que existe no mundo é "mob"). */
+const IGNORAR = ["minecraft:item", "minecraft:xp_orb", "minecraft:armor_stand", "minecraft:npc", "minecraft:painting", "minecraft:arrow", "minecraft:boat"];
+
+/** Último tick de uso da varinha por jogador. @type {Map<string, number>} */
+const ultimoUso = new Map();
+
+/** @param {Player} p */
+const forDoJogoNormal = (p) => {
+  const dim = p.dimension.id;
+  return !(dim.startsWith("vulpus:") && dim !== DIM_ECOS);
+};
+
+/** @param {Player} p */
+const ausente = (p) => p.hasTag(TAG_SUMIDO) || p.getGameMode() === GameMode.Spectator;
+
+/**
+ * O conjunto completo está vestido?
+ * @param {Player} p
+ */
+export function temConjunto(p) {
+  const eq = p.getComponent("minecraft:equippable");
+  if (!eq) return false;
+  for (const [slot, id] of Object.entries(PECAS)) if (eq.getEquipment(/** @type {any} */ (slot))?.typeId !== id) return false;
+  return true;
+}
+
+/** O bônus vale para esta pessoa agora? @param {Player} p */
+function bonusAtivo(p) {
+  const c = config();
+  return c.ecosEquipLigado && c.ecosBonusConjunto && !ausente(p) && !emMinigame(p) && forDoJogoNormal(p) && temConjunto(p);
+}
+
+/**
+ * Dispara o raio da varinha. Devolve true se o raio saiu.
+ * @param {Player} p
+ * @returns {boolean}
+ */
+export function usarVarinha(p) {
+  const c = config();
+  if (!c.ecosEquipLigado || ausente(p)) return false;
+  if (emMinigame(p)) {
+    msg(p, textos.MINIGAME);
+    return false;
+  }
+  if (!forDoJogoNormal(p)) {
+    msg(p, textos.DIMENSAO);
+    return false;
+  }
+  const agora = system.currentTick;
+  const espera = Math.round(c.ecosVaraRecargaSeg * 20);
+  const ultimo = ultimoUso.get(p.id);
+  if (ultimo !== undefined && agora >= ultimo && agora - ultimo < espera) {
+    p.onScreenDisplay.setActionBar(textos.RECARGA(Math.ceil((espera - (agora - ultimo)) / 20)));
+    return false;
+  }
+  const eq = p.getComponent("minecraft:equippable");
+  const item = eq?.getEquipment(EquipmentSlot.Mainhand);
+  if (!eq || item?.typeId !== ITEM_VARINHA) return false;
+  ultimoUso.set(p.id, agora);
+
+  const origem = p.getHeadLocation();
+  const dir = p.getViewDirection();
+  const dim = p.dimension;
+  /** @type {{ entity: import("@minecraft/server").Entity, distance: number } | undefined} */
+  let alvo;
+  try {
+    for (const h of p.getEntitiesFromViewDirection({ maxDistance: ALCANCE, excludeTypes: IGNORAR })) {
+      const t = h.entity.typeId;
+      if (!h.entity.isValid) continue;
+      if (t === "minecraft:player" && !c.ecosVaraPvp) continue;
+      if (t.startsWith("vulpus:") && !t.startsWith("vulpus:ecos_")) continue;
+      alvo = h;
+      break;
+    }
+  } catch (e) {
+    registrarErro("Ecos: raio da varinha", e);
+  }
+  const alcance = alvo ? alvo.distance : ALCANCE;
+  try {
+    for (let d = 1.5; d <= alcance; d += 1) {
+      dim.spawnParticle("minecraft:endrod", { x: origem.x + dir.x * d, y: origem.y - 0.15 + dir.y * d, z: origem.z + dir.z * d });
+    }
+    dim.playSound("mob.vex.charge", origem, { volume: 0.8, pitch: 1.4 });
+  } catch (e) {
+    registrarErro("Ecos: efeitos da varinha", e);
+  }
+  if (alvo) {
+    try {
+      alvo.entity.applyDamage(c.ecosVaraDano, { cause: EntityDamageCause.magic, damagingEntity: p });
+      const l = alvo.entity.location;
+      dim.spawnParticle("minecraft:basic_crit_particle", { x: l.x, y: l.y + 1, z: l.z });
+    } catch (e) {
+      registrarErro("Ecos: dano da varinha", e);
+    }
+  }
+  gastar(p, item, eq);
+  return true;
+}
+
+/**
+ * Gasta 1 de durabilidade (não gasta no criativo); quebra ao zerar.
+ * @param {Player} p
+ * @param {import("@minecraft/server").ItemStack} item
+ * @param {import("@minecraft/server").EntityEquippableComponent} eq
+ */
+function gastar(p, item, eq) {
+  if (p.getGameMode() === GameMode.Creative) return;
+  const dur = item.getComponent("durability");
+  if (!dur) return;
+  dur.damage += 1;
+  if (dur.damage >= dur.maxDurability) {
+    eq.setEquipment(EquipmentSlot.Mainhand, undefined);
+    msg(p, textos.QUEBROU);
+    p.playSound("random.break");
+  } else {
+    eq.setEquipment(EquipmentSlot.Mainhand, item);
+  }
+}
+
+world.afterEvents.itemUse.subscribe(({ source, itemStack }) => {
+  try {
+    if (itemStack?.typeId !== ITEM_VARINHA || source?.typeId !== "minecraft:player") return;
+    usarVarinha(source);
+  } catch (e) {
+    registrarErro("Ecos: uso da varinha", e);
+  }
+});
+
+// Sem dano de queda com o conjunto completo (só confere a roupa quando a queda acontece de verdade).
+world.beforeEvents.entityHurt.subscribe((ev) => {
+  try {
+    if (ev.damageSource.cause !== EntityDamageCause.fall) return;
+    const p = ev.hurtEntity;
+    if (p.typeId !== "minecraft:player") return;
+    if (bonusAtivo(/** @type {Player} */ (p))) ev.cancel = true;
+  } catch (e) {
+    registrarErro("Ecos: queda do conjunto", e);
+  }
+});
+
+// Brilho discreto de quem veste o conjunto completo, a cada 2 s; desligado, não toca em ninguém.
+system.runInterval(() => {
+  try {
+    if (!config().ecosEquipLigado || !config().ecosBonusConjunto) return;
+    for (const p of online()) {
+      if (!p.isValid || !bonusAtivo(p)) continue;
+      const l = p.location;
+      p.dimension.spawnParticle("minecraft:endrod", { x: l.x + (Math.random() - 0.5) * 0.8, y: l.y + 0.2 + Math.random() * 1.4, z: l.z + (Math.random() - 0.5) * 0.8 });
+    }
+  } catch (e) {
+    registrarErro("Ecos: brilho do conjunto", e);
+  }
+}, VARREDURA_TICKS);
+
+world.afterEvents.playerLeave.subscribe(({ playerId }) => void ultimoUso.delete(playerId));

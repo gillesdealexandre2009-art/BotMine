@@ -1,262 +1,482 @@
 // @ts-check
-// Dimensão "Ecos dos Ausentes". Registra a dimensão customizada, controla construção,
-// entrada/saída de jogadores e efeitos por região (fog, som, etc.).
-// Segue o mesmo padrão do Intervalo: dimensão void, construção procedural, guarda-volumes.
-
+// Dimensão "Ecos dos Ausentes" (vulpus:ecos): registro, construção do mapa (feita UMA vez, antes do evento, por botão da staff:
+// aos poucos, com área de ticking temporária, retomável) e a atmosfera de dentro (fog por região, sons e partículas discretos).
+// Quem decide quando abre, quem entra e os objetivos é o sistemas/ecos.js; aqui só há o "lugar".
 import { system, world } from "@minecraft/server";
-import { config, lerMundo, salvarMundo } from "../core/db.js";
+import { lerMundo, salvarMundo } from "../core/db.js";
+import { erro, ok, registrarErro, som } from "../core/util.js";
+import { CAIXA, CHEGADA, construir, FASES_MAPA, REG } from "./ecos_mapa.js";
 import { PincelMundo } from "./obras_pincel.js";
-import { CAIXA, construir, PONTOS, REG } from "./ecos_mapa.js";
+import { localSpawn } from "./spawn.js";
+import * as textos from "../textos/ecos.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {import("@minecraft/server").Dimension} Dimension */
+/** @typedef {{ x: number, y: number, z: number }} Ponto3 */
 
-// ───────────────────────────────────────────── constantes
 export const DIM_ECOS = "vulpus:ecos";
 const CHAVE_CONSTRUIDO = "vulpus:ecos:construido";
+const CHAVE_PROGRESSO = "vulpus:ecos:progresso";
 const CHAVE_ORIGEM = "vulpus:ecos:origem";
-const ORCAMENTO_MS = 10;
-const AREA_TICKING = "vulpus_ecos_build";
+const AREAS = ["vulpus_ecos_obra_a", "vulpus_ecos_obra_b", "vulpus_ecos_obra_c"];
+/** O jogo corta fillBlocks acima de 32768 blocos por chamada. */
+const MAX_BLOCOS_FILL = 30000;
+const ORIGEM_PADRAO = Object.freeze({ x: 10000, y: 80, z: 10000 });
+/** Conferências de atmosfera (ticks). Nada roda se não há ninguém na dimensão. */
+const PASSO_FOG = 20;
+const PASSO_VISAO = 200;
+const PASSO_SOM = 40;
+const PASSO_PARTICULAS = 40;
 
-const ORIGEM_PADRAO = { x: 10000, y: 80, z: 10000 };
+/** Ajustes dos testes (orçamento da construção em ms por tick). */
+export const ajustes = { orcamentoMs: 10 };
 
-// ───────────────────────────────────────────── registro da dimensão
+// ------------------------------------------------------------------------------------ registro da dimensão
+let dimensaoRegistrada = false;
+let erroDimensao = "";
+// A dimensão só pode ser registrada na partida do sistema (startup).
 system.beforeEvents.startup.subscribe(({ dimensionRegistry }) => {
-  dimensionRegistry.registerCustomDimension(DIM_ECOS);
+  if (!dimensionRegistry) return;
+  try {
+    dimensionRegistry.registerCustomDimension(DIM_ECOS);
+    dimensaoRegistrada = true;
+  } catch (e) {
+    erroDimensao = String(e);
+  }
 });
 
-// ───────────────────────────────────────────── estado de construção
-/** @type {{ ocupado: boolean, fase: string, pct: number }} */
-const cons = { ocupado: false, fase: "", pct: 0 };
-
-export const estadoConstrucao = () => ({ ...cons });
-export const ecosConstruido = () => !!lerMundo(CHAVE_CONSTRUIDO, false);
-
-/** @returns {{ x: number, y: number, z: number }} */
-export function origemEcos() {
-  return lerMundo(CHAVE_ORIGEM, ORIGEM_PADRAO);
-}
-
-// ───────────────────────────────────────────── construção procedural
-
-/**
- * Inicia a construção da dimensão Ecos dos Ausentes.
- * @param {Player} [quem] staff que disparou
- * @returns {Promise<boolean>}
- */
-export async function construirEcos(quem) {
-  if (cons.ocupado) return false;
-  cons.ocupado = true;
-  cons.fase = "Preparando";
-  cons.pct = 0;
-
-  const o = origemEcos();
-  const dim = world.getDimension(DIM_ECOS);
-
-  // Área de ticking para manter chunks carregados durante a construção
-  try { dim.runCommand(`tickingarea remove ${AREA_TICKING}`); } catch { /* não existia */ }
+/** A dimensão, ou undefined se o mundo não a tem. */
+export function dimEcos() {
   try {
-    dim.runCommand(
-      `tickingarea add ${o.x + CAIXA.x1} ${o.y + CAIXA.y1} ${o.z + CAIXA.z1} ` +
-      `${o.x + CAIXA.x2} ${o.y + CAIXA.y2} ${o.z + CAIXA.z2} ${AREA_TICKING} true`,
-    );
+    return world.getDimension(DIM_ECOS);
   } catch {
-    // Área muito grande — usar circle
-    const cx = o.x + Math.floor((CAIXA.x1 + CAIXA.x2) / 2);
-    const cz = o.z + Math.floor((CAIXA.z1 + CAIXA.z2) / 2);
-    try { dim.runCommand(`tickingarea add circle ${cx} ${o.y} ${cz} 10 ${AREA_TICKING} true`); } catch { /* ok */ }
+    return undefined;
   }
-
-  // Esperar chunks carregarem
-  await new Promise((r) => system.runTimeout(() => r(undefined), 200));
-
-  return new Promise((resolve) => {
-    rodar(dim, o, (p, progresso) => construir(p, progresso), () => {
-      salvarMundo(CHAVE_CONSTRUIDO, true);
-      try { dim.runCommand(`tickingarea remove ${AREA_TICKING}`); } catch { /* ok */ }
-      cons.ocupado = false;
-      cons.fase = "Concluído";
-      cons.pct = 1;
-      resolve(true);
-    });
-  });
 }
 
-/**
- * @param {Dimension} dim
- * @param {{ x: number, y: number, z: number }} o
- * @param {(p: import("./obras_pincel.js").Pincel, progresso: (f: number, txt: string) => void) => Generator} fabricar
- * @param {() => void} aoTerminar
- */
-function rodar(dim, o, fabricar, aoTerminar) {
-  const pincel = new PincelMundo(dim);
+/** Para o diagnóstico. */
+export const diagnosticoEcos = () => ({ registrada: dimensaoRegistrada, erro: erroDimensao, pronta: !!dimEcos() });
 
-  // Wrapper que soma a origem a todas as coordenadas
-  /** @type {import("./obras_pincel.js").Pincel} */
-  const proxy = {
-    fill: (x1, y1, z1, x2, y2, z2, id) => pincel.fill(o.x + x1, o.y + y1, o.z + z1, o.x + x2, o.y + y2, o.z + z2, id),
-    set: (x, y, z, id, est) => pincel.set(o.x + x, o.y + y, o.z + z, id, est),
-    id: (x, y, z) => pincel.id(o.x + x, o.y + y, o.z + z),
-    superficie: (x, z) => pincel.superficie(o.x + x, o.z + z),
-    existe: (id) => pincel.existe(id),
-    placa: (x, y, z, linhas) => pincel.placa(o.x + x, o.y + y, o.z + z, linhas),
-    get ops() { return pincel.ops; },
-    set ops(v) { pincel.ops = v; },
-    get falhas() { return pincel.falhas; },
-    get semChao() { return pincel.semChao; },
-    get primeiraFalha() { return pincel.primeiraFalha; },
-  };
+/** @param {Player} p */
+export const naDimensao = (p) => p.dimension.id === DIM_ECOS;
 
-  const progresso = (/** @type {number} */ f, /** @type {string} */ txt) => {
-    cons.pct = f;
-    cons.fase = txt;
-  };
-
-  const gen = fabricar(proxy, progresso);
-  const tick = system.runInterval(() => {
-    const t0 = Date.now();
-    try {
-      while (Date.now() - t0 < ORCAMENTO_MS) {
-        const r = gen.next();
-        if (r.done) { system.clearRun(tick); aoTerminar(); return; }
-      }
-    } catch (e) {
-      console.warn(`[ECOS] erro na construção: ${e}`);
-    }
-  }, 1);
+/** Quem está lá dentro agora (só pergunta à dimensão, não ao mundo todo). @returns {Player[]} */
+export function jogadoresNosEcos() {
+  try {
+    return dimEcos()?.getPlayers() ?? [];
+  } catch {
+    return [];
+  }
 }
 
-// ───────────────────────────────────────────── entrada e saída de jogadores
+// ------------------------------------------------------------------------------------ origem e chegada
+export const ecosConstruido = () => lerMundo(CHAVE_CONSTRUIDO, false) === true;
 
-/**
- * Teleporta o jogador para a dimensão Ecos e guarda o inventário.
- * @param {Player} player
- */
-export function entrarNosEcos(player) {
-  if (!ecosConstruido()) return false;
+/** Quantas fases do mapa já estão prontas (para retomar). */
+export function fasesProntas() {
+  const n = lerMundo(CHAVE_PROGRESSO, 0);
+  return Number.isInteger(n) && n >= 0 && n <= FASES_MAPA.length ? n : 0;
+}
+
+/** @returns {Ponto3} */
+export function origemEcos() {
+  const o = lerMundo(CHAVE_ORIGEM, ORIGEM_PADRAO);
+  return o && [o.x, o.y, o.z].every((n) => Number.isInteger(n)) ? { x: o.x, y: o.y, z: o.z } : { ...ORIGEM_PADRAO };
+}
+
+/** Onde a pessoa aparece ao entrar: o Limiar (coordenadas do mapa). @returns {{ x: number, y: number, z: number, d: string, ry: number }} */
+export function chegadaEcos() {
   const o = origemEcos();
-  const spawn = PONTOS.find((pt) => pt.t === "spawn");
-  const destX = o.x + (spawn?.x ?? 10);
-  const destY = o.y + (spawn?.y ?? 1);
-  const destZ = o.z + (spawn?.z ?? 28);
-  player.teleport({ x: destX, y: destY, z: destZ }, { dimension: world.getDimension(DIM_ECOS) });
-  return true;
+  return { x: o.x + CHEGADA.x + 0.5, y: o.y + CHEGADA.y, z: o.z + CHEGADA.z + 0.5, d: DIM_ECOS, ry: -90 };
 }
 
-/**
- * Devolve o jogador ao spawn do Overworld.
- * @param {Player} player
- */
-export function sairDosEcos(player) {
-  const ow = world.getDimension("minecraft:overworld");
-  const spawnLocal = world.getDefaultSpawnLocation();
-  player.teleport({ x: spawnLocal.x, y: spawnLocal.y + 1, z: spawnLocal.z }, { dimension: ow });
-}
-
-// ───────────────────────────────────────────── fog por região
+/** Posição relativa ao mapa (para as marcações em coordenadas do mapa, se um dia precisar). @param {Ponto3} p */
+export const relativoAoMapa = (p) => {
+  const o = origemEcos();
+  return { x: Math.floor(p.x) - o.x, y: Math.floor(p.y) - o.y, z: Math.floor(p.z) - o.z };
+};
 
 /**
  * @param {Player} player
  * @returns {typeof REG[number] | undefined}
  */
 export function regiaoDoJogador(player) {
-  if (player.dimension.id !== DIM_ECOS) return undefined;
-  const o = origemEcos();
-  const rx = Math.floor(player.location.x) - o.x;
-  const rz = Math.floor(player.location.z) - o.z;
-  return REG.find((r) => rx >= r.x1 && rx <= r.x2 && rz >= r.z1 && rz <= r.z2);
+  if (!naDimensao(player)) return undefined;
+  const { x, z } = relativoAoMapa(player.location);
+  return REG.find((r) => x >= r.x1 && x <= r.x2 && z >= r.z1 && z <= r.z2);
 }
 
-/** @type {Map<string, string>} jogador -> último fog aplicado */
+/** Devolve uma pessoa ao spawn do mundo (sem as regras de teleporte: é uma saída forçada). @param {Player} player */
+export function mandarParaSpawn(player) {
+  try {
+    const s = localSpawn();
+    if (s) player.teleport({ x: s.x, y: s.y, z: s.z }, { dimension: world.getDimension(s.d) });
+    else {
+      const d = world.getDefaultSpawnLocation();
+      player.teleport({ x: d.x + 0.5, y: Math.max(d.y, 64), z: d.z + 0.5 }, { dimension: world.getDimension("minecraft:overworld") });
+    }
+    return true;
+  } catch (e) {
+    registrarErro("Ecos: mandar para o spawn", e);
+    return false;
+  }
+}
+
+// ------------------------------------------------------------------------------------ construção
+/** @type {{ ocupado: boolean, fase: string, pct: number, falhas: number }} */
+const cons = { ocupado: false, fase: "", pct: 0, falhas: 0 };
+
+/** Estado para o painel e os testes. */
+export const estadoConstrucao = () => ({
+  ocupado: cons.ocupado,
+  fase: cons.fase,
+  pct: Math.round(cons.pct * 100),
+  falhas: cons.falhas,
+  prontas: fasesProntas(),
+  total: FASES_MAPA.length,
+  construido: ecosConstruido(),
+});
+
+/** As áreas ficam em três fatias do mapa (cada uma abaixo do limite de chunks por área). @param {number} i @param {Ponto3} o */
+function caixaDaArea(i, o) {
+  const largura = CAIXA.x2 - CAIXA.x1 + 1;
+  const parte = Math.ceil(largura / AREAS.length);
+  const x1 = CAIXA.x1 + i * parte - (i === 0 ? 2 : 0);
+  const x2 = Math.min(CAIXA.x2, CAIXA.x1 + (i + 1) * parte - 1) + (i === AREAS.length - 1 ? 2 : 0);
+  return {
+    from: { x: o.x + x1, y: Math.max(-64, o.y + CAIXA.y1 - 3), z: o.z + CAIXA.z1 - 2 },
+    to: { x: o.x + x2, y: Math.min(319, o.y + CAIXA.y2 + 3), z: o.z + CAIXA.z2 + 2 },
+  };
+}
+
+/** @param {Dimension} dim @param {Ponto3} o */
+async function criarAreas(dim, o) {
+  const g = world.tickingAreaManager;
+  try {
+    for (let i = 0; i < AREAS.length; i++) {
+      if (g.getTickingArea(AREAS[i])) g.removeTickingArea(AREAS[i]);
+      await g.createTickingArea(AREAS[i], { dimension: dim, ...caixaDaArea(i, o) });
+    }
+    return true;
+  } catch (e) {
+    registrarErro("Ecos: áreas de ticking", e);
+    return false;
+  }
+}
+
+/** Solta as áreas de ticking da obra (também ao ligar o mundo: elas sobrevivem a um reinício). */
+export function soltarAreas() {
+  const g = world.tickingAreaManager;
+  for (const nome of AREAS) {
+    try {
+      if (g.getTickingArea(nome)) g.removeTickingArea(nome);
+    } catch (e) {
+      registrarErro(`Ecos: soltar ${nome}`, e);
+    }
+  }
+}
+world.afterEvents.worldLoad.subscribe(() => {
+  (erroDimensao ? console.warn : console.log)(`[Vulpus] Ecos: dimensão ${dimEcos() ? "disponível" : "indisponível"}${erroDimensao ? ` (${erroDimensao})` : ""}`);
+  if (!dimEcos()) return;
+  if (!cons.ocupado) soltarAreas();
+});
+
+/** @param {Dimension} dim @param {Ponto3[]} pontos @param {number} tentativas @param {(ok: boolean) => void} aoFim */
+function esperarCarga(dim, pontos, tentativas, aoFim) {
+  let n = 0;
+  const confere = () => {
+    let pronto = false;
+    try {
+      pronto = pontos.every((p) => dim.isChunkLoaded(p) && !!dim.getBlock(p));
+    } catch {
+      pronto = false;
+    }
+    if (pronto) return aoFim(true);
+    if (++n >= tentativas) return aoFim(false);
+    system.runTimeout(confere, 4);
+  };
+  confere();
+}
+
+/** Preenche em pedaços de até MAX_BLOCOS_FILL blocos. */
+function preencher(/** @type {PincelMundo} */ pincel, x1, y1, z1, x2, y2, z2, id, soAr) {
+  const [xa, xb] = [Math.min(x1, x2), Math.max(x1, x2)];
+  const [ya, yb] = [Math.min(y1, y2), Math.max(y1, y2)];
+  const [za, zb] = [Math.min(z1, z2), Math.max(z1, z2)];
+  const dx = xb - xa + 1, dy = yb - ya + 1, dz = zb - za + 1;
+  if (dx * dy * dz <= MAX_BLOCOS_FILL) return pincel.fill(xa, ya, za, xb, yb, zb, id, soAr);
+  if (dx >= dy && dx >= dz) {
+    const m = xa + (dx >> 1) - 1;
+    preencher(pincel, xa, ya, za, m, yb, zb, id, soAr);
+    preencher(pincel, m + 1, ya, za, xb, yb, zb, id, soAr);
+  } else if (dz >= dy) {
+    const m = za + (dz >> 1) - 1;
+    preencher(pincel, xa, ya, za, xb, yb, m, id, soAr);
+    preencher(pincel, xa, ya, m + 1, xb, yb, zb, id, soAr);
+  } else {
+    const m = ya + (dy >> 1) - 1;
+    preencher(pincel, xa, ya, za, xb, m, zb, id, soAr);
+    preencher(pincel, xa, m + 1, za, xb, yb, zb, id, soAr);
+  }
+}
+
+/** Pincel com a origem somada (o mapa é escrito em coordenadas relativas). @param {PincelMundo} pincel @param {Ponto3} o @returns {import("./obras_pincel.js").Pincel} */
+function pincelComOrigem(pincel, o) {
+  /** @type {any} */
+  const proxy = {
+    fill: (x1, y1, z1, x2, y2, z2, id, soAr) => preencher(pincel, o.x + x1, o.y + y1, o.z + z1, o.x + x2, o.y + y2, o.z + z2, id, soAr),
+    set: (x, y, z, id, est) => pincel.set(o.x + x, o.y + y, o.z + z, id, est),
+    id: (x, y, z) => pincel.id(o.x + x, o.y + y, o.z + z),
+    superficie: (x, z) => pincel.superficie(o.x + x, o.z + z),
+    existe: (id) => pincel.existe(id),
+    placa: (x, y, z, linhas) => pincel.placa(o.x + x, o.y + y, o.z + z, linhas),
+    get ops() {
+      return pincel.ops;
+    },
+    set ops(v) {
+      pincel.ops = v;
+    },
+  };
+  return proxy;
+}
+
+/** Quem está na dimensão sai antes de mexer no chão dela. */
+function retirarQuemEstaDentro() {
+  for (const p of jogadoresNosEcos()) mandarParaSpawn(p);
+}
+
+/**
+ * Constrói (ou retoma) o mapa, aos poucos. Só a staff chama (painel), nunca na abertura do evento nem a cada tick.
+ * @param {Player | undefined} quem recebe os avisos
+ * @param {{ refazer?: boolean }} [opcoes]  refazer = começa do zero (limpa tudo); o painel só oferece ao dono, com confirmação dupla
+ * @returns {Promise<boolean>} se começou
+ */
+export async function construirEcos(quem, opcoes = {}) {
+  if (cons.ocupado) {
+    if (quem) erro(quem, textos.JA_CONSTRUINDO);
+    return false;
+  }
+  const dim = dimEcos();
+  if (!dim) {
+    if (quem) erro(quem, textos.SEM_DIMENSAO);
+    return false;
+  }
+  if (!opcoes.refazer && ecosConstruido()) {
+    if (quem) erro(quem, textos.JA_CONSTRUIDO);
+    return false;
+  }
+  cons.ocupado = true;
+  cons.fase = textos.FASE_PREPARANDO;
+  cons.pct = 0;
+  cons.falhas = 0;
+  const o = origemEcos();
+  if (opcoes.refazer) salvarMundo(CHAVE_PROGRESSO, 0);
+  const desde = fasesProntas();
+  salvarMundo(CHAVE_CONSTRUIDO, false);
+  retirarQuemEstaDentro();
+  if (quem) ok(quem, desde > 0 ? textos.RETOMANDO(desde, FASES_MAPA.length) : textos.CONSTRUINDO);
+
+  /** @param {string} motivo */
+  const falhou = (motivo) => {
+    soltarAreas();
+    cons.ocupado = false;
+    cons.fase = "";
+    registrarErro("Ecos: construção", motivo);
+    if (quem?.isValid) erro(quem, textos.FALHA_CONSTRUCAO(motivo));
+  };
+
+  const areasOk = await criarAreas(dim, o);
+  if (!areasOk) {
+    falhou(textos.AREA_NAO_CARREGOU);
+    return false;
+  }
+  const pontos = [0, 1, 2].map((i) => {
+    const c = caixaDaArea(i, o);
+    return { x: Math.floor((c.from.x + c.to.x) / 2), y: o.y, z: Math.floor((c.from.z + c.to.z) / 2) };
+  });
+  esperarCarga(dim, pontos, 75, (carregou) => {
+    if (!carregou) return falhou(textos.AREA_NAO_CARREGOU);
+    const pincel = new PincelMundo(dim);
+    const gen = construir(
+      pincelComOrigem(pincel, o),
+      (f, txt) => {
+        cons.pct = f;
+        cons.fase = txt;
+      },
+      desde,
+      (n) => {
+        salvarMundo(CHAVE_PROGRESSO, n);
+      },
+    );
+    const run = system.runInterval(() => {
+      try {
+        const ini = Date.now();
+        while (Date.now() - ini < ajustes.orcamentoMs) {
+          const r = gen.next();
+          if (r.done) {
+            system.clearRun(run);
+            cons.falhas = pincel.falhas;
+            salvarMundo(CHAVE_CONSTRUIDO, true);
+            salvarMundo(CHAVE_PROGRESSO, FASES_MAPA.length);
+            if (pincel.falhas > 0) registrarErro("Ecos: blocos que não puderam ser colocados", `${pincel.falhas} (primeira: ${pincel.primeiraFalha})`);
+            // as áreas ficam mais um instante para o mundo gravar tudo, depois são soltas
+            system.runTimeout(() => {
+              soltarAreas();
+              cons.ocupado = false;
+              cons.fase = "";
+              cons.pct = 1;
+              if (quem?.isValid) ok(quem, textos.CONSTRUIDO(pincel.falhas));
+            }, 40);
+            return;
+          }
+        }
+      } catch (e) {
+        system.clearRun(run);
+        falhou(String(e));
+      }
+    }, 1);
+    if (quem) {
+      const acompanha = system.runInterval(() => {
+        if (!cons.ocupado || !quem.isValid) return system.clearRun(acompanha);
+        try {
+          quem.onScreenDisplay.setActionBar(textos.CONSTRUINDO_FASE(cons.fase || textos.FASE_PREPARANDO, Math.round(cons.pct * 100)));
+        } catch {
+          // a pessoa saiu
+        }
+      }, 20);
+    }
+  });
+  return true;
+}
+
+// ------------------------------------------------------------------------------------ atmosfera: fog por região
+/** Fog da fase final do Testemunho (mais pesado, só na arena). */
+let faseFinal = false;
+/** @param {boolean} v */
+export function definirFaseFinal(v) {
+  faseFinal = v;
+}
+export const emFaseFinal = () => faseFinal;
+
+/** @type {Map<string, string>} jogador → último fog aplicado */
 const fogAtual = new Map();
+/** @type {Set<string>} quem recebeu a visão noturna daqui */
+const comVisao = new Set();
+
+/** @param {typeof REG[number]} reg */
+const fogDaRegiao = (reg) => (reg.id === "arena" && !faseFinal ? `${reg.fog}_t2` : reg.fog);
+
+/** @param {Player} player */
+function tirarFog(player) {
+  try {
+    player.runCommand(`fog @s remove "vulpus_ecos"`);
+  } catch {
+    // jogador saindo
+  }
+}
 
 function atualizarFog() {
-  for (const player of world.getAllPlayers()) {
-    if (player.dimension.id !== DIM_ECOS) {
-      if (fogAtual.has(player.id)) {
-        try { player.runCommand(`fog @s remove "vulpus_ecos"`); } catch { /* ok */ }
-        fogAtual.delete(player.id);
-      }
-      continue;
+  const dentro = jogadoresNosEcos();
+  const ids = new Set(dentro.map((p) => p.id));
+  // quem saiu perde o fog e a visão noturna
+  for (const id of [...fogAtual.keys()]) {
+    if (ids.has(id)) continue;
+    fogAtual.delete(id);
+    const p = world.getAllPlayers().find((x) => x.id === id);
+    if (p) tirarFog(p);
+  }
+  for (const id of [...comVisao]) {
+    if (ids.has(id)) continue;
+    comVisao.delete(id);
+    try {
+      world.getAllPlayers().find((x) => x.id === id)?.removeEffect("night_vision");
+    } catch {
+      // saiu
     }
+  }
+  for (const player of dentro) {
     const reg = regiaoDoJogador(player);
     if (!reg) continue;
-    const fogAnterior = fogAtual.get(player.id);
-    if (fogAnterior === reg.fog) continue;
-
-    try { player.runCommand(`fog @s remove "vulpus_ecos"`); } catch { /* ok */ }
-    // Transição suave: primeiro _t2 (mais leve), depois o fog cheio
-    try { player.runCommand(`fog @s push ${reg.fog}_t2 "vulpus_ecos"`); } catch { /* ok */ }
-    const fogFinal = reg.fog;
-    const pid = player.id;
-    system.runTimeout(() => {
-      try {
-        const p2 = world.getAllPlayers().find((pl) => pl.id === pid);
-        if (p2) {
-          p2.runCommand(`fog @s remove "vulpus_ecos"`);
-          p2.runCommand(`fog @s push ${fogFinal} "vulpus_ecos"`);
-        }
-      } catch { /* jogador saiu */ }
-    }, 30);
-    fogAtual.set(player.id, reg.fog);
+    const alvo = fogDaRegiao(reg);
+    if (fogAtual.get(player.id) === alvo) continue;
+    fogAtual.set(player.id, alvo);
+    tirarFog(player);
+    try {
+      player.runCommand(`fog @s push ${alvo} "vulpus_ecos"`);
+    } catch (e) {
+      registrarErro("Ecos: fog", e);
+    }
   }
 }
 
-// Night vision para atmosfera escura
 function atualizarVisao() {
-  for (const player of world.getAllPlayers()) {
-    if (player.dimension.id !== DIM_ECOS) continue;
-    try { player.addEffect("night_vision", 4800, { amplifier: 0, showParticles: false }); } catch { /* ok */ }
+  for (const player of jogadoresNosEcos()) {
+    try {
+      player.addEffect("night_vision", 400, { amplifier: 0, showParticles: false });
+      comVisao.add(player.id);
+    } catch {
+      // saiu
+    }
   }
 }
 
-// ───────────────────────────────────────────── sons ambiente por região
-
-/** @type {Map<string, number>} jogador -> último tick de som */
-const ultimoSom = new Map();
-
-const SONS_REGIAO = {
-  limiar: { som: "ambient.cave", intervalo: 280 },
-  vila: { som: "ambient.cave", intervalo: 400 },
-  arquivo: { som: "ambient.cave", intervalo: 200 },
-  arena: { som: "ambient.cave", intervalo: 160 },
-};
+// ------------------------------------------------------------------------------------ atmosfera: sons e partículas
+/** Sons só do jogo (nada de terceiros), baixos e espaçados. */
+const SOM_CAVERNA = "ambient.cave";
+const SOM_LAMENTO = "mob.vex.ambient";
+/** @type {Map<string, { caverna: number, lamento: number }>} jogador → próximo tick de cada som */
+const proximoSom = new Map();
+/** @param {number} min @param {number} max */
+const sorteio = (min, max) => min + Math.floor(Math.random() * (max - min));
 
 function somAmbiente() {
-  const tick = system.currentTick;
-  for (const player of world.getAllPlayers()) {
-    if (player.dimension.id !== DIM_ECOS) continue;
-    const reg = regiaoDoJogador(player);
-    if (!reg) continue;
-    const cfg = SONS_REGIAO[reg.id];
-    if (!cfg) continue;
-    const ultimo = ultimoSom.get(player.id) ?? 0;
-    if (tick - ultimo < cfg.intervalo) continue;
-    ultimoSom.set(player.id, tick);
-    try {
-      const rx = (Math.random() - 0.5) * 16;
-      const rz = (Math.random() - 0.5) * 16;
-      player.dimension.runCommand(
-        `playsound ${cfg.som} @a[name="${player.name}"] ${player.location.x + rx} ${player.location.y} ${player.location.z + rz} 0.4`,
-      );
-    } catch { /* ok */ }
+  const agora = system.currentTick;
+  for (const player of jogadoresNosEcos()) {
+    let e = proximoSom.get(player.id);
+    if (!e) proximoSom.set(player.id, (e = { caverna: agora + sorteio(100, 400), lamento: agora + sorteio(400, 1200) }));
+    const l = player.location;
+    if (agora >= e.caverna) {
+      e.caverna = agora + sorteio(700, 1600);
+      som(player, SOM_CAVERNA, { volume: 0.25, pitch: 0.8 + Math.random() * 0.3 });
+    }
+    // lamentadores: só o som, de longe (não há entidade)
+    if (agora >= e.lamento) {
+      e.lamento = agora + sorteio(1000, 2600);
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 18 + Math.random() * 14;
+      som(player, SOM_LAMENTO, { volume: 0.18, pitch: 0.5 + Math.random() * 0.2, location: { x: l.x + Math.cos(ang) * dist, y: l.y, z: l.z + Math.sin(ang) * dist } });
+    }
   }
 }
 
-// ───────────────────────────────────────────── loops de runtime
+function particulasLeves() {
+  for (const player of jogadoresNosEcos()) {
+    try {
+      const l = player.location;
+      const reg = regiaoDoJogador(player);
+      const id = reg?.id === "arena" && faseFinal ? "minecraft:basic_flame_particle" : "minecraft:endrod";
+      for (let i = 0; i < 2; i++) {
+        player.dimension.spawnParticle(id, { x: l.x + (Math.random() - 0.5) * 10, y: l.y + 0.5 + Math.random() * 2.5, z: l.z + (Math.random() - 0.5) * 10 });
+      }
+    } catch {
+      // chunk descarregado ou jogador saindo
+    }
+  }
+}
+
+world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+  fogAtual.delete(playerId);
+  comVisao.delete(playerId);
+  proximoSom.delete(playerId);
+});
 
 let loopsIniciados = false;
-
+/** Liga os ciclos de atmosfera (uma vez). Cada um começa conferindo se alguém está na dimensão. */
 export function iniciarLoopsEcos() {
   if (loopsIniciados) return;
   loopsIniciados = true;
-  system.runInterval(atualizarFog, 20);
-  system.runInterval(atualizarVisao, 200);
-  system.runInterval(somAmbiente, 20);
+  system.runInterval(atualizarFog, PASSO_FOG);
+  system.runInterval(atualizarVisao, PASSO_VISAO);
+  system.runInterval(somAmbiente, PASSO_SOM);
+  system.runInterval(particulasLeves, PASSO_PARTICULAS);
 }
-
-// Limpar estado quando jogador sai
-world.afterEvents.playerLeave.subscribe((ev) => {
-  fogAtual.delete(ev.playerId);
-  ultimoSom.delete(ev.playerId);
-});
