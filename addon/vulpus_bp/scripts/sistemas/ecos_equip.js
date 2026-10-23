@@ -89,11 +89,15 @@ export function usarVarinha(p) {
   const dim = p.dimension;
   /** @type {{ entity: import("@minecraft/server").Entity, distance: number } | undefined} */
   let alvo;
+  let sohJogador = false;
   try {
     for (const h of p.getEntitiesFromViewDirection({ maxDistance: ALCANCE, excludeTypes: IGNORAR })) {
       const t = h.entity.typeId;
       if (!h.entity.isValid) continue;
-      if (t === "minecraft:player" && !c.ecosVaraPvp) continue;
+      if (t === "minecraft:player" && !c.ecosVaraPvp) {
+        sohJogador = true;
+        continue;
+      }
       if (t.startsWith("vulpus:") && !t.startsWith("vulpus:ecos_")) continue;
       alvo = h;
       break;
@@ -110,6 +114,7 @@ export function usarVarinha(p) {
   } catch (e) {
     registrarErro("Ecos: efeitos da varinha", e);
   }
+  if (!alvo) p.onScreenDisplay.setActionBar(sohJogador ? textos.SO_JOGADOR : textos.SEM_ALVO);
   if (alvo) {
     try {
       alvo.entity.applyDamage(c.ecosVaraDano, { cause: EntityDamageCause.magic, damagingEntity: p });

@@ -7,3 +7,6 @@ export const DIMENSAO = "A varinha Lamento não funciona aqui.";
 export const RECARGA = (seg) => `§7A varinha ainda está silenciosa (${seg}s).`;
 export const QUEBROU = "§cA varinha Lamento se desfez.";
 export const SEM_ALVO = "§7O lamento se perdeu no vazio.";
+
+// Feedback do raio: a pessoa sempre vê por que não feriu ninguém.
+export const SO_JOGADOR = "§7A Lamento não fere jogadores (a staff pode ligar isso nas configurações). Teste em um monstro.";
