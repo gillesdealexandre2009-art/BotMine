@@ -22,12 +22,22 @@ const OVERWORLD = "minecraft:overworld";
 /** Áreas de carregamento que a versão antiga do RTP criava (limpa no começo, se sobraram). */
 const PREFIXO_AREA = "vulpus_rtp_";
 
-/** Nome da ticking area temporária de preload (uma por vez). */
+/**
+ * Preload: uma área de carregamento temporária (ticking area) no destino, só com poucos chunks. Não dá para usar uma entidade
+ * "tick_world" (como a dos chunk loaders de código aberto) antes do teleporte: ela só nasce em chunk já carregado. A área fica
+ * viva até a pessoa pousar (não só até o teleporte), senão o chão some embaixo dela; e sempre tem prazo para morrer.
+ */
 const AREA_PRELOAD = "vulpus_rtp_pre";
+/** No máximo estas áreas ao mesmo tempo (cada pessoa usa uma); sem vaga, teleporta sem preload (a queda lenta protege). */
+const SLOTS_PRELOAD = 3;
 /** Ticks de espera para os chunks carregarem antes de teleportar. */
 const TICKS_PRELOAD = 60;
-/** Raio da ticking area de preload (em chunks, 1 = 1 chunk ao redor do centro). */
-const RAIO_PRELOAD = 2;
+/** Raio da área de preload, em chunks (1 = só uns poucos chunks em volta do ponto). */
+const RAIO_PRELOAD = 1;
+/** Quanto a área continua depois da chegada, até o chão carregar e a pessoa pousar. */
+const TICKS_DEPOIS_CHEGADA = 20 * 20;
+/** Folga acima do tempo previsto (preload + contagem do teleporte) antes de a varredura derrubar a área. */
+const TICKS_FOLGA_AREA = 100;
 
 const RAIO_PADRAO = 2;
 const RAIO_MAX = 8;
@@ -180,20 +190,53 @@ function sortearDestino() {
   return { x: Math.round(Math.cos(angulo) * raio) + 0.5, y, z: Math.round(Math.sin(angulo) * raio) + 0.5, d: OVERWORLD };
 }
 
-/**
- * Remove a ticking area de preload (silencioso se não existir).
- */
-function limparPreload() {
+/** @type {({ dono: string, ate: number } | null)[]} vagas de preload em uso (dono = id da pessoa, ate = tick limite) */
+const vagas = Array.from({ length: SLOTS_PRELOAD }, () => null);
+const nomeVaga = (/** @type {number} */ i) => `${AREA_PRELOAD}${i}`;
+
+/** Remove a área da vaga (silencioso se não existir) e a libera. @param {number} i */
+function liberarVaga(i) {
+  vagas[i] = null;
   try {
-    world.getDimension(OVERWORLD).runCommand(`tickingarea remove ${AREA_PRELOAD}`);
+    world.getDimension(OVERWORLD).runCommand(`tickingarea remove ${nomeVaga(i)}`);
   } catch {
     // não existia
   }
 }
 
+/** Libera todas as vagas dessa pessoa. @param {string} dono */
+function liberarDe(dono) {
+  vagas.forEach((v, i) => {
+    if (v?.dono === dono) liberarVaga(i);
+  });
+}
+
 /**
- * Cria uma ticking area temporária no destino para forçar o carregamento dos chunks,
- * espera TICKS_PRELOAD e só então teleporta. Se o jogador sair ou ficar inválido, limpa tudo.
+ * Pega uma vaga livre (vencida conta como livre). -1 = sem vaga.
+ * @param {string} dono
+ * @param {number} ate  tick em que a área precisa ter sumido
+ */
+function reservarVaga(dono, ate) {
+  const agora = system.currentTick;
+  vagas.forEach((v, i) => {
+    if (v && v.ate <= agora) liberarVaga(i);
+  });
+  const i = vagas.findIndex((v) => v === null);
+  if (i >= 0) vagas[i] = { dono, ate };
+  return i;
+}
+
+// Varredura de segurança: nenhuma área de preload passa do prazo, aconteça o que acontecer com o teleporte.
+system.runInterval(() => {
+  const agora = system.currentTick;
+  vagas.forEach((v, i) => {
+    if (v && v.ate <= agora) liberarVaga(i);
+  });
+}, 100);
+
+/**
+ * Cria uma área de carregamento pequena e temporária no destino, espera TICKS_PRELOAD e só então teleporta. A área só cai depois
+ * que a pessoa chega (TICKS_DEPOIS_CHEGADA) ou no prazo máximo; se ela sair, o teleporte falhar ou a contagem for cancelada, cai também.
  * @param {Player} player
  * @param {boolean} semEspera
  * @returns {boolean}
@@ -203,31 +246,44 @@ function levar(player, semEspera) {
   const dim = world.getDimension(OVERWORLD);
   const bx = Math.floor(destino.x);
   const bz = Math.floor(destino.z);
+  const espera = semEspera ? 0 : Math.max(0, Math.floor(config().esperaTeleporte)) * 20;
+  const vaga = reservarVaga(player.id, system.currentTick + TICKS_PRELOAD + espera + TICKS_FOLGA_AREA + TICKS_DEPOIS_CHEGADA);
 
-  limparPreload();
-  try {
-    dim.runCommand(`tickingarea add circle ${bx} 64 ${bz} ${RAIO_PRELOAD} ${AREA_PRELOAD} true`);
-  } catch (e) {
-    registrarErro("Preload do RTP", e);
-    return teleportar(player, destino, {
+  /** Teleporta e, ao chegar, encurta a vida da área para o tempo de pousar. */
+  const ir = () =>
+    teleportar(player, destino, {
       nome: textos.DESTINO,
       tema: "rtp",
       semEspera,
-      aoChegar: (p) => descer(p, destino.y),
+      aoChegar: (p) => {
+        descer(p, destino.y);
+        const v = vaga >= 0 ? vagas[vaga] : null;
+        if (v && v.dono === player.id) v.ate = system.currentTick + TICKS_DEPOIS_CHEGADA;
+      },
     });
+
+  if (vaga < 0) return ir(); // muita gente teleportando: sem preload, a queda lenta protege
+  try {
+    dim.runCommand(`tickingarea remove ${nomeVaga(vaga)}`);
+  } catch {
+    // não existia: é o normal
+  }
+  try {
+    dim.runCommand(`tickingarea add circle ${bx} 64 ${bz} ${RAIO_PRELOAD} ${nomeVaga(vaga)} true`);
+  } catch (e) {
+    registrarErro("Preload do RTP", e);
+    liberarVaga(vaga);
+    return ir();
   }
 
   player.onScreenDisplay.setActionBar(textos.PREPARANDO);
 
   system.runTimeout(() => {
-    limparPreload();
-    if (!player.isValid) return;
-    teleportar(player, destino, {
-      nome: textos.DESTINO,
-      tema: "rtp",
-      semEspera,
-      aoChegar: (p) => descer(p, destino.y),
-    });
+    if (!player.isValid) {
+      liberarDe(player.id);
+      return;
+    }
+    if (!ir()) liberarDe(player.id);
   }, TICKS_PRELOAD);
   return true;
 }
@@ -533,6 +589,7 @@ world.afterEvents.entityHurt.subscribe(({ hurtEntity }) => {
 });
 
 world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+  liberarDe(playerId);
   caindo.get(playerId)?.();
   decolando.get(playerId)?.();
   ignorados.delete(playerId);
@@ -541,7 +598,12 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
 // Áreas de carregamento que sobraram (versão antiga + preload que não foi limpo).
 system.runTimeout(() => {
   const dim = world.getDimension(OVERWORLD);
-  limparPreload();
+  for (let i = 0; i < SLOTS_PRELOAD; i++) liberarVaga(i);
+  try {
+    dim.runCommand(`tickingarea remove ${AREA_PRELOAD}`); // nome da versão anterior
+  } catch {
+    // não existe
+  }
   for (let i = 1; i <= 80; i++) {
     try {
       dim.runCommand(`tickingarea remove ${PREFIXO_AREA}${i}`);
