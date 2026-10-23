@@ -330,7 +330,7 @@ export const ENIGMA = Object.freeze({
 
 export const MENSAGENS = Object.freeze({
   inicio:
-    "§6🎃 O Último Outono de Hollow\n§7De 25 a 31 de outubro. Uma casa, uma mata, um abrigo e uma ponte guardam o que alguém tentou esquecer.\n§8Aviso: a história trata de luto e tem um desfecho triste (sem cenas gráficas). Se não quiser acompanhar, tudo bem. Você pode jogar normalmente.\n§7Comece pela casa perto do spawn. Use /vulpus:hollow para abrir o seu diário de investigação.",
+    "§6✦ O Último Outono de Hollow\n§7De 25 a 31 de outubro. Uma casa, uma mata, um abrigo e uma ponte guardam o que alguém tentou esquecer.\n§8Aviso: a história trata de luto e tem um desfecho triste (sem cenas gráficas). Se não quiser acompanhar, tudo bem. Você pode jogar normalmente.\n§7Comece pela casa perto do spawn. Use /vulpus:hollow para abrir o seu diário de investigação.",
   concluiu:
     "§7Você reconstruiu a história de Hollow.\n\n§7Ele não estava perdido. Ele estava sozinho com uma dor grande demais, e não pediu ajuda a tempo.\n\n§fSe você ou alguém que você conhece está sofrendo, não carregue isso sozinho: no Brasil, o §bCVV §fatende pelo §b188 §f(24 horas, gratuito) e em cvv.org.br.",
   naoEhFinal: "§7Você ainda não reuniu o que precisa para entender isto.",

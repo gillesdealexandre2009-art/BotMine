@@ -21,9 +21,9 @@ export const LINHA_VAZIO = "§8Você ainda não encontrou nenhum registro. Eles 
 export const LINHA_ENCERRADO = "§8O evento terminou: dá para reler os registros, mas não há mais recompensas.";
 export const LINHA_AINDA_NAO = "§8O evento ainda não começou.";
 /** @param {string} titulo @param {string} link */
-export const LINHA_AUDIO = (titulo, link) => `§7${titulo}\n§b🎧 Ouvir: §f${link}`;
+export const LINHA_AUDIO = (titulo, link) => `§7${titulo}\n§b✦ Ouvir: §f${link}`;
 /** @param {string} link */
-export const LINHA_AUDIO_REGISTRO = (link) => `\n\n§b🎧 Ouvir: §f${link}`;
+export const LINHA_AUDIO_REGISTRO = (link) => `\n\n§b✦ Ouvir: §f${link}`;
 export const SECAO_LER = "Registros que você já leu";
 /** @param {string} nome */
 export const BOTAO_REGISTRO = (nome) => nome;
@@ -85,7 +85,7 @@ export const SOM_VENTO = "ambient.cave";
 // ------------------------------------------------------------------ áudios das leituras (sons do resource pack)
 /** @param {string} audio  A1..A4 */
 export const SOM_AUDIO = (audio) => `vulpus.hollow_${audio.toLowerCase()}`;
-export const BOTAO_OUVIR = "🎧 Ouvir a leitura";
+export const BOTAO_OUVIR = "✦ Ouvir a leitura";
 export const BOTAO_PARAR = "Parar o áudio";
 
 // ------------------------------------------------------------------ painel da staff

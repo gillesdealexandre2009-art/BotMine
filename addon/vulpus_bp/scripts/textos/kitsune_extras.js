@@ -13,7 +13,7 @@ export const FRASES_CHEGADA = [
   (n) => `§d✦ §7A raposa ${n} §7chegou na toca! §d✦`,
   (n) => `§6🦊 §7Uma cauda brilhante surgiu: ${n} §7entrou!`,
   (n) => `§b✧ §7${n} §7apareceu entre as pétalas. Bem-vinda(o)! §b✧`,
-  (n) => `§e☄ §7O luar trouxe ${n} §7de volta à Vulpus!`,
+  (n) => `§e✦ §7O luar trouxe ${n} §7de volta à Vulpus!`,
 ];
 /** @type {((nome: string) => string)[]} */
 export const FRASES_SAIDA = [
