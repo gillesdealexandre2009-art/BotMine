@@ -70,6 +70,18 @@ const FAISCA = "minecraft:endrod";
 
 /** @type {Map<string, () => void>} id → aborta a decolagem */
 const decolando = new Map();
+/** Quem está entre o início do RTP e a chegada (preload + contagem + teleporte): nada de segundo RTP nem de portal. id → tick limite (rede de segurança). @type {Map<string, number>} */
+const preparando = new Map();
+const TICKS_PREPARANDO_MAX = 20 * 8;
+/** Está no meio de um RTP? Vence sozinho depois do tempo máximo. @param {string} id */
+function ocupado(id) {
+  const ate = preparando.get(id);
+  if (ate === undefined) return false;
+  if (ate > system.currentTick) return true;
+  preparando.delete(id);
+  return false;
+}
+
 /** @type {Map<string, () => void>} id → encerra a queda */
 const caindo = new Map();
 /** @type {Map<string, number>} id → tick até quando o portal ignora a pessoa */
@@ -242,12 +254,19 @@ system.runInterval(() => {
  * @returns {boolean}
  */
 function levar(player, semEspera) {
+  if (ocupado(player.id)) return false; // já tem um RTP andando: não começa outro (isso apagava o preload do primeiro)
   const destino = sortearDestino();
   const dim = world.getDimension(OVERWORLD);
   const bx = Math.floor(destino.x);
   const bz = Math.floor(destino.z);
   const espera = semEspera ? 0 : Math.max(0, Math.floor(config().esperaTeleporte)) * 20;
   const vaga = reservarVaga(player.id, system.currentTick + TICKS_PRELOAD + espera + TICKS_FOLGA_AREA + TICKS_DEPOIS_CHEGADA);
+  preparando.set(player.id, system.currentTick + TICKS_PRELOAD + espera + TICKS_PREPARANDO_MAX);
+  try {
+    proteger(player, TICKS_PRELOAD + espera + 100, true); // durante a espera ele já está protegido e flutua devagar
+  } catch (e) {
+    registrarErro("Proteção da espera do RTP", e);
+  }
 
   /** Teleporta e, ao chegar, encurta a vida da área para o tempo de pousar. */
   const ir = () =>
@@ -256,13 +275,24 @@ function levar(player, semEspera) {
       tema: "rtp",
       semEspera,
       aoChegar: (p) => {
+        preparando.delete(p.id);
         descer(p, destino.y);
         const v = vaga >= 0 ? vagas[vaga] : null;
         if (v && v.dono === player.id) v.ate = system.currentTick + TICKS_DEPOIS_CHEGADA;
       },
     });
 
-  if (vaga < 0) return ir(); // muita gente teleportando: sem preload, a queda lenta protege
+  /** Teleporte recusado ou cancelado: libera tudo. */
+  const desistir = () => {
+    preparando.delete(player.id);
+    liberarDe(player.id);
+  };
+  if (vaga < 0) {
+    // muita gente teleportando: sem preload, a queda lenta protege
+    const feito = ir();
+    if (!feito) desistir();
+    return feito;
+  }
   try {
     dim.runCommand(`tickingarea remove ${nomeVaga(vaga)}`);
   } catch {
@@ -273,17 +303,19 @@ function levar(player, semEspera) {
   } catch (e) {
     registrarErro("Preload do RTP", e);
     liberarVaga(vaga);
-    return ir();
+    const feito = ir();
+    if (!feito) desistir();
+    return feito;
   }
 
   player.onScreenDisplay.setActionBar(textos.PREPARANDO);
 
   system.runTimeout(() => {
     if (!player.isValid) {
-      liberarDe(player.id);
+      desistir();
       return;
     }
-    if (!ir()) liberarDe(player.id);
+    if (!ir()) desistir();
   }, TICKS_PRELOAD);
   return true;
 }
@@ -293,7 +325,7 @@ function levar(player, semEspera) {
  * @param {Player} player
  */
 export function rtp(player) {
-  if (decolando.has(player.id)) {
+  if (decolando.has(player.id) || ocupado(player.id)) {
     erro(player, textos.JA_PROCURANDO);
     return;
   }
@@ -391,7 +423,7 @@ function decolar(player) {
       const decorridos = system.currentTick - inicio;
       if (decorridos >= TICKS_SUBIDA) {
         encerrar(undefined);
-        player.removeEffect("slow_falling");
+        // a queda lenta fica durante o preload (levar renova a proteção); só cai de vez se o RTP não começar
         if (!levar(player, true)) {
           ignorados.set(id, system.currentTick + TICKS_RECARGA_PORTAL);
           player.addEffect("slow_falling", 200, { amplifier: 0, showParticles: false });
@@ -561,7 +593,7 @@ function conferirPortal() {
   const agora = system.currentTick;
   for (const player of online()) {
     if (player.dimension.id !== p.d) continue;
-    if (decolando.has(player.id) || caindo.has(player.id)) continue;
+    if (decolando.has(player.id) || caindo.has(player.id) || ocupado(player.id)) continue;
     if ((ignorados.get(player.id) ?? 0) > agora) continue;
     const { x, y, z } = player.location;
     if (Math.hypot(x - p.x, z - p.z) > p.r || Math.abs(y - p.y) > ALTURA_PORTAL) continue;
@@ -590,6 +622,7 @@ world.afterEvents.entityHurt.subscribe(({ hurtEntity }) => {
 
 world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   liberarDe(playerId);
+  preparando.delete(playerId);
   caindo.get(playerId)?.();
   decolando.get(playerId)?.();
   ignorados.delete(playerId);
