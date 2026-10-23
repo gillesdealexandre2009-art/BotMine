@@ -239,6 +239,24 @@ async function confirmarApagar(player, casa, voltarCasas, voltarCasa) {
 }
 
 /**
+ * Pede confirmação antes de levar a casa para onde a pessoa está (a posição antiga se perde). Devolve se mudou.
+ * @param {Player} player
+ * @param {Casa} casa
+ * @returns {Promise<boolean>}
+ */
+async function confirmarMover(player, casa) {
+  const sim = await confirmar(player, {
+    titulo: casa.nome,
+    texto: textos.CONFIRMAR_MOVER(casa.nome, formatarCoords(casa)),
+    sim: textos.SIM_MOVER,
+    nao: textos.NAO_MOVER,
+  });
+  if (!sim || !dadosJogador(player).casas.includes(casa)) return false;
+  moverCasa(player, casa);
+  return true;
+}
+
+/**
  * Menu de uma casa: ir, mover, renomear, apagar.
  * @param {Player} player
  * @param {string} nome
@@ -258,8 +276,8 @@ async function menuCasa(player, nome, voltarCasas) {
   await new Lista(casa.nome)
     .texto(textos.INFO_CASA(nomeDimensao(casa.d), formatarCoords(casa)))
     .botao(textos.IR, ICONES.tpa, () => irCasa(player, casa))
-    .botao(textos.MOVER, ICONES.mundo, () => {
-      moverCasa(player, casa);
+    .botao(textos.MOVER, ICONES.mundo, async () => {
+      await confirmarMover(player, casa);
       return reabrir();
     })
     .botao(textos.RENOMEAR, ICONES.editar, () => renomearCasa(player, casa, reabrir))
@@ -321,7 +339,7 @@ registrarComando(
   { nome: "definircasa", descricao: textos.CMD_DEFINIRCASA, parametros: [{ nome: "nome", tipo: "texto" }] },
   (p, [nome]) => {
     const existente = acharCasa(p, limparNome(nome));
-    if (existente) moverCasa(p, existente);
+    if (existente) confirmarMover(p, existente);
     else criarCasa(p, nome);
   },
 );
@@ -330,6 +348,6 @@ registrarComando(
   { nome: "apagarcasa", descricao: textos.CMD_APAGARCASA, parametros: [{ nome: "nome", tipo: "texto" }] },
   (p, [nome]) => {
     const casa = casaDoComando(p, nome);
-    if (casa) apagarCasa(p, casa);
+    if (casa) confirmarApagar(p, casa, () => {}, () => {});
   },
 );

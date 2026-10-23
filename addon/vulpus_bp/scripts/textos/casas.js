@@ -33,6 +33,11 @@ export const APAGAR = "Apagar";
 /** @param {string} nome */
 export const CONFIRMAR_APAGAR = (nome) => `Apagar a casa §6${nome}§r? Não dá para desfazer.`;
 export const SIM_APAGAR = "Apagar";
+/** @param {string} nome @param {string} onde  coordenadas de hoje */
+export const CONFIRMAR_MOVER = (nome, onde) => `Mudar a casa §6${nome}§r para onde você está agora?
+§7Hoje ela fica em ${onde}. O lugar antigo deixa de valer.`;
+export const SIM_MOVER = "Mudar";
+export const NAO_MOVER = "Deixa onde está";
 export const NAO_APAGAR = "Deixa quieta";
 
 // Formulários
