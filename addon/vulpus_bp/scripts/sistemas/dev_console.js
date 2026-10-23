@@ -3,6 +3,8 @@
 // minigames sem ninguém online e escrevem o resultado no log, para validar a obra no jogo de verdade (blocos inválidos, falhas, tempo).
 // Jogador nenhum consegue usar: o evento só vale quando vem do console (ScriptEventSource.Server).
 import { ScriptEventSource, system, world } from "@minecraft/server";
+import { PADROES } from "../config.js";
+import { config, salvarConfig } from "../core/db.js";
 import { dimensaoIntervalo, estadoConstrucao, intervaloConstruido, construirIntervalo, pontoChegada } from "./intervalo.js";
 import { PONTOS } from "./intervalo_mapa.js";
 import { JOGOS, construir, diagnostico, estadoPartida } from "./mg_motor.js";
@@ -79,6 +81,12 @@ async function minigames() {
 system.afterEvents.scriptEventReceive.subscribe((ev) => {
   if (ev.id !== "vulpus:dev" || ev.sourceType !== ScriptEventSource.Server) return;
   const cmd = ev.message.trim();
+  if (cmd === "hollow_data") {
+    salvarConfig({ hollowInicio: PADROES.hollowInicio, hollowFim: PADROES.hollowFim });
+    const c = config();
+    log(`hollow_data: início=${new Date(c.hollowInicio).toISOString()} fim=${new Date(c.hollowFim).toISOString()}`);
+    return;
+  }
   const rodar = cmd === "intervalo" ? intervalo : cmd === "minigames" ? minigames : undefined;
   if (!rodar) return log(`comando desconhecido: ${cmd}`);
   rodar().catch((e) => log(`erro em ${cmd}: ${e}`));
