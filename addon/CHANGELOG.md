@@ -4,6 +4,15 @@ Textos prontos para colar no canal de changelog do Discord. O changelog da Kiza 
 
 ---
 
+## 22/10/2026: RTP mais seguro
+
+🦊 O RTP agora carrega os chunks do destino antes de te teleportar — chega de morrer caindo no vazio porque o chão não existia ainda!
+
+- O terreno é preparado uns **3 segundos antes** de você chegar, então tudo já está carregado quando a queda começa.
+- Se por algum motivo não der (limite de áreas ativas), funciona como antes — com a proteção de queda lenta.
+
+---
+
 ## 21/10/2026: O Último Outono de Hollow e limpeza automática
 
 🎃 Chegou o evento de Halloween: O Último Outono de Hollow! De 25 a 31 de outubro, uma casa, uma mata, um abrigo e uma ponte guardam uma história que alguém tentou esquecer. Comece pela casa perto do spawn, leia os registros que encontrar e junte as pistas (o seu diário de investigação fica em /vulpus:hollow). A história tem um desfecho triste (sem cenas gráficas); se não quiser acompanhar, tudo bem, o resto do servidor segue normal.

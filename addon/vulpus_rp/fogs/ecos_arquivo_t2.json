@@ -1,0 +1,13 @@
+{
+  "format_version": "1.16.100",
+  "minecraft:fog_settings": {
+    "description": { "identifier": "vulpus:nevoa_ecos_arquivo_t2" },
+    "distance": {
+      "air":             { "fog_start": 14, "fog_end": 42, "fog_color": "#150a1e", "render_distance_type": "fixed" },
+      "water":           { "fog_start": 3,  "fog_end": 18, "fog_color": "#0d0614", "render_distance_type": "fixed" },
+      "lava":            { "fog_start": 0,  "fog_end": 5,  "fog_color": "#150a1e", "render_distance_type": "fixed" },
+      "lava_resistance": { "fog_start": 0,  "fog_end": 8,  "fog_color": "#150a1e", "render_distance_type": "fixed" },
+      "weather":         { "fog_start": 14, "fog_end": 42, "fog_color": "#150a1e", "render_distance_type": "fixed" }
+    }
+  }
+}
