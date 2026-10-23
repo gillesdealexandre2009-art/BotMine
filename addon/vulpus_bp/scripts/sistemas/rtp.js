@@ -133,7 +133,8 @@ function descer(player, altura) {
         parar();
         return;
       }
-      if (decorridos % 20 === 0) proteger(player, 60, true);
+      // Renova a cada 1 s e, por garantia, sempre que a queda lenta sumir (um atraso do servidor não pode deixar a pessoa sem proteção a 300 blocos do chão).
+      if (decorridos % 20 === 0 || (!pousou && !player.getEffect("slow_falling"))) proteger(player, 60, true);
       if (c.y < LIMITE_VAZIO) {
         player.teleport({ x: c.x, y: altura, z: c.z }, { checkForBlocks: false, keepVelocity: false });
         return;
