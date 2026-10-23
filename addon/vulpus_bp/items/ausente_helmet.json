@@ -4,8 +4,7 @@
     "description": {
       "identifier": "vulpus:ausente_helmet",
       "menu_category": {
-        "category": "equipment",
-        "group": "itemGroup.name.helmet"
+        "category": "equipment"
       }
     },
     "components": {

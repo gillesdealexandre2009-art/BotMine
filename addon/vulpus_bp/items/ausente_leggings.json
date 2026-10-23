@@ -4,8 +4,7 @@
     "description": {
       "identifier": "vulpus:ausente_leggings",
       "menu_category": {
-        "category": "equipment",
-        "group": "itemGroup.name.leggings"
+        "category": "equipment"
       }
     },
     "components": {

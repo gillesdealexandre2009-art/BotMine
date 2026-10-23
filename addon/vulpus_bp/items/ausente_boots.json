@@ -4,8 +4,7 @@
     "description": {
       "identifier": "vulpus:ausente_boots",
       "menu_category": {
-        "category": "equipment",
-        "group": "itemGroup.name.boots"
+        "category": "equipment"
       }
     },
     "components": {

@@ -4,8 +4,7 @@
     "description": {
       "identifier": "vulpus:varinha_lamento",
       "menu_category": {
-        "category": "equipment",
-        "group": "itemGroup.name.sword"
+        "category": "equipment"
       }
     },
     "components": {
