@@ -458,6 +458,13 @@ function particulasLeves() {
       for (let i = 0; i < 2; i++) {
         player.dimension.spawnParticle(id, { x: l.x + (Math.random() - 0.5) * 10, y: l.y + 0.5 + Math.random() * 2.5, z: l.z + (Math.random() - 0.5) * 10 });
       }
+      // camada baixa por região (poucas partículas, perto do chão): alma rasteira no Limiar, vaga-lumes na Vila, pó roxo no Arquivo
+      const baixa = { limiar: "minecraft:sculk_soul_particle", vila: "minecraft:firefly_particle", arquivo: "minecraft:obsidian_glow_dust_particle" }[reg?.id ?? ""];
+      if (baixa) {
+        for (let i = 0; i < 2; i++) {
+          player.dimension.spawnParticle(baixa, { x: l.x + (Math.random() - 0.5) * 16, y: l.y + 0.1 + Math.random() * 1.2, z: l.z + (Math.random() - 0.5) * 16 });
+        }
+      }
     } catch {
       // chunk descarregado ou jogador saindo
     }

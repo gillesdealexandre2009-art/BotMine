@@ -1,0 +1,18 @@
+{
+ "global": { "tile": "640x360", "colunas": 2, "fov": 90 },
+ "areas": {
+  "ceu": {
+   "nevoa": "0x0b1030:200:60",
+   "ambiente": 0.75,
+   "sol": 0.0,
+   "vistas": [
+    { "nome": "limiar_cruzeiro", "cam": [12.5, 2.62, 32.5], "alvo": [30, 46, 32] },
+    { "nome": "vila_panela", "cam": [100, 3, 40], "alvo": [112, 46, 46] },
+    { "nome": "ponte_galaxia", "cam": [150, 3, 34], "alvo": [168, 46, 34] },
+    { "nome": "arquivo_w", "cam": [200, 3, 30], "alvo": [205, 46, 12] },
+    { "nome": "arena_planeta", "cam": [262, -4, 33], "alvo": [275, 46, 33] },
+    { "nome": "visao_geral", "cam": [160, 2, 38], "alvo": [160, 60, 38] }
+   ]
+  }
+ }
+}

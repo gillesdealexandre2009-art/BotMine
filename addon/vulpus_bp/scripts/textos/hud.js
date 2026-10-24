@@ -114,6 +114,43 @@ export const LINHA_LOCAL = (/** @type {number} */ x, /** @type {number} */ y, /*
 export const LINHAS_MINIGAME = (linhas, caudas, mudanca) => [...linhas.slice(0, 13), `${glyph(G.CAUDAS)} §6${formatarNumero(caudas)}${DESTAQUE(mudanca)}`];
 
 /**
+ * @typedef {object} InfoEcos
+ * @property {string} area  nome da área atual ("" = passagem entre áreas)
+ * @property {number | null} restanteMs  quanto falta para a janela fechar; null = janela fechada (staff testando)
+ * @property {number} fragmentos  fragmentos ganhos (progresso)
+ * @property {number} totalFragmentos
+ * @property {number} bolsa  fragmentos no inventário agora
+ * @property {number} objetivos  concluídos
+ * @property {number} totalObjetivos
+ */
+
+/**
+ * "3h 12min" ou "12min" (arredonda para cima: só chega a 0 quando fecha).
+ * @param {number} ms
+ */
+export const TEMPO_RESTANTE = (ms) => {
+  const min = Math.ceil(ms / 60000);
+  if (min < 1) return "<1min";
+  return min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, "0")}min` : `${min}min`;
+};
+
+/**
+ * Sidebar de quem está na dimensão do Ecos dos Ausentes (azul-noite, violeta e pérola; até 28 caracteres visíveis por linha).
+ * @param {InfoEcos} e
+ * @param {{ nivel: number, caudas: number, mudanca: number, online: number }} g
+ */
+export const LINHAS_ECOS = (e, g) => [
+  "§9✦ §3§lECOS DOS AUSENTES",
+  `§d✦ §7${e.area || "Passagem"}`,
+  `${glyph(G.TEMPO)} §7Janela §f${e.restanteMs === null ? "fechada" : TEMPO_RESTANTE(e.restanteMs)}`,
+  `§b✦ §7Fragmentos §f${e.fragmentos}§7/${e.totalFragmentos}`,
+  ...(e.bolsa > 0 ? [`§8  na bolsa §f${e.bolsa}`] : []),
+  `§d✦ §7Objetivos §f${e.objetivos}§7/${e.totalObjetivos}`,
+  `${glyph(G.CAUDAS)} §6${formatarNumero(g.caudas)}${DESTAQUE(g.mudanca)}`,
+  `§7Nv §f${formatarNumero(g.nivel)} §8• ${glyph(G.ONLINE)} §f${formatarNumero(g.online)}`,
+];
+
+/**
  * As linhas da sidebar (até 28 caracteres visíveis cada): 6 fixas, mais nome Kitsune e cargo em cima, a
  * cabeça a prêmio depois das Caudas, o minigame depois do online e clã, guerra e bandeiras embaixo (até 14; o label do
  * RP cabe 16).

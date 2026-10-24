@@ -7,6 +7,7 @@ import { limiar, portao } from "./ecos_mapa_limiar.js";
 import { vila } from "./ecos_mapa_vila.js";
 import { passagem, arquivo } from "./ecos_mapa_arquivo.js";
 import { corredorFinal, arena } from "./ecos_mapa_arena.js";
+import { ceu } from "./ecos_mapa_ceu.js";
 
 /** @typedef {import("./obras_pincel.js").Pincel} Pincel */
 
@@ -17,7 +18,7 @@ export const REG = [
   { id: "arena", nome: "O Último Testemunho", x1: 248, z1: 4, x2: 302, z2: 62, y1: -8, y2: 26, fog: "vulpus:nevoa_ecos_arena" },
 ];
 
-export const CAIXA = { x1: -3, z1: -3, x2: 306, z2: 78, y1: -10, y2: 40 };
+export const CAIXA = { x1: -3, z1: -3, x2: 306, z2: 78, y1: -10, y2: 48 };
 
 /** Pontos de interesse (relativos à origem). Fixos: não dependem de a obra ter rodado na mesma sessão. */
 /** @type {{ x: number, y: number, z: number, t: string, dados?: any }[]} */
@@ -60,7 +61,7 @@ export const PALCOS = [
 ];
 
 /** Nomes das fases da obra, na ordem. A construção é retomável: quem terminou uma fase não a refaz. */
-export const FASES_MAPA = ["Limpando e base", "O Limiar", "Portão", "A Vila Silenciosa", "Passagem", "O Arquivo das Almas", "Corredor final", "O Último Testemunho"];
+export const FASES_MAPA = ["Limpando e base", "O Limiar", "Portão", "A Vila Silenciosa", "Passagem", "O Arquivo das Almas", "Corredor final", "O Último Testemunho", "O Céu"];
 
 /** Onde a pessoa chega ao entrar (coordenadas relativas à origem; é o mesmo ponto "spawn" do Limiar). */
 export const CHEGADA = Object.freeze({ x: 12, y: 1, z: 32 });
@@ -92,6 +93,7 @@ export function* construir(p, progresso, desde = 0, fasePronta = () => {}) {
     [0.58, () => arquivo(H)],
     [0.8, () => corredorFinal(H)],
     [0.83, () => arena(H)],
+    [0.93, () => ceu(H, CAIXA)],
   ];
   for (let i = Math.max(0, desde); i < fases.length; i++) {
     progresso(fases[i][0], FASES_MAPA[i]);

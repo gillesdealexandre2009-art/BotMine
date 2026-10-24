@@ -664,3 +664,7 @@ Primeiro num **mundo novo** com "APIs Beta" ligado e sem cheats, com os três pa
 | `tools/gerar_temas.py` | refaz os temas Sakura, Lunar e Espírito, as raposinhas da escolha de tema e a prévia `docs/previas/temas.png` |
 | `docs/` | especificações e pesquisa |
 | `dist/` | o pacote gerado; não vai para o git |
+
+### Ecos dos Ausentes: scoreboard próprio
+
+Dentro da dimensão `vulpus:ecos` a sidebar troca o conjunto de linhas (`sistemas/ecos_hud.js` + `LINHAS_ECOS` em `textos/hud.js`, escolhido em `montar()` de `sistemas/hud.js`, depois do minigame): título "ECOS DOS AUSENTES", área atual (O Limiar, A Vila Silenciosa, O Arquivo das Almas, O Último Testemunho ou Passagem, pela região `REG` do mapa), tempo restante da janela ("14h 05min"; "fechada" se a staff testa fora dela), fragmentos "N/16" (e "na bolsa N" se houver no inventário), objetivos "N/13", Caudas e "Nv N • online N". Área e bolsa têm cache de 20 ticks por jogador. Mesmas regras do HUD (só reenvia quando o texto muda, `tituloLivre`, desligado respeitado, flags e marcas). Fora da dimensão nada muda. Sem tinta própria na caixa: a tinta usa as marcas numeradas das 20 Eras (`vulpus_era.json` gerado), e uma marca nova exigiria mudar o gerador de UI. Teste: `teste_hud_ecos.mjs`.

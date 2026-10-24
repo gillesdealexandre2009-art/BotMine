@@ -238,19 +238,29 @@ function* salao(H) {
     H.lampPend(x, yt - 5, z, M.lanternaAlma);
   }
   yield* pausa();
-  // surreal: prateleiras flutuantes em hélice sobre a avenida e a escada que não leva a lugar nenhum
-  for (let i = 0; i < 9; i++) {
-    const a = (i / 9) * Math.PI * 2;
-    const x = 206 + Math.round(Math.cos(a) * 7), z = 33 + Math.round(Math.sin(a) * 3), y = Y + 5 + (i % 5);
+  // surreal, com intenção: os livros que se soltaram das estantes e sobem em hélice até a luz do teto (uma hélice só, regular)
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const x = 206 + Math.round(Math.cos(a) * 6), z = 33 + Math.round(Math.sin(a) * 3), y = Y + 4 + Math.floor(i * 0.7);
     F(x, y, z, x + 1, y, z, M.estante);
-    S(x, y + 1, z, i % 3 === 0 ? M.vela : M.estanteCinz);
+    S(x, y + 1, z, i % 4 === 0 ? M.vela : M.estanteCinz);
   }
-  for (let i = 0; i < 6; i++) {
-    for (const z of [32, 33, 34]) {
-      st(213 + i, Y + i, z, M.dsTijolo.stairs, "e");
-      F(213 + i, Y - 1, z, 213 + i, Y + i - 1, z, M.dsPol.b);
+  // luz quente pendurada sobre a avenida (halos pontuais: o Arquivo era frio demais)
+  for (const x of [199, 217]) H.pendente(x, yt - 1, 33, 5, M.lanterna);
+  // surreal, com intenção: a escada que sobe ao nada. Ganha uma moldura de porta no topo e uma lanterna de alma dentro:
+  // quem sobe vê que a "porta" dá no ar; fica no corredor norte da nave (z 19..20), fora da avenida.
+  for (let i = 0; i < 9; i++) {
+    for (const z of [19, 20]) {
+      if (i > 0) F(199 + i, Y, z, 199 + i, Y + i - 1, z, M.dsPol.b);
+      st(199 + i, Y + i, z, M.dsTijolo.stairs, "e");
     }
   }
+  F(208, Y + 8, 19, 208, Y + 8, 20, M.dsPol.b);
+  for (const z of [18, 21]) F(209, Y + 8, z, 209, Y + 12, z, M.dsPol.b);
+  F(209, Y + 13, 18, 209, Y + 13, 21, M.dsPol.b);
+  S(209, Y + 12, 19, M.dsCinzel); S(209, Y + 12, 20, M.dsCinzel);
+  H.lampPend(209, Y + 11, 19, M.lanternaAlma);
+  H.vela(208, Y + 9, 19, 3, true);
   // dais do Livro-Mestre no fim da avenida
   F(219, Y, 29, 222, Y, 37, M.dsPol.b);
   F(220, Y + 1, 31, 221, Y + 1, 35, M.dsPol.slab);

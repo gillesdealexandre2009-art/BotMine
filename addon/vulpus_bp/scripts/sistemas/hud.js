@@ -21,6 +21,7 @@ import { glitchHud } from "./arg.js";
 import { glitchHudIntervalo } from "./intervalo.js";
 import { linhasEra } from "./eras_hud.js";
 import { marcaTinta } from "./eras_tinta.js";
+import { infoEcosHud } from "./ecos_hud.js";
 import { linhasHud as linhasMinigame } from "./mg_motor.js";
 import { linhaSpleef } from "./spleef.js";
 
@@ -91,6 +92,12 @@ function montar(player, caudas, mudanca, quantosOnline) {
   if (mg) {
     const finais = textos.LINHAS_MINIGAME(mg, caudas, mudanca);
     return { texto: marcasDe(player) + finais.join("\n"), chave: finais.join("\n") };
+  }
+  const ecos = infoEcosHud(player);
+  if (ecos) {
+    const finais = textos.LINHAS_ECOS(ecos, { nivel: infoNivel(player).nivel, caudas, mudanca, online: quantosOnline });
+    const junto = finais.join("\n");
+    return { texto: marcasDe(player) + junto, chave: junto };
   }
   const { nivel, fracao, rank } = infoNivel(player);
   const { x, y, z } = player.location;

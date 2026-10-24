@@ -3,11 +3,11 @@
   "minecraft:fog_settings": {
     "description": { "identifier": "vulpus:nevoa_ecos_limiar_t2" },
     "distance": {
-      "air":             { "fog_start": 24, "fog_end": 100, "fog_color": "#b8b3cc", "render_distance_type": "fixed" },
+      "air":             { "fog_start": 24, "fog_end": 130, "fog_color": "#6e6a9a", "render_distance_type": "fixed" },
       "water":           { "fog_start": 0,  "fog_end": 24, "fog_color": "#5d5a78", "render_distance_type": "fixed" },
       "lava":            { "fog_start": 0,  "fog_end": 3,  "fog_color": "#b8b3cc", "render_distance_type": "fixed" },
       "lava_resistance": { "fog_start": 0,  "fog_end": 5,  "fog_color": "#b8b3cc", "render_distance_type": "fixed" },
-      "weather":         { "fog_start": 24, "fog_end": 100, "fog_color": "#b8b3cc", "render_distance_type": "fixed" }
+      "weather":         { "fog_start": 24, "fog_end": 130, "fog_color": "#6e6a9a", "render_distance_type": "fixed" }
     }
   }
 }

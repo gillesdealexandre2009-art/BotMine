@@ -73,3 +73,7 @@ Mostra: estado, janela, tempo que falta, mapa (construído ou fases prontas), po
 - **Reinício do servidor no meio:** as criaturas somem e voltam pelo ciclo; o progresso das pessoas e a janela continuam.
 - **Lag:** nada roda por tick; os ciclos são de 100 ticks e só trabalham quando alguém está na dimensão. A construção usa 10 ms por tick e solta as áreas de ticking no fim. O `limpeza.js` ignora dimensões `vulpus:*`.
 - **Limitação conhecida:** o conjunto de fragmentos soltos no chão ao morrer só é recolhido se o chão estiver carregado (perto de quem morreu, está); o resto vale a foto.
+
+## Scoreboard dentro do Ecos
+
+Quem está em `vulpus:ecos` vê uma sidebar própria: título, área (calculada pela região do mapa), tempo restante da janela, fragmentos N/16 (+ "na bolsa N"), objetivos N/13, Caudas e "Nv · online". Código: `sistemas/ecos_hud.js` (dados, cache de 20 ticks), `LINHAS_ECOS` em `textos/hud.js`, escolha em `sistemas/hud.js`. O jogador que desligou o scoreboard continua sem ele. Não há tinta azul-noite na caixa (exigiria uma marca nova no gerador de UI das Eras). A aparência das linhas (✦ e o relógio) só se confere no jogo.
