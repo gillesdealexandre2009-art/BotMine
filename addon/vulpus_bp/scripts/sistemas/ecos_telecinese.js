@@ -11,6 +11,7 @@ import { registrarErro } from "../core/util.js";
 import * as textosEquip from "../textos/ecos_equip.js";
 import * as textos from "../textos/ecos_telecinese.js";
 import { baseEm, bloqueio } from "./cla_terreno.js";
+import { ehChao } from "./obras_pincel.js";
 import { dentroDoIntervalo } from "./intervalo.js";
 import { posicaoArmazem } from "./leilao_armazem.js";
 import { dentro as dentroDoLobby } from "./lobby.js";
@@ -57,6 +58,15 @@ const semQueda = new Map();
 const blocos = new Map();
 /** entidade-bloco solta no ar -> { e, desde, por } @type {Map<string, { e: Entity, desde: number, por: string }>} */
 const voando = new Map();
+/**
+ * Jogadores arremessados: o cliente do jogador ignora o empurrão logo depois de um teleporte, então o voo é simulado no servidor
+ * (trajetória com gravidade e atrito, um teleporte por tick) até bater, pousar ou estourar o tempo.
+ * jogador -> { e, pos, v, desde } @type {Map<string, { e: Entity, pos: Vector3, v: Vector3, desde: number }>}
+ */
+const lancados = new Map();
+const GRAVIDADE = 0.08;
+const ATRITO = 0.98;
+const VOO_JOGADOR_MAX = 90;
 /** @type {number | undefined} */
 let laco;
 
@@ -382,10 +392,71 @@ function lancar(p, alvo, forca) {
   } catch {
     // jogadores não aceitam
   }
+  if (alvo.typeId === "minecraft:player") {
+    const vel = forca * 0.5;
+    lancados.set(alvo.id, {
+      e: alvo,
+      pos: { ...alvo.location },
+      v: { x: d.x * vel, y: d.y * vel + 0.25, z: d.z * vel },
+      desde: agoraTick(),
+    });
+    garantirLaco();
+    return;
+  }
   if (alvo.typeId === "minecraft:item" || alvo.typeId === ENTIDADE_BLOCO) {
     alvo.applyImpulse({ x: d.x * forca * 0.4, y: d.y * forca * 0.4 + 0.1, z: d.z * forca * 0.4 });
   } else {
     alvo.applyKnockback({ x: d.x * forca, z: d.z * forca }, Math.max(0.2, d.y * forca * 0.6 + 0.25));
+  }
+}
+
+/** O bloco barra o corpo de quem voa? (plantas, flores e coisas finas deixam passar; folhas barram.) @param {import("@minecraft/server").Block} b */
+const barra = (b) => !b.isAir && !b.isLiquid && (ehChao(b.typeId) || /leaves/.test(b.typeId));
+
+/** O ponto está livre para uma pessoa (corpo de 1,8 de altura)? @param {import("@minecraft/server").Dimension} dim @param {Vector3} q */
+function livrePara(dim, q) {
+  for (const dy of [0, 0.9, 1.7]) {
+    const b = dim.getBlock({ x: Math.floor(q.x), y: Math.floor(q.y + dy), z: Math.floor(q.z) });
+    if (!b) return false; // chunk não carregado
+    if (barra(b)) return false;
+  }
+  return true;
+}
+
+/**
+ * Um tick do voo de um jogador arremessado.
+ * @param {string} id
+ * @param {{ e: Entity, pos: Vector3, v: Vector3, desde: number }} l
+ * @param {number} agora
+ */
+function voarJogador(id, l, agora) {
+  try {
+    const e = l.e;
+    if (!e.isValid || agora - l.desde > VOO_JOGADOR_MAX || posProtegida(e.dimension.id, e.location)) {
+      lancados.delete(id);
+      return;
+    }
+    l.v.y -= GRAVIDADE;
+    l.v.x *= ATRITO;
+    l.v.y *= ATRITO;
+    l.v.z *= ATRITO;
+    const q = { x: l.pos.x + l.v.x, y: l.pos.y + l.v.y, z: l.pos.z + l.v.z };
+    if (!livrePara(e.dimension, q)) {
+      // bateu: para na última posição livre; se o chão está logo abaixo, o voo acabou
+      lancados.delete(id);
+      return;
+    }
+    e.teleport(q);
+    l.pos = q;
+    semQueda.set(id, agora + 40);
+    if (agora % 3 === 0) e.dimension.spawnParticle("minecraft:endrod", q);
+    if (l.v.y < 0 && agora - l.desde > 4) {
+      const abaixo = e.dimension.getBlock({ x: Math.floor(q.x), y: Math.floor(q.y - 0.3), z: Math.floor(q.z) });
+      if (abaixo && barra(abaixo)) lancados.delete(id);
+    }
+  } catch (err) {
+    lancados.delete(id);
+    registrarErro("Ecos: voo do jogador", err);
   }
 }
 
@@ -397,7 +468,7 @@ function garantirLaco() {
 }
 
 function pararLacoSeOcioso() {
-  if (laco !== undefined && segurando.size === 0 && voando.size === 0) {
+  if (laco !== undefined && segurando.size === 0 && voando.size === 0 && lancados.size === 0) {
     system.clearRun(laco);
     laco = undefined;
   }
@@ -416,6 +487,7 @@ function passo() {
       }
     }
     if (agora % 2 === 0) for (const [id, v] of [...voando]) voarUm(id, v, agora);
+    for (const [id, l] of [...lancados]) voarJogador(id, l, agora);
   } catch (e) {
     registrarErro("Ecos: laço da telecinese", e);
   }
