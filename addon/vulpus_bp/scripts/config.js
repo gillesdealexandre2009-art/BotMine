@@ -291,6 +291,16 @@ export const PADROES = {
   ecosVaraRecargaSeg: 4,
   ecosVaraPvp: false,
   ecosBonusConjunto: true,
+  // Telecinese da varinha (segurar e arremessar entidades, jogadores e blocos).
+  ecosVaraTelecinese: true,
+  ecosVaraSegurarMaxSeg: 6,
+  ecosVaraCooldownSeg: 8,
+  ecosVaraForca: 2.5,
+  ecosVaraPegarJogador: true,
+  ecosVaraPegarBloco: true,
+  ecosVaraImunidadeSeg: 10,
+  ecosVaraQuedaSeg: 4,
+  ecosVaraBlocosMax: 12,
   // Ecos dos Ausentes: o evento (Staff > Ecos dos Ausentes). Janela de exatamente 24 h, em ms (2/11/2026 00:05 a 3/11/2026 00:05, Brasília).
   ecosLigado: true,
   ecosInicio: Date.UTC(2026, 10, 2, 3, 5, 0),

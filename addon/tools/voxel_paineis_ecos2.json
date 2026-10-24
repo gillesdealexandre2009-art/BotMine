@@ -1,0 +1,558 @@
+{
+ "global": {
+  "tile": "640x360",
+  "colunas": 3,
+  "fov": 78
+ },
+ "areas": {
+  "limiar": {
+   "nevoa": "0xb8b3cc:80:14",
+   "ambiente": 0.3,
+   "sol": 0.75,
+   "vistas": [
+    {
+     "nome": "chegada",
+     "cam": [
+      12.5,
+      2.62,
+      32.5
+     ],
+     "alvo": [
+      40,
+      3,
+      32
+     ]
+    },
+    {
+     "nome": "veu",
+     "cam": [
+      12.5,
+      2.62,
+      32.5
+     ],
+     "alvo": [
+      3,
+      4,
+      32
+     ]
+    },
+    {
+     "nome": "aleia_capela",
+     "cam": [
+      34.5,
+      3.62,
+      31.5
+     ],
+     "alvo": [
+      34,
+      5,
+      4
+     ]
+    },
+    {
+     "nome": "campo",
+     "cam": [
+      26,
+      6,
+      22
+     ],
+     "alvo": [
+      42,
+      2,
+      32
+     ]
+    },
+    {
+     "nome": "portico",
+     "cam": [
+      48.5,
+      2.62,
+      32.5
+     ],
+     "alvo": [
+      66,
+      6,
+      32
+     ]
+    },
+    {
+     "nome": "rotunda",
+     "cam": [
+      34.5,
+      3,
+      40
+     ],
+     "alvo": [
+      34,
+      3,
+      58
+     ]
+    },
+    {
+     "nome": "coveiro",
+     "cam": [
+      18,
+      5,
+      36
+     ],
+     "alvo": [
+      14,
+      3,
+      44
+     ]
+    },
+    {
+     "nome": "tumulo_sem_nome",
+     "cam": [
+      50,
+      4,
+      20
+     ],
+     "alvo": [
+      58,
+      3,
+      9
+     ]
+    },
+    {
+     "nome": "iso_geral",
+     "iso": true,
+     "alvo": [
+      33,
+      5,
+      32
+     ],
+     "caixa_mundo": [
+      -2,
+      -1,
+      -2,
+      70,
+      24,
+      68
+     ],
+     "rot": 0,
+     "nevoa": null
+    }
+   ]
+  },
+  "vila": {
+   "nevoa": "0xd9a77a:85:14",
+   "ambiente": 0.3,
+   "sol": 0.75,
+   "vistas": [
+    {
+     "nome": "entrada",
+     "cam": [
+      74.5,
+      2.62,
+      32.5
+     ],
+     "alvo": [
+      110,
+      6,
+      32
+     ]
+    },
+    {
+     "nome": "praca",
+     "cam": [
+      100,
+      2.8,
+      33
+     ],
+     "alvo": [
+      122,
+      5,
+      26
+     ]
+    },
+    {
+     "nome": "torre",
+     "cam": [
+      122.5,
+      3,
+      28
+     ],
+     "alvo": [
+      118,
+      16,
+      12
+     ],
+     "fov": 70
+    },
+    {
+     "nome": "feira",
+     "cam": [
+      112,
+      2.8,
+      41
+     ],
+     "alvo": [
+      124,
+      3,
+      48
+     ]
+    },
+    {
+     "nome": "casas_norte",
+     "cam": [
+      90,
+      2.62,
+      32.5
+     ],
+     "alvo": [
+      97,
+      5,
+      22
+     ]
+    },
+    {
+     "nome": "padaria",
+     "cam": [
+      80,
+      2.62,
+      32.5
+     ],
+     "alvo": [
+      81,
+      4,
+      23
+     ]
+    },
+    {
+     "nome": "fechada",
+     "cam": [
+      99,
+      2.62,
+      32.5
+     ],
+     "alvo": [
+      97,
+      3,
+      43
+     ]
+    },
+    {
+     "nome": "iso_praca",
+     "iso": true,
+     "alvo": [
+      123,
+      13,
+      28
+     ],
+     "caixa_mundo": [
+      104,
+      -1,
+      4,
+      142,
+      38,
+      52
+     ],
+     "rot": 0,
+     "nevoa": null
+    },
+    {
+     "nome": "iso_rua",
+     "iso": true,
+     "alvo": [
+      91,
+      6,
+      32
+     ],
+     "caixa_mundo": [
+      70,
+      -1,
+      2,
+      112,
+      16,
+      62
+     ],
+     "rot": 0,
+     "nevoa": null
+    }
+   ]
+  },
+  "arquivo": {
+   "nevoa": "0x1b2440:60:8",
+   "ambiente": 0.22,
+   "sol": 0.0,
+   "vistas": [
+    {
+     "nome": "boca",
+     "cam": [
+      150.5,
+      2.62,
+      32.5
+     ],
+     "alvo": [
+      170,
+      3,
+      32
+     ]
+    },
+    {
+     "nome": "atrio",
+     "cam": [
+      176.5,
+      -2.38,
+      26
+     ],
+     "alvo": [
+      184,
+      -3,
+      34
+     ]
+    },
+    {
+     "nome": "salao",
+     "cam": [
+      193.5,
+      -2.38,
+      33.5
+     ],
+     "alvo": [
+      222,
+      0,
+      33
+     ]
+    },
+    {
+     "nome": "salao_galeria",
+     "cam": [
+      196,
+      0.6,
+      18
+     ],
+     "alvo": [
+      206,
+      -1,
+      34
+     ]
+    },
+    {
+     "nome": "cripta",
+     "cam": [
+      193.5,
+      -2.38,
+      6.5
+     ],
+     "alvo": [
+      230,
+      -3,
+      6
+     ]
+    },
+    {
+     "nome": "memoria",
+     "cam": [
+      225.5,
+      -2.38,
+      33.5
+     ],
+     "alvo": [
+      236,
+      -2,
+      33
+     ]
+    },
+    {
+     "nome": "cela",
+     "cam": [
+      214,
+      -3,
+      48
+     ],
+     "alvo": [
+      220,
+      -3,
+      43
+     ]
+    },
+    {
+     "nome": "iso_fachada",
+     "iso": true,
+     "alvo": [
+      190,
+      4,
+      33
+     ],
+     "caixa_mundo": [
+      150,
+      -1,
+      0,
+      244,
+      22,
+      66
+     ],
+     "rot": 1,
+     "nevoa": null,
+     "ambiente": 0.5,
+     "sol": 0.7
+    },
+    {
+     "nome": "iso_salao_corte",
+     "iso": true,
+     "alvo": [
+      207,
+      1.5,
+      33
+     ],
+     "caixa_mundo": [
+      190,
+      -7,
+      12,
+      224,
+      10,
+      54
+     ],
+     "rot": 1,
+     "nevoa": null,
+     "ymax": 5,
+     "ambiente": 0.55
+    }
+   ]
+  },
+  "arena": {
+   "nevoa": "0x2c2440:100:18",
+   "ambiente": 0.25,
+   "sol": 0.35,
+   "vistas": [
+    {
+     "nome": "corredor",
+     "cam": [
+      240.5,
+      -2.38,
+      33.5
+     ],
+     "alvo": [
+      250,
+      -3,
+      33
+     ]
+    },
+    {
+     "nome": "entrada",
+     "cam": [
+      249.5,
+      -2.38,
+      33.5
+     ],
+     "alvo": [
+      285,
+      -1,
+      33
+     ]
+    },
+    {
+     "nome": "centro",
+     "cam": [
+      268.5,
+      -2.38,
+      33.5
+     ],
+     "alvo": [
+      298,
+      4,
+      33
+     ]
+    },
+    {
+     "nome": "porta",
+     "cam": [
+      284.5,
+      -2.38,
+      33.5
+     ],
+     "alvo": [
+      300,
+      8,
+      33
+     ]
+    },
+    {
+     "nome": "cavea",
+     "cam": [
+      262,
+      -3.4,
+      28
+     ],
+     "alvo": [
+      285,
+      2,
+      12
+     ]
+    },
+    {
+     "nome": "fosso",
+     "cam": [
+      255,
+      -3,
+      33
+     ],
+     "alvo": [
+      272,
+      -5,
+      40
+     ]
+    },
+    {
+     "nome": "iso_arena",
+     "iso": true,
+     "alvo": [
+      275,
+      8,
+      33
+     ],
+     "caixa_mundo": [
+      244,
+      -7,
+      4,
+      306,
+      24,
+      62
+     ],
+     "rot": 0,
+     "nevoa": null
+    },
+    {
+     "nome": "iso_arena_oeste",
+     "iso": true,
+     "alvo": [
+      275,
+      8,
+      33
+     ],
+     "caixa_mundo": [
+      244,
+      -7,
+      4,
+      306,
+      24,
+      62
+     ],
+     "rot": 3,
+     "nevoa": null
+    },
+    {
+     "nome": "iso_arena_sul",
+     "iso": true,
+     "alvo": [
+      275,
+      8,
+      33
+     ],
+     "caixa_mundo": [
+      244,
+      -7,
+      4,
+      306,
+      24,
+      62
+     ],
+     "rot": 2,
+     "nevoa": null
+    }
+   ]
+  }
+ }
+}

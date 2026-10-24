@@ -10,10 +10,10 @@ Na vila de **Névoa-Velha**, todo Dia de Finados as pessoas acendiam uma luz par
 
 | Área | Clima | Fragmentos |
 |---|---|---|
-| **O Limiar** | cemitério, mausoléu e capela arruinada; é onde se chega | 3 |
-| **A Vila Silenciosa** | casas fechadas, padaria, igreja com sino, biblioteca | 4 |
-| **O Arquivo das Almas** | subsolo de estantes e cripta, com Sentinelas | 6 |
-| **O Último Testemunho** | arena final de velas e névoa | 3 |
+| **O Limiar** | cemitério em fileiras, capela arruinada e rotunda; é onde se chega | 3 |
+| **A Vila Silenciosa** | casas vazias, padaria, torre do sino com relógio sem ponteiros, feira | 4 |
+| **O Arquivo das Almas** | biblioteca monumental no subsolo, criptas das Sentinelas e a sala partida | 6 |
+| **O Último Testemunho** | arena circular a céu aberto, fosso espelhado e porta-moldura vazia | 3 |
 
 Total: **16 fragmentos por pessoa**. O conjunto completo (armadura + varinha) custa 34, então ninguém termina sozinho: é preciso negociar fragmentos.
 
@@ -33,23 +33,23 @@ Total: **16 fragmentos por pessoa**. O conjunto completo (armadura + varinha) cu
 
 ## Objetivos (E01 a E13)
 
-"Marcar" = a staff marca um bloco no painel (Staff > Ecos dos Ausentes > Objetivos). Os locais abaixo são **sugestões** em coordenadas do mapa (origem 10000, 80, 10000; some os valores para ter a coordenada do mundo). `requer` = precisa ter concluído antes (sem isso o jogo só diz "nada responde ainda").
+"Marcar" = a staff marca um bloco no painel (Staff > Ecos dos Ausentes > Objetivos). Os locais abaixo são os **palcos do mapa novo** (lista completa, com como chegar e o que cada um é, em `05-mapa.md`), em coordenadas relativas à origem (10000, 80, 10000; some os valores para ter a coordenada do mundo). `requer` = precisa ter concluído antes (sem isso o jogo só diz "nada responde ainda").
 
 | ID | Quem / o quê | Tipo | Fragmentos | Requer | Onde marcar (sugestão) |
 |---|---|---|---|---|---|
-| E01 | Tuco, o Coveiro | diálogo | 1 | - | perto da chegada (12, 1, 32) |
-| E02 | Lanterna | enigma (3 opções) | 1 | - | capela arruinada (55, 1, 11) |
-| E03 | Túmulo sem nome | segredo (bloco) | 1 | - | canto afastado do cemitério |
-| E04 | Dona Brasa | diálogo | 1 | - | casa da padaria, na Vila |
-| E05 | Mestre Sino | enigma | 1 | - | igreja da Vila (140, 1, 10) |
-| E06 | Os Gêmeos Sussurro | enigma | 1 | - | praça da Vila |
-| E07 | Carta na casa fechada | segredo | 1 | - | casa fechada da Vila |
-| E08 | Pó, o Arquivista | diálogo | 1 | - | entrada do Arquivo (178, -5, 33) |
-| E09 | Sentinela da Cripta (corredor leste) | elite (combate) | 1 | - | altar norte (215, -5, 14) |
-| E10 | Sentinela da Cripta (corredor oeste) | elite (combate) | 1 | - | altar sul (215, -5, 50) |
-| E11 | Prateleira escondida | segredo | 1 | - | estante escondida do Arquivo |
-| E12 | Memória Partida | conversa ou combate | 2 | E08 | perto do corredor final do Arquivo |
-| E13 | O Último Testemunho | conversa ou combate (chefe) | 3 | E08 | arena (273, -1, 33) |
+| E01 | Tuco, o Coveiro | diálogo | 1 | - | barril do canto do coveiro (12, 1, 45) |
+| E02 | Lanterna | enigma (3 opções) | 1 | - | pedestal da capela, cinzelado (34, 3, 4) |
+| E03 | Túmulo sem nome | segredo (bloco) | 1 | - | lápide lisa no monte do canto NE (58, 2, 9) |
+| E04 | Dona Brasa | diálogo | 1 | - | forno da padaria (83, 1, 19) |
+| E05 | Mestre Sino | enigma | 1 | - | atril no pé da torre do sino (118, 1, 12) |
+| E06 | Os Gêmeos Sussurro | enigma | 1 | - | pedestal gêmeo da praça (130, 2, 27) |
+| E07 | Carta na casa fechada | segredo | 1 | - | caixa de correio da casa fechada (98, 4, 51) |
+| E08 | Pó, o Arquivista | diálogo | 1 | - | atril do balcão do Átrio (183, -4, 33) |
+| E09 | Sentinela da Cripta (corredor leste) | elite (combate) | 1 | - | altar da cripta norte (230, -4, 6) |
+| E10 | Sentinela da Cripta (corredor oeste) | elite (combate) | 1 | - | altar da cripta sul (230, -4, 60) |
+| E11 | Prateleira escondida | segredo | 1 | - | estante cinzelada da cela escondida (220, -4, 41) |
+| E12 | Memória Partida | conversa ou combate | 2 | E08 | pedestal da sala partida (231, -4, 33) |
+| E13 | O Último Testemunho | conversa ou combate (chefe) | 3 | E08 | estrela de obsidiana no centro da arena (272, -5, 33) |
 
 Segredos (E03, E07, E11) são só um bloco que a pessoa clica. Nas elites (E09, E10), o bloco marcado é opcional: ele só mostra a dica; o fragmento sai da **morte da Sentinela**, e é o **ponto de criatura** da Sentinela que diz se ela paga E09 ou E10.
 

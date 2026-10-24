@@ -1,0 +1,69 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "vulpus:ecos_bloco",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "t0": "textures/blocks/stone",
+        "t1": "textures/blocks/dirt",
+        "t2": "textures/blocks/grass_side_carried",
+        "t3": "textures/blocks/sand",
+        "t4": "textures/blocks/gravel",
+        "t5": "textures/blocks/cobblestone",
+        "t6": "textures/blocks/planks_oak",
+        "t7": "textures/blocks/planks_spruce",
+        "t8": "textures/blocks/planks_birch",
+        "t9": "textures/blocks/planks_jungle",
+        "t10": "textures/blocks/planks_acacia",
+        "t11": "textures/blocks/planks_big_oak",
+        "t12": "textures/blocks/log_oak",
+        "t13": "textures/blocks/log_spruce",
+        "t14": "textures/blocks/log_birch",
+        "t15": "textures/blocks/brick",
+        "t16": "textures/blocks/stonebrick",
+        "t17": "textures/blocks/glass",
+        "t18": "textures/blocks/wool_colored_white",
+        "t19": "textures/blocks/wool_colored_red",
+        "t20": "textures/blocks/wool_colored_blue",
+        "t21": "textures/blocks/wool_colored_green",
+        "t22": "textures/blocks/wool_colored_yellow",
+        "t23": "textures/blocks/wool_colored_black",
+        "t24": "textures/blocks/snow",
+        "t25": "textures/blocks/ice",
+        "t26": "textures/blocks/sandstone_normal",
+        "t27": "textures/blocks/netherrack",
+        "t28": "textures/blocks/obsidian",
+        "t29": "textures/blocks/clay",
+        "t30": "textures/blocks/hardened_clay_stained_white",
+        "t31": "textures/blocks/stone_granite",
+        "t32": "textures/blocks/stone_diorite",
+        "t33": "textures/blocks/stone_andesite",
+        "t34": "textures/blocks/coal_ore",
+        "t35": "textures/blocks/iron_ore",
+        "t36": "textures/blocks/gold_ore",
+        "t37": "textures/blocks/diamond_ore",
+        "t38": "textures/blocks/coal_block",
+        "t39": "textures/blocks/iron_block",
+        "t40": "textures/blocks/gold_block",
+        "t41": "textures/blocks/diamond_block",
+        "t42": "textures/blocks/end_stone",
+        "t43": "textures/blocks/soul_sand",
+        "t44": "textures/blocks/glowstone",
+        "t45": "textures/blocks/sea_lantern",
+        "t46": "textures/blocks/red_sand",
+        "t47": "textures/blocks/hay_block_side",
+        "t48": "textures/blocks/quartz_block_side",
+        "t49": "textures/blocks/nether_brick"
+      },
+      "geometry": {
+        "default": "geometry.vulpus.ecos_bloco"
+      },
+      "render_controllers": [
+        "controller.render.vulpus.ecos_bloco"
+      ]
+    }
+  }
+}

@@ -175,6 +175,12 @@ const FAIXAS = {
   abateEsperaSeg: [0, 60],
   ecosVaraDano: [1, 40],
   ecosVaraRecargaSeg: [1, 60],
+  ecosVaraSegurarMaxSeg: [1, 60],
+  ecosVaraCooldownSeg: [0, 300],
+  ecosVaraForca: [0, 10],
+  ecosVaraImunidadeSeg: [0, 300],
+  ecosVaraQuedaSeg: [0, 30],
+  ecosVaraBlocosMax: [0, 100],
   ecosTetoCriaturas: [0, 60],
   ecosReaparecerSeg: [10, 3600],
   ecosDanoMin: [1, 100],
@@ -417,7 +423,7 @@ const GRUPOS = [
   { id: "eras", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ERAS, icone: ICONES.tempo, chaves: ["erasTinta"] },
   { id: "hollow", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_HOLLOW, icone: ICONES.tempo, chaves: [], abrir: (p) => menuHollowStaff(p) },
   { id: "ecos", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ECOS, icone: ICONES.tempo, chaves: [], abrir: (p) => menuEcosStaff(p) },
-  { id: "ecos_equip", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ECOS_EQUIP, icone: ICONES.ajustes, chaves: ["ecosEquipLigado", "ecosVaraDano", "ecosVaraRecargaSeg", "ecosVaraPvp", "ecosBonusConjunto"] },
+  { id: "ecos_equip", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ECOS_EQUIP, icone: ICONES.ajustes, chaves: ["ecosEquipLigado", "ecosVaraDano", "ecosVaraRecargaSeg", "ecosVaraPvp", "ecosBonusConjunto", "ecosVaraTelecinese", "ecosVaraSegurarMaxSeg", "ecosVaraCooldownSeg", "ecosVaraForca", "ecosVaraPegarJogador", "ecosVaraPegarBloco", "ecosVaraImunidadeSeg", "ecosVaraQuedaSeg", "ecosVaraBlocosMax"] },
   { id: "limpeza", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_LIMPEZA, icone: ICONES.apagar, chaves: [], abrir: (p) => menuLimpezaStaff(p) },
   { id: "kitsune", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_KITSUNE, icone: ICONES.apelido, chaves: ["kitsuneChegadaFx", "kitsuneChegadaMsg"] },
   { id: "geral", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao", "limiteMundo"] },
@@ -567,7 +573,7 @@ function campoDe(chave, atual) {
   if (typeof valor === "boolean") return { tipo: "alternar", rotulo, padrao: valor };
   if (typeof valor === "string") return { tipo: "texto", rotulo, dica: chave === "florFalas" ? textos.DICA_FALAS : textos.DICA_LINK, padrao: valor };
   const [min, max] = FAIXAS[chave] ?? [0, Number.MAX_SAFE_INTEGER];
-  return { tipo: "numero", rotulo, padrao: valor, min, max, casas: chave === "florRaio" ? 1 : 0 };
+  return { tipo: "numero", rotulo, padrao: valor, min, max, casas: chave === "florRaio" || chave === "ecosVaraForca" ? 1 : 0 };
 }
 
 /**

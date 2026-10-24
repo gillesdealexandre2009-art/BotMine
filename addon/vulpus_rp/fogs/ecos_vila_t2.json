@@ -3,11 +3,11 @@
   "minecraft:fog_settings": {
     "description": { "identifier": "vulpus:nevoa_ecos_vila_t2" },
     "distance": {
-      "air":             { "fog_start": 20, "fog_end": 60, "fog_color": "#1f1a15", "render_distance_type": "fixed" },
-      "water":           { "fog_start": 5,  "fog_end": 25, "fog_color": "#151210", "render_distance_type": "fixed" },
-      "lava":            { "fog_start": 0,  "fog_end": 5,  "fog_color": "#1f1a15", "render_distance_type": "fixed" },
-      "lava_resistance": { "fog_start": 0,  "fog_end": 8,  "fog_color": "#1f1a15", "render_distance_type": "fixed" },
-      "weather":         { "fog_start": 20, "fog_end": 60, "fog_color": "#1f1a15", "render_distance_type": "fixed" }
+      "air":             { "fog_start": 24, "fog_end": 105, "fog_color": "#d9a77a", "render_distance_type": "fixed" },
+      "water":           { "fog_start": 0,  "fog_end": 24, "fog_color": "#6b4f3f", "render_distance_type": "fixed" },
+      "lava":            { "fog_start": 0,  "fog_end": 3,  "fog_color": "#d9a77a", "render_distance_type": "fixed" },
+      "lava_resistance": { "fog_start": 0,  "fog_end": 5,  "fog_color": "#d9a77a", "render_distance_type": "fixed" },
+      "weather":         { "fog_start": 24, "fog_end": 105, "fog_color": "#d9a77a", "render_distance_type": "fixed" }
     }
   }
 }

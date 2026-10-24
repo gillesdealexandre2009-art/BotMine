@@ -1,0 +1,333 @@
+{
+ "global": {
+  "tile": "640x360",
+  "colunas": 3,
+  "fov": 75
+ },
+ "areas": {
+  "limiar": {
+   "nevoa": "0xb8b3cc:80:14",
+   "ambiente": 0.3,
+   "sol": 0.75,
+   "vistas": [
+    {
+     "nome": "chegada",
+     "cam": [
+      12.5,
+      2.62,
+      32.5
+     ],
+     "yaw": 0,
+     "pitch": 3
+    },
+    {
+     "nome": "veu",
+     "cam": [
+      12.5,
+      2.62,
+      32.5
+     ],
+     "yaw": 180,
+     "pitch": 4
+    },
+    {
+     "nome": "aleia",
+     "cam": [
+      34.5,
+      3.62,
+      31.5
+     ],
+     "yaw": 270,
+     "pitch": 2
+    },
+    {
+     "nome": "campo",
+     "cam": [
+      30.5,
+      3.62,
+      33.5
+     ],
+     "yaw": 300,
+     "pitch": -4
+    },
+    {
+     "nome": "portico",
+     "cam": [
+      48.5,
+      2.62,
+      32.5
+     ],
+     "yaw": 0,
+     "pitch": 8
+    },
+    {
+     "nome": "iso_capela_campo",
+     "iso": true,
+     "alvo": [
+      37.0,
+      7.5,
+      34.0
+     ],
+     "caixa_mundo": [
+      -2,
+      -1,
+      0,
+      76,
+      16,
+      68
+     ],
+     "rot": 0,
+     "nevoa": null
+    }
+   ]
+  },
+  "vila": {
+   "nevoa": "0xd9a77a:85:14",
+   "ambiente": 0.3,
+   "sol": 0.75,
+   "vistas": [
+    {
+     "nome": "entrada",
+     "cam": [
+      74.5,
+      2.62,
+      32.5
+     ],
+     "yaw": 0,
+     "pitch": 4
+    },
+    {
+     "nome": "praca",
+     "cam": [
+      106.5,
+      2.62,
+      32.5
+     ],
+     "yaw": 340,
+     "pitch": 14
+    },
+    {
+     "nome": "torre",
+     "cam": [
+      122.5,
+      2.62,
+      26.5
+     ],
+     "yaw": 270,
+     "pitch": 20
+    },
+    {
+     "nome": "feira",
+     "cam": [
+      122.5,
+      2.62,
+      41.5
+     ],
+     "yaw": 80,
+     "pitch": 0
+    },
+    {
+     "nome": "iso_praca",
+     "iso": true,
+     "alvo": [
+      123.0,
+      13.5,
+      28.0
+     ],
+     "caixa_mundo": [
+      104,
+      -1,
+      4,
+      142,
+      28,
+      52
+     ],
+     "rot": 0,
+     "nevoa": null
+    },
+    {
+     "nome": "iso_rua",
+     "iso": true,
+     "alvo": [
+      91.0,
+      6.5,
+      32.0
+     ],
+     "caixa_mundo": [
+      70,
+      -1,
+      2,
+      112,
+      14,
+      62
+     ],
+     "rot": 0,
+     "nevoa": null
+    }
+   ]
+  },
+  "arquivo": {
+   "nevoa": "0x1b2440:60:8",
+   "ambiente": 0.22,
+   "sol": 0.0,
+   "vistas": [
+    {
+     "nome": "boca",
+     "cam": [
+      150.5,
+      2.62,
+      32.5
+     ],
+     "yaw": 0,
+     "pitch": 8
+    },
+    {
+     "nome": "atrio",
+     "cam": [
+      177.5,
+      -2.38,
+      33.5
+     ],
+     "yaw": 0,
+     "pitch": 4
+    },
+    {
+     "nome": "salao",
+     "cam": [
+      193.5,
+      -2.38,
+      33.5
+     ],
+     "yaw": 0,
+     "pitch": 12
+    },
+    {
+     "nome": "cripta",
+     "cam": [
+      193.5,
+      -2.38,
+      6.5
+     ],
+     "yaw": 0,
+     "pitch": 2
+    },
+    {
+     "nome": "memoria",
+     "cam": [
+      225.5,
+      -2.38,
+      33.5
+     ],
+     "yaw": 0,
+     "pitch": 4
+    },
+    {
+     "nome": "iso_salao_corte",
+     "iso": true,
+     "alvo": [
+      207.0,
+      1.5,
+      33.0
+     ],
+     "caixa_mundo": [
+      190,
+      -7,
+      12,
+      224,
+      10,
+      54
+     ],
+     "rot": 1,
+     "ymax": 5,
+     "nevoa": null,
+     "ambiente": 0.55
+    }
+   ]
+  },
+  "arena": {
+   "nevoa": "0x2c2440:100:18",
+   "ambiente": 0.25,
+   "sol": 0.35,
+   "vistas": [
+    {
+     "nome": "entrada",
+     "cam": [
+      249.5,
+      -2.38,
+      33.5
+     ],
+     "yaw": 0,
+     "pitch": 6
+    },
+    {
+     "nome": "centro",
+     "cam": [
+      268.5,
+      -2.38,
+      33.5
+     ],
+     "yaw": 0,
+     "pitch": 10
+    },
+    {
+     "nome": "porta",
+     "cam": [
+      284.5,
+      -2.38,
+      33.5
+     ],
+     "yaw": 0,
+     "pitch": 18
+    },
+    {
+     "nome": "centro_oeste",
+     "cam": [
+      268.5,
+      -2.38,
+      33.5
+     ],
+     "yaw": 180,
+     "pitch": 8
+    },
+    {
+     "nome": "iso_arena",
+     "iso": true,
+     "alvo": [
+      275.0,
+      8.5,
+      33.0
+     ],
+     "caixa_mundo": [
+      244,
+      -7,
+      4,
+      306,
+      24,
+      62
+     ],
+     "rot": 0,
+     "nevoa": null
+    },
+    {
+     "nome": "iso_arena_oeste",
+     "iso": true,
+     "alvo": [
+      275.0,
+      8.5,
+      33.0
+     ],
+     "caixa_mundo": [
+      244,
+      -7,
+      4,
+      306,
+      24,
+      62
+     ],
+     "rot": 3,
+     "nevoa": null
+    }
+   ]
+  }
+ }
+}

@@ -8,6 +8,8 @@ import { online, TAG_SUMIDO } from "../core/jogadores.js";
 import { msg, registrarErro } from "../core/util.js";
 import * as textos from "../textos/ecos_equip.js";
 import { emMinigame } from "./mg_estado.js";
+import * as telecinese from "./ecos_telecinese.js";
+import * as textosTele from "../textos/ecos_telecinese.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 
@@ -29,6 +31,9 @@ const IGNORAR = ["minecraft:item", "minecraft:xp_orb", "minecraft:armor_stand", 
 
 /** Último tick de uso da varinha por jogador. @type {Map<string, number>} */
 const ultimoUso = new Map();
+/** Último tick em que o uso da varinha foi tratado (itemUse e itemStartUse chegam juntos). @type {Map<string, number>} */
+const ultimoClique = new Map();
+const PROP_MODO = "vulpus:varinha_modo";
 
 /** @param {Player} p */
 const forDoJogoNormal = (p) => {
@@ -124,40 +129,62 @@ export function usarVarinha(p) {
       registrarErro("Ecos: dano da varinha", e);
     }
   }
-  gastar(p, item, eq);
+  telecinese.gastarVarinha(p);
   return true;
 }
 
+/** Modo da varinha (0 = raio, 1 = telecinese de entidades, 2 = de blocos), guardado em cada jogador. @param {Player} p */
+export function modoVarinha(p) {
+  const m = p.getDynamicProperty(PROP_MODO);
+  return m === 1 || m === 2 ? m : 0;
+}
+
+/** Passa para o próximo modo e mostra na actionbar. @param {Player} p */
+export function alternarModo(p) {
+  const proximo = (modoVarinha(p) + 1) % 3;
+  p.setDynamicProperty(PROP_MODO, proximo);
+  p.onScreenDisplay.setActionBar(textosTele.MODO(proximo));
+  p.playSound("random.click");
+  return proximo;
+}
+
 /**
- * Gasta 1 de durabilidade (não gasta no criativo); quebra ao zerar.
+ * Uso da varinha (clique direito ou começo do segurar): agachado troca de modo; senão faz o que o modo manda.
  * @param {Player} p
- * @param {import("@minecraft/server").ItemStack} item
- * @param {import("@minecraft/server").EntityEquippableComponent} eq
  */
-function gastar(p, item, eq) {
-  if (p.getGameMode() === GameMode.Creative) return;
-  const dur = item.getComponent("durability");
-  if (!dur) return;
-  dur.damage += 1;
-  if (dur.damage >= dur.maxDurability) {
-    eq.setEquipment(EquipmentSlot.Mainhand, undefined);
-    msg(p, textos.QUEBROU);
-    p.playSound("random.break");
-  } else {
-    eq.setEquipment(EquipmentSlot.Mainhand, item);
+export function usarVarinhaPorModo(p) {
+  const agora = system.currentTick;
+  if (ultimoClique.get(p.id) === agora) return;
+  ultimoClique.set(p.id, agora);
+  if (ausente(p)) return;
+  if (p.isSneaking) {
+    alternarModo(p);
+    return;
   }
+  const modo = modoVarinha(p);
+  if (modo === 0) usarVarinha(p);
+  else if (config().ecosEquipLigado && !emMinigame(p) && forDoJogoNormal(p)) telecinese.iniciarSegurar(p, modo);
 }
 
 world.afterEvents.itemUse.subscribe(({ source, itemStack }) => {
   try {
     if (itemStack?.typeId !== ITEM_VARINHA || source?.typeId !== "minecraft:player") return;
-    usarVarinha(source);
+    usarVarinhaPorModo(source);
   } catch (e) {
     registrarErro("Ecos: uso da varinha", e);
   }
 });
 
 // Sem dano de queda com o conjunto completo (só confere a roupa quando a queda acontece de verdade).
+world.afterEvents.itemStartUse.subscribe(({ source, itemStack }) => {
+  try {
+    if (itemStack?.typeId !== ITEM_VARINHA || source?.typeId !== "minecraft:player") return;
+    usarVarinhaPorModo(source);
+  } catch (e) {
+    registrarErro("Ecos: começo do uso da varinha", e);
+  }
+});
+
 world.beforeEvents.entityHurt.subscribe((ev) => {
   try {
     if (ev.damageSource.cause !== EntityDamageCause.fall) return;

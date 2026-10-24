@@ -5,7 +5,7 @@
 import { system, world } from "@minecraft/server";
 import { lerMundo, salvarMundo } from "../core/db.js";
 import { erro, ok, registrarErro, som } from "../core/util.js";
-import { CAIXA, CHEGADA, construir, FASES_MAPA, REG } from "./ecos_mapa.js";
+import { CAIXA, CHEGADA, construir, FASES_MAPA, REG } from "./ecos_mapa_novo.js";
 import { PincelMundo } from "./obras_pincel.js";
 import { localSpawn } from "./spawn.js";
 import * as textos from "../textos/ecos.js";

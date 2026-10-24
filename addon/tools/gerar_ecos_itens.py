@@ -41,9 +41,10 @@ PAL = {
     "w": (226, 253, 255), "k": (104, 222, 242), "c": (44, 138, 182),
     "z": (222, 208, 200), "y": (176, 156, 156), "x": (116, 96, 110),
     "5": (190, 170, 236), "6": (150, 128, 214),
+    "n": (88, 88, 150), "N": (110, 108, 172), "m": (70, 68, 128), "P": (244, 245, 254),
 }
 # tom mais escuro para a metade direita (a luz vem do canto superior esquerdo)
-ESCURECE = {"l": "p", "p": "s", "s": "t", "G": "g", "g": "h", "u": "v", "v": "V", "z": "y", "y": "x", "5": "6"}
+ESCURECE = {"l": "p", "p": "s", "s": "t", "G": "g", "g": "h", "u": "v", "v": "V", "z": "y", "y": "x", "5": "6", "N": "n", "n": "m"}
 OUTLINE = PAL["o"]
 
 
@@ -94,54 +95,54 @@ def halo(img, cores=("w", "k", "c", "W"), raio=2):
 
 # metades esquerdas (8 colunas); a direita é espelhada e escurecida
 ICONES_MET = {
+    # mesmos materiais da armadura vestida: base ardósia azul-violeta (n/N/m), placas pérola, ouro só em borda, gema ciano
     "ausente_helmet": (2, [
         "......Gg",
-        "....llGg",
-        "...lllGg",
-        "..llppGg",
-        "..GGGgwk",
-        "..lpsoVV",
-        "..lpsoVk",
-        "..lssoVV",
-        "..lssoVV",
-        "...ssooo",
+        "....pppG",
+        "...pPpps",
+        "..GGGGGG",
+        "..noookn",
+        "..nooooo",
+        "..psnnps",
+        "..pstnns",
+        "..nnn...",
     ]),
     "ausente_chestplate": (2, [
-        ".llppp..",
-        ".llppsGg",
-        "llllppsG",
-        "llppopGw",
-        "lppsopGk",
-        "ppssoGkc",
-        "ppssopsg",
-        "GGggoGGg",
-        "....opss",
-        "....ssst",
+        "pppn...n",
+        "pPpnnppn",
+        "psnnnpwk",
+        "pnNnnpkc",
+        ".nNnnpps",
+        ".nnnnnps",
+        ".GGGGGkc",
+        ".nnnppss",
+        "..nnnpss",
+        "...nnnnn",
     ]),
     "ausente_leggings": (2, [
-        ".GGGGGwk",
-        ".llppssp",
-        ".lppsssp",
-        ".lppssp.",
-        ".lpssp..",
-        ".lGGgGp.",
-        ".lpssp..",
-        ".lpssp..",
-        ".lpssp..",
-        ".ussvp..",
-        ".GGgggg.",
+        ".GGGGGGG",
+        ".nNnnppn",
+        ".nnnnpsn",
+        ".nnnnppn",
+        ".nNnnnn.",
+        ".ppsnn..",
+        ".psksn..",
+        ".ppsnn..",
+        ".nNnnn..",
+        ".nnnnn..",
+        ".GGGGG..",
     ]),
     "ausente_boots": (3, [
         "..GGGG..",
-        "..lppsv.",
-        "..lpksv.",
-        "..lpssv.",
-        "..lpssv.",
-        ".llppsv.",
-        ".lppssV.",
-        ".lGGgGv.",
-        ".VVVVVV.",
-]),
+        "..nnNnn.",
+        "..npsnn.",
+        "..npsnn.",
+        "..nnnnn.",
+        ".nnNnnn.",
+        ".ppsknn.",
+        ".ppsssn.",
+        ".ooooon.",
+    ]),
 }
 
 # desenhos completos (16x16); contorno e halo são automáticos
@@ -199,6 +200,9 @@ def icone(nome):
 
 
 # ---------------------------------------------------------------- camadas de armadura 64x32
+# Projeto (ver evento-ecos/02-equipamentos.md): base escura e fria (ardósia azul-violeta) como "roupa de baixo"; placas pequenas de
+# pérola/prata só onde há proteção; contorno escuro de 1 px entre placas; luz no canto superior esquerdo (3 tons por placa);
+# ouro pálido só em 1 px de borda; gema ciano minúscula. Nada de área lisa > 3x3 e nenhuma faixa larga.
 def caixa(u, v, w, h, d):
     """Retângulos UV de uma caixa humanoide (padrão de pele/armadura do jogo)."""
     return {
@@ -207,78 +211,208 @@ def caixa(u, v, w, h, d):
     }
 
 
-def _pintar(img, x, y, linhas):
-    for dy, linha in enumerate(linhas):
-        for dx, ch in enumerate(linha):
-            if ch in PAL:
-                img.putpixel((x + dx, y + dy), PAL[ch] + (255,))
+CORES = {
+    "o": (38, 34, 76),                               # contorno
+    "n": (88, 88, 150), "N": (110, 108, 172), "m": (70, 68, 128),   # tecido: base, luz, sombra
+    "P": (244, 245, 254), "p": (216, 220, 246), "s": (166, 170, 216), "t": (114, 112, 172),  # pérola: brilho, luz, meio, sombra
+    "G": (250, 236, 186), "g": (206, 182, 126), "h": (150, 124, 88),                      # ouro pálido
+    "w": (226, 253, 255), "k": (104, 222, 242), "c": (44, 138, 182),                      # gema ciano
+}
+MATS = {"perola": ("p", "s", "t"), "ouro": ("G", "g", "h"), "gema": ("w", "k", "c")}
 
 
-def _espelha(linhas):
-    return ["".join(ESCURECE.get(c, c) for c in reversed(l)) for l in linhas]
+class Face:
+    def __init__(self, img, x0, y0, w, h):
+        self.img, self.x0, self.y0, self.w, self.h = img, x0, y0, w, h
+        self.placa = set()
+
+    def px(self, x, y, ch):
+        if 0 <= x < self.w and 0 <= y < self.h:
+            self.img.putpixel((self.x0 + x, self.y0 + y), CORES[ch] + (255,))
+
+    def tecido(self, y_ini=0, y_fim=None, desloc=0):
+        """Tecido quase liso: luz na coluna da esquerda, sombra contínua na da direita e 1 dobra vertical marcada."""
+        dobra = (self.w * 5) // 8 if self.w >= 8 else (2 if self.w == 4 else -1)
+        for y in range(y_ini, self.h if y_fim is None else y_fim):
+            for x in range(self.w):
+                self.px(x, y, "N" if x == 0 else "m" if x == self.w - 1 or x == dobra else "n")
+
+    def preencher(self, x, y, w, h, ch):
+        for j in range(h):
+            for i in range(w):
+                self.px(x + i, y + j, ch)
+
+    def forma(self, x, y, linhas, mat="perola"):
+        """Placa a partir de máscara ('#'); contorno de 1 px só sobre tecido; luz no canto superior esquerdo."""
+        hi, meio, lo = MATS[mat]
+        m = {(x + i, y + j) for j, l in enumerate(linhas) for i, ch in enumerate(l) if ch == "#"}
+        for (px_, py_) in m:
+            for dx, dy in ((1, 0), (0, 1)):   # contorno só no lado da sombra (direita/baixo): define sem escurecer tudo
+                q = (px_ + dx, py_ + dy)
+                if q not in m and q not in self.placa and 0 <= q[0] < self.w and 0 <= q[1] < self.h:
+                    self.px(q[0], q[1], "o")
+        for (px_, py_) in m:
+            tl = (px_ - 1, py_) not in m or (px_, py_ - 1) not in m
+            br = (px_ + 1, py_) not in m or (px_, py_ + 1) not in m
+            self.px(px_, py_, hi if tl and not br else lo if br and not tl else meio)
+        self.placa |= m
+        return m
+
+    def rect(self, x, y, w, h, mat="perola"):
+        return self.forma(x, y, ["#" * w] * h, mat)
+
+    def limpar(self, y_ini, y_fim=None):
+        for y in range(y_ini, self.h if y_fim is None else y_fim):
+            for x in range(self.w):
+                self.img.putpixel((self.x0 + x, self.y0 + y), (0, 0, 0, 0))
 
 
-def _caixa_pintar(img, u, v, w, h, d, faces):
-    pos = caixa(u, v, w, h, d)
-    for nome, linhas in faces.items():
-        _pintar(img, pos[nome][0], pos[nome][1], linhas)
+def _faces(img, u, v, w, h, d):
+    return {n: Face(img, x, y, (d if n in ("right", "left") else w), (d if n in ("top", "bottom") else h))
+            for n, (x, y) in caixa(u, v, w, h, d).items()}
 
 
 def _cabeca(img):
-    topo = ["slpGgpst", "pllGgllp", "plpGgplp", "plpGgplp", "plpGgplp", "plpGgplp", "pllGgllp", "spsGgsst"]
-    frente = ["llllllps", "lppppsss", "GGGwkGGg", "lp.kc.sp", "lp.Gg.sp", "ls.Gg.st", "ps....st", "........"]
-    lado = ["pllllllp", "psppppps", "GGGGGGGG", "vvvppppp", "vVvvppps", "vVvVppss", "uvVvpss.", "gGgGgGg."]
-    costas = ["pllllllp", "ppppppps", "GGGGGGGG", "uvvVvvVV", "uvvVvvVV", "vvVVvVVV", "VvVVVVVt", "gGg.gGg."]
-    fundo = ["VVVVVVVV"] * 8
-    _caixa_pintar(img, 0, 0, 8, 8, 8, {"top": topo, "bottom": fundo, "right": lado, "front": frente, "left": _espelha(lado), "back": costas})
+    f = _faces(img, 0, 0, 8, 8, 8)
+    for fc in f.values():
+        fc.tecido()
+    # frente: testa de placa (1 px de ouro), viseira escura lisa com 2 olhos de alma, queixeiras
+    fr = f["front"]
+    fr.rect(0, 0, 8, 2)
+    fr.preencher(0, 0, 8, 1, "G")
+    fr.preencher(0, 2, 8, 3, "o")
+    fr.px(2, 3, "k")
+    fr.px(5, 3, "k")
+    fr.rect(0, 5, 2, 3)
+    fr.rect(6, 5, 2, 3)
+    # lado direito: testa + proteção de orelha com gema; lado esquerdo: testa + corrente de ouro com pingente
+    d_ = f["right"]
+    d_.rect(0, 0, 8, 2)
+    d_.preencher(0, 0, 8, 1, "G")
+    d_.rect(2, 3, 4, 3)
+    d_.px(3, 4, "k")
+    e_ = f["left"]
+    e_.rect(0, 0, 8, 2)
+    e_.preencher(0, 0, 8, 1, "G")
+    e_.preencher(2, 3, 1, 3, "G")
+    e_.px(2, 6, "k")
+    e_.rect(4, 3, 3, 3)
+    # costas: testa e nuca
+    c = f["back"]
+    c.rect(0, 0, 8, 2)
+    c.preencher(0, 0, 8, 1, "G")
+    c.rect(1, 3, 6, 4)
+    c.px(3, 4, "k")
+    # topo: crista fina (2 px) com ponta de ouro
+    t = f["top"]
+    t.forma(3, 0, ["##"] * 8)
+    t.preencher(3, 0, 2, 2, "G")
+    f["bottom"].preencher(0, 0, 8, 8, "m")
     img.paste(img.crop((0, 0, 32, 16)), (32, 0))
 
 
 def _corpo(img, camada):
-    cloth = ["uvvGgvVV", "uvvGgvVV", "vvVGgVVV", "vvVggVVV", "VVVtVVtt"]
+    f = _faces(img, 16, 16, 8, 12, 4)
     if camada == 1:
-        frente = ["lGGGGGGs", "lppGGpss", "lpGwkGss", "lpGkcGss", "lppGGpss", "lppppsst", "GgGggGgh"] + cloth
-        costas = ["lGGGGGGs", "lppGgpss", "lppGgpss", "lppkcpss", "lppGgpss", "lppppsst", "GgGggGgh"] + cloth
-        lado = ["lGGs", "lpps", "lpps", "lpps", "lpps", "lpss", "GgGh", "vuvV", "uvvV", "vvuV", "vVvV", "VvVV"]
-        topo = ["pGGGGGGs", "puvvvvVs", "pvVVVVvs", "pppppsss"]
+        for fc in f.values():
+            fc.tecido(0, 9)
+        fr = f["front"]
+        fr.rect(0, 0, 3, 2)
+        fr.rect(5, 0, 3, 2)
+        fr.rect(3, 1, 2, 6)
+        fr.px(3, 2, "w")
+        fr.px(4, 2, "k")
+        fr.px(3, 3, "k")
+        fr.px(4, 3, "c")
+        for i in range(3):   # faixa diagonal de ouro (assimetria), curta e contínua, até o cinto
+            fr.px(i, 3 + i, "g")
+        fr.rect(0, 8, 8, 1, "ouro")
+        fr.px(3, 8, "k")
+        fr.px(4, 8, "k")
+        co = f["back"]
+        co.rect(0, 0, 3, 2)
+        co.rect(5, 0, 3, 2)
+        co.rect(3, 1, 2, 6)
+        co.px(3, 3, "k")
+        for i in range(3):
+            co.px(7 - i, 3 + i, "g")
+        co.rect(0, 8, 8, 1, "ouro")
+        d_ = f["right"]
+        d_.rect(0, 1, 3, 4)
+        d_.px(1, 2, "k")
+        d_.rect(0, 8, 4, 1, "ouro")
+        e_ = f["left"]
+        e_.rect(1, 2, 3, 3)
+        e_.rect(0, 8, 4, 1, "ouro")
+        f["top"].rect(1, 1, 6, 2, "ouro")
+        for n in ("front", "back", "right", "left"):
+            f[n].limpar(9)
+        f["bottom"].limpar(0)
     else:
-        vazio = ["........"] * 7
-        frente = vazio + ["lGGwkGGs", "lpGkcGss", "lppGGpss", "lpvuVvss", "uvVvvVvV"]
-        costas = vazio + ["lGGGgGGs", "lppGgpss", "lppGgpss", "lpvuVvss", "uvVvvVvV"]
-        lado = ["...."] * 7 + ["GgGg", "lpps", "lpps", "lvvV", "uvvV"]
-        topo = ["........"] * 4
-    _caixa_pintar(img, 16, 16, 8, 12, 4, {
-        "top": topo, "bottom": ["VvVvVvVv"] * 4, "right": lado, "front": frente, "left": _espelha(lado), "back": costas,
-    })
+        # camada 2: só o quadril (por baixo da cintura da camada 1)
+        for n in ("front", "back", "right", "left"):
+            f[n].tecido(9, 12)
+        f["front"].rect(1, 9, 2, 3)
+        f["front"].rect(5, 9, 2, 3)
+        f["back"].rect(1, 9, 6, 2)
+        f["right"].rect(1, 9, 2, 3)
+        f["left"].rect(1, 9, 2, 3)
+        f["bottom"].preencher(0, 0, 8, 4, "m")
 
 
 def _braco(img):
-    frente = ["lpps", "lpps", "lpss", "GgGg", "uvvV", "uvvV", "vvVV", "vvVV", "lpps", "lpss", "GgGg", "gghh"]
-    fora = list(frente)
-    fora[1] = "lwks"
-    fora[2] = "lkcs"
-    _caixa_pintar(img, 40, 16, 4, 12, 4, {
-        "top": ["llps", "lpps", "ppss", "psst"], "bottom": ["GgGg", "gggg", "gghh", "hhhh"],
-        "right": fora, "front": frente, "left": _espelha(frente), "back": _espelha(frente),
-    })
+    f = _faces(img, 40, 16, 4, 12, 4)
+    for fc in f.values():
+        fc.tecido()
+    ou = f["right"]   # lado de fora: ombreira angular com gema, braçadeira
+    ou.forma(0, 0, ["####", "####", "###.", "##.."])
+    ou.preencher(0, 0, 4, 1, "G")
+    ou.px(1, 1, "k")
+    for n in ("front", "back"):
+        fc = f[n]
+        fc.forma(0, 0, ["####", "####", ".##."])
+        fc.preencher(0, 0, 4, 1, "G")
+    f["left"].forma(0, 0, ["####", "####"])
+    f["left"].preencher(0, 0, 4, 1, "G")
+    tp = f["top"]
+    tp.rect(0, 0, 4, 4)
+    tp.px(1, 1, "k")
+    for fc in (ou, f["front"], f["back"], f["left"]):
+        fc.preencher(0, 10, 4, 1, "g")
+        fc.preencher(0, 11, 4, 1, "m")
+    f["bottom"].preencher(0, 0, 4, 4, "o")
 
 
 def _perna(img, camada):
+    f = _faces(img, 0, 16, 4, 12, 4)
     if camada == 1:
-        v = ["...."] * 6
-        frente = v + ["uvvV", "GgGg", "lpps", "lwks", "llps", "VVVV"]
-        outro = v + ["uvvV", "GgGg", "lpps", "lpss", "lpss", "VVVV"]
-        topo = ["...."] * 4
-        fundo = ["vVVV", "VVVV", "VVVV", "VVVt"]
+        # botas: só da canela para baixo (linhas 6 a 11); o resto fica vazio para a calça aparecer
+        for n in ("front", "back", "right", "left"):
+            fc = f[n]
+            fc.tecido(6, 12)
+            fc.preencher(0, 6, 4, 1, "G")
+            fc.preencher(0, 11, 4, 1, "o")
+        fr = f["front"]
+        fr.rect(0, 8, 4, 2)
+        fr.px(1, 8, "k")
+        f["right"].rect(1, 8, 2, 2)
+        f["left"].rect(1, 8, 2, 2)
+        f["bottom"].preencher(0, 0, 4, 4, "o")
     else:
-        frente = ["lpps", "lpps", "lpss", "lpss", "GgGg", "lpps", "lwks", "lpss", "GgGg", "uvvV", "uvvV", "vvVV"]
-        outro = list(frente)
-        outro[5] = "lpss"
-        topo = ["lppp", "lpps", "ppss", "psst"]
-        fundo = ["VVVV"] * 4
-    _caixa_pintar(img, 0, 16, 4, 12, 4, {
-        "top": topo, "bottom": fundo, "right": outro, "front": frente, "left": _espelha(outro), "back": _espelha(outro),
-    })
+        for n in ("front", "back", "right", "left"):
+            f[n].tecido()
+        fr = f["front"]
+        fr.forma(0, 3, [".##.", "####", "####"])
+        fr.preencher(1, 3, 2, 1, "G")
+        fr.px(1, 4, "k")
+        fr.px(2, 4, "k")
+        fr.rect(1, 7, 2, 4)
+        fr.preencher(1, 7, 2, 1, "g")
+        for n in ("right", "left"):
+            f[n].rect(1, 3, 2, 3)
+            f[n].rect(1, 8, 2, 3)
+        f["top"].preencher(0, 0, 4, 4, "m")
+        f["bottom"].preencher(0, 0, 4, 4, "m")
 
 
 def textura_armadura(camada):
@@ -340,6 +474,7 @@ def main():
         "minecraft:max_stack_size": 1,
         "minecraft:glint": True,
         "minecraft:hand_equipped": True,
+        "minecraft:use_modifiers": {"use_duration": 3600, "movement_modifier": 1.0},
         "minecraft:durability": {"max_durability": VARINHA_DUR},
         "minecraft:damage": 1,
         "minecraft:repairable": {"repair_items": [{"items": ["vulpus:fragmento_alma"], "repair_amount": "query.max_durability * 0.25"}]},
