@@ -1,0 +1,221 @@
+{
+ "global": {
+  "tile": "640x360",
+  "colunas": 2,
+  "fov": 90
+ },
+ "areas": {
+  "caixa": {
+   "nevoa": "0x38466f:100:12",
+   "ambiente": 0.6,
+   "sol": 0,
+   "vistas": [
+    {
+     "nome": "oeste_parede",
+     "cam": [
+      -19.5,
+      2.62,
+      25.5
+     ],
+     "alvo": [
+      -56,
+      14,
+      25
+     ]
+    },
+    {
+     "nome": "norte_parede",
+     "cam": [
+      18.5,
+      2.62,
+      -20.5
+     ],
+     "alvo": [
+      18,
+      14,
+      -56
+     ]
+    },
+    {
+     "nome": "sul_parede",
+     "cam": [
+      22.5,
+      1.62,
+      80.5
+     ],
+     "alvo": [
+      22,
+      14,
+      131
+     ]
+    },
+    {
+     "nome": "canto_noroeste",
+     "cam": [
+      -3.5,
+      2.62,
+      -0.5
+     ],
+     "alvo": [
+      -56,
+      20,
+      -56
+     ]
+    },
+    {
+     "nome": "leste_parede",
+     "cam": [
+      323.5,
+      2.62,
+      20.5
+     ],
+     "alvo": [
+      360,
+      14,
+      20
+     ]
+    },
+    {
+     "nome": "oeste_para_cima",
+     "cam": [
+      -19.5,
+      2.62,
+      25.5
+     ],
+     "alvo": [
+      -45,
+      49,
+      20
+     ]
+    },
+    {
+     "nome": "canto_sudeste",
+     "cam": [
+      304.5,
+      2.62,
+      71.5
+     ],
+     "alvo": [
+      360,
+      18,
+      132
+     ]
+    },
+    {
+     "nome": "nordeste_olhando_o_mapa",
+     "cam": [
+      303.5,
+      2.62,
+      -10.5
+     ],
+     "alvo": [
+      240,
+      12,
+      25
+     ]
+    },
+    {
+     "nome": "vila_sul_floresta",
+     "cam": [
+      111.5,
+      2.62,
+      78.5
+     ],
+     "alvo": [
+      111,
+      14,
+      125
+     ]
+    },
+    {
+     "nome": "iso_sem_teto",
+     "iso": true,
+     "alvo": [
+      151,
+      10,
+      38
+     ],
+     "caixa_mundo": [
+      -58,
+      -9,
+      -58,
+      361,
+      49,
+      133
+     ],
+     "ymax": 49,
+     "rot": 0,
+     "elev": 42,
+     "zoom": 1,
+     "nevoa": null
+    },
+    {
+     "nome": "iso_sem_teto_rot2",
+     "iso": true,
+     "alvo": [
+      151,
+      10,
+      38
+     ],
+     "caixa_mundo": [
+      -58,
+      -9,
+      -58,
+      361,
+      49,
+      133
+     ],
+     "ymax": 49,
+     "rot": 2,
+     "elev": 42,
+     "zoom": 1,
+     "nevoa": null
+    },
+    {
+     "nome": "iso_limiar_e_bosque",
+     "iso": true,
+     "alvo": [
+      20,
+      8,
+      32
+     ],
+     "caixa_mundo": [
+      -58,
+      -9,
+      -58,
+      110,
+      49,
+      100
+     ],
+     "ymax": 49,
+     "rot": 1,
+     "elev": 34,
+     "zoom": 1.4,
+     "nevoa": null
+    },
+    {
+     "nome": "iso_arena_e_bosque",
+     "iso": true,
+     "alvo": [
+      280,
+      8,
+      33
+     ],
+     "caixa_mundo": [
+      200,
+      -9,
+      -58,
+      361,
+      49,
+      133
+     ],
+     "ymax": 49,
+     "rot": 3,
+     "elev": 34,
+     "zoom": 1.4,
+     "nevoa": null
+    }
+   ]
+  }
+ }
+}

@@ -7,7 +7,8 @@ import { limiar, portao } from "./ecos_mapa_limiar.js";
 import { vila } from "./ecos_mapa_vila.js";
 import { passagem, arquivo } from "./ecos_mapa_arquivo.js";
 import { corredorFinal, arena } from "./ecos_mapa_arena.js";
-import { ceu } from "./ecos_mapa_ceu.js";
+import { ceu, paredes, barreira } from "./ecos_mapa_ceu.js";
+import { chaoBosque, arvores, FATIAS_BOSQUE } from "./ecos_mapa_bosque.js";
 
 /** @typedef {import("./obras_pincel.js").Pincel} Pincel */
 
@@ -16,9 +17,14 @@ export const REG = [
   { id: "vila", nome: "A Vila Silenciosa", x1: 70, z1: 0, x2: 165, z2: 75, y1: -3, y2: 40, fog: "vulpus:nevoa_ecos_vila" },
   { id: "arquivo", nome: "O Arquivo das Almas", x1: 170, z1: 0, x2: 240, z2: 65, y1: -8, y2: 20, fog: "vulpus:nevoa_ecos_arquivo" },
   { id: "arena", nome: "O Último Testemunho", x1: 248, z1: 4, x2: 302, z2: 62, y1: -8, y2: 26, fog: "vulpus:nevoa_ecos_arena" },
+  // o resto da caixa (as bordas entre as áreas e o anel de floresta): por último, para as áreas terem prioridade
+  { id: "bosque", nome: "O Bosque Sem Fim", x1: -56, z1: -56, x2: 359, z2: 131, y1: -10, y2: 52, fog: "vulpus:nevoa_ecos_bosque" },
 ];
 
-export const CAIXA = { x1: -3, z1: -3, x2: 306, z2: 78, y1: -10, y2: 48 };
+/** o mapa jogável original (áreas e as passagens entre elas): dentro dele, o que não é uma área continua sendo "passagem" */
+export const MAPA_INTERNO = Object.freeze({ x1: -3, z1: -3, x2: 306, z2: 78 });
+
+export const CAIXA = { x1: -57, z1: -57, x2: 360, z2: 132, y1: -10, y2: 52 };
 
 /** Pontos de interesse (relativos à origem). Fixos: não dependem de a obra ter rodado na mesma sessão. */
 /** @type {{ x: number, y: number, z: number, t: string, dados?: any }[]} */
@@ -61,7 +67,8 @@ export const PALCOS = [
 ];
 
 /** Nomes das fases da obra, na ordem. A construção é retomável: quem terminou uma fase não a refaz. */
-export const FASES_MAPA = ["Limpando e base", "O Limiar", "Portão", "A Vila Silenciosa", "Passagem", "O Arquivo das Almas", "Corredor final", "O Último Testemunho", "O Céu"];
+export const FASES_MAPA = ["Limpando e base", "O Limiar", "Portão", "A Vila Silenciosa", "Passagem", "O Arquivo das Almas", "Corredor final", "O Último Testemunho",
+  "O Chão do Bosque", "O Bosque 1/4", "O Bosque 2/4", "O Bosque 3/4", "O Bosque 4/4", "O Céu", "As Paredes do Céu", "A Barreira"];
 
 /** Onde a pessoa chega ao entrar (coordenadas relativas à origem; é o mesmo ponto "spawn" do Limiar). */
 export const CHEGADA = Object.freeze({ x: 12, y: 1, z: 32 });
@@ -83,17 +90,24 @@ export function* construir(p, progresso, desde = 0, fasePronta = () => {}) {
         yield;
       }
       F(CAIXA.x1, CAIXA.y1, CAIXA.z1, CAIXA.x2, CAIXA.y1, CAIXA.z2, M.bedrock);
-      F(CAIXA.x1, CAIXA.y1 + 1, CAIXA.z1, CAIXA.x2, -2, CAIXA.z2, M.barreira);
+      F(CAIXA.x1, CAIXA.y1 + 1, CAIXA.z1, CAIXA.x2, CAIXA.y1 + 1, CAIXA.z2, M.barreira); // rede de segurança: nada cai no vazio
       yield;
     }],
-    [0.04, () => limiar(H)],
-    [0.2, () => portao(H)],
-    [0.23, () => vila(H)],
-    [0.55, () => passagem(H)],
-    [0.58, () => arquivo(H)],
-    [0.8, () => corredorFinal(H)],
-    [0.83, () => arena(H)],
-    [0.93, () => ceu(H, CAIXA)],
+    [0.02, () => limiar(H)],
+    [0.1, () => portao(H)],
+    [0.11, () => vila(H)],
+    [0.25, () => passagem(H)],
+    [0.26, () => arquivo(H)],
+    [0.33, () => corredorFinal(H)],
+    [0.34, () => arena(H)],
+    [0.4, () => chaoBosque(H)],
+    [0.5, () => arvores(H, FATIAS_BOSQUE[0][0], FATIAS_BOSQUE[0][1])],
+    [0.58, () => arvores(H, FATIAS_BOSQUE[1][0], FATIAS_BOSQUE[1][1])],
+    [0.66, () => arvores(H, FATIAS_BOSQUE[2][0], FATIAS_BOSQUE[2][1])],
+    [0.74, () => arvores(H, FATIAS_BOSQUE[3][0], FATIAS_BOSQUE[3][1])],
+    [0.8, () => ceu(H, CAIXA)],
+    [0.9, () => paredes(H, CAIXA)],
+    [0.97, () => barreira(H, CAIXA)],
   ];
   for (let i = Math.max(0, desde); i < fases.length; i++) {
     progresso(fases[i][0], FASES_MAPA[i]);

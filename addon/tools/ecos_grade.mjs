@@ -53,7 +53,7 @@ export class PincelGrade extends PincelMemoria {
     return x >= c.x1 && x <= c.x2 && y >= c.y1 && y <= c.y2 && z >= c.z1 && z <= c.z2;
   }
 
-  fill(x1, y1, z1, x2, y2, z2, tipo, soAr = false) {
+  fill(x1, y1, z1, x2, y2, z2, tipo, soAr = false, est = undefined) {
     this.ops++;
     const xa = Math.min(x1, x2), xb = Math.max(x1, x2), ya = Math.min(y1, y2), yb = Math.max(y1, y2), za = Math.min(z1, z2), zb = Math.max(z1, z2);
     const vol = (xb - xa + 1) * (yb - ya + 1) * (zb - za + 1);
@@ -63,7 +63,7 @@ export class PincelGrade extends PincelMemoria {
       if (this.foraAmostra.length < 8) this.foraAmostra.push(`fill ${xa},${ya},${za} → ${xb},${yb},${zb} ${tipo}`);
       return;
     }
-    const i = this.idx(tipo);
+    const i = this.idx(tipo, est);
     for (let y = ya; y <= yb; y++) for (let z = za; z <= zb; z++) for (let x = xa; x <= xb; x++) {
       const k = this.pos(x, y, z);
       if (soAr && this.grade[k] !== 0) continue;

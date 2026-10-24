@@ -5,7 +5,7 @@
 import { system, world } from "@minecraft/server";
 import { lerMundo, salvarMundo } from "../core/db.js";
 import { erro, ok, registrarErro, som } from "../core/util.js";
-import { CAIXA, CHEGADA, construir, FASES_MAPA, REG } from "./ecos_mapa_novo.js";
+import { CAIXA, CHEGADA, construir, FASES_MAPA, MAPA_INTERNO, REG } from "./ecos_mapa_novo.js";
 import { PincelMundo } from "./obras_pincel.js";
 import { localSpawn } from "./spawn.js";
 import * as textos from "../textos/ecos.js";
@@ -18,7 +18,8 @@ export const DIM_ECOS = "vulpus:ecos";
 const CHAVE_CONSTRUIDO = "vulpus:ecos:construido";
 const CHAVE_PROGRESSO = "vulpus:ecos:progresso";
 const CHAVE_ORIGEM = "vulpus:ecos:origem";
-const AREAS = ["vulpus_ecos_obra_a", "vulpus_ecos_obra_b", "vulpus_ecos_obra_c"];
+/** a caixa inteira (mapa + floresta + céu) passa de 100 chunks: cinco fatias, cada uma abaixo do limite de uma área de ticking */
+const AREAS = ["vulpus_ecos_obra_a", "vulpus_ecos_obra_b", "vulpus_ecos_obra_c", "vulpus_ecos_obra_d", "vulpus_ecos_obra_e"];
 /** O jogo corta fillBlocks acima de 32768 blocos por chamada. */
 const MAX_BLOCOS_FILL = 30000;
 const ORIGEM_PADRAO = Object.freeze({ x: 10000, y: 80, z: 10000 });
@@ -103,7 +104,10 @@ export const relativoAoMapa = (p) => {
 export function regiaoDoJogador(player) {
   if (!naDimensao(player)) return undefined;
   const { x, z } = relativoAoMapa(player.location);
-  return REG.find((r) => x >= r.x1 && x <= r.x2 && z >= r.z1 && z <= r.z2);
+  const reg = REG.find((r) => x >= r.x1 && x <= r.x2 && z >= r.z1 && z <= r.z2);
+  // as passagens entre as áreas (dentro do mapa original) não são "bosque"
+  if (reg?.id === "bosque" && x >= MAPA_INTERNO.x1 && x <= MAPA_INTERNO.x2 && z >= MAPA_INTERNO.z1 && z <= MAPA_INTERNO.z2) return undefined;
+  return reg;
 }
 
 /** Devolve uma pessoa ao spawn do mundo (sem as regras de teleporte: é uma saída forçada). @param {Player} player */
@@ -137,7 +141,7 @@ export const estadoConstrucao = () => ({
   construido: ecosConstruido(),
 });
 
-/** As áreas ficam em três fatias do mapa (cada uma abaixo do limite de chunks por área). @param {number} i @param {Ponto3} o */
+/** As áreas de ticking ficam em fatias da caixa (cada uma abaixo do limite de chunks por área). @param {number} i @param {Ponto3} o */
 function caixaDaArea(i, o) {
   const largura = CAIXA.x2 - CAIXA.x1 + 1;
   const parte = Math.ceil(largura / AREAS.length);
@@ -199,24 +203,24 @@ function esperarCarga(dim, pontos, tentativas, aoFim) {
 }
 
 /** Preenche em pedaços de até MAX_BLOCOS_FILL blocos. */
-function preencher(/** @type {PincelMundo} */ pincel, x1, y1, z1, x2, y2, z2, id, soAr) {
+function preencher(/** @type {PincelMundo} */ pincel, x1, y1, z1, x2, y2, z2, id, soAr, estados = undefined) {
   const [xa, xb] = [Math.min(x1, x2), Math.max(x1, x2)];
   const [ya, yb] = [Math.min(y1, y2), Math.max(y1, y2)];
   const [za, zb] = [Math.min(z1, z2), Math.max(z1, z2)];
   const dx = xb - xa + 1, dy = yb - ya + 1, dz = zb - za + 1;
-  if (dx * dy * dz <= MAX_BLOCOS_FILL) return pincel.fill(xa, ya, za, xb, yb, zb, id, soAr);
+  if (dx * dy * dz <= MAX_BLOCOS_FILL) return pincel.fill(xa, ya, za, xb, yb, zb, id, soAr, estados);
   if (dx >= dy && dx >= dz) {
     const m = xa + (dx >> 1) - 1;
-    preencher(pincel, xa, ya, za, m, yb, zb, id, soAr);
-    preencher(pincel, m + 1, ya, za, xb, yb, zb, id, soAr);
+    preencher(pincel, xa, ya, za, m, yb, zb, id, soAr, estados);
+    preencher(pincel, m + 1, ya, za, xb, yb, zb, id, soAr, estados);
   } else if (dz >= dy) {
     const m = za + (dz >> 1) - 1;
-    preencher(pincel, xa, ya, za, xb, yb, m, id, soAr);
-    preencher(pincel, xa, ya, m + 1, xb, yb, zb, id, soAr);
+    preencher(pincel, xa, ya, za, xb, yb, m, id, soAr, estados);
+    preencher(pincel, xa, ya, m + 1, xb, yb, zb, id, soAr, estados);
   } else {
     const m = ya + (dy >> 1) - 1;
-    preencher(pincel, xa, ya, za, xb, m, zb, id, soAr);
-    preencher(pincel, xa, m + 1, za, xb, yb, zb, id, soAr);
+    preencher(pincel, xa, ya, za, xb, m, zb, id, soAr, estados);
+    preencher(pincel, xa, m + 1, za, xb, yb, zb, id, soAr, estados);
   }
 }
 
@@ -224,7 +228,7 @@ function preencher(/** @type {PincelMundo} */ pincel, x1, y1, z1, x2, y2, z2, id
 function pincelComOrigem(pincel, o) {
   /** @type {any} */
   const proxy = {
-    fill: (x1, y1, z1, x2, y2, z2, id, soAr) => preencher(pincel, o.x + x1, o.y + y1, o.z + z1, o.x + x2, o.y + y2, o.z + z2, id, soAr),
+    fill: (x1, y1, z1, x2, y2, z2, id, soAr, estados) => preencher(pincel, o.x + x1, o.y + y1, o.z + z1, o.x + x2, o.y + y2, o.z + z2, id, soAr, estados),
     set: (x, y, z, id, est) => pincel.set(o.x + x, o.y + y, o.z + z, id, est),
     id: (x, y, z) => pincel.id(o.x + x, o.y + y, o.z + z),
     superficie: (x, z) => pincel.superficie(o.x + x, o.z + z),
@@ -290,7 +294,7 @@ export async function construirEcos(quem, opcoes = {}) {
     falhou(textos.AREA_NAO_CARREGOU);
     return false;
   }
-  const pontos = [0, 1, 2].map((i) => {
+  const pontos = AREAS.map((_, i) => {
     const c = caixaDaArea(i, o);
     return { x: Math.floor((c.from.x + c.to.x) / 2), y: o.y, z: Math.floor((c.from.z + c.to.z) / 2) };
   });
@@ -477,12 +481,68 @@ world.afterEvents.playerLeave.subscribe(({ playerId }) => {
   proximoSom.delete(playerId);
 });
 
+// ------------------------------------------------------------------------------------ sem monstros nem bichos naturais
+/** Passivos que o jogo gera sozinho; aldeão, gato, golem etc. ficam. */
+const PASSIVOS = /^minecraft:(sheep|cow|pig|chicken|horse|donkey|mule|rabbit|llama|trader_llama|goat|bat|squid|glow_squid|cod|salmon|tropical_fish|pufferfish|turtle|panda|fox|parrot|axolotl|frog|tadpole|mooshroom|camel|sniffer|armadillo|polar_bear|strider|happy_ghast)$/;
+const PASSO_INTRUSOS = 100;
+
+/**
+ * É um bicho que o jogo gerou e que não pertence aos Ecos? Tudo do mod (vulpus:*, incluindo as criaturas do evento) fica;
+ * monstro (família monster) e animal passivo vão embora.
+ * @param {import("@minecraft/server").Entity} e
+ */
+export function ehIntruso(e) {
+  try {
+    const id = e.typeId;
+    if (id.startsWith("vulpus:") || id === "minecraft:player" || id === "minecraft:item" || id === "minecraft:armor_stand") return false;
+    if (PASSIVOS.test(id)) return true;
+    return e.matches({ families: ["monster"] });
+  } catch {
+    return false;
+  }
+}
+
+/** Remove os intrusos já presentes na dimensão (só chunks carregados). */
+export function limparIntrusos() {
+  const dim = dimEcos();
+  if (!dim) return 0;
+  let n = 0;
+  try {
+    for (const e of dim.getEntities()) {
+      if (!ehIntruso(e)) continue;
+      e.remove();
+      n++;
+    }
+  } catch (e) {
+    registrarErro("Ecos: limpar intrusos", e);
+  }
+  return n;
+}
+
+// nascimento natural: sai na hora (só quem nasce na dimensão dos Ecos)
+world.afterEvents.entitySpawn.subscribe(({ entity }) => {
+  try {
+    if (entity.dimension.id !== DIM_ECOS || !ehIntruso(entity)) return;
+    entity.remove();
+  } catch {
+    // já saiu
+  }
+});
+// ao ligar o mundo
+world.afterEvents.worldLoad.subscribe(() => {
+  system.runTimeout(() => limparIntrusos(), 100);
+});
+
 let loopsIniciados = false;
 /** Liga os ciclos de atmosfera (uma vez). Cada um começa conferindo se alguém está na dimensão. */
 export function iniciarLoopsEcos() {
   if (loopsIniciados) return;
   loopsIniciados = true;
   system.runInterval(atualizarFog, PASSO_FOG);
+  // varredura leve: só olha a dimensão se há alguém nela
+  system.runInterval(() => {
+    if (jogadoresNosEcos().length > 0) limparIntrusos();
+  }, PASSO_INTRUSOS);
   system.runInterval(atualizarVisao, PASSO_VISAO);
   system.runInterval(somAmbiente, PASSO_SOM);
   system.runInterval(particulasLeves, PASSO_PARTICULAS);

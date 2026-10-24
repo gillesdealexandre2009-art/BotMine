@@ -5,8 +5,8 @@
 // Todo ponto é função determinística de (x,z): a fase é retomável e dá o mesmo resultado em qualquer tick.
 import { hash2, fbm } from "./ecos_mapa_base.js";
 
-/** altura do teto (relativa ao chão). A torre mais alta da Vila termina em y=40. */
-export const Y_CEU = 46;
+/** altura do teto (relativa ao chão): 7 blocos acima da copa mais alta (árvores de até 36 sobre colinas de até +4) */
+export const Y_CEU = 50;
 /** centro da galáxia espiral (sobre a ponte entre a Vila e o Arquivo) */
 const GX = 165, GZ = 34;
 
@@ -149,4 +149,118 @@ export function* ceu(H, caixa) {
     }
     yield* pausa(600);
   }
+}
+
+// ------------------------------------------------------------------------------------ paredes do céu
+/** Rampa da parede: do vazio ao brilho (sem branco: o pé da parede é uma luz violeta, não uma lâmpada). */
+const RAMPA_PAREDE = ["black_concrete", "black_concrete", "blue_terracotta", "blue_concrete", "purple_concrete", "magenta_concrete", "light_blue_concrete", "cyan_concrete"];
+const Y_PE = -3;
+
+/** constelações da parede: [s, y, pontos [ds, dy, mãe]] (s = posição ao longo do perímetro desenrolado) */
+function constelacoesParede(P) {
+  const mold = [
+    [[0, 0, 1], [6, 3, 0], [12, 1, 1], [17, 6, 0], [23, 4, 0]],           // um arco de cinco estrelas
+    [[0, 0, 0], [5, 6, 1], [11, 2, 0], [16, 9, 1], [22, 3, 0]],           // um W alto
+    [[0, 4, 1], [7, 0, 0], [7, 8, 0], [14, 4, 1]],                         // um losango (a Pipa)
+    [[0, 0, 0], [6, 2, 0], [12, 4, 1], [18, 7, 0], [24, 11, 1]],           // uma escada de estrelas subindo
+  ];
+  const lista = [];
+  for (let i = 0; i < 12; i++) lista.push({ s: Math.floor((P * (i + 0.5)) / 12) - 10, y: 22 + ((i * 7) % 18), pts: mold[i % mold.length] });
+  return lista;
+}
+
+/** @returns {(s: number, y: number) => string} bloco da parede em (s,y) */
+function fabricaParede(P) {
+  const ad = new Map();
+  for (const c of constelacoesParede(P)) {
+    for (const [ds, dy, mae] of c.pts) {
+      const s = ((c.s + ds) % P + P) % P, y = c.y + dy;
+      ad.set(s + "," + y, mae ? "sea_lantern" : "white_concrete");
+      for (const [os, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const k = ((s + os) % P + P) % P + "," + (y + oy);
+        if (!ad.has(k)) ad.set(k, mae ? "white_concrete" : "light_blue_concrete");
+      }
+    }
+  }
+  return (s, y) => {
+    const a = ad.get(s + "," + y);
+    if (a) return a;
+    const t = (y - Y_PE) / (Y_CEU - Y_PE);
+    // degradê de luz que sobe do horizonte: forte no pé, some antes da metade; nuvens alongadas de nebulosa por cima
+    const luz = Math.exp(-(y - Y_PE) / 15);
+    const nuvem = fbm(s * 0.7, y * 1.5, 11, 34, 3);
+    const nuvem2 = fbm(s * 0.5 + 300, y * 1.2, 23, 22, 2);
+    let v = luz * 0.62 + Math.max(0, nuvem - 0.42) * (1.1 - t) * 0.95 + Math.max(0, nuvem2 - 0.6) * 0.8 * (1 - t) * (t > 0.15 ? 1 : 0.3);
+    v += (hash2(s, y, 5) - 0.5) * 0.06;
+    v += 0.1 * (1 - t) * (1 - t); // azul de meia-noite de base, escurecendo para cima
+    v = Math.max(0, Math.min(0.999, v * (1 - Math.max(0, t - 0.8) * 4))); // topo preto (encontra o teto sem emenda)
+    const k = Math.floor(v * 8.2);
+    if (k === 0 || k === 1) {
+      // estrelas soltas só no escuro
+      const h = hash2(s, y, 1234);
+      if (h < 0.014) return hash2(s, y, 4321) < 0.0004 / 0.014 ? "sea_lantern" : hash2(s, y, 99) < 0.75 ? "white_concrete" : "quartz_block";
+    }
+    return RAMPA_PAREDE[Math.min(k, RAMPA_PAREDE.length - 1)];
+  };
+}
+
+/**
+ * Quatro paredes de 2 blocos em volta de tudo, do fundo ao teto, sem frestas nos cantos: a camada de fora é preta lisa e a de dentro
+ * é a galáxia (um perímetro só, desenrolado, para as cores passarem os cantos sem emenda).
+ * @param {*} H @param {{ x1:number, z1:number, x2:number, z2:number, y1:number }} c  a caixa do céu
+ */
+export function* paredes(H, c) {
+  const { F, pausa } = H;
+  const yTopo = Y_CEU - 1;
+  // camada de fora e miolo enterrado: pretos e lisos (fatias de altura para o fill não passar de 30000)
+  const lisa = (x1, z1, x2, z2) => {
+    const area = (x2 - x1 + 1) * (z2 - z1 + 1);
+    const passo = Math.max(1, Math.floor(28000 / area));
+    for (let y = c.y1 + 1; y <= yTopo; y += passo) F(x1, y, z1, x2, Math.min(yTopo, y + passo - 1), z2, "minecraft:black_concrete");
+  };
+  lisa(c.x1, c.z1, c.x2, c.z1 + 1); lisa(c.x1, c.z2 - 1, c.x2, c.z2); lisa(c.x1, c.z1 + 2, c.x1 + 1, c.z2 - 2); lisa(c.x2 - 1, c.z1 + 2, c.x2, c.z2 - 2);
+  yield;
+  // camada de dentro: a galáxia, por colunas (corridas verticais do mesmo bloco viram um fill)
+  const xi1 = c.x1 + 1, xi2 = c.x2 - 1, zi1 = c.z1 + 1, zi2 = c.z2 - 1;
+  const Wd = xi2 - xi1, Hd = zi2 - zi1, P = 2 * (Wd + Hd);
+  const bloco = fabricaParede(P);
+  /** @type {[number, number, number][]} x, z, s */
+  const colunas = [];
+  for (let x = xi1; x <= xi2; x++) colunas.push([x, zi1, x - xi1]);
+  for (let z = zi1 + 1; z <= zi2; z++) colunas.push([xi2, z, Wd + (z - zi1)]);
+  for (let x = xi2 - 1; x >= xi1; x--) colunas.push([x, zi2, Wd + Hd + (xi2 - x)]);
+  for (let z = zi2 - 1; z > zi1; z--) colunas.push([xi1, z, 2 * Wd + Hd + (zi2 - z)]);
+  for (const [x, z, s] of colunas) {
+    let ini = Y_PE, atual = bloco(s, ini);
+    for (let y = Y_PE + 1; y <= yTopo + 1; y++) {
+      const b = y <= yTopo ? bloco(s, y) : "";
+      if (b !== atual) {
+        F(x, ini, z, x, y - 1, z, "minecraft:" + atual);
+        ini = y;
+        atual = b;
+      }
+    }
+    yield* pausa(600);
+  }
+}
+
+/**
+ * Barreira invisível (2 blocos) logo dentro das paredes, do fundo ao teto. Só ocupa o que está vazio: onde há tronco ou copa a
+ * própria árvore já bloqueia, e a copa não fica com buraco.
+ * @param {*} H @param {{ x1:number, z1:number, x2:number, z2:number, y1:number }} c
+ */
+export function* barreira(H, c) {
+  const { p, M } = H;
+  const id = M.barreira;
+  const yTopo = Y_CEU - 1;
+  const x1 = c.x1 + 2, x2 = c.x2 - 2, z1 = c.z1 + 2, z2 = c.z2 - 2;
+  const lado = (ax, az, bx, bz) => {
+    const area = (bx - ax + 1) * (bz - az + 1);
+    const passo = Math.max(1, Math.floor(28000 / area));
+    for (let y = c.y1 + 1; y <= yTopo; y += passo) p.fill(ax, y, az, bx, Math.min(yTopo, y + passo - 1), bz, id, true);
+  };
+  lado(x1, z1, x2, z1 + 1); yield;
+  lado(x1, z2 - 1, x2, z2); yield;
+  lado(x1, z1 + 2, x1 + 1, z2 - 2); yield;
+  lado(x2 - 1, z1 + 2, x2, z2 - 2); yield;
 }

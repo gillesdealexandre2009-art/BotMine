@@ -12,7 +12,7 @@ export const Y_MAX = 319;
 /**
  * @typedef {object} Pincel
  * @property {number} ops  operações feitas (os geradores usam para saber a hora de ceder a vez)
- * @property {(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, tipo: string, soAr?: boolean) => void} fill
+ * @property {(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, tipo: string, soAr?: boolean, estados?: Estados) => void} fill
  * @property {(x: number, y: number, z: number, tipo: string, estados?: Estados) => void} set
  * @property {(x: number, y: number, z: number) => string | undefined} id  tipo do bloco (undefined = não carregado)
  * @property {(x: number, z: number) => { y: number, id: string } | undefined} superficie  primeiro bloco sólido ou líquido de cima para baixo
@@ -43,13 +43,28 @@ export class PincelMundo {
     this.perms = new Map();
   }
 
-  fill(x1, y1, z1, x2, y2, z2, tipo, soAr = false) {
+  fill(x1, y1, z1, x2, y2, z2, tipo, soAr = false, estados = undefined) {
     const ya = Math.max(Y_MIN, Math.min(y1, y2)), yb = Math.min(Y_MAX, Math.max(y1, y2));
     if (ya > yb) return;
     this.ops++;
     try {
       const vol = new BlockVolume({ x: Math.min(x1, x2), y: ya, z: Math.min(z1, z2) }, { x: Math.max(x1, x2), y: yb, z: Math.max(z1, z2) });
-      this.dim.fillBlocks(vol, tipo, soAr ? { blockFilter: { includeTypes: ["minecraft:air"] }, ignoreChunkBoundErrors: true } : { ignoreChunkBoundErrors: true });
+      /** @type {any} */
+      let alvo = tipo;
+      if (estados) {
+        const chave = tipo + JSON.stringify(estados);
+        alvo = this.perms.get(chave);
+        if (!alvo) {
+          try {
+            alvo = BlockPermutation.resolve(tipo, estados);
+            this.perms.set(chave, alvo);
+          } catch (e) {
+            this.falha(`estado de ${tipo}`, e);
+            alvo = tipo;
+          }
+        }
+      }
+      this.dim.fillBlocks(vol, alvo, soAr ? { blockFilter: { includeTypes: ["minecraft:air"] }, ignoreChunkBoundErrors: true } : { ignoreChunkBoundErrors: true });
     } catch (e) {
       this.falha(`fill ${tipo}`, e);
     }
