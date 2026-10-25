@@ -286,6 +286,7 @@ AJUSTES = {
     "automod_spam_msgs": (6, 3, 30, "Mensagens na janela que contam como spam"),
     "automod_spam_janela": (8, 3, 60, "Janela do antispam (segundos)"),
     "automod_mencoes_max": (5, 2, 50, "Máximo de menções por mensagem"),
+    "automod_mencoes_grave": (12, 5, 200, "Menções numa mensagem que viram timeout na hora (raid)"),
     "automod_strikes": (3, 1, 10, "Infrações do automod (em 2 min) até o timeout"),
     "automod_timeout_min": (5, 1, 1440, "Minutos do timeout curto do automod"),
     "ticket_sla_min": (60, 0, 10080, "Minutos até lembrar a staff de um ticket sem dono (0 = desliga)"),

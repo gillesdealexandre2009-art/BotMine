@@ -342,12 +342,12 @@ class Moderacao(commands.Cog):
     # ------------------------------------------------------------------ limpar
     @app_commands.command(name="limpar", description="Apaga mensagens recentes do canal.")
     @app_commands.guild_only()
-    @app_commands.describe(quantidade="Quantas mensagens verificar (1-100)", membro="Só as mensagens dessa pessoa")
+    @app_commands.describe(quantidade="Quantas mensagens verificar (1-1000)", membro="Só as mensagens dessa pessoa")
     @exigir_nivel(config.NIVEL_STAFF)
     async def limpar(
         self,
         interaction: discord.Interaction,
-        quantidade: app_commands.Range[int, 1, 100],
+        quantidade: app_commands.Range[int, 1, 1000],
         membro: Optional[discord.Member] = None,
     ) -> None:
         guild, canal = interaction.guild, interaction.channel

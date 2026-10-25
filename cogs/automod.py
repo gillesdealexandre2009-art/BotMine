@@ -28,6 +28,16 @@ if TYPE_CHECKING:  # pragma: no cover
 log = logging.getLogger("kiza.automod")
 CONVITE_RE = re.compile(r"(?:https?://)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com/invite)/[A-Za-z0-9-]+", re.I)
 LINK_RE = re.compile(r"https?://\S+", re.I)
+# Menção escrita no texto (`<@123>`, `<@!123>`, `<@&123>`): conta mesmo quando o usuário/cargo não existe mais ou não está no
+# servidor. O Discord não põe esses casos em `message.mentions` (aparecem como "@usuário-desconhecido"), e foi assim que um raid
+# de menções passou pelo automod.
+MENCAO_RE = re.compile(r"<@[!&]?\d{5,25}>")
+MENCAO_TEXTO_RE = re.compile(r"@(?:everyone|here)\b", re.I)
+
+
+def contar_mencoes(texto: str, resolvidas: int = 0) -> int:
+    """Quantas menções a mensagem faz: cada ocorrência no texto conta (repetir a mesma pessoa 50 vezes também é spam)."""
+    return max(resolvidas, len(MENCAO_RE.findall(texto or "")) + len(MENCAO_TEXTO_RE.findall(texto or "")))
 JANELA_STRIKES_S = 120
 
 
@@ -45,9 +55,11 @@ class Automod(commands.Cog):
         conteudo = mensagem.content or ""
 
         if await banco.ajuste(guild.id, "automod_mencoes") == 1:
-            total = len(set(mensagem.mentions)) + len(set(mensagem.role_mentions))
+            resolvidas = len(set(mensagem.mentions)) + len(set(mensagem.role_mentions))
+            total = contar_mencoes(conteudo, resolvidas)
             if mensagem.mention_everyone or total > await banco.ajuste(guild.id, "automod_mencoes_max"):
-                return "mencoes"
+                grave = total >= await banco.ajuste(guild.id, "automod_mencoes_grave")
+                return "mencoes_grave" if grave else "mencoes"
         if await banco.ajuste(guild.id, "automod_convites") == 1 and CONVITE_RE.search(conteudo):
             return "convite"
         if await banco.ajuste(guild.id, "automod_links") == 1 and LINK_RE.search(conteudo):
@@ -135,6 +147,9 @@ class Automod(commands.Cog):
     async def _punir(self, mensagem: discord.Message, motivo: str) -> None:
         guild, autor, banco = mensagem.guild, mensagem.author, self.bot.banco
         assert guild is not None and isinstance(autor, discord.Member)
+        grave = motivo == "mencoes_grave"  # raid de menções: sem strikes, timeout na hora
+        if grave:
+            motivo = "mencoes"
         descricao_motivo = textos.AUTOMOD_MOTIVOS[motivo]
 
         try:
@@ -163,7 +178,7 @@ class Automod(commands.Cog):
         strikes.append(agora)
         while strikes and agora - strikes[0] > JANELA_STRIKES_S:
             strikes.popleft()
-        if len(strikes) < await banco.ajuste(guild.id, "automod_strikes"):
+        if not grave and len(strikes) < await banco.ajuste(guild.id, "automod_strikes"):
             return
 
         strikes.clear()
@@ -186,8 +201,8 @@ class Automod(commands.Cog):
         )
         try:  # limpa o que sobrou do flood recente
             await mensagem.channel.purge(  # type: ignore[union-attr]
-                limit=30,
-                check=lambda m: m.author.id == autor.id and (discord.utils.utcnow() - m.created_at).total_seconds() < 90,
+                limit=100 if grave else 30,
+                check=lambda m: m.author.id == autor.id and (discord.utils.utcnow() - m.created_at).total_seconds() < (300 if grave else 90),
             )
         except discord.HTTPException:
             pass
