@@ -526,3 +526,47 @@ CREATE TABLE hollow_conclusoes (
 );
 """,
 ))
+
+
+# Feedback do servidor + códigos de resgate de Caudas (o do feedback é pessoal: só o dono do código resgata).
+MIGRACOES.append((
+    17,
+    """
+CREATE TABLE feedbacks (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id  INTEGER NOT NULL,
+    user_id   INTEGER NOT NULL,
+    nota      INTEGER NOT NULL,
+    texto     TEXT    NOT NULL,
+    melhorar  TEXT    NOT NULL DEFAULT '',
+    codigo    TEXT,
+    criado_em INTEGER NOT NULL
+);
+CREATE INDEX ix_feedbacks_usuario ON feedbacks (guild_id, user_id, criado_em);
+CREATE TABLE codigos (
+    codigo    TEXT    PRIMARY KEY,
+    guild_id  INTEGER NOT NULL,
+    caudas    INTEGER NOT NULL,
+    usos_max  INTEGER NOT NULL DEFAULT 1,      -- 0 = ilimitado
+    usos      INTEGER NOT NULL DEFAULT 0,
+    expira_em INTEGER NOT NULL DEFAULT 0,      -- 0 = nunca
+    ativo     INTEGER NOT NULL DEFAULT 1,
+    criado_por INTEGER NOT NULL DEFAULT 0,     -- 0 = a própria Kiza
+    criado_em INTEGER NOT NULL,
+    motivo    TEXT    NOT NULL DEFAULT '',
+    dono_id   INTEGER NOT NULL DEFAULT 0       -- 0 = qualquer um; senão só essa pessoa resgata
+);
+CREATE TABLE codigos_usos (
+    codigo  TEXT    NOT NULL,
+    user_id INTEGER NOT NULL,
+    mc_nome TEXT    NOT NULL,
+    quando  INTEGER NOT NULL,
+    PRIMARY KEY (codigo, user_id)
+);
+CREATE TABLE codigos_tentativas (
+    user_id INTEGER NOT NULL,
+    quando  INTEGER NOT NULL
+);
+CREATE INDEX ix_codigos_tentativas ON codigos_tentativas (user_id, quando);
+""",
+))

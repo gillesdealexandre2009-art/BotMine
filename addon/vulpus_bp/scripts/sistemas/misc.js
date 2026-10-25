@@ -10,6 +10,8 @@ import { menuColecao } from "./pets.js";
 import { menuEra } from "./eras.js";
 import { menuMinigames } from "./mg_menu.js";
 import { menuRegras } from "./regras.js";
+import * as textosCodigo from "../textos/codigo.js";
+import { resgatarCodigoSeguro } from "./codigo.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 
@@ -27,6 +29,7 @@ export async function menuMisc(player, voltar) {
     .botao(textos.BOTAO_COMECAR, ICONES.nova, (p) => abrirComecar(p))
     .botao(textos.BOTAO_ERA, ICONES.tempo, (p) => menuEra(p, aqui))
     .botao(textos.BOTAO_REGRAS, ICONES.regras, (p) => menuRegras(p, aqui))
+    .botao(textosCodigo.BOTAO, ICONES.caudas, (p) => resgatarCodigoSeguro(p))
     .voltar(voltar)
     .abrir(player);
 }

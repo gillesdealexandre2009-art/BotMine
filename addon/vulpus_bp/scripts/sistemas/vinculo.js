@@ -308,6 +308,15 @@ async function somar(id, nome) {
   return false; // sem resposta: o mesmo envio (mesma chave) será repetido
 }
 
+/**
+ * Pede uma soma de Caudas/XP já no próximo ciclo (depois de o bot creditar algo, como um código resgatado).
+ * @param {string} id
+ */
+export function somarAgora(id) {
+  const e = estados.get(id);
+  if (e) e.proximaSoma = 0;
+}
+
 /** @param {Player} p @param {Estado} e */
 function agendarSoma(p, e) {
   if (e.somando || e.fase !== "livre" || !dadosJogador(p).vinculo || !ponteViva()) return;

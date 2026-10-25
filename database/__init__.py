@@ -24,6 +24,7 @@ import aiosqlite
 
 from migrations import MIGRACOES
 
+from .codigos import CodigosMixin
 from .comunidade import ComunidadeMixin
 from .configuracao import ConfigMixin
 from .convites import ConvitesMixin
@@ -42,7 +43,7 @@ log = logging.getLogger("kiza.db")
 __all__ = ["Banco", "agora"]
 
 
-class Banco(ConfigMixin, EconomiaMixin, ModeracaoMixin, ComunidadeMixin, MinecraftMixin, ApoioMixin, ConvitesMixin, PlacaresMixin, KitsuneExtrasMixin, HalloweenMixin):
+class Banco(ConfigMixin, EconomiaMixin, ModeracaoMixin, ComunidadeMixin, MinecraftMixin, ApoioMixin, ConvitesMixin, PlacaresMixin, KitsuneExtrasMixin, HalloweenMixin, CodigosMixin):
     def __init__(self, caminho: str) -> None:
         self.caminho = caminho
         self._conn: Optional[aiosqlite.Connection] = None

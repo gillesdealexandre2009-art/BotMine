@@ -49,7 +49,10 @@ export const FASE_PREPARANDO = "preparando";
 export const CONSTRUINDO = "Construindo o mapa dos Ecos aos poucos. Acompanhe pela actionbar; não precisa ficar perto.";
 export const AREA_NAO_CARREGOU = "a área não carregou (tente de novo com o servidor mais vazio)";
 /** @param {number} feitas @param {number} total */
-export const RETOMANDO = (feitas, total) => `Continuando a construção (${feitas} de ${total} fases já prontas).`;
+export const RETOMANDO = (feitas, total) => `Continuando a construção (${feitas} de ${total} etapas já prontas).`;
+/** o mundo recusou uma área de ticking: diz qual foi o pedido e que vai tentar em pedaços menores */
+export const LIMITE_TICKING = (chunks, motivo, pedacos) => `O mundo recusou abrir a área de obra (~${chunks} chunks): ${motivo}. Tentando de novo em ${pedacos} pedaços menores.`;
+export const LIMITE_TICKING_FIM = (chunks, motivo) => `nem a menor janela (~${chunks} chunks) abriu: ${motivo}. O limite de ticking do mundo (300 chunks somados) está tomado por outras áreas; libere-as e use "Continuar construção"`;
 /** @param {string} m */
 export const FALHA_CONSTRUCAO = (m) => `Não consegui construir o mapa: ${m}. Pode tentar de novo; ele continua de onde parou.`;
 /** @param {number} falhas */

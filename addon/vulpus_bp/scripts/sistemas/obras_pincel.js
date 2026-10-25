@@ -208,3 +208,54 @@ export class PincelMemoria {
     this.placas.set(this.chave(x, y, z), linhas);
   }
 }
+
+/**
+ * Pincel recortado: repassa ao pincel de baixo só o que cai dentro de uma caixa (x e z; y livre). O resto é ignorado e
+ * `id`/`superficie` fora dela respondem `undefined` ("não carregado"). Serve para construir uma obra grande em janelas:
+ * cada janela abre só a sua área de ticking e roda o MESMO gerador, e o que cai fora dela fica para a janela vizinha.
+ * Como cada bloco só é escrito pela janela que o contém e na mesma ordem do gerador, o resultado é igual ao de uma obra só.
+ * `ops` conta toda chamada (até as ignoradas) para os geradores cederem a vez no mesmo ritmo.
+ * @implements {Pincel}
+ */
+export class PincelRecortado {
+  /** @param {Pincel} base @param {{ x1: number, x2: number, z1: number, z2: number }} caixa */
+  constructor(base, caixa) {
+    this.base = base;
+    this.c = caixa;
+    this.ops = 0;
+  }
+
+  /** @param {number} x @param {number} z */
+  dentro(x, z) {
+    return x >= this.c.x1 && x <= this.c.x2 && z >= this.c.z1 && z <= this.c.z2;
+  }
+
+  fill(x1, y1, z1, x2, y2, z2, tipo, soAr = false, estados = undefined) {
+    this.ops++;
+    const xa = Math.max(Math.min(x1, x2), this.c.x1), xb = Math.min(Math.max(x1, x2), this.c.x2);
+    const za = Math.max(Math.min(z1, z2), this.c.z1), zb = Math.min(Math.max(z1, z2), this.c.z2);
+    if (xa > xb || za > zb) return;
+    this.base.fill(xa, Math.min(y1, y2), za, xb, Math.max(y1, y2), zb, tipo, soAr, estados);
+  }
+
+  set(x, y, z, tipo, estados) {
+    this.ops++;
+    if (this.dentro(x, z)) this.base.set(x, y, z, tipo, estados);
+  }
+
+  id(x, y, z) {
+    return this.dentro(x, z) ? this.base.id(x, y, z) : undefined;
+  }
+
+  superficie(x, z) {
+    return this.dentro(x, z) ? this.base.superficie(x, z) : undefined;
+  }
+
+  existe(id) {
+    return this.base.existe(id);
+  }
+
+  placa(x, y, z, linhas) {
+    if (this.dentro(x, z)) this.base.placa(x, y, z, linhas);
+  }
+}

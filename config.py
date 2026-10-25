@@ -91,6 +91,7 @@ COGS_PADRAO = [
     "placares",
     "kitsune_extras",
     "engajamento",
+    "feedback",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -193,6 +194,7 @@ CANAIS_POR_NOME = {
     "chat": "chat",
     "perolas": "perolas",
     "doacoes": "doac",
+    "feedback": "feedback",
 }
 CARGOS_BASE = {
     "visitante": "Visitante (cargo de quem acabou de entrar)",

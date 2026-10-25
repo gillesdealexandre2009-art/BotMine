@@ -4,7 +4,7 @@
     "name": "Vulpus Ponte",
     "description": "Ponte do servidor Vulpus com o Discord: só o servidor dedicado (precisa de APIs Beta)",
     "uuid": "1c2ca332-1a62-406a-b6cd-b446da598623",
-    "version": [0, 1, 1],
+    "version": [0, 1, 2],
     "min_engine_version": [1, 26, 50]
   },
   "modules": [
@@ -12,7 +12,7 @@
       "type": "script",
       "language": "javascript",
       "uuid": "43840bec-5384-4aae-9566-5ecdf5dbe660",
-      "version": [0, 1, 1],
+      "version": [0, 1, 2],
       "entry": "scripts/main.js"
     }
   ],

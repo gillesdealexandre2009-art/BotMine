@@ -6,7 +6,7 @@ import { system, world } from "@minecraft/server";
 import { lerMundo, salvarMundo } from "../core/db.js";
 import { erro, ok, registrarErro, som } from "../core/util.js";
 import { CAIXA, CHEGADA, construir, FASES_MAPA, MAPA_INTERNO, REG } from "./ecos_mapa_novo.js";
-import { PincelMundo } from "./obras_pincel.js";
+import { PincelMundo, PincelRecortado } from "./obras_pincel.js";
 import { localSpawn } from "./spawn.js";
 import * as textos from "../textos/ecos.js";
 
@@ -16,10 +16,19 @@ import * as textos from "../textos/ecos.js";
 
 export const DIM_ECOS = "vulpus:ecos";
 const CHAVE_CONSTRUIDO = "vulpus:ecos:construido";
-const CHAVE_PROGRESSO = "vulpus:ecos:progresso";
+/** etapas já prontas = janela * nº de fases + fase (o plano por janelas trocou a chave: o progresso antigo, por fase, não vale) */
+const CHAVE_PROGRESSO = "vulpus:ecos:etapa";
 const CHAVE_ORIGEM = "vulpus:ecos:origem";
-/** a caixa inteira (mapa + floresta + céu) passa de 100 chunks: cinco fatias, cada uma abaixo do limite de uma área de ticking */
-const AREAS = ["vulpus_ecos_obra_a", "vulpus_ecos_obra_b", "vulpus_ecos_obra_c", "vulpus_ecos_obra_d", "vulpus_ecos_obra_e"];
+/** prefixo das áreas de ticking da obra (todas as que começam assim são nossas e se soltam sempre) */
+const PREFIXO_AREA = "vulpus_ecos_obra";
+/** nomes de versões antigas da obra (3 e 5 fatias), soltos também */
+const AREAS_ANTIGAS = ["a", "b", "c", "d", "e"].map((x) => PREFIXO_AREA + "_" + x);
+/**
+ * A obra roda em JANELAS: faixas de x da CAIXA, uma de cada vez. O mundo tem um limite de chunks de ticking SOMADOS (300 no BDS,
+ * contando as áreas dos outros sistemas), e a caixa inteira (mapa + floresta + céu, ~350 chunks) não cabe. Cada janela abre uma
+ * só área de ticking (~84 chunks), roda TODAS as fases com o pincel recortado nela, e solta a área antes da próxima.
+ */
+export const JANELAS = 6;
 /** O jogo corta fillBlocks acima de 32768 blocos por chamada. */
 const MAX_BLOCOS_FILL = 30000;
 const ORIGEM_PADRAO = Object.freeze({ x: 10000, y: 80, z: 10000 });
@@ -76,7 +85,16 @@ export const ecosConstruido = () => lerMundo(CHAVE_CONSTRUIDO, false) === true;
 /** Quantas fases do mapa já estão prontas (para retomar). */
 export function fasesProntas() {
   const n = lerMundo(CHAVE_PROGRESSO, 0);
-  return Number.isInteger(n) && n >= 0 && n <= FASES_MAPA.length ? n : 0;
+  return Number.isInteger(n) && n >= 0 && n <= etapasTotais() ? n : 0;
+}
+
+/** Total de etapas da obra (janelas x fases). */
+export const etapasTotais = () => JANELAS * FASES_MAPA.length;
+
+/** As janelas da obra: faixas de x (relativas à origem) que cobrem a CAIXA, com a caixa inteira em z. @returns {{ x1: number, x2: number, z1: number, z2: number }[]} */
+export function janelasDaObra() {
+  const w = Math.ceil((CAIXA.x2 - CAIXA.x1 + 1) / JANELAS);
+  return Array.from({ length: JANELAS }, (_, i) => ({ x1: CAIXA.x1 + i * w, x2: Math.min(CAIXA.x2, CAIXA.x1 + (i + 1) * w - 1), z1: CAIXA.z1, z2: CAIXA.z2 }));
 }
 
 /** @returns {Ponto3} */
@@ -137,50 +155,67 @@ export const estadoConstrucao = () => ({
   pct: Math.round(cons.pct * 100),
   falhas: cons.falhas,
   prontas: fasesProntas(),
-  total: FASES_MAPA.length,
+  total: etapasTotais(),
   construido: ecosConstruido(),
 });
 
-/** As áreas de ticking ficam em fatias da caixa (cada uma abaixo do limite de chunks por área). @param {number} i @param {Ponto3} o */
-function caixaDaArea(i, o) {
-  const largura = CAIXA.x2 - CAIXA.x1 + 1;
-  const parte = Math.ceil(largura / AREAS.length);
-  const x1 = CAIXA.x1 + i * parte - (i === 0 ? 2 : 0);
-  const x2 = Math.min(CAIXA.x2, CAIXA.x1 + (i + 1) * parte - 1) + (i === AREAS.length - 1 ? 2 : 0);
-  return {
-    from: { x: o.x + x1, y: Math.max(-64, o.y + CAIXA.y1 - 3), z: o.z + CAIXA.z1 - 2 },
-    to: { x: o.x + x2, y: Math.min(319, o.y + CAIXA.y2 + 3), z: o.z + CAIXA.z2 + 2 },
-  };
-}
+/** chunks que uma caixa ocupa (o limite do mundo é em chunks somados) @param {{ x1: number, x2: number, z1: number, z2: number }} f @param {Ponto3} o */
+const chunksDa = (f, o) => (Math.floor((o.x + f.x2) / 16) - Math.floor((o.x + f.x1) / 16) + 1) * (Math.floor((o.z + f.z2) / 16) - Math.floor((o.z + f.z1) / 16) + 1);
 
-/** @param {Dimension} dim @param {Ponto3} o */
-async function criarAreas(dim, o) {
+/** @param {{ x1: number, x2: number, z1: number, z2: number }} f @param {Ponto3} o */
+const caixaDaArea = (f, o) => ({
+  from: { x: o.x + f.x1, y: Math.max(-64, o.y + CAIXA.y1 - 1), z: o.z + f.z1 },
+  to: { x: o.x + f.x2, y: Math.min(319, o.y + CAIXA.y2 + 1), z: o.z + f.z2 },
+});
+
+/**
+ * Abre UMA área de ticking para a faixa. Nunca lança: devolve o motivo (e se foi o limite de chunks).
+ * @param {Dimension} dim @param {Ponto3} o @param {{ x1: number, x2: number, z1: number, z2: number }} faixa
+ * @returns {Promise<{ ok: boolean, limite: boolean, erro: string, chunks: number }>}
+ */
+async function abrirArea(dim, o, faixa) {
   const g = world.tickingAreaManager;
+  const chunks = chunksDa(faixa, o);
+  const caixa = caixaDaArea(faixa, o);
   try {
-    for (let i = 0; i < AREAS.length; i++) {
-      if (g.getTickingArea(AREAS[i])) g.removeTickingArea(AREAS[i]);
-      await g.createTickingArea(AREAS[i], { dimension: dim, ...caixaDaArea(i, o) });
+    // quando o jogo sabe responder, pergunta antes (o erro de limite só aparece depois de pedir)
+    const temCapacidade = /** @type {any} */ (g).hasCapacity;
+    if (typeof temCapacidade === "function" && !temCapacidade.call(g, { dimension: dim, ...caixa })) {
+      const max = /** @type {any} */ (g).maxChunkCount;
+      return { ok: false, limite: true, erro: "sem capacidade para " + chunks + " chunks (limite de " + (max ?? "?") + " somados no mundo)", chunks };
     }
-    return true;
+  } catch {
+    // sem a pergunta: o pedido de verdade decide
+  }
+  try {
+    await g.createTickingArea(PREFIXO_AREA + "_" + Math.abs(faixa.x1), { dimension: dim, ...caixa });
+    return { ok: true, limite: false, erro: "", chunks };
   } catch (e) {
-    registrarErro("Ecos: áreas de ticking", e);
-    return false;
+    const msg = String(e);
+    return { ok: false, limite: /limit|OverChunkLimit|capacity/i.test(msg), erro: msg, chunks };
   }
 }
 
-/** Solta as áreas de ticking da obra (também ao ligar o mundo: elas sobrevivem a um reinício). */
+/** Solta as áreas de ticking da obra (também ao ligar o mundo e antes de cada janela: elas sobrevivem a um reinício). */
 export function soltarAreas() {
   const g = world.tickingAreaManager;
-  for (const nome of AREAS) {
+  /** @type {Set<string>} */
+  const nomes = new Set(AREAS_ANTIGAS);
+  try {
+    for (const a of /** @type {any} */ (g).getAllTickingAreas?.() ?? []) if (String(a.identifier).startsWith(PREFIXO_AREA)) nomes.add(a.identifier);
+  } catch (e) {
+    registrarErro("Ecos: listar áreas de ticking", e);
+  }
+  for (const nome of nomes) {
     try {
       if (g.getTickingArea(nome)) g.removeTickingArea(nome);
     } catch (e) {
-      registrarErro(`Ecos: soltar ${nome}`, e);
+      registrarErro("Ecos: soltar " + nome, e);
     }
   }
 }
 world.afterEvents.worldLoad.subscribe(() => {
-  (erroDimensao ? console.warn : console.log)(`[Vulpus] Ecos: dimensão ${dimEcos() ? "disponível" : "indisponível"}${erroDimensao ? ` (${erroDimensao})` : ""}`);
+  (erroDimensao ? console.warn : console.log)("[Vulpus] Ecos: dimensão " + (dimEcos() ? "disponível" : "indisponível") + (erroDimensao ? " (" + erroDimensao + ")" : ""));
   if (!dimEcos()) return;
   if (!cons.ocupado) soltarAreas();
 });
@@ -278,7 +313,7 @@ export async function construirEcos(quem, opcoes = {}) {
   const desde = fasesProntas();
   salvarMundo(CHAVE_CONSTRUIDO, false);
   retirarQuemEstaDentro();
-  if (quem) ok(quem, desde > 0 ? textos.RETOMANDO(desde, FASES_MAPA.length) : textos.CONSTRUINDO);
+  if (quem) ok(quem, desde > 0 ? textos.RETOMANDO(desde, etapasTotais()) : textos.CONSTRUINDO);
 
   /** @param {string} motivo */
   const falhou = (motivo) => {
@@ -289,68 +324,118 @@ export async function construirEcos(quem, opcoes = {}) {
     if (quem?.isValid) erro(quem, textos.FALHA_CONSTRUCAO(motivo));
   };
 
-  const areasOk = await criarAreas(dim, o);
-  if (!areasOk) {
-    falhou(textos.AREA_NAO_CARREGOU);
-    return false;
+  if (quem) {
+    const acompanha = system.runInterval(() => {
+      if (!cons.ocupado || !quem.isValid) return system.clearRun(acompanha);
+      try {
+        quem.onScreenDisplay.setActionBar(textos.CONSTRUINDO_FASE(cons.fase || textos.FASE_PREPARANDO, Math.round(cons.pct * 100)));
+      } catch {
+        // a pessoa saiu
+      }
+    }, 20);
   }
-  const pontos = AREAS.map((_, i) => {
-    const c = caixaDaArea(i, o);
-    return { x: Math.floor((c.from.x + c.to.x) / 2), y: o.y, z: Math.floor((c.from.z + c.to.z) / 2) };
-  });
-  esperarCarga(dim, pontos, 75, (carregou) => {
-    if (!carregou) return falhou(textos.AREA_NAO_CARREGOU);
-    const pincel = new PincelMundo(dim);
-    const gen = construir(
-      pincelComOrigem(pincel, o),
-      (f, txt) => {
-        cons.pct = f;
-        cons.fase = txt;
-      },
-      desde,
-      (n) => {
-        salvarMundo(CHAVE_PROGRESSO, n);
-      },
-    );
+  executarJanelas(dim, o, desde, quem, falhou).catch((e) => falhou(String(e)));
+  return true;
+}
+
+/** Roda o gerador respeitando o orçamento de ms por tick. @param {Generator<any, void, any>} gen @returns {Promise<void>} */
+function rodar(gen) {
+  return new Promise((resolve, reject) => {
     const run = system.runInterval(() => {
       try {
         const ini = Date.now();
         while (Date.now() - ini < ajustes.orcamentoMs) {
-          const r = gen.next();
-          if (r.done) {
+          if (gen.next().done) {
             system.clearRun(run);
-            cons.falhas = pincel.falhas;
-            salvarMundo(CHAVE_CONSTRUIDO, true);
-            salvarMundo(CHAVE_PROGRESSO, FASES_MAPA.length);
-            if (pincel.falhas > 0) registrarErro("Ecos: blocos que não puderam ser colocados", `${pincel.falhas} (primeira: ${pincel.primeiraFalha})`);
-            // as áreas ficam mais um instante para o mundo gravar tudo, depois são soltas
-            system.runTimeout(() => {
-              soltarAreas();
-              cons.ocupado = false;
-              cons.fase = "";
-              cons.pct = 1;
-              if (quem?.isValid) ok(quem, textos.CONSTRUIDO(pincel.falhas));
-            }, 40);
+            resolve();
             return;
           }
         }
       } catch (e) {
         system.clearRun(run);
-        falhou(String(e));
+        reject(e);
       }
     }, 1);
-    if (quem) {
-      const acompanha = system.runInterval(() => {
-        if (!cons.ocupado || !quem.isValid) return system.clearRun(acompanha);
-        try {
-          quem.onScreenDisplay.setActionBar(textos.CONSTRUINDO_FASE(cons.fase || textos.FASE_PREPARANDO, Math.round(cons.pct * 100)));
-        } catch {
-          // a pessoa saiu
-        }
-      }, 20);
-    }
   });
-  return true;
+}
+
+/** @param {Dimension} dim @param {Ponto3} o @param {{ x1: number, x2: number, z1: number, z2: number }} faixa @returns {Promise<boolean>} */
+const carregar = (dim, o, faixa) => {
+  const c = caixaDaArea(faixa, o);
+  const ponto = { x: Math.floor((c.from.x + c.to.x) / 2), y: o.y, z: Math.floor((c.from.z + c.to.z) / 2) };
+  return new Promise((resolve) => esperarCarga(dim, [ponto], 75, resolve));
+};
+
+/** Divide a faixa em n pedaços de x. @param {{ x1: number, x2: number, z1: number, z2: number }} f @param {number} n */
+function dividir(f, n) {
+  const w = Math.ceil((f.x2 - f.x1 + 1) / n);
+  return Array.from({ length: n }, (_, i) => ({ x1: f.x1 + i * w, x2: Math.min(f.x2, f.x1 + (i + 1) * w - 1), z1: f.z1, z2: f.z2 })).filter((p) => p.x1 <= p.x2);
+}
+
+/**
+ * A obra por janelas: janela a janela (faixas de x), abre só a área de ticking dela, roda todas as fases recortadas nela e solta.
+ * O progresso salvo é janela * fases + fase; se o servidor reiniciar, "continuar" volta de onde parou. Se o jogo recusar a área por
+ * limite de chunks, avisa com precisão e repete a janela em pedaços menores (cada pedaço com a sua área, um de cada vez).
+ * @param {Dimension} dim @param {Ponto3} o @param {number} desde @param {Player | undefined} quem @param {(m: string) => void} falhou
+ */
+async function executarJanelas(dim, o, desde, quem, falhou) {
+  const pincel = new PincelMundo(dim);
+  const base = pincelComOrigem(pincel, o);
+  const janelas = janelasDaObra();
+  const NF = FASES_MAPA.length;
+  for (let w = Math.floor(desde / NF); w < janelas.length; w++) {
+    const f0 = Math.max(0, desde - w * NF);
+    let partes = 1;
+    for (;;) {
+      const pedacos = dividir(janelas[w], partes);
+      let estourou = false;
+      for (let k = 0; k < pedacos.length; k++) {
+        soltarAreas(); // nada sobra de uma tentativa ou janela anterior
+        const ab = await abrirArea(dim, o, pedacos[k]);
+        if (!ab.ok) {
+          soltarAreas();
+          if (ab.limite && partes < 8) {
+            if (quem?.isValid) erro(quem, textos.LIMITE_TICKING(ab.chunks, ab.erro, partes * 2));
+            registrarErro("Ecos: limite de ticking", `${ab.erro} (janela ${w + 1}/${janelas.length}, ${ab.chunks} chunks)`);
+            estourou = true;
+            break;
+          }
+          return falhou(ab.limite ? textos.LIMITE_TICKING_FIM(ab.chunks, ab.erro) : `${textos.AREA_NAO_CARREGOU} (${ab.erro})`);
+        }
+        if (!(await carregar(dim, o, pedacos[k]))) {
+          soltarAreas();
+          return falhou(textos.AREA_NAO_CARREGOU);
+        }
+        const ultimo = k === pedacos.length - 1;
+        const gen = construir(
+          new PincelRecortado(base, pedacos[k]),
+          (f, txt) => {
+            cons.pct = (w + (k + f) / pedacos.length) / janelas.length;
+            cons.fase = `${txt} (${w + 1}/${janelas.length})`;
+          },
+          f0,
+          (n) => {
+            if (ultimo) salvarMundo(CHAVE_PROGRESSO, w * NF + n);
+          },
+        );
+        await rodar(gen);
+        soltarAreas();
+      }
+      if (!estourou) break;
+      partes *= 2;
+    }
+  }
+  cons.falhas = pincel.falhas;
+  salvarMundo(CHAVE_CONSTRUIDO, true);
+  salvarMundo(CHAVE_PROGRESSO, etapasTotais());
+  if (pincel.falhas > 0) registrarErro("Ecos: blocos que não puderam ser colocados", `${pincel.falhas} (primeira: ${pincel.primeiraFalha})`);
+  soltarAreas();
+  system.runTimeout(() => {
+    cons.ocupado = false;
+    cons.fase = "";
+    cons.pct = 1;
+    if (quem?.isValid) ok(quem, textos.CONSTRUIDO(pincel.falhas));
+  }, 40);
 }
 
 // ------------------------------------------------------------------------------------ atmosfera: fog por região

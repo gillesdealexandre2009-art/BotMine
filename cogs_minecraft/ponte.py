@@ -32,9 +32,11 @@ from discord.ext import commands, tasks
 
 import config
 import textos
+from cogs.feedback import mensagem_do_resultado
 from cogs_minecraft import embeds
 from cogs_minecraft.embeds import Contexto
 from cogs_minecraft.proximidade import validar_pontos
+from database.codigos import normalizar_codigo
 from utils.helpers import arquivo_banner, formatar_moeda, formatar_numero, nivel_por_xp, publicar_ou_editar, responder
 from utils.permissoes import checar_membro, exigir_nivel
 from utils.pix import assinatura_valida
@@ -244,6 +246,7 @@ class Ponte(commands.Cog):
                 web.post("/mc/eventos", self.rota_eventos),
                 web.post("/mc/status", self.rota_status),
                 web.post("/mc/prox", self.rota_prox),
+                web.post("/mc/codigo", self.rota_codigo),
                 web.get("/mc/chat", self.rota_chat),
                 web.post("/pix/webhook", self.rota_pix),
                 web.get("/site/resumo", self.rota_site_resumo),
@@ -493,6 +496,31 @@ class Ponte(commands.Cog):
         if conceder:
             resposta["kitsune_conceder"] = conceder
         return web.json_response(resposta)
+
+    async def rota_codigo(self, request: web.Request) -> web.Response:
+        """Resgate de código pelo jogo: {id, nome, codigo} -> {ok, caudas, mensagem}. Exige vínculo; as Caudas vão para o saldo do Discord
+        e chegam ao jogo no próximo sync."""
+        corpo = await self._json(request)
+        mc_id, nome = self._jogador(corpo)
+        codigo = limpar_texto(corpo.get("codigo", ""), 40)
+        if not codigo:
+            return web.json_response({"ok": False, "mensagem": textos.CODIGO_RESPOSTAS["nao_existe"]})
+        gid = self.guild_id()
+        if gid is None:
+            return web.json_response({"ok": False, "erro": "sem_servidor", "mensagem": textos.CODIGO_RESGATAR_ERRO}, status=503)
+        banco = self.bot.banco
+        vinculo = await banco.mc_vinculo_de_jogador(gid, mc_id, nome)
+        if vinculo is None:
+            return web.json_response({"ok": False, "erro": "nao_vinculado", "mensagem": textos.CODIGO_RESPOSTAS["sem_vinculo"]}, status=403)
+        r = await banco.resgatar_codigo(gid, vinculo["user_id"], vinculo["mc_nome"], codigo)
+        if r.ok:
+            feedback = self.bot.get_cog("Feedback")
+            guild = self.bot.get_guild(gid)
+            if feedback is not None and guild is not None:
+                await feedback.avisar_resgate(guild, vinculo["user_id"], normalizar_codigo(codigo), r.caudas, vinculo["mc_nome"])  # type: ignore[attr-defined]
+        return web.json_response(
+            {"ok": r.ok, "status": r.status, "caudas": r.caudas, "saldo": r.saldo, "mensagem": mensagem_do_resultado(r)}
+        )
 
     async def rota_pix(self, request: web.Request) -> web.Response:
         """Aviso do Mercado Pago ("pagamento mudou"). Não credita nada por conta própria: manda o cog de apoio conferir na API."""

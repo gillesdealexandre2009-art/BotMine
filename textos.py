@@ -492,6 +492,12 @@ COMANDOS_CAMPOS = [
         "`/convidar`: seu link para trazer amigos e ganhar {moeda}\n"
         "`/apoiar`: as metas do mês e os botões de apoio",
     ),
+    (
+        "💬 Feedback e códigos",
+        "`/feedback enviar`: conte o que achou do servidor e ganhe um código de {moeda}\n"
+        "`/resgatar`: troque um código por {moeda} (precisa da conta do Minecraft ligada)\n"
+        "Staff: `/feedback configurar` e `/codigo` (criar, listar, desativar, usos)",
+    ),
     ("ℹ️ Outros", "`/ajuda`: este resumo, onde você estiver\n`/status`: vê se eu estou acordada"),
 ]
 COMANDOS_RODAPE = "Me marque no chat se quiser conversar. Prometo responder. Talvez."
@@ -1746,3 +1752,67 @@ MURAL_E_MAIS = " · e mais {n}"
 MURAL_AGRADECIMENTO = "🧡 Mais um mês começou! Obrigada aos **{n} Kitsunes** que ajudam a toca a seguir de pé. Vocês fazem tudo isso existir."
 MURAL_SAIU = "Pronto, tirei você do mural. Você continua Kitsune!"
 MURAL_VOLTOU = "Seu nome voltou para o mural dos Kitsunes 🦊"
+
+# ------------------------------------------------------------------ feedback e códigos de resgate
+FEEDBACK_CANAL_NOME = "💬・feedback"
+FEEDBACK_PAINEL_TITULO = "💬 Conte o que você achou da toca"
+FEEDBACK_PAINEL_DESC = (
+    "Sua opinião ajuda a toca a melhorar. Leva um minutinho.\n\n"
+    "🎁 **Quem manda o primeiro feedback ganha um código de 1.000 {moeda} para usar no Minecraft.**"
+)
+FEEDBACK_PAINEL_RODAPE = "Precisa da conta do Minecraft ligada (/minecraft vincular) para usar o código."
+FEEDBACK_BOTAO = "Dar meu feedback"
+FEEDBACK_MODAL_TITULO = "Seu feedback"
+FEEDBACK_CAMPO_NOTA = "Nota de 1 a 5"
+FEEDBACK_CAMPO_TEXTO = "O que você achou do servidor?"
+FEEDBACK_CAMPO_MELHORAR = "O que melhorar? (opcional)"
+FEEDBACK_NOTA_INVALIDA = "A nota precisa ser um número de **1 a 5**."
+FEEDBACK_CURTO = "Conte um pouquinho mais: o feedback precisa ter pelo menos **{min}** caracteres."
+FEEDBACK_ESPERA = "Calma, tente de novo em {seg} segundos."
+FEEDBACK_RECENTE = "Já recebi seu feedback há pouco tempo. Você pode mandar outro {quando}."
+FEEDBACK_ERRO = "Não consegui guardar seu feedback agora. Tente de novo daqui a pouco."
+FEEDBACK_SEM_CODIGO = "Obrigada pelo feedback, ele foi para a equipe! 🦊 Você já ganhou o seu código antes, então este não gera outro."
+FEEDBACK_OBRIGADA = (
+    "Obrigada pelo feedback, ele foi para a equipe! 🦊\n\n"
+    "Que tal avaliar o servidor no **DISBOARD**? Role até o final da página e deixe sua avaliação: ajuda mais gente a conhecer a nossa família.\n"
+    "{link}\n\n"
+    "# 🎁 Quem avaliar ganha 1.000 {moeda} no Minecraft!\n"
+    "Seu código pessoal (só você consegue usar, vale 1 vez até {validade}):\n"
+    "## `{codigo}`\n"
+    "Para resgatar: ligue sua conta (`/minecraft vincular`) e use `/resgatar` aqui, ou o botão **Resgatar código** na Miscelânea do jogo."
+)
+FEEDBACK_DISBOARD = "https://disboard.org/pt-br/server/1549268882416734238"
+FEEDBACK_LOG_TITULO = "💬 Novo feedback"
+FEEDBACK_LOG_MELHORAR = "O que melhorar"
+FEEDBACK_SEM_CANAL = "Não achei um canal de feedback. Use `/feedback configurar` para eu criar um."
+FEEDBACK_SEM_PERMISSAO = "Não consegui criar o canal. Me dê a permissão **Gerenciar canais** e tente de novo."
+FEEDBACK_CONFIGURADO = "Pronto! O painel de feedback está em {canal}."
+FEEDBACK_REAPROVEITADO = "Usei o canal {canal}, que já existia, e publiquei o painel nele."
+
+CODIGO_CRIADO = "Código criado: `{codigo}`\n{caudas} Caudas, {usos}, {validade}."
+CODIGO_USOS_ILIMITADOS = "usos ilimitados"
+CODIGO_USOS_N = "{n} uso(s)"
+CODIGO_SEM_VALIDADE = "sem validade"
+CODIGO_VALE_ATE = "vale até {quando}"
+CODIGO_JA_EXISTE = "Esse código já existe. Escolha outro ou deixe em branco que eu gero um."
+CODIGO_INVALIDO = "O código precisa ter de 4 a 40 letras, números ou hífens."
+CODIGO_LISTA_TITULO = "🎟️ Códigos ({total})"
+CODIGO_LISTA_VAZIA = "Ainda não há códigos."
+CODIGO_LISTA_LINHA = "{estado} `{codigo}` · {caudas} Caudas · {usos} · {validade}{extra}"
+CODIGO_DESATIVADO = "Código `{codigo}` desativado."
+CODIGO_NAO_ACHEI = "Não achei esse código (ou ele já estava desativado)."
+CODIGO_USOS_TITULO = "🎟️ Usos de {codigo}"
+CODIGO_USOS_VAZIO = "Ninguém usou esse código ainda."
+CODIGO_LOG = "🎟️ {mencao} resgatou `{codigo}` (+{caudas} Caudas, jogador {nome})."
+# Mensagens de resgate (texto puro: o Discord e o jogo usam as mesmas)
+CODIGO_OK = "+{caudas} Caudas! Resgate feito."
+CODIGO_RESPOSTAS = {
+    "nao_existe": "Esse código não existe ou não é seu. Confira se digitou certinho.",
+    "inativo": "Esse código foi desativado.",
+    "expirou": "Esse código expirou.",
+    "esgotado": "Esse código já foi todo usado.",
+    "ja_usou": "Você já resgatou esse código.",
+    "muitas": "Muitas tentativas erradas. Espere 10 minutos e tente de novo.",
+    "sem_vinculo": "Ligue sua conta do Minecraft primeiro: no Discord use /minecraft vincular com o código que aparece no jogo.",
+}
+CODIGO_RESGATAR_ERRO = "Não consegui resgatar agora. Tente de novo daqui a pouco."
