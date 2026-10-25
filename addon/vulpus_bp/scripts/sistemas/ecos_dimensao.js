@@ -41,8 +41,10 @@ const PASSO_PARTICULAS = 40;
 /** Ajustes dos testes (orçamento da construção em ms por tick). */
 export const ajustes = {
   orcamentoMs: 10,
-  /** quanto esperar a Promise de createTickingArea (que só resolve com TODOS os chunks carregados) antes de desistir: 60 s */
+  /** quanto esperar (por polling) todos os chunks da janela carregarem antes de desistir: 60 s */
   esperaAreaTicks: 1200,
+  /** idem para a segunda estratégia (uma área de 1 chunk só para o chunk que não carregou): 20 s */
+  esperaChunkTicks: 400,
   /** sem sinal de vida da obra por este tempo (90 s), o guarda libera o botão "Continuar construção" */
   batidaTicks: 1800,
 };
@@ -178,14 +180,26 @@ const caixaDaArea = (f, o) => ({
   to: { x: o.x + f.x2, y: Math.min(319, o.y + CAIXA.y2 + 1), z: o.z + f.z2 },
 });
 
+/** pontos (centro de cada chunk de 16x16, na altura do mapa) que cobrem a faixa, em coordenadas do mundo @param {{ x1: number, x2: number, z1: number, z2: number }} f @param {Ponto3} o */
+function pontosDaFaixa(f, o) {
+  /** @type {{ cx: number, cz: number, x: number, y: number, z: number }[]} */
+  const pts = [];
+  for (let cx = Math.floor((o.x + f.x1) / 16); cx <= Math.floor((o.x + f.x2) / 16); cx++) {
+    for (let cz = Math.floor((o.z + f.z1) / 16); cz <= Math.floor((o.z + f.z2) / 16); cz++) pts.push({ cx, cz, x: cx * 16 + 8, y: o.y, z: cz * 16 + 8 });
+  }
+  return pts;
+}
+
+/** nomes das áreas da obra abertas por comando nesta sessão (soltarAreas remove todas) */
+const abertas = new Set();
+
 /**
- * Abre UMA área de ticking para a faixa. Nunca lança e NUNCA fica pendurada: a Promise de createTickingArea só resolve quando todos
- * os chunks carregam, então ela corre contra um relógio (ajustes.esperaAreaTicks). No estouro, se o jogo já diz que a área está
- * carregada (isFullyLoaded) segue; senão remove a área e devolve tempo=true.
- * @param {Dimension} dim @param {Ponto3} o @param {{ x1: number, x2: number, z1: number, z2: number }} faixa
- * @returns {Promise<{ ok: boolean, limite: boolean, tempo: boolean, erro: string, chunks: number }>}
+ * Abre UMA área de ticking por COMANDO (o createTickingArea do script fica pendurado em certos chunks da dimensão customizada:
+ * a Promise dele nunca resolve, e o mesmo chunk carrega normal por comando). Nunca lança: devolve o motivo e se foi o limite de chunks.
+ * @param {Dimension} dim @param {Ponto3} o @param {{ x1: number, x2: number, z1: number, z2: number }} faixa @param {string} [nome]
+ * @returns {Promise<{ ok: boolean, limite: boolean, erro: string, chunks: number, nome: string }>}
  */
-async function abrirArea(dim, o, faixa) {
+async function abrirArea(dim, o, faixa, nome = PREFIXO_AREA + "_" + Math.abs(faixa.x1)) {
   const g = world.tickingAreaManager;
   const chunks = chunksDa(faixa, o);
   const caixa = caixaDaArea(faixa, o);
@@ -194,85 +208,80 @@ async function abrirArea(dim, o, faixa) {
     const temCapacidade = /** @type {any} */ (g).hasCapacity;
     if (typeof temCapacidade === "function" && !temCapacidade.call(g, { dimension: dim, ...caixa })) {
       const max = /** @type {any} */ (g).maxChunkCount;
-      return { ok: false, limite: true, tempo: false, erro: "sem capacidade para " + chunks + " chunks (limite de " + (max ?? "?") + " somados no mundo)", chunks };
+      return { ok: false, limite: true, erro: "sem capacidade para " + chunks + " chunks (limite de " + (max ?? "?") + " somados no mundo)", chunks, nome };
     }
   } catch {
-    // sem a pergunta: o pedido de verdade decide
+    // sem a pergunta: o comando decide
   }
-  const nome = PREFIXO_AREA + "_" + Math.abs(faixa.x1);
-  /** @type {number | undefined} */
-  let relogio;
   try {
-    const pedido = g.createTickingArea(nome, { dimension: dim, ...caixa }).then(
-      () => /** @type {const} */ ("ok"),
-      (e) => ({ erro: String(e) }),
-    );
-    const tempo = new Promise((resolve) => {
-      relogio = system.runTimeout(() => resolve("tempo"), ajustes.esperaAreaTicks);
-    });
-    const r = await Promise.race([pedido, tempo]);
-    if (relogio !== undefined) system.clearRun(relogio);
-    if (r === "ok") return { ok: true, limite: false, tempo: false, erro: "", chunks };
-    if (typeof r === "object") return { ok: false, limite: /limit|OverChunkLimit|capacity/i.test(r.erro), tempo: false, erro: r.erro, chunks };
-    // estourou: a Promise ficou pendente (ela não vaza: já tem os dois desfechos tratados). O jogo diz se a área carregou?
-    let carregada = false;
-    try {
-      carregada = g.getTickingArea(nome)?.isFullyLoaded === true;
-    } catch {
-      carregada = false;
-    }
-    if (carregada) return { ok: true, limite: false, tempo: false, erro: "", chunks };
-    try {
-      if (g.getTickingArea(nome)) g.removeTickingArea(nome);
-    } catch {
-      // some no próximo soltarAreas
-    }
-    return { ok: false, limite: false, tempo: true, erro: "a área não terminou de carregar em " + Math.round(ajustes.esperaAreaTicks / 20) + " s", chunks };
+    const cmd = "tickingarea add " + (o.x + faixa.x1) + " " + o.y + " " + (o.z + faixa.z1) + " " + (o.x + faixa.x2) + " " + o.y + " " + (o.z + faixa.z2) + " " + nome;
+    const r = dim.runCommand(cmd);
+    if (!r || r.successCount < 1) return { ok: false, limite: false, erro: "o comando tickingarea add não foi aceito", chunks, nome };
+    abertas.add(nome);
+    return { ok: true, limite: false, erro: "", chunks, nome };
   } catch (e) {
-    return { ok: false, limite: false, tempo: false, erro: String(e), chunks };
+    const msg = String(e);
+    return { ok: false, limite: /limit|capacity/i.test(msg), erro: msg, chunks, nome };
   }
 }
 
-/** Solta as áreas de ticking da obra (também ao ligar o mundo e antes de cada janela: elas sobrevivem a um reinício). */
+/**
+ * Espera (por polling, sem depender de Promise) todos os chunks da faixa carregarem: a cada 4 ticks lê um bloco no centro de cada chunk.
+ * @param {Dimension} dim @param {Ponto3} o @param {{ x1: number, x2: number, z1: number, z2: number }} faixa @param {number} ticks
+ * @returns {Promise<{ ok: boolean, faltam: { cx: number, cz: number, x: number, y: number, z: number }[] }>}
+ */
+function esperarChunks(dim, o, faixa, ticks) {
+  const pts = pontosDaFaixa(faixa, o);
+  const max = Math.max(1, Math.ceil(ticks / 4));
+  return new Promise((resolve) => {
+    let n = 0;
+    const confere = () => {
+      cons.ultimo = system.currentTick; // sinal de vida: o polling é nosso, não pode pendurar
+      /** @type {typeof pts} */
+      let faltam = pts;
+      try {
+        faltam = pts.filter((p) => !(dim.isChunkLoaded(p) && !!dim.getBlock(p)));
+      } catch {
+        faltam = pts;
+      }
+      if (faltam.length === 0) return resolve({ ok: true, faltam: [] });
+      if (++n >= max) return resolve({ ok: false, faltam });
+      system.runTimeout(confere, 4);
+    };
+    confere();
+  });
+}
+
+/** Solta as áreas de ticking da obra (também ao ligar o mundo e antes de cada janela: elas sobrevivem a um reinício). Por comando e, se ainda funcionar, pelo gerente de scripts. */
 export function soltarAreas() {
   const g = world.tickingAreaManager;
   /** @type {Set<string>} */
-  const nomes = new Set(AREAS_ANTIGAS);
+  const nomes = new Set([...AREAS_ANTIGAS, ...abertas]);
   try {
     for (const a of /** @type {any} */ (g).getAllTickingAreas?.() ?? []) if (String(a.identifier).startsWith(PREFIXO_AREA)) nomes.add(a.identifier);
-  } catch (e) {
-    registrarErro("Ecos: listar áreas de ticking", e);
+  } catch {
+    // sem a lista: valem os nomes conhecidos
   }
+  const dim = dimEcos();
   for (const nome of nomes) {
     try {
+      dim?.runCommand("tickingarea remove " + nome);
+    } catch {
+      // não existe (ou já saiu): normal
+    }
+    try {
       if (g.getTickingArea(nome)) g.removeTickingArea(nome);
-    } catch (e) {
-      registrarErro("Ecos: soltar " + nome, e);
+    } catch {
+      // idem
     }
   }
+  abertas.clear();
 }
 world.afterEvents.worldLoad.subscribe(() => {
   (erroDimensao ? console.warn : console.log)("[Vulpus] Ecos: dimensão " + (dimEcos() ? "disponível" : "indisponível") + (erroDimensao ? " (" + erroDimensao + ")" : ""));
   if (!dimEcos()) return;
   if (!cons.ocupado) soltarAreas();
 });
-
-/** @param {Dimension} dim @param {Ponto3[]} pontos @param {number} tentativas @param {(ok: boolean) => void} aoFim */
-function esperarCarga(dim, pontos, tentativas, aoFim) {
-  let n = 0;
-  const confere = () => {
-    let pronto = false;
-    try {
-      pronto = pontos.every((p) => dim.isChunkLoaded(p) && !!dim.getBlock(p));
-    } catch {
-      pronto = false;
-    }
-    if (pronto) return aoFim(true);
-    if (++n >= tentativas) return aoFim(false);
-    system.runTimeout(confere, 4);
-  };
-  confere();
-}
 
 /** Preenche em pedaços de até MAX_BLOCOS_FILL blocos. */
 function preencher(/** @type {PincelMundo} */ pincel, x1, y1, z1, x2, y2, z2, id, soAr, estados = undefined) {
@@ -352,7 +361,7 @@ export async function construirEcos(quem, opcoes = {}) {
   if (opcoes.refazer) salvarMundo(CHAVE_PROGRESSO, 0);
   const desde = fasesProntas();
   salvarMundo(CHAVE_CONSTRUIDO, false);
-  retirarQuemEstaDentro();
+  if (desde === 0) retirarQuemEstaDentro(); // numa retomada a staff pode ficar perto do chunk teimoso (ajuda a carregar)
   if (quem) ok(quem, desde > 0 ? textos.RETOMANDO(desde, etapasTotais()) : textos.CONSTRUINDO);
 
   /** @param {string} motivo */
@@ -424,13 +433,6 @@ function rodar(gen, token) {
   });
 }
 
-/** @param {Dimension} dim @param {Ponto3} o @param {{ x1: number, x2: number, z1: number, z2: number }} faixa @returns {Promise<boolean>} */
-const carregar = (dim, o, faixa) => {
-  const c = caixaDaArea(faixa, o);
-  const ponto = { x: Math.floor((c.from.x + c.to.x) / 2), y: o.y, z: Math.floor((c.from.z + c.to.z) / 2) };
-  return new Promise((resolve) => esperarCarga(dim, [ponto], 75, resolve));
-};
-
 /** Divide a faixa em n pedaços de x. @param {{ x1: number, x2: number, z1: number, z2: number }} f @param {number} n */
 function dividir(f, n) {
   const w = Math.ceil((f.x2 - f.x1 + 1) / n);
@@ -475,20 +477,34 @@ async function executarJanelas(dim, o, desde, quem, falhou, token) {
         if (!ab.ok) {
           soltarAreas();
           logObra(rotP + ": " + ab.erro);
-          if ((ab.limite || ab.tempo) && partes < 8) {
-            if (quem?.isValid) erro(quem, ab.tempo ? textos.AREA_DEMOROU(w + 1, janelas.length, ab.chunks, Math.round(ajustes.esperaAreaTicks / 20), partes * 2) : textos.LIMITE_TICKING(ab.chunks, ab.erro, partes * 2));
-            if (ab.limite) registrarErro("Ecos: limite de ticking", ab.erro + " (" + rotP + ", " + ab.chunks + " chunks)");
+          if (ab.limite && partes < 8) {
+            if (quem?.isValid) erro(quem, textos.LIMITE_TICKING(ab.chunks, ab.erro, partes * 2));
+            registrarErro("Ecos: limite de ticking", ab.erro + " (" + rotP + ", " + ab.chunks + " chunks)");
             recuar = true;
             break;
           }
-          return falhou(ab.limite ? textos.LIMITE_TICKING_FIM(ab.chunks, ab.erro) : ab.tempo ? textos.AREA_NAO_TERMINOU(w + 1, janelas.length, ab.chunks, Math.round(ajustes.esperaAreaTicks / 20)) : textos.AREA_NAO_CARREGOU + " (" + ab.erro + ")");
+          return falhou(ab.limite ? textos.LIMITE_TICKING_FIM(ab.chunks, ab.erro) : textos.AREA_NAO_CARREGOU + " (" + ab.erro + ")");
         }
-        if (!(await carregar(dim, o, pedacos[k]))) {
-          soltarAreas();
-          return falhou(textos.AREA_NAO_CARREGOU + " (" + rotP + ", " + chunks + " chunks)");
-        }
+        // espera por polling; se algum chunk não carregar, segunda estratégia: uma área só dele
+        let espera = await esperarChunks(dim, o, pedacos[k], ajustes.esperaAreaTicks);
         if (!vivo()) return;
-        logObra(rotP + " carregada em " + seg(tAbrir) + " s");
+        if (!espera.ok) {
+          logObra(rotP + ": " + espera.faltam.length + " de " + chunks + " chunks NÃO carregaram em " + seg(tAbrir) + " s (colunas/linhas de chunk: " + espera.faltam.map((p) => p.cx + "," + p.cz).join(" ") + "); tentando uma área de 1 chunk para cada um");
+          for (const p of espera.faltam) {
+            const um = { x1: p.cx * 16 - o.x, x2: p.cx * 16 + 15 - o.x, z1: p.cz * 16 - o.z, z2: p.cz * 16 + 15 - o.z };
+            const r1 = await abrirArea(dim, o, um, PREFIXO_AREA + "_c" + p.cx + "_" + p.cz);
+            if (!vivo()) return;
+            if (!r1.ok) logObra("chunk " + p.cx + "," + p.cz + ": " + r1.erro);
+          }
+          espera = await esperarChunks(dim, o, pedacos[k], ajustes.esperaChunkTicks);
+          if (!vivo()) return;
+        }
+        if (!espera.ok) {
+          soltarAreas();
+          const ends = espera.faltam.map((p) => "x " + p.cx * 16 + ".." + (p.cx * 16 + 15) + ", z " + p.cz * 16 + ".." + (p.cz * 16 + 15));
+          logObra(rotP + ": chunk(s) que não carregam nem sozinhos: " + ends.join(" | "));
+          return falhou(textos.CHUNK_NAO_CARREGA(w + 1, janelas.length, ends, espera.faltam[0].x, espera.faltam[0].z));
+        }
         const ultimo = k === pedacos.length - 1;
         let fasesFeitas = 0;
         const tFases = Date.now();

@@ -52,11 +52,10 @@ export const AREA_NAO_CARREGOU = "a área não carregou (tente de novo com o ser
 export const RETOMANDO = (feitas, total) => `Continuando a construção (${feitas} de ${total} etapas já prontas).`;
 /** o mundo recusou uma área de ticking: diz qual foi o pedido e que vai tentar em pedaços menores */
 export const LIMITE_TICKING = (chunks, motivo, pedacos) => `O mundo recusou abrir a área de obra (~${chunks} chunks): ${motivo}. Tentando de novo em ${pedacos} pedaços menores.`;
-/** a área da janela demorou para carregar: a obra tenta de novo em pedaços menores */
-export const AREA_DEMOROU = (n, total, chunks, seg, pedacos) => `A área da janela ${n}/${total} (${chunks} chunks) não terminou de carregar em ${seg} s. Tentando de novo em ${pedacos} pedaços menores.`;
-export const AREA_NAO_TERMINOU = (n, total, chunks, seg) => `a área da janela ${n}/${total} (${chunks} chunks) não terminou de carregar em ${seg} s, nem em pedaços menores (servidor ocupado ou chunks que não geram); use "Continuar construção" com o servidor mais vazio`;
 export const OBRA_TRAVADA = (onde) => `A obra parece travada (${onde}). Soltei as áreas: tente "Continuar construção".`;
 export const OBRA_PARADA_LINHA = (motivo) => `§cobra parada (${motivo}): use "Continuar construção"`;
+/** um chunk não carrega nem em uma área só dele: diz onde fica e o que fazer */
+export const CHUNK_NAO_CARREGA = (n, total, ends, x, z) => `o chunk ${ends.join(" e ")} (janela ${n}/${total}) não carrega sozinho. Use "Ir para Ecos", fique perto de x ${Math.round(x)}, z ${Math.round(z)} (a presença de um jogador ajuda a carregar) e use "Continuar construção"`;
 export const LIMITE_TICKING_FIM = (chunks, motivo) => `nem a menor janela (~${chunks} chunks) abriu: ${motivo}. O limite de ticking do mundo (300 chunks somados) está tomado por outras áreas; libere-as e use "Continuar construção"`;
 /** @param {string} m */
 export const FALHA_CONSTRUCAO = (m) => `Não consegui construir o mapa: ${m}. Pode tentar de novo; ele continua de onde parou.`;
