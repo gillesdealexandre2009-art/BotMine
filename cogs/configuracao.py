@@ -37,6 +37,7 @@ SECOES = {
     "publicar": ("📤 Publicar painéis", "Regras, verificação, cargos e tickets"),
     "visibilidade": ("🔒 Visibilidade", "Quem enxerga cada categoria/canal"),
     "publicacoes": ("📸 Publicações (fidelidade)", "Canais onde posts contam para virar Helper"),
+    "ajustes": ("⚙️ Ajustes de feedback e códigos", "Caudas, validade, espera e limites"),
 }
 
 # o que publicar: chave -> (nome do cog, método, rótulo)
@@ -71,19 +72,21 @@ class BotaoVoltar(discord.ui.Button):
 class SelecaoChave(discord.ui.Select):
     """Menu 'o que você quer configurar dentro desta seção'. Guarda a escolha em view.chave."""
 
-    def __init__(self, opcoes: list[tuple[str, str]], placeholder: str) -> None:
+    def __init__(self, opcoes: list[tuple[str, str]], placeholder: str, row: int = 0) -> None:
         super().__init__(
             placeholder=placeholder,
             min_values=1,
             max_values=1,
             options=[discord.SelectOption(label=rotulo[:100], value=valor) for valor, rotulo in opcoes],
-            row=0,
+            row=row,
         )
 
     async def callback(self, interaction: discord.Interaction) -> None:
         valor = self.values[0]
-        for opcao in self.options:
-            opcao.default = opcao.value == valor
+        # com mais de um menu (canais em blocos de 25), escolher num tira a marca dos outros
+        for menu in getattr(self.view, "menus", [self]):
+            for opcao in menu.options:
+                opcao.default = opcao.value == valor
         self.view.chave = valor  # type: ignore[union-attr]
         await self.view.atualizar(interaction)  # type: ignore[union-attr]
 
@@ -145,10 +148,31 @@ class BotaoLimpar(discord.ui.Button):
         await v.atualizar(interaction)
 
 
+def dividir_linhas(linhas: list[str], limite_primeiro: int = 3800, limite_resto: int = 1000) -> list[str]:
+    """Junta as linhas em textos que cabem na descrição (primeiro) e em campos (demais) da embed."""
+    saida: list[str] = []
+    atual: list[str] = []
+    tamanho = 0
+    for linha in linhas:
+        limite = limite_primeiro if not saida else limite_resto
+        if atual and tamanho + len(linha) + 1 > limite:
+            saida.append("\n".join(atual))
+            atual, tamanho = [], 0
+        atual.append(linha[:limite_resto])
+        tamanho += len(linha) + 1
+    saida.append("\n".join(atual))
+    return saida
+
+
 class SecaoCanais(SecaoBase):
     def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
         super().__init__(cog, dono_id, guild)
-        self.add_item(SelecaoChave(list(config.CANAIS_CONFIG.items()), "1) Qual função?"))
+        self.menus: list[SelecaoChave] = []
+        for i, bloco in enumerate(config.blocos_de_canais()):
+            titulo = "1) Qual função?" if i == 0 else f"1{chr(97 + i)}) Mais funções"
+            menu = SelecaoChave(bloco, titulo, row=0 if i == 0 else 2 + i)  # 1º na linha 0; os demais na 3 (e 4, que o Voltar divide)
+            self.menus.append(menu)
+            self.add_item(menu)
         self.add_item(SelecaoCanal())
         self.add_item(BotaoLimpar())
         self.add_item(BotaoVoltar())
@@ -164,8 +188,75 @@ class SecaoCanais(SecaoBase):
             marca = "👉 " if chave == self.chave else ""
             alvo = f"<#{valor}>" if valor else "*não configurado*"
             linhas.append(f"{marca}{'✅' if valor else '❌'} **{rotulo}** — {alvo}")
-        e = embed("📺 Canais", "\n".join(linhas))
+        pedacos = dividir_linhas(linhas)
+        e = embed("📺 Canais", pedacos[0])
+        for i, resto in enumerate(pedacos[1:], start=2):
+            e.add_field(name=f"Continuação ({i})", value=resto, inline=False)
         e.set_footer(text="1) escolha a função  2) escolha o canal")
+        return e
+
+
+# ---------------------------------------------------------------- ajustes (feedback e códigos)
+class AjusteModal(discord.ui.Modal):
+    def __init__(self, secao: "SecaoAjustes", chave: str, atual: int) -> None:
+        padrao, minimo, maximo, desc = config.AJUSTES[chave]
+        super().__init__(title=chave[:45], timeout=300)
+        self.secao, self.chave, self.minimo, self.maximo = secao, chave, minimo, maximo
+        self.valor = discord.ui.TextInput(label=f"{minimo} a {maximo} (padrão {padrao})"[:45], default=str(atual), max_length=8)
+        self.add_item(self.valor)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        bruto = str(self.valor.value).strip()
+        if not bruto.lstrip("-").isdigit() or not self.minimo <= int(bruto) <= self.maximo:
+            await responder(interaction, textos.AJUSTE_FORA_FAIXA.format(chave=self.chave, min=self.minimo, max=self.maximo))
+            return
+        await self.secao.cog.bot.banco.definir_ajuste(self.secao.guild.id, self.chave, int(bruto))
+        await self.secao.atualizar(interaction)
+
+
+class BotaoMudarAjuste(discord.ui.Button):
+    def __init__(self) -> None:
+        super().__init__(label="Mudar valor", emoji="✏️", style=discord.ButtonStyle.primary, row=1)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        v: SecaoAjustes = self.view  # type: ignore[assignment]
+        if not await v.exigir_chave(interaction):
+            return
+        atual = await v.cog.bot.banco.ajuste(v.guild.id, v.chave)  # type: ignore[arg-type]
+        await interaction.response.send_modal(AjusteModal(v, v.chave, atual))  # type: ignore[arg-type]
+
+
+class BotaoPadraoAjuste(discord.ui.Button):
+    def __init__(self) -> None:
+        super().__init__(label="Voltar ao padrão", emoji="↩️", style=discord.ButtonStyle.secondary, row=1)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        v: SecaoAjustes = self.view  # type: ignore[assignment]
+        if not await v.exigir_chave(interaction):
+            return
+        await v.cog.bot.banco.definir_ajuste(v.guild.id, v.chave, None)  # type: ignore[arg-type]
+        await v.atualizar(interaction)
+
+
+class SecaoAjustes(SecaoBase):
+    def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
+        super().__init__(cog, dono_id, guild)
+        opcoes = [(k, f"{k} — {config.AJUSTES[k][3]}") for k in config.AJUSTES_NO_SETUP]
+        self.add_item(SelecaoChave(opcoes, "1) Qual ajuste?"))
+        self.add_item(BotaoMudarAjuste())
+        self.add_item(BotaoPadraoAjuste())
+        self.add_item(BotaoVoltar())
+
+    async def construir_embed(self) -> discord.Embed:
+        valores = await self.cog.bot.banco.todos_ajustes(self.guild.id)
+        linhas = []
+        for chave in config.AJUSTES_NO_SETUP:
+            padrao, _minimo, _maximo, desc = config.AJUSTES[chave]
+            extra = "" if valores[chave] == padrao else f" *(padrão {padrao})*"
+            marca = "👉 " if chave == self.chave else ""
+            linhas.append(f"{marca}`{chave}` = **{valores[chave]}**{extra}\n{desc}")
+        e = embed("⚙️ Ajustes de feedback e códigos", "\n".join(linhas))
+        e.set_footer(text="1) escolha o ajuste  2) mude o valor. Os outros ajustes: /ajustes")
         return e
 
 
@@ -627,6 +718,7 @@ SECAO_CLASSES = {
     "publicar": SecaoPublicar,
     "visibilidade": SecaoVisibilidade,
     "publicacoes": SecaoPublicacoes,
+    "ajustes": SecaoAjustes,
 }
 
 
@@ -836,9 +928,10 @@ class Configuracao(commands.Cog):
             valor = valores[chave]
             extra = "" if valor == padrao else f" *(padrão {padrao})*"
             linhas.append(f"`{chave}` = **{valor}**{extra} — {desc}")
-        await interaction.response.send_message(
-            embed=embed("⚙️ Ajustes", truncar("\n".join(linhas), 4000)), ephemeral=True
-        )
+        partes = dividir_linhas(linhas, 3800, 3800)  # a lista passou de 4096 caracteres: manda em mais de uma mensagem
+        await interaction.response.send_message(embed=embed("⚙️ Ajustes", partes[0]), ephemeral=True)
+        for i, resto in enumerate(partes[1:], start=2):
+            await interaction.followup.send(embed=embed(f"⚙️ Ajustes ({i})", resto), ephemeral=True)
 
     @ajustes.command(name="definir", description="Muda um ajuste numérico.")
     @app_commands.describe(chave="Qual ajuste", valor="Novo valor")

@@ -18,7 +18,7 @@ from discord.ext import commands
 
 import config
 import textos
-from database.codigos import CARACTERES_MIN_FEEDBACK, VALIDADE_FEEDBACK_DIAS, ResultadoCodigo, normalizar_codigo
+from database.codigos import CARACTERES_MIN_FEEDBACK, ResultadoCodigo, normalizar_codigo
 from utils.helpers import embed, enviar_log, formatar_moeda, publicar_ou_editar
 from utils.permissoes import checar_membro, exigir_nivel, nivel_do_membro
 
@@ -26,7 +26,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from main import Kiza
 
 log = logging.getLogger("kiza.feedback")
-ESPERA_ENTRE_ENVIOS = 60.0
 POR_PAGINA = 8
 DIA = 86400
 
@@ -38,8 +37,8 @@ def ler_nota(bruto: str) -> Optional[int]:
     return int(limpo) if limpo in {"1", "2", "3", "4", "5"} else None
 
 
-def texto_longo_o_bastante(texto: str) -> bool:
-    return len(" ".join(texto.split())) >= CARACTERES_MIN_FEEDBACK
+def texto_longo_o_bastante(texto: str, minimo: int = CARACTERES_MIN_FEEDBACK) -> bool:
+    return len(" ".join(texto.split())) >= minimo
 
 
 def mensagem_do_resultado(r: ResultadoCodigo) -> str:
@@ -87,12 +86,12 @@ def linha_da_lista(linha, agora: int) -> str:
 
 # ------------------------------------------------------------------ painel e formulário
 class FeedbackModal(discord.ui.Modal, title=textos.FEEDBACK_MODAL_TITULO):
-    def __init__(self, cog: "Feedback") -> None:
+    def __init__(self, cog: "Feedback", minimo: int = CARACTERES_MIN_FEEDBACK) -> None:
         super().__init__(timeout=900)
         self.cog = cog
         self.nota = discord.ui.TextInput(label=textos.FEEDBACK_CAMPO_NOTA, min_length=1, max_length=1, placeholder="5")
         self.texto = discord.ui.TextInput(
-            label=textos.FEEDBACK_CAMPO_TEXTO, style=discord.TextStyle.paragraph, min_length=CARACTERES_MIN_FEEDBACK, max_length=1000
+            label=textos.FEEDBACK_CAMPO_TEXTO, style=discord.TextStyle.paragraph, min_length=min(minimo, 1000), max_length=1000
         )
         self.melhorar = discord.ui.TextInput(
             label=textos.FEEDBACK_CAMPO_MELHORAR, style=discord.TextStyle.paragraph, required=False, max_length=500
@@ -114,7 +113,7 @@ class PainelFeedbackView(discord.ui.View):
 
     @discord.ui.button(label=textos.FEEDBACK_BOTAO, emoji="💬", style=discord.ButtonStyle.primary, custom_id="kiza:feedback:abrir")
     async def abrir(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
-        await interaction.response.send_modal(FeedbackModal(self.cog))
+        await self.cog.abrir_formulario(interaction)
 
 
 class AbrirTicketView(discord.ui.View):
@@ -251,7 +250,16 @@ class Feedback(commands.Cog):
 
     @feedback.command(name="enviar", description="Conte o que você achou do servidor.")
     async def enviar(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_modal(FeedbackModal(self))
+        await self.abrir_formulario(interaction)
+
+    async def abrir_formulario(self, interaction: discord.Interaction) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        banco = self.bot.banco
+        if not await banco.ajuste(guild.id, "feedback_ligado"):
+            await interaction.response.send_message(textos.FEEDBACK_DESLIGADO, ephemeral=True)
+            return
+        await interaction.response.send_modal(FeedbackModal(self, await banco.ajuste(guild.id, "feedback_min_caracteres")))
 
     # ------------------------------------------------------------------ envio
     async def receber(self, interaction: discord.Interaction, nota_bruta: str, texto: str, melhorar: str) -> None:
@@ -262,18 +270,23 @@ class Feedback(commands.Cog):
         if nota is None:
             await interaction.response.send_message(textos.FEEDBACK_NOTA_INVALIDA, ephemeral=True)
             return
-        if not texto_longo_o_bastante(texto):
-            await interaction.response.send_message(textos.FEEDBACK_CURTO.format(min=CARACTERES_MIN_FEEDBACK), ephemeral=True)
+        banco = self.bot.banco
+        if not await banco.ajuste(guild.id, "feedback_ligado"):
+            await interaction.response.send_message(textos.FEEDBACK_DESLIGADO, ephemeral=True)
+            return
+        minimo = await banco.ajuste(guild.id, "feedback_min_caracteres")
+        if not texto_longo_o_bastante(texto, minimo):
+            await interaction.response.send_message(textos.FEEDBACK_CURTO.format(min=minimo), ephemeral=True)
             return
         agora = time.monotonic()
-        resta = ESPERA_ENTRE_ENVIOS - (agora - self._ultimo_envio.get(membro.id, -1e9))
+        resta = await banco.ajuste(guild.id, "feedback_espera_seg") - (agora - self._ultimo_envio.get(membro.id, -1e9))
         if resta > 0:
             await interaction.response.send_message(textos.FEEDBACK_ESPERA.format(seg=int(resta) + 1), ephemeral=True)
             return
         self._ultimo_envio[membro.id] = agora
         banco = self.bot.banco
         ultimo = await banco.feedback_ultimo(guild.id, membro.id)
-        liberado = int(time.time()) if ultimo is None else int(ultimo["criado_em"]) + 30 * DIA
+        liberado = int(time.time()) if ultimo is None else int(ultimo["criado_em"]) + await banco.ajuste(guild.id, "feedback_dias_novo") * DIA
         if ultimo is not None and liberado > time.time():
             await interaction.response.send_message(textos.FEEDBACK_RECENTE.format(quando=f"<t:{liberado}:R>"), ephemeral=True)
             return
@@ -333,8 +346,9 @@ class Feedback(commands.Cog):
         """Gera (ou reenvia) o código pessoal. None se a pessoa nunca mandou feedback."""
         return await self.bot.banco.feedback_entregar(guild.id, alvo_id, staff_id)
 
-    def texto_da_entrega(self, alvo_id: int, codigo: str, novo: bool) -> str:
-        validade = f"<t:{int(time.time()) + VALIDADE_FEEDBACK_DIAS * DIA}:d>"
+    async def texto_da_entrega(self, alvo_id: int, codigo: str, novo: bool) -> str:
+        linha = await self.bot.banco.codigo_obter(codigo)
+        validade = f"<t:{linha['expira_em']}:d>" if linha and linha["expira_em"] else textos.CODIGO_SEM_VALIDADE
         texto = textos.FEEDBACK_ENTREGUE.format(mencao=f"<@{alvo_id}>", moeda=config.MOEDA_NOME, codigo=codigo, validade=validade)
         return texto if novo else textos.FEEDBACK_REENVIADO + "\n" + texto
 
@@ -362,7 +376,7 @@ class Feedback(commands.Cog):
             return
         codigo, novo = r
         await interaction.response.send_message(
-            self.texto_da_entrega(alvo, codigo, novo), allowed_mentions=discord.AllowedMentions(users=[discord.Object(alvo)])
+            await self.texto_da_entrega(alvo, codigo, novo), allowed_mentions=discord.AllowedMentions(users=[discord.Object(alvo)])
         )
 
     @feedback.command(name="liberar", description="(Staff) Entrega o código de feedback de um membro (ou reenvia o mesmo).")
@@ -378,7 +392,7 @@ class Feedback(commands.Cog):
         ticket = await self.bot.banco.obter_ticket_por_canal(interaction.channel_id) if interaction.channel_id else None
         if ticket is not None and ticket["status"] == "aberto" and int(ticket["autor_id"]) == membro.id:
             await interaction.response.send_message(
-                self.texto_da_entrega(membro.id, codigo, novo), allowed_mentions=discord.AllowedMentions(users=[membro])
+                await self.texto_da_entrega(membro.id, codigo, novo), allowed_mentions=discord.AllowedMentions(users=[membro])
             )
         else:
             await interaction.response.send_message(

@@ -181,7 +181,20 @@ CANAIS_CONFIG = {
     "mc_historico": "Histórico da Vulpus (clãs e guerras do Minecraft)",
     "mc_login": "Login do Minecraft (painel de vínculo e registro de entradas)",
     "doacoes": "Doações e metas (painel de apoio por PIX e mural de quem ajudou)",
+    "feedback": "Dar feedback (painel com o botão)",
+    "feedbacks": "Feedbacks (onde a staff lê)",
+    "changelog_mc": "Updates do Minecraft (changelog do jogo)",
+    "midia": "Mídias (onde a Kiza reage a imagens e vídeos)",
+    "publicacoes": "Publicações (canal de posts que contam para a fidelidade)",
 }
+MAX_OPCOES_MENU = 25  # limite do Discord por menu de seleção: o /setup divide os canais em blocos deste tamanho
+
+
+def blocos_de_canais(tamanho: int = MAX_OPCOES_MENU) -> list[list[tuple[str, str]]]:
+    """CANAIS_CONFIG dividido em blocos que cabem num menu do Discord (um menu por bloco)."""
+    itens = list(CANAIS_CONFIG.items())
+    return [itens[i : i + tamanho] for i in range(0, len(itens), tamanho)]
+
 # Se um desses canais não estiver no /setup, a Kiza procura um canal cujo nome contenha a palavra
 # (sem acento e sem maiúscula). Configurar no /setup sempre vence.
 CANAIS_POR_NOME = {
@@ -336,7 +349,17 @@ AJUSTES = {
     "prox_sair": (64, 4, 160, "Blocos de distância para sair da sala (maior que o de entrar, para ninguém ficar trocando)"),
     "prox_espera_seg": (6, 1, 120, "Segundos mínimos entre dois movimentos da mesma pessoa de sala"),
     "prox_max_salas": (15, 1, 50, "Máximo de salas de proximidade ao mesmo tempo"),
+    "feedback_ligado": (1, 0, 1, "1 = feedback do servidor ligado (botão do painel e /feedback enviar)"),
+    "feedback_caudas": (1000, 0, 100000, "Caudas do código entregue pela staff depois do feedback"),
+    "feedback_codigo_dias": (90, 1, 3650, "Dias de validade do código do feedback"),
+    "feedback_min_caracteres": (20, 5, 500, "Mínimo de caracteres do feedback"),
+    "feedback_espera_seg": (60, 0, 3600, "Segundos de espera entre dois feedbacks da mesma pessoa"),
+    "feedback_dias_novo": (30, 0, 365, "Dias até a pessoa poder mandar outro feedback"),
+    "codigo_erros_max": (5, 1, 100, "Tentativas erradas de código por pessoa antes de bloquear"),
+    "codigo_erros_janela_min": (10, 1, 1440, "Minutos da janela das tentativas erradas de código"),
 }
+# Ajustes que têm painel próprio no /setup (> Ajustes)
+AJUSTES_NO_SETUP = [k for k in AJUSTES if k.startswith(("feedback_", "codigo_"))]
 # Quantos meses de Kitsune dá para comprar de uma vez (o preço é o do mês vezes isto).
 KITSUNE_MESES = (1, 3, 6, 12)
 

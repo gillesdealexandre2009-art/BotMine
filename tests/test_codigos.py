@@ -315,7 +315,7 @@ def test_categoria_de_ticket_e_canais_fixos():
 
     assert ("feedback", "Receber feedback saldo") == next((c[0], c[1]) for c in config.CATEGORIAS_TICKET if c[0] == "feedback")
     assert config.CANAL_FEEDBACKS_ID == 1563968537796550727 and config.CANAL_DAR_FEEDBACK_ID == 1563967949344211054
-    assert len(config.CANAIS_CONFIG) <= 25
+    assert all(len(b) <= 25 for b in config.blocos_de_canais()) and len(config.CANAIS_CONFIG) <= 50
 
 
 # ------------------------------------------------------------------ rota do jogo
@@ -362,3 +362,120 @@ def test_rota_codigo_dados_invalidos(tmp_path, corpo):
             await banco.fechar()
 
     assert rodar(cenario) in (200, 400)
+
+
+# ------------------------------------------------------------------ /setup: canais em blocos e ajustes
+def test_canais_do_setup_em_blocos_e_novas_funcoes():
+    import config
+    from cogs.configuracao import SECAO_CLASSES, dividir_linhas
+
+    blocos = config.blocos_de_canais()
+    assert len(blocos) == 2 and all(len(b) <= 25 for b in blocos)
+    assert sum(len(b) for b in blocos) == len(config.CANAIS_CONFIG) == len({k for b in blocos for k, _ in b})
+    for chave in ("feedback", "feedbacks", "changelog_mc", "placares", "doacoes"):
+        assert chave in config.CANAIS_CONFIG
+    assert "ajustes" in SECAO_CLASSES
+    # a listagem cabe na embed mesmo com tudo "não configurado" (descrição < 4096 e campos < 1024)
+    linhas = [f"❌ **{r}** — *não configurado*" for r in config.CANAIS_CONFIG.values()]
+    partes = dividir_linhas(linhas)
+    assert len(partes[0]) < 4096 and all(len(x) < 1024 for x in partes[1:])
+    muitas = dividir_linhas(["x" * 300] * 30)  # força a divisão em campos
+    assert len(muitas) > 1 and len(muitas[0]) <= 3800 and all(len(x) <= 1000 for x in muitas[1:])
+
+
+def test_ajustes_do_feedback_e_dos_codigos_existem():
+    import config
+
+    a = config.AJUSTES
+    esperados = {
+        "feedback_ligado": 1, "feedback_caudas": 1000, "feedback_codigo_dias": 90, "feedback_min_caracteres": 20,
+        "feedback_espera_seg": 60, "feedback_dias_novo": 30, "codigo_erros_max": 5, "codigo_erros_janela_min": 10,
+    }
+    for chave, padrao in esperados.items():
+        assert a[chave][0] == padrao and chave in config.AJUSTES_NO_SETUP
+    assert a["feedback_caudas"][1:3] == (0, 100000)
+
+
+def test_ajustes_mudam_o_codigo_e_o_limite_de_erros(tmp_path):
+    async def cenario():
+        b = await novo(tmp_path)
+        await b.definir_ajuste(G, "feedback_caudas", 250)
+        await b.definir_ajuste(G, "feedback_codigo_dias", 7)
+        await b.definir_ajuste(G, "codigo_erros_max", 2)
+        await b.feedback_registrar(G, A, 5, "feedback longo o bastante aqui", "")
+        cod, _ = await b.feedback_entregar(G, A, STAFF)
+        linha = await b.codigo_obter(cod)
+        erros = [(await b.resgatar_codigo(G, B, "L", f"X{i}")).status for i in range(3)]
+        await b.definir_ajuste(G, "codigo_erros_janela_min", 1)
+        await b._exec("UPDATE codigos_tentativas SET quando = quando - 120")  # fora da janela de 1 min
+        liberado = await b.resgatar_codigo(G, A, "R", cod)
+        await b.fechar()
+        return dict(linha), erros, liberado
+
+    linha, erros, liberado = rodar(cenario)
+    assert linha["caudas"] == 250 and 6 * 86400 < linha["expira_em"] - int(time.time()) <= 7 * 86400
+    assert erros == ["nao_existe", "nao_existe", "muitas"] and liberado == ResultadoCodigo("ok", 250, 250)
+
+
+def test_ajustes_do_formulario(tmp_path):
+    async def cenario():
+        b = await novo(tmp_path)
+        cog = Feedback(SimpleNamespace(banco=b))  # type: ignore[arg-type]
+        enviadas = []
+
+        async def canal_feedbacks(_g):
+            return None
+
+        cog.canal_feedbacks = canal_feedbacks  # type: ignore[method-assign]
+        await b.definir_ajuste(G, "feedback_min_caracteres", 40)
+        i1, r1, _ = interacao(A)
+        await cog.receber(i1, "5", "texto de uns trinta caracteres", "")  # < 40
+        await b.definir_ajuste(G, "feedback_min_caracteres", 20)
+        await b.definir_ajuste(G, "feedback_espera_seg", 0)
+        await b.definir_ajuste(G, "feedback_dias_novo", 0)
+        for _ in range(2):  # sem espera e sem dias: dois seguidos passam
+            i, r, s = interacao(A)
+            await cog.receber(i, "5", "texto de uns trinta caracteres", "")
+            enviadas.append(len(s))
+        await b.definir_ajuste(G, "feedback_ligado", 0)
+        i3, r3, _ = interacao(A)
+        await cog.receber(i3, "5", "texto de uns trinta caracteres", "")
+        n = (await b._um("SELECT COUNT(*) AS n FROM feedbacks"))["n"]
+        await b.fechar()
+        return r1.mensagens, enviadas, r3.mensagens, n
+
+    curto, enviadas, desligado, n = rodar(cenario)
+    assert "40" in curto[0] and enviadas == [1, 1] and "desligado" in desligado[0] and n == 2
+
+
+def test_secoes_do_setup_montam_os_menus_nas_linhas_certas(tmp_path):
+    from cogs.configuracao import SecaoAjustes, SecaoCanais
+
+    async def cenario():
+        b = await novo(tmp_path)
+        cog = SimpleNamespace(bot=SimpleNamespace(banco=b))
+        guild = SimpleNamespace(id=G)
+        canais = SecaoCanais(cog, 1, guild)  # type: ignore[arg-type]
+        ajustes = SecaoAjustes(cog, 1, guild)  # type: ignore[arg-type]
+        e1, e2 = await canais.construir_embed(), await ajustes.construir_embed()
+        # escolher no 2º menu tira a marca do 1º
+        primeiro, segundo = canais.menus
+        alvo = segundo.options[0].value
+        primeiro.options[0].default = True
+        for menu in canais.menus:
+            for op in menu.options:
+                op.default = op.value == alvo
+        await b.fechar()
+        return canais, ajustes, e1, e2, primeiro, segundo
+
+    canais, ajustes, e1, e2, primeiro, segundo = rodar(cenario)
+    assert [m.row for m in canais.menus] == [0, 3] and len(canais.menus[0].options) == 25 and len(canais.menus[1].options) == 5
+    assert len(e1.description) < 4096 and len(e1) < 6000 and len(e2.description) < 4096
+    assert not any(o.default for o in primeiro.options) and segundo.options[0].default
+    assert len(ajustes.children[0].options) == 8
+    import config
+
+    texto = "\n".join(f"`{k}` = **{v[0]}** *(padrão {v[0]})* — {v[3]}" for k, v in config.AJUSTES.items())
+    from cogs.configuracao import dividir_linhas
+
+    assert all(len(x) < 4096 for x in dividir_linhas(texto.split("\n"), 3800, 3800))  # /ajustes ver divide em mensagens

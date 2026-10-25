@@ -1761,6 +1761,7 @@ FEEDBACK_PAINEL_DESC = (
 )
 FEEDBACK_PAINEL_RODAPE = "Precisa da conta do Minecraft ligada (/minecraft vincular) para resgatar."
 FEEDBACK_BOTAO = "Dar meu feedback"
+FEEDBACK_DESLIGADO = "O feedback está desligado por enquanto."
 FEEDBACK_MODAL_TITULO = "Seu feedback"
 FEEDBACK_CAMPO_NOTA = "Nota de 1 a 5"
 FEEDBACK_CAMPO_TEXTO = "O que você achou do servidor?"

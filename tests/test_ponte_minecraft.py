@@ -577,7 +577,7 @@ def test_fila_do_chat_tem_teto(tmp_path):
 def test_canais_da_ponte_no_setup_e_padroes():
     import config
 
-    assert len(config.CANAIS_CONFIG) <= 25  # o menu de seleção do Discord aceita no máximo 25 opções
+    assert all(len(b) <= 25 for b in config.blocos_de_canais()) and len(config.CANAIS_CONFIG) <= 50  # um menu do Discord por bloco de 25
     for chave in ("mc_chat", "mc_ip", "mc_historico", "mc_login"):
         assert chave in config.CANAIS_CONFIG and isinstance(config.MC_CANAIS_PADRAO[chave], int)
     assert [s[1] for s in config.MC_SERVIDORES] == ["plus-01.bedhosting.com.br", "vulpus.bedrock.net.br"]

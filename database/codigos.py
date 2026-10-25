@@ -13,12 +13,10 @@ from .util import agora
 
 ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # sem 0/O/1/I
 PREFIXO = "VULPUS"
-MAX_ERROS = 5
-JANELA_ERROS = 600
+# Padrões (o /setup > Ajustes muda: feedback_* e codigo_erros_* em config.AJUSTES)
 VALIDADE_FEEDBACK_DIAS = 90
 CARACTERES_MIN_FEEDBACK = 20
 CAUDAS_FEEDBACK = 1000
-DIAS_NOVO_FEEDBACK = 30
 
 
 def gerar_codigo() -> str:
@@ -111,9 +109,9 @@ class CodigosMixin:
         )
 
     # ------------------------------------------------------------------ resgate
-    async def codigo_erros_recentes(self, user_id: int) -> int:
+    async def codigo_erros_recentes(self, user_id: int, janela_seg: int = 600) -> int:
         linha = await self._um(  # type: ignore[attr-defined]
-            "SELECT COUNT(*) AS n FROM codigos_tentativas WHERE user_id = ? AND quando > ?", (user_id, agora() - JANELA_ERROS)
+            "SELECT COUNT(*) AS n FROM codigos_tentativas WHERE user_id = ? AND quando > ?", (user_id, agora() - janela_seg)
         )
         return int(linha["n"])
 
@@ -123,12 +121,14 @@ class CodigosMixin:
             return ResultadoCodigo("sem_vinculo")
         cod = normalizar_codigo(codigo)
         agora_ = agora()
+        max_erros = await self.ajuste(guild_id, "codigo_erros_max")  # type: ignore[attr-defined]
+        janela = await self.ajuste(guild_id, "codigo_erros_janela_min") * 60  # type: ignore[attr-defined]
         async with self._tx() as conn:  # type: ignore[attr-defined]
-            await conn.execute("DELETE FROM codigos_tentativas WHERE quando <= ?", (agora_ - JANELA_ERROS,))
+            await conn.execute("DELETE FROM codigos_tentativas WHERE quando <= ?", (agora_ - janela,))
             erros = await self._fetchone(  # type: ignore[attr-defined]
                 conn, "SELECT COUNT(*) AS n FROM codigos_tentativas WHERE user_id = ?", (user_id,)
             )
-            if erros["n"] >= MAX_ERROS:
+            if erros["n"] >= max_erros:
                 return ResultadoCodigo("muitas")
             linha = await self._fetchone(conn, "SELECT * FROM codigos WHERE codigo = ? AND guild_id = ?", (cod, guild_id))  # type: ignore[attr-defined]
             status = "ok"
@@ -198,10 +198,15 @@ class CodigosMixin:
         )
 
     async def feedback_entregar(
-        self, guild_id: int, user_id: int, staff_id: int, caudas: int = CAUDAS_FEEDBACK
+        self, guild_id: int, user_id: int, staff_id: int, caudas: Optional[int] = None
     ) -> Optional[tuple[str, bool]]:
         """Entrega o código pessoal (1 uso, só deste usuário, 90 dias). Segunda chamada devolve o MESMO código.
-        Retorna (código, novo) ou None se a pessoa nunca mandou feedback."""
+        Retorna (código, novo) ou None se a pessoa nunca mandou feedback. Caudas e validade vêm dos ajustes."""
+        if caudas is None:
+            caudas = await self.ajuste(guild_id, "feedback_caudas")  # type: ignore[attr-defined]
+        dias = await self.ajuste(guild_id, "feedback_codigo_dias")  # type: ignore[attr-defined]
+        if caudas <= 0:
+            raise ValueError("feedback_caudas precisa ser positivo para gerar código")
         async with self._tx() as conn:  # type: ignore[attr-defined]
             antigo = await self._fetchone(  # type: ignore[attr-defined]
                 conn,
@@ -218,7 +223,7 @@ class CodigosMixin:
             if fb is None:
                 return None
             codigo = await self._codigo_inserir(
-                conn, guild_id, caudas, None, 1, VALIDADE_FEEDBACK_DIAS, staff_id, f"Feedback de {user_id}", user_id
+                conn, guild_id, caudas, None, 1, dias, staff_id, f"Feedback de {user_id}", user_id
             )
             await conn.execute(
                 "UPDATE feedbacks SET codigo = ?, codigo_entregue_em = ?, entregue_por = ? WHERE id = ?",
