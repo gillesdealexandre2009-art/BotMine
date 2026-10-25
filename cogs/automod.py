@@ -1,7 +1,8 @@
 """Automod leve (antispam, convites, links, menções em massa) e modo raid (/raid).
 
 Ignora Staff e acima. Ação: apagar + avisar + (após várias infrações) timeout curto, sempre com log.
-Tudo configurável com /ajustes (automod_*).
+Tudo configurável com /ajustes (automod_*). Contas novas (seguranca_novo_*) não mandam link/convite/menções logo depois de
+entrar: a mensagem some em silêncio, sem strike. Links de golpe (falso nitro/Steam) viram timeout curto na hora.
 """
 from __future__ import annotations
 
@@ -20,13 +21,14 @@ import config
 import textos
 from cogs.moderacao import registrar_caso
 from utils.helpers import embed, enviar_log, responder, truncar
+from utils import seguranca as seg
 from utils.permissoes import exigir_nivel, nivel_do_membro
 
 if TYPE_CHECKING:  # pragma: no cover
     from main import Kiza
 
 log = logging.getLogger("kiza.automod")
-CONVITE_RE = re.compile(r"(?:https?://)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com/invite)/[A-Za-z0-9-]+", re.I)
+CONVITE_RE = seg._CONVITE  # discord.gg, discord.com/invite, dsc.gg... (tem_convite também pega "discord . gg" e "discord(dot)gg")
 LINK_RE = re.compile(r"https?://\S+", re.I)
 # Menção escrita no texto (`<@123>`, `<@!123>`, `<@&123>`): conta mesmo quando o usuário/cargo não existe mais ou não está no
 # servidor. O Discord não põe esses casos em `message.mentions` (aparecem como "@usuário-desconhecido"), e foi assim que um raid
@@ -54,13 +56,15 @@ class Automod(commands.Cog):
         assert guild is not None
         conteudo = mensagem.content or ""
 
+        if await banco.ajuste(guild.id, "seguranca_golpe") == 1 and seg.eh_link_golpe(conteudo):
+            return "golpe"
         if await banco.ajuste(guild.id, "automod_mencoes") == 1:
             resolvidas = len(set(mensagem.mentions)) + len(set(mensagem.role_mentions))
             total = contar_mencoes(conteudo, resolvidas)
             if mensagem.mention_everyone or total > await banco.ajuste(guild.id, "automod_mencoes_max"):
                 grave = total >= await banco.ajuste(guild.id, "automod_mencoes_grave")
                 return "mencoes_grave" if grave else "mencoes"
-        if await banco.ajuste(guild.id, "automod_convites") == 1 and CONVITE_RE.search(conteudo):
+        if await banco.ajuste(guild.id, "automod_convites") == 1 and seg.tem_convite(conteudo):
             return "convite"
         if await banco.ajuste(guild.id, "automod_links") == 1 and LINK_RE.search(conteudo):
             return "link"
@@ -87,8 +91,50 @@ class Automod(commands.Cog):
         if await nivel_do_membro(self.bot, mensagem.author) >= config.NIVEL_STAFF:
             return
         motivo = await self._detectar(mensagem)
-        if motivo is not None:
+        if motivo in ("golpe", "mencoes_grave"):
             await self._punir(mensagem, motivo)
+        elif await self._soft_limit(mensagem):
+            return  # conta nova com link/convite/menções: some em silêncio, sem strike
+        elif motivo is not None:
+            await self._punir(mensagem, motivo)
+
+    # ------------------------------------------------------------------ limite suave para contas novas
+    async def _soft_limit(self, mensagem: discord.Message) -> bool:
+        """Conta nova (seguranca_conta_nova_dias) nos primeiros seguranca_novo_minutos: apaga link/convite/3+ menções, sem punir."""
+        try:
+            guild, autor, banco = mensagem.guild, mensagem.author, self.bot.banco
+            if guild is None or getattr(autor, "joined_at", None) is None:
+                return False
+            if autor.joined_at is None or await banco.ajuste(guild.id, "seguranca_novo_ligado") != 1:
+                return False
+            agora = discord.utils.utcnow().timestamp()
+            if not seg.soft_limit_aplica(
+                autor.joined_at.timestamp(),
+                autor.created_at.timestamp(),
+                agora,
+                await banco.ajuste(guild.id, "seguranca_novo_minutos"),
+                await banco.ajuste(guild.id, "seguranca_conta_nova_dias"),
+            ):
+                return False
+            conteudo = mensagem.content or ""
+            resolvidas = len(set(mensagem.mentions)) + len(set(mensagem.role_mentions))
+            if not (LINK_RE.search(conteudo) or seg.tem_convite(conteudo) or contar_mencoes(conteudo, resolvidas) >= 3):
+                return False
+            isentos = seg.ids_da_lista(await banco.get_config(guild.id, "seguranca_cargos_isentos"))
+            if any(r.id in isentos for r in autor.roles):
+                return False
+            await mensagem.delete()
+            await mensagem.channel.send(
+                textos.SEG_AVISO_CONTA_NOVA.format(mencao=autor.mention),
+                delete_after=8,
+                allowed_mentions=discord.AllowedMentions(users=[autor]),
+            )
+            return True
+        except discord.HTTPException:
+            return True  # a mensagem já era (ou sem permissão): não pune de qualquer jeito
+        except Exception:
+            log.exception("Falha no limite de contas novas")
+            return False
 
     # ------------------------------------------------------------------ apps externos
     async def _checar_app_externo(self, mensagem: discord.Message) -> None:
@@ -147,8 +193,8 @@ class Automod(commands.Cog):
     async def _punir(self, mensagem: discord.Message, motivo: str) -> None:
         guild, autor, banco = mensagem.guild, mensagem.author, self.bot.banco
         assert guild is not None and isinstance(autor, discord.Member)
-        grave = motivo == "mencoes_grave"  # raid de menções: sem strikes, timeout na hora
-        if grave:
+        grave = motivo in ("mencoes_grave", "golpe")  # raid de menções ou golpe: sem strikes, timeout na hora
+        if motivo == "mencoes_grave":
             motivo = "mencoes"
         descricao_motivo = textos.AUTOMOD_MOTIVOS[motivo]
 

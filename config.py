@@ -92,6 +92,7 @@ COGS_PADRAO = [
     "kitsune_extras",
     "engajamento",
     "feedback",
+    "seguranca",
 ]
 _desativados = {c.strip() for c in os.getenv("COGS_DESATIVADOS", "").split(",") if c.strip()}
 COGS = [c for c in COGS_PADRAO if c not in _desativados]
@@ -361,10 +362,30 @@ AJUSTES = {
     "nick_sinc_ligado": (1, 0, 1, "1 = apelido do Discord vira [CLÃ] apelido do jogo (só para quem ligou a conta do Minecraft)"),
     "nick_sinc_sem_cla": (1, 0, 1, "1 = quem não tem clã fica só com o apelido/nome do jogo; 0 = não mexe em quem não tem clã"),
     "nick_sinc_intervalo_seg": (30, 5, 3600, "Segundos mínimos entre duas mudanças de apelido da mesma pessoa"),
+    "seguranca_raid_auto": (1, 0, 1, "1 = detector automático de raid por velocidade de entrada ligado"),
+    "seguranca_raid_n": (6, 2, 100, "Contas que entram dentro da janela para disparar o modo raid suave"),
+    "seguranca_raid_janela": (20, 5, 300, "Janela do detector de raid (segundos)"),
+    "seguranca_raid_novas_m": (4, 2, 100, "Contas MUITO novas que entram em 60 s para disparar o modo raid suave"),
+    "seguranca_raid_muito_nova_h": (24, 1, 168, "Horas de idade abaixo das quais a conta conta como muito nova"),
+    "seguranca_raid_duracao_min": (15, 1, 1440, "Minutos que o modo raid suave dura antes de desligar sozinho"),
+    "seguranca_raid_conta_dias": (7, 1, 90, "No modo raid suave, contas com menos dias que isto levam timeout curto"),
+    "seguranca_raid_timeout_min": (10, 1, 1440, "Minutos do timeout de conta nova durante o modo raid suave"),
+    "seguranca_nuke": (1, 0, 1, "1 = alerta anti-nuke (ações destrutivas em sequência) ligado"),
+    "seguranca_nuke_apagar": (3, 2, 50, "Canais/cargos apagados pela mesma pessoa em 30 s para alertar"),
+    "seguranca_nuke_banir": (5, 2, 100, "Banimentos/expulsões pela mesma pessoa em 60 s para alertar"),
+    "seguranca_nuke_webhook": (3, 2, 50, "Webhooks criados pela mesma pessoa em 60 s para alertar"),
+    "seguranca_nuke_remover_perms": (0, 0, 1, "1 = no alerta, tira os cargos perigosos da pessoa (só o dono muda; precisa de hierarquia)"),
+    "seguranca_novo_ligado": (1, 0, 1, "1 = contas novas não mandam link/convite/menções logo depois de entrar"),
+    "seguranca_novo_minutos": (10, 1, 120, "Minutos depois da entrada em que vale o limite de conta nova"),
+    "seguranca_conta_nova_dias": (3, 1, 90, "Conta com menos dias que isto conta como nova no limite"),
+    "seguranca_golpe": (1, 0, 1, "1 = apaga links de golpe (falso nitro/presente/Steam) e dá timeout curto"),
 }
 # Ajustes que têm painel próprio no /setup (> Ajustes)
 AJUSTES_NO_SETUP = [k for k in AJUSTES if k.startswith(("feedback_", "codigo_"))]
 AJUSTES_NICK_NO_SETUP = [k for k in AJUSTES if k.startswith("nick_sinc_")]
+AJUSTES_SEG_NO_SETUP = [k for k in AJUSTES if k.startswith("seguranca_")]
+# Ajustes que só o dono do servidor muda (dão poder sobre os cargos de outras pessoas)
+AJUSTES_SO_DONO = {"seguranca_nuke_remover_perms"}
 # Quantos meses de Kitsune dá para comprar de uma vez (o preço é o do mês vezes isto).
 KITSUNE_MESES = (1, 3, 6, 12)
 

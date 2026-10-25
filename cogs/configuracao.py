@@ -20,6 +20,7 @@ from utils.helpers import (
     sem_acento,
     truncar,
 )
+from utils import seguranca as seg
 from utils.permissoes import exigir_nivel
 from utils.views import DonoView
 
@@ -39,6 +40,7 @@ SECOES = {
     "publicacoes": ("📸 Publicações (fidelidade)", "Canais onde posts contam para virar Helper"),
     "ajustes": ("⚙️ Ajustes de feedback e códigos", "Caudas, validade, espera e limites"),
     "apelidos": (textos.NICK_SETUP_TITULO, textos.NICK_SETUP_SECAO_DESC),
+    "seguranca": (textos.SEG_SETUP_TITULO, textos.SEG_SETUP_SECAO_DESC),
 }
 
 # o que publicar: chave -> (nome do cog, método, rótulo)
@@ -207,6 +209,9 @@ class AjusteModal(discord.ui.Modal):
         self.add_item(self.valor)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
+        if self.chave in config.AJUSTES_SO_DONO and interaction.user.id != self.secao.guild.owner_id:
+            await responder(interaction, textos.SEG_SO_DONO)
+            return
         bruto = str(self.valor.value).strip()
         if not bruto.lstrip("-").isdigit() or not self.minimo <= int(bruto) <= self.maximo:
             await responder(interaction, textos.AJUSTE_FORA_FAIXA.format(chave=self.chave, min=self.minimo, max=self.maximo))
@@ -292,6 +297,69 @@ class SecaoApelidos(SecaoAjustes):
     def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
         super().__init__(cog, dono_id, guild)
         self.add_item(BotaoAplicarApelidos())
+
+
+class SelecaoCargosIsentos(discord.ui.RoleSelect):
+    """Cargos que não levam o limite de contas novas (além da staff, que já é isenta)."""
+
+    def __init__(self) -> None:
+        super().__init__(placeholder=textos.SEG_SETUP_ISENTOS, min_values=0, max_values=10, row=2)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        v: SecaoSeguranca = self.view  # type: ignore[assignment]
+        ids = [int(r) for r in interaction.data.get("values", []) if int(r) != v.guild.id]  # type: ignore[union-attr]
+        await v.cog.bot.banco.set_config(v.guild.id, "seguranca_cargos_isentos", ",".join(map(str, ids)) or None)
+        await v.atualizar(interaction)
+
+
+class BotaoRegrasNativas(discord.ui.Button):
+    def __init__(self) -> None:
+        super().__init__(label=textos.SEG_BOTAO_REGRAS, emoji="🛡️", style=discord.ButtonStyle.success, row=1)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        v: SecaoSeguranca = self.view  # type: ignore[assignment]
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        linhas = await seg.aplicar_regras(v.cog.bot, v.guild)
+        await interaction.followup.send(embed=embed(textos.SEG_REGRAS_TITULO, "\n".join(linhas)), ephemeral=True)
+
+
+class BotaoStatusSeguranca(discord.ui.Button):
+    def __init__(self) -> None:
+        super().__init__(label=textos.SEG_BOTAO_STATUS, emoji="📋", style=discord.ButtonStyle.secondary, row=1)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        v: SecaoSeguranca = self.view  # type: ignore[assignment]
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        cog = v.cog.bot.get_cog("Seguranca")
+        if cog is None:
+            await interaction.followup.send(textos.SETUP_MODULO_OFF, ephemeral=True)
+            return
+        await interaction.followup.send(embed=await cog.embed_status(v.guild), ephemeral=True)  # type: ignore[attr-defined]
+
+
+class SecaoSeguranca(SecaoAjustes):
+    """Detector de raid, anti-nuke, contas novas e links de golpe: ajustes seguranca_*, cargos isentos e regras nativas."""
+
+    chaves_do_painel = config.AJUSTES_SEG_NO_SETUP
+    titulo_do_painel = textos.SEG_SETUP_TITULO
+    rodape_do_painel = textos.SEG_SETUP_RODAPE
+
+    def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
+        super().__init__(cog, dono_id, guild)
+        self.selecao_isentos = SelecaoCargosIsentos()
+        self.add_item(BotaoRegrasNativas())
+        self.add_item(BotaoStatusSeguranca())
+        self.add_item(self.selecao_isentos)
+
+    async def construir_embed(self) -> discord.Embed:
+        e = await super().construir_embed()
+        ids = seg.ids_da_lista(await self.cog.bot.banco.get_config(self.guild.id, "seguranca_cargos_isentos"))
+        self.selecao_isentos.default_values = [discord.Object(id=i) for i in ids if self.guild.get_role(i) is not None]
+        extra = "\n\n**Cargos isentos do limite de contas novas:** " + (" ".join(f"<@&{i}>" for i in ids) or "*só a staff*")
+        if not await self.cog.bot.banco.get_config_int(self.guild.id, "canal_logs_mod"):
+            extra += "\n" + textos.SEG_SETUP_SEM_CANAL
+        e.description = truncar((e.description or "") + extra, 4000)
+        return e
 
 
 # ---------------------------------------------------------------- cargos base
@@ -754,6 +822,7 @@ SECAO_CLASSES = {
     "publicacoes": SecaoPublicacoes,
     "ajustes": SecaoAjustes,
     "apelidos": SecaoApelidos,
+    "seguranca": SecaoSeguranca,
 }
 
 
@@ -977,6 +1046,9 @@ class Configuracao(commands.Cog):
             await responder(interaction, textos.AJUSTE_INVALIDO)
             return
         _, minimo, maximo, _ = dados
+        if chave in config.AJUSTES_SO_DONO and interaction.user.id != interaction.guild.owner_id:  # type: ignore[union-attr]
+            await responder(interaction, textos.SEG_SO_DONO)
+            return
         if not minimo <= valor <= maximo:
             await responder(interaction, textos.AJUSTE_FORA_FAIXA.format(chave=chave, min=minimo, max=maximo))
             return

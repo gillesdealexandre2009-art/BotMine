@@ -169,6 +169,7 @@ AUTOMOD_MOTIVOS = {
     "convite": "convites de outros servidores não são permitidos aqui",
     "link": "links não são permitidos neste servidor",
     "mencoes": "muitas menções de uma vez não são permitidas",
+    "golpe": "esse link parece golpe (falso nitro/presente) e foi removido",
 }
 AUTOMOD_APP_MOTIVO = "Automod: flood com app externo"
 AUTOMOD_TIMEOUT_MOTIVO = "Automod: infrações repetidas ({motivo})"  # {motivo}
@@ -176,6 +177,83 @@ RAID_LIGADO = "🚨 Modo raid **ligado**. Novos membros serão barrados até voc
 RAID_DESLIGADO = "✅ Modo raid **desligado**. A entrada de novos membros voltou ao normal."
 RAID_STATUS_LIGADO = "🚨 O modo raid está **ligado**."
 RAID_STATUS_DESLIGADO = "✅ O modo raid está **desligado**."
+
+# ============================================================================ segurança
+SEG_SETUP_TITULO = "🛡️ Segurança"
+SEG_SETUP_SECAO_DESC = "Raid, regras do Discord, anti-nuke e contas novas"
+SEG_SETUP_RODAPE = "1) escolha o ajuste  2) mude o valor. Cargos isentos de baixo valem para o limite de contas novas."
+SEG_SETUP_SEM_CANAL = "⚠️ Sem canal de **Logs de moderação** (/setup > Canais) os alertas não chegam à staff."
+SEG_SETUP_ISENTOS = "Cargos isentos do limite de contas novas…"
+SEG_SO_DONO = "🦊 Só o dono do servidor muda esse ajuste."
+SEG_BOTAO_REGRAS = "Aplicar regras do Discord"
+SEG_BOTAO_STATUS = "Ver status"
+SEG_AVISO_CONTA_NOVA = "{mencao}, contas novas ainda não podem mandar links, é só por alguns minutos 🦊"  # {mencao}
+
+SEG_RAID_TITULO = "🚨 Possível raid detectado"
+SEG_RAID_MOTIVO = {
+    "velocidade": "**{n}** contas entraram em poucos segundos.",
+    "contas_novas": "**{n}** contas muito novas entraram em menos de 1 minuto.",
+}
+SEG_RAID_MANUAL_ATIVO = "O modo raid **manual** já está ligado (ele expulsa); não mudei nada."
+SEG_RAID_SUAVE_LIGADO = "Modo raid suave ligado por **{min} min**: contas com menos de **{dias} dias** levam timeout de **{timeout} min**. Quem é antigo entra sem atrito."
+SEG_RAID_CONTAS = "Contas"
+SEG_RAID_TIMEOUT_APLICADO = "{n} conta(s) nova(s) já receberam timeout."
+SEG_RAID_DESLIGADO_TITULO = "✅ Modo raid suave desligado"
+SEG_RAID_DESLIGADO_AUTO = "O tempo acabou e voltei ao normal."
+SEG_RAID_DESLIGADO_POR = "Desligado por {quem}."  # {quem}
+SEG_RAID_BOTAO_DESLIGAR = "Desligar modo raid"
+SEG_RAID_BOTAO_EXPULSAR = "Expulsar essas contas"
+SEG_RAID_SO_STAFF = "🦊 Só a staff usa esses botões."
+SEG_RAID_NAO_ESTAVA = "🦊 O modo raid suave já estava desligado."
+SEG_RAID_OFF_OK = "✅ Modo raid suave desligado."
+SEG_RAID_ON_OK = "🚨 Modo raid suave ligado por {min} min."  # {min}
+SEG_RAID_EXPULSAR_CONFIRMA = "Expulsar **{n}** conta(s) deste alerta? Quem ainda está no servidor e não é da staff sai agora."  # {n}
+SEG_RAID_EXPULSAR_BOTAO = "Sim, expulsar"
+SEG_RAID_EXPULSAR_NADA = "🦊 Não há contas desse alerta no servidor."
+SEG_RAID_EXPULSAR_FEITO = "👢 {n} conta(s) expulsa(s)."  # {n}
+SEG_RAID_KICK_MOTIVO = "Kiza: expulsão de contas do raid, por {quem}"  # {quem}
+SEG_RAID_TIMEOUT_MOTIVO = "Kiza: modo raid suave (conta nova)"
+
+SEG_NUKE_TITULO = "🚨 ALERTA: ações destrutivas em sequência"
+SEG_NUKE_DESC = "{quem} fez **{n}** ações de **{tipo}** em poucos segundos."  # {quem} {n} {tipo}
+SEG_NUKE_TIPOS = {"apagar": "apagar canais/cargos", "banir": "banir/expulsar", "webhook": "criar webhooks"}
+SEG_NUKE_REMOVIDOS = "Cargos perigosos removidos temporariamente: {cargos}. Devolva com `/seguranca devolver-cargos`."
+SEG_NUKE_SEM_HIERARQUIA = "Não consegui tirar os cargos dessa pessoa (confira a hierarquia do meu cargo)."
+SEG_NUKE_MOTIVO = "Kiza: anti-nuke ({tipo})"  # {tipo}
+SEG_DEVOLVER_OK = "✅ Cargos devolvidos: {cargos}."  # {cargos}
+SEG_DEVOLVER_NADA = "🦊 Não guardei cargos removidos dessa pessoa."
+SEG_DEVOLVER_ERRO = "🦊 Não consegui devolver os cargos (hierarquia ou permissão)."
+
+SEG_REGRAS_TITULO = "🛡️ Regras do AutoMod do Discord"
+SEG_REGRAS_SEM_PERM = "🦊 Preciso da permissão **Gerenciar Servidor** para criar as regras do Discord."
+SEG_REGRAS_ERRO = "🦊 O Discord não aceitou o pedido agora. Tente de novo daqui a pouco."
+SEG_REGRAS_SEM_CANAL = "⚠️ Sem canal de Logs de moderação: as regras bloqueiam, mas não avisam a staff."
+SEG_REGRAS_CRIADA = "✅ Criada: **{nome}**"  # {nome}
+SEG_REGRAS_ATUALIZADA = "🔁 Atualizada: **{nome}**"  # {nome}
+SEG_REGRAS_OUTRA = "⚠️ **{nome}** não criada: já existe **{outra}** do mesmo tipo (o Discord só permite uma)."  # {nome} {outra}
+SEG_REGRAS_FALHOU = "❌ **{nome}**: {motivo}"  # {nome} {motivo}
+SEG_REGRAS_NENHUMA = "nenhuma (use `/seguranca aplicar-regras`)"
+
+SEG_AUDITORIA_TITULO = "🔎 Auditoria de permissões"
+SEG_AUDITORIA_LIMPA = "Não achei riscos nos pontos que verifico. 🦊"
+SEG_AUDITORIA_RESUMO = "Achei **{n}** ponto(s) para olhar. Eu só leio: não mudei nada."  # {n}
+SEG_AUDITORIA_BOTAO = "Aplicar correções seguras"
+SEG_AUDITORIA_SO_DONO = "🦊 Só o dono do servidor aplica as correções."
+SEG_CORRECAO_OK = "✅ Tirei do @everyone: {perms}."  # {perms}
+SEG_CORRECAO_NADA = "🦊 Nada a corrigir: o @everyone já não tem essas permissões."
+SEG_CORRECAO_SEM_PERM = "🦊 Preciso de **Gerenciar Cargos** para mexer no @everyone."
+SEG_CORRECAO_CONFIRMA = "Tirar **Mencionar @everyone**, **Usar aplicativos externos** e **Gerenciar webhooks** do @everyone? Confirma?"
+SEG_CORRECAO_LOG = "{quem} aplicou as correções seguras: {resultado}"  # {quem} {resultado}
+
+SEG_STATUS_TITULO = "🛡️ Segurança"
+SEG_PERMISSOES_BOT = (
+    ("manage_guild", "Gerenciar Servidor"),
+    ("moderate_members", "Moderar Membros"),
+    ("view_audit_log", "Ver Registro de Auditoria"),
+    ("kick_members", "Expulsar Membros"),
+    ("manage_roles", "Gerenciar Cargos"),
+    ("manage_messages", "Gerenciar Mensagens"),
+)
 
 # ============================================================================ canais
 CANAL_REGRA_DESCRICOES = {
@@ -295,7 +373,7 @@ AJUDA_CAMPOS = {
     ),
     "admin": (
         "👑 Admin",
-        "`/setup` `/configuracao` `/ajustes` — configuração\n`/ban` `/unban` `/raid` `/canal-regra` `/economia-admin` `/backup`\n"
+        "`/setup` `/configuracao` `/ajustes` — configuração\n`/ban` `/unban` `/raid` `/seguranca` `/canal-regra` `/economia-admin` `/backup`\n"
         "`/fidelidade-ajustar` — corrigir ou importar números da fidelidade",
     ),
 }  # {moeda} em "membro"
