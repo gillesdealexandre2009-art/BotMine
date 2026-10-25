@@ -181,8 +181,8 @@ const FAIXAS = {
   ecosVaraImunidadeSeg: [0, 300],
   ecosVaraQuedaSeg: [0, 30],
   ecosVaraBlocosMax: [0, 100],
-  durabilidadeArmaduraLimite: [10, 100],
   durabilidadeAlertaLimite: [0, 50],
+  chatLocalRaio: [0, 200],
   ecosTetoCriaturas: [0, 60],
   ecosReaparecerSeg: [10, 3600],
   ecosDanoMin: [1, 100],
@@ -429,8 +429,8 @@ const GRUPOS = [
   { id: "ecos_equip", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_ECOS_EQUIP, icone: ICONES.ajustes, chaves: ["ecosEquipLigado", "ecosVaraDano", "ecosVaraRecargaSeg", "ecosVaraPvp", "ecosBonusConjunto", "ecosVaraTelecinese", "ecosVaraSegurarMaxSeg", "ecosVaraCooldownSeg", "ecosVaraForca", "ecosVaraPegarJogador", "ecosVaraPegarBloco", "ecosVaraImunidadeSeg", "ecosVaraQuedaSeg", "ecosVaraBlocosMax"] },
   { id: "limpeza", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_LIMPEZA, icone: ICONES.apagar, chaves: [], abrir: (p) => menuLimpezaStaff(p) },
   { id: "kitsune", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_KITSUNE, icone: ICONES.apelido, chaves: ["kitsuneChegadaFx", "kitsuneChegadaMsg"] },
-  { id: "durabilidade", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_DURABILIDADE, icone: ICONES.ajustes, chaves: ["durabilidadeHudLigado", "durabilidadeArmaduraLimite", "durabilidadeAlertaLimite"] },
-  { id: "geral", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao", "limiteMundo"] },
+  { id: "durabilidade", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_DURABILIDADE, icone: ICONES.ajustes, chaves: ["durabilidadeHudLigado", "durabilidadeAlertaLimite"] },
+  { id: "geral", cat: textos.BOTAO_CONFIG, titulo: textos.GRUPO_GERAL, icone: ICONES.mundo, chaves: ["linkDiscord", "hudPadrao", "limiteMundo", "chatLocalRaio"] },
 ];
 
 /**

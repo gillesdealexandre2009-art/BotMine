@@ -112,8 +112,9 @@ export function sanear(mensagem) {
  * @param {string} nome  nome da conta
  * @param {Identidade} identidade
  * @param {string} mensagem já saneada
+ * @param {string} [marca]  prefixo da linha (ex.: "§8[§bLocal§8] " no chat local); "" = chat global
  */
-export function montarLinha(nome, identidade, mensagem) {
+export function montarLinha(nome, identidade, mensagem, marca = "") {
   const cargo = CARGOS[identidade.cargo];
   const selo = glyph(cargo ? cargo.glyph : GLYPH_RANK[identidade.rank]);
   const kitsune = identidade.kitsune ? ` ${glyph(G.KITSUNE)}` : "";
@@ -124,5 +125,5 @@ export function montarLinha(nome, identidade, mensagem) {
     ? `§8[${pintar(identidade.cla.tag, identidade.cla.tema) ?? `§${identidade.cla.cor}${identidade.cla.tag}`}§8] `
     : "";
   const corMensagem = identidade.msgCor ? `§${identidade.msgCor}` : "§f";
-  return `${selo}${kitsune} §8[§e${identidade.nivel}§8] ${cla}${nomeFinal}§8 » ${corMensagem}${mensagem}`;
+  return `${marca}${selo}${kitsune} §8[§e${identidade.nivel}§8] ${cla}${nomeFinal}§8 » ${corMensagem}${mensagem}`;
 }

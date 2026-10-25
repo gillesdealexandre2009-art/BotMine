@@ -36,7 +36,7 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {{ dia: string, sequencia: number }} diaria  dia (Brasília, "2026-10-02") da última diária e dias seguidos
  * @property {Casa[]} casas
  * @property {import("./teleporte.js").Local | null} voltar
- * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema, cla: boolean, pegadinhas: boolean, musica: boolean, abate: string, durabilidade: "tudo" | "armadura" | "alerta" | "desligado" }} ajustes
+ * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema, cla: boolean, pegadinhas: boolean, musica: boolean, abate: string, durabilidade: "tudo" | "alerta" | "desligado", durabilidadePecas: string[] }} ajustes
  *   hud (scoreboard lateral) null = usar config().hudPadrao; cla = linha do clã no placar
  * @property {boolean} recebeuItem
  * @property {string} apelido  nome de exibição (só vale com o selo Kitsune; "" = o nome da conta)
@@ -82,6 +82,9 @@ export const MAX_LOOKS = 3;
  * @property {{ chave: string, c: number, x: number, sc: number, sx: number } | null} pend  chave, diferenças enviadas e totais do jogo no momento do envio
  */
 
+/** Itens que o jogador pode pôr na caixa de durabilidade, na ordem da caixa. */
+export const PECAS_DURABILIDADE = Object.freeze(["mao", "escudo", "capacete", "peitoral", "calca", "botas"]);
+
 /**
  * Temas do painel, na ordem da escolha em Ajustes. Laranja e Black são de todos; os outros, do selo Kitsune
  * (core/forms.js). Tema desconhecido no dado salvo vira laranja.
@@ -117,7 +120,7 @@ function dadosNovos() {
     diaria: { dia: "", sequencia: 0 },
     casas: [],
     voltar: null,
-    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja", cla: true, pegadinhas: true, musica: true, abate: "auto", durabilidade: "tudo" },
+    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja", cla: true, pegadinhas: true, musica: true, abate: "auto", durabilidade: "tudo", durabilidadePecas: ["mao", "capacete", "peitoral", "calca", "botas"] },
     recebeuItem: false,
     apelido: "",
     apelidoDono: "",
@@ -234,7 +237,13 @@ function completar(lido) {
       cla: booleano(ajustes.cla, base.ajustes.cla),
       pegadinhas: booleano(ajustes.pegadinhas, base.ajustes.pegadinhas),
       musica: booleano(ajustes.musica, base.ajustes.musica),
-      durabilidade: ["tudo", "armadura", "alerta", "desligado"].includes(ajustes.durabilidade) ? ajustes.durabilidade : "tudo",
+      durabilidade: ["tudo", "alerta", "desligado"].includes(ajustes.durabilidade) ? ajustes.durabilidade : "tudo",
+      // "armadura" (modo antigo) virou a escolha de peças sem a mão
+      durabilidadePecas: Array.isArray(ajustes.durabilidadePecas)
+        ? PECAS_DURABILIDADE.filter((id) => ajustes.durabilidadePecas.includes(id))
+        : ajustes.durabilidade === "armadura"
+          ? base.ajustes.durabilidadePecas.filter((id) => id !== "mao")
+          : base.ajustes.durabilidadePecas,
       abate: typeof ajustes.abate === "string" && /^[a-z]{1,12}$/.test(ajustes.abate) ? ajustes.abate : "auto",
     },
     recebeuItem: booleano(lido.recebeuItem, base.recebeuItem),

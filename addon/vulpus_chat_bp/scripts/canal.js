@@ -77,6 +77,51 @@ export function lerIdentidade(player) {
   };
 }
 
+/** "vulpus:chat:local" ou "vulpus:chat:time" (modo do chat; sem tag = global). */
+const TAG_MODO = "vulpus:chat:";
+/** Teto do raio do chat local (o canal é escrito pelo pack principal; qualquer valor maior que isso é ignorado). */
+const RAIO_MAXIMO = 200;
+
+/**
+ * Modo do chat do jogador: "global", "local" ou "time".
+ * @param {Player} player
+ * @returns {"global" | "local" | "time"}
+ */
+export function lerModo(player) {
+  for (const tag of player.getTags()) {
+    if (!tag.startsWith(TAG_MODO)) continue;
+    const modo = tag.slice(TAG_MODO.length);
+    if (modo === "local" || modo === "time") return modo;
+  }
+  return "global";
+}
+
+/** Raio do chat local em blocos; 0 = desligado (ou sem canal). */
+export function lerRaioLocal() {
+  const valor = lerScore(world.scoreboard.getObjective("vulpus_canal"), "#chat_raio");
+  return typeof valor === "number" && Number.isInteger(valor) ? Math.min(RAIO_MAXIMO, Math.max(0, valor)) : 0;
+}
+
+/**
+ * Tag do clã (3 letras) do jogador, ou "" sem clã.
+ * @param {Player} player
+ */
+export function lerTagCla(player) {
+  for (const tag of player.getTags()) {
+    const cla = TAG_CLA.exec(tag);
+    if (cla) return cla[1];
+  }
+  return "";
+}
+
+/**
+ * Tem cargo (helper, staff ou admin) pelo canal: lê o chat local de todo mundo.
+ * @param {Player} player
+ */
+export function temCargo(player) {
+  return scoreDe(world.scoreboard.getObjective("vulpus_cargo"), player, CARGO_MAXIMO) >= 1;
+}
+
 /**
  * Clã, apelido e tema pelas tags de entidade. Apelido estranho (símbolos, § ou grande demais) é ignorado.
  * @param {string[]} tags

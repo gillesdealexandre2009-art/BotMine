@@ -4,16 +4,18 @@
 // Não importa hud.js: a sidebar percebe a troca sozinha no próximo ciclo.
 import { ICONES } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
-import { config, dadosJogador, editarJogador, TEMAS_MENU } from "../core/db.js";
+import { config, dadosJogador, editarJogador, PECAS_DURABILIDADE, TEMAS_MENU } from "../core/db.js";
 import { Lista, podeUsarTema, temaDoPainel } from "../core/forms.js";
 import { erro, ok } from "../core/util.js";
 import * as textos from "../textos/ajustes.js";
+import * as textosChat from "../textos/chat_modo.js";
 import * as textosDur from "../textos/durabilidade.js";
 import * as textosExtras from "../textos/kitsune_extras.js";
 import { menuAbate } from "./abate.js";
 import { menuKitsune, temSelo } from "./kitsune.js";
 import { alternarChegada, menuCorMensagem, menuLooks, nomeCorMensagem } from "./kitsune_extras.js";
 import { alternarEsconderPets, menuColecao, menuVitrine, petsEscondidos, vitrineDe } from "./pets.js";
+import { menuChat, modoChat } from "./chat_modo.js";
 import { MODOS } from "./durabilidade.js";
 import { alternarMusica } from "./musica.js";
 import { alternarPegadinhas } from "./pegadinhas.js";
@@ -101,17 +103,8 @@ export async function menuAjustes(player, voltar) {
   await new Lista(textos.TITULO)
     .texto(textos.CORPO)
     .botao(textos.BOTAO_HUD(hud), icone(hud), eReabrir(alternarHud))
-    .botao(
-      textosDur.BOTAO_DURABILIDADE(durabilidade),
-      icone(durabilidade !== "desligado"),
-      eReabrir((p) => {
-        const proximo = MODOS[(MODOS.indexOf(durabilidade) + 1) % MODOS.length];
-        editarJogador(p, (d) => {
-          d.ajustes.durabilidade = proximo;
-        });
-        ok(p, textosDur.DURABILIDADE_MUDOU(proximo));
-      }),
-    )
+    .botao(textosDur.BOTAO_DURABILIDADE(durabilidade), icone(durabilidade !== "desligado"), (p) => menuDurabilidade(p, () => menuAjustes(p, voltar)))
+    .botao(textosChat.BOTAO_AJUSTE(modoChat(player)), ICONES.sim, (p) => menuChat(p, () => menuAjustes(p, voltar)))
     .botao(textos.BOTAO_TEMA(tema), ICONE_TEMA[tema], (p) => menuTemas(p, () => menuAjustes(p, voltar)))
     .botao(
       textos.BOTAO_TPA(tpa),
@@ -160,6 +153,44 @@ export async function menuAjustes(player, voltar) {
     .botao(textos.BOTAO_KITSUNE, ICONES.kitsune, (p) => menuCantoKitsune(p, () => menuAjustes(p, voltar)))
     .voltar(voltar)
     .abrir(player);
+}
+
+/**
+ * Durabilidade no HUD: o modo (placar e aviso / só aviso / desligado) e quais itens ganham linha.
+ * Cada clique troca e reabre.
+ * @param {Player} player
+ * @param {() => any} [voltar]
+ */
+export async function menuDurabilidade(player, voltar) {
+  const { durabilidade, durabilidadePecas } = dadosJogador(player).ajustes;
+  const aqui = (/** @type {Player} */ p) => menuDurabilidade(p, voltar);
+  const lista = new Lista(textosDur.TITULO_MENU).texto(textosDur.CORPO_MENU(durabilidade, durabilidadePecas.length));
+  lista.botao(textosDur.BOTAO_MODO(durabilidade), icone(durabilidade !== "desligado"), async (p) => {
+    const proximo = MODOS[(MODOS.indexOf(durabilidade) + 1) % MODOS.length];
+    editarJogador(p, (d) => {
+      d.ajustes.durabilidade = proximo;
+    });
+    ok(p, textosDur.DURABILIDADE_MUDOU(proximo));
+    await aqui(p);
+  });
+  for (const id of PECAS_DURABILIDADE) {
+    const ligado = durabilidadePecas.includes(id);
+    lista.botao(textosDur.BOTAO_PECA(id, ligado), icone(ligado), async (p) => {
+      editarJogador(p, (d) => {
+        const atual = d.ajustes.durabilidadePecas;
+        d.ajustes.durabilidadePecas = PECAS_DURABILIDADE.filter((x) => (x === id ? !ligado : atual.includes(x)));
+      });
+      await aqui(p);
+    });
+  }
+  const todos = durabilidadePecas.length === PECAS_DURABILIDADE.length;
+  lista.botao(todos ? textosDur.BOTAO_NADA : textosDur.BOTAO_TUDO, icone(!todos), async (p) => {
+    editarJogador(p, (d) => {
+      d.ajustes.durabilidadePecas = todos ? [] : [...PECAS_DURABILIDADE];
+    });
+    await aqui(p);
+  });
+  await lista.voltar(voltar).abrir(player);
 }
 
 /**

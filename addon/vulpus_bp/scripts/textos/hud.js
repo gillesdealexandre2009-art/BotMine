@@ -22,7 +22,7 @@ import { barra, G, glyph } from "../glyphs.js";
  * @property {number} caudas
  * @property {number} mudanca  ganho (ou perda) recente de Caudas; 0 = nada em destaque
  * @property {number} online
- * @property {string[]} [durabilidade]  linhas de durabilidade (mão e armadura; 0 a 2); ausente = sem elas
+ * @property {string[]} [durabilidade]  linhas de durabilidade (as que o jogador escolheu); ausente = sem elas
  * @property {string[]} [era]  linhas da Era (sistemas/eras_hud.js): 0, 1 ou 2; ausente = sem a linha
  * @property {number} x
  * @property {number} y

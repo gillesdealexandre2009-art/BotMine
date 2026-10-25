@@ -12,6 +12,7 @@ import { TEMAS_COR } from "../cores.js";
 import { G, glyph } from "../glyphs.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/niveis.js";
+import { config } from "../core/db.js";
 import { aoMudarCla, tagDe, tagPintada } from "./cla_dados.js";
 import { aoMudarVisual, apelidoDe, nomeExibido, resetarVisual, temaNomeDe } from "./kitsune.js";
 import { corMensagemDe, TAG_MSGCOR } from "./kitsune_extras.js";
@@ -49,6 +50,8 @@ const OBJ_RANK = Object.freeze({ id: "vulpus_rank", nome: "Vulpus rank" });
 const OBJ_CARGO = Object.freeze({ id: "vulpus_cargo", nome: "Vulpus cargo" });
 const VERSAO_CANAL = 1;
 const PARTICIPANTE_VERSAO = "#versao";
+/** Raio do chat local em blocos (0 = desligado), lido pelo pack do chat. */
+const PARTICIPANTE_CHAT_RAIO = "#chat_raio";
 
 /** Tags de entidade lidas pelo chat: clã ("vulpus:cla:ABC:6[:tema]"), apelido e tema do nome (Kitsune). */
 const TAG_CLA = "vulpus:cla:";
@@ -200,6 +203,7 @@ export function atualizarIdentidade(player) {
   gravarScore(c.nivel, player, info.nivel);
   gravarScore(c.rank, player, info.rank.indice);
   gravarScore(c.cargo, player, cargo ? CARGOS[cargo].codigo : 0);
+  gravarScore(c.versao, PARTICIPANTE_CHAT_RAIO, config().chatLocalRaio);
 }
 
 /**

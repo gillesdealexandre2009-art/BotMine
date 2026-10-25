@@ -1,21 +1,21 @@
 // @ts-check
-// Durabilidade no HUD: linha da mão e da peça de armadura mais gasta na caixa lateral (sistemas/hud.js) e aviso curto no chat
+// Durabilidade no HUD: as linhas que o jogador escolher (mão, escudo, capacete, peitoral, calça, botas) na caixa lateral (sistemas/hud.js) e aviso curto no chat
 // quando um item está quase quebrando. Não usa a barra de ação nem pausa nada. Cada jogador escolhe em Ajustes
 // (ajustes.durabilidade) e a staff desliga tudo em Staff > Configurações > Durabilidade no HUD.
 // Só lê o inventário e o equipamento a cada ciclo do HUD (10 ticks) e guarda a última leitura por jogador: sem mudança de
 // typeId/dano nada é refeito.
 import { EquipmentSlot, GameMode, world } from "@minecraft/server";
-import { config, dadosJogador } from "../core/db.js";
+import { config, dadosJogador, PECAS_DURABILIDADE } from "../core/db.js";
 import { msg, registrarErro, som } from "../core/util.js";
 import * as textos from "../textos/durabilidade.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 /** @typedef {import("@minecraft/server").ItemStack} ItemStack */
-/** @typedef {"tudo" | "armadura" | "alerta" | "desligado"} ModoDurabilidade */
+/** @typedef {"tudo" | "alerta" | "desligado"} ModoDurabilidade */
 /** @typedef {{ chave: string, nome: string, pct: number, exato: number }} Leitura  pct = % que sobra (inteiro, 1..100 enquanto não quebra); exato = o mesmo sem arredondar */
 
 /** Os modos na ordem do seletor. @type {readonly ModoDurabilidade[]} */
-export const MODOS = Object.freeze(["tudo", "armadura", "alerta", "desligado"]);
+export const MODOS = Object.freeze(["tudo", "alerta", "desligado"]);
 
 /** Margem acima do limite do alerta para ele poder avisar de novo (histerese), em pontos percentuais. */
 const HISTERESE = 3;
@@ -23,7 +23,7 @@ const HISTERESE = 3;
 /** Peças vestidas, da cabeça aos pés. */
 const PECAS = [EquipmentSlot.Head, EquipmentSlot.Chest, EquipmentSlot.Legs, EquipmentSlot.Feet];
 
-/** @type {Map<string, { assinatura: string, mao: Leitura | null, pecas: Leitura[] }>} id → última leitura */
+/** @type {Map<string, { assinatura: string, mao: Leitura | null, extra: Leitura | null, pecas: Leitura[] }>} id → última leitura */
 const cache = new Map();
 /** @type {Map<string, Map<string, number>>} id → (slot|typeId → nível já avisado: 1 = quase quebrando, 2 = crítico) */
 const avisados = new Map();
@@ -75,7 +75,7 @@ function leitura(player) {
   const equip = player.getComponent("minecraft:equippable");
   const slot = player.selectedSlotIndex;
   /** @type {(ItemStack | undefined)[]} */
-  const itens = [inv?.getItem(slot), ...PECAS.map((s) => equip?.getEquipment(s))];
+  const itens = [inv?.getItem(slot), equip?.getEquipment(EquipmentSlot.Offhand), ...PECAS.map((s) => equip?.getEquipment(s))];
   const assinatura = itens
     .map((it) => {
       if (!it) return "-";
@@ -90,11 +90,12 @@ function leitura(player) {
   const antes = cache.get(player.id);
   if (antes && antes.assinatura === assinatura) return antes;
   const mao = ler(`m${slot}`, itens[0]);
+  const extra = ler("off", itens[1]);
   const pecas = PECAS.flatMap((s, i) => {
-    const l = ler(String(s), itens[i + 1]);
+    const l = ler(String(s), itens[i + 2]);
     return l ? [l] : [];
   });
-  const novo = { assinatura, mao, pecas };
+  const novo = { assinatura, mao, extra, pecas };
   cache.set(player.id, novo);
   return novo;
 }
@@ -103,25 +104,26 @@ function leitura(player) {
 export const corDaFaixa = (pct) => (pct > 50 ? "§a" : pct >= 20 ? "§e" : "§c");
 
 /**
- * Linhas de durabilidade para a caixa lateral (0, 1 ou 2): a mão e a peça vestida mais gasta abaixo do limite.
- * Vazio para criativo/espectador e conforme o modo. Só o HUD normal chama isto.
+ * Linhas de durabilidade para a caixa lateral, só dos itens que o jogador escolheu em Ajustes (ajustes.durabilidadePecas),
+ * na ordem mão, escudo, capacete, peitoral, calça, botas. Vazio para criativo/espectador e conforme o modo.
+ * Só o HUD normal chama isto.
  * @param {Player} player
  * @returns {string[]}
  */
 export function linhasDurabilidade(player) {
   const modo = modoDurabilidade(player);
-  if (modo === "desligado" || modo === "alerta" || !modoDeJogo(player)) {
+  if (modo !== "tudo" || !modoDeJogo(player)) {
     cache.delete(player.id);
     return [];
   }
   const l = leitura(player);
-  const linhas = [];
-  if (modo === "tudo" && l.mao) linhas.push(textos.LINHA(l.mao.nome, l.mao.pct, corDaFaixa(l.mao.pct)));
-  const limite = config().durabilidadeArmaduraLimite;
-  let pior = null;
-  for (const p of l.pecas) if (p.pct < limite && (!pior || p.exato < pior.exato)) pior = p;
-  if (pior) linhas.push(textos.LINHA(pior.nome, pior.pct, corDaFaixa(pior.pct)));
-  return linhas;
+  const quer = dadosJogador(player).ajustes.durabilidadePecas;
+  /** @type {(Leitura | null)[]} */
+  const porId = [l.mao, l.extra, ...PECAS.map((s) => l.pecas.find((p) => p.chave.startsWith(`${s}|`)) ?? null)];
+  return PECAS_DURABILIDADE.flatMap((id, i) => {
+    const it = porId[i];
+    return it && quer.includes(id) ? [textos.LINHA(it.nome, it.pct, corDaFaixa(it.pct))] : [];
+  });
 }
 
 /**
@@ -140,8 +142,8 @@ export function verificarAlerta(player) {
   if (limite <= 0) return; // alerta desligado pela staff (a memória dos avisos fica, para não repetir tudo ao religar)
   const l = leitura(player);
   let mapa = avisados.get(player.id);
-  // "Só armadura" alerta só das peças vestidas; "Mão e armadura" e "Só alerta" alertam das duas coisas
-  const lista = modo === "armadura" ? l.pecas : l.mao ? [l.mao, ...l.pecas] : l.pecas;
+  // alerta da mão, do escudo e das peças vestidas, independente de quais linhas estão no placar
+  const lista = [l.mao, l.extra, ...l.pecas].filter((x) => x !== null);
   const critico = Math.max(1, Math.floor(limite / 3));
   for (const it of lista) {
     const nivel = it.exato < critico ? 2 : it.exato < limite ? 1 : 0;

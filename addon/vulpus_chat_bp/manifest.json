@@ -4,7 +4,7 @@
     "name": "Vulpus Chat",
     "description": "Chat do servidor Vulpus (precisa do experimento APIs Beta)",
     "uuid": "64b4756c-363d-4186-9e22-e4716171d6a7",
-    "version": [0, 2, 1],
+    "version": [0, 2, 2],
     "min_engine_version": [1, 26, 50]
   },
   "modules": [
@@ -12,7 +12,7 @@
       "type": "script",
       "language": "javascript",
       "uuid": "c313c16c-70c6-4955-aeb9-d4c0c6824224",
-      "version": [0, 2, 1],
+      "version": [0, 2, 2],
       "entry": "scripts/main.js"
     }
   ],

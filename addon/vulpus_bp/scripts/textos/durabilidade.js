@@ -53,11 +53,10 @@ export const LINHA = (nome, pct, cor) => `§7${nome} ${cor}${pct}%`;
 export const ALERTA = (nome, pct, critico) =>
   critico ? `§c${nome} está quase quebrando (${pct}%)! Conserte já.` : `§e${nome} está gastando (${pct}%). Hora de consertar.`;
 
-/** Rótulo e botão de cada modo do seletor (Ajustes). @type {Readonly<Record<string, string>>} */
+/** Rótulo de cada modo do seletor (Ajustes). @type {Readonly<Record<string, string>>} */
 export const NOME_MODO = Object.freeze({
-  tudo: "§aMão e armadura",
-  armadura: "§eSó armadura",
-  alerta: "§bSó alerta",
+  tudo: "§aPlacar e aviso",
+  alerta: "§bSó aviso",
   desligado: "§cDesligado",
 });
 /** @param {string} modo */
@@ -65,8 +64,27 @@ export const BOTAO_DURABILIDADE = (modo) => `Durabilidade no HUD: ${NOME_MODO[mo
 /** @param {string} modo */
 export const DURABILIDADE_MUDOU = (modo) =>
   ({
-    tudo: "Durabilidade: mão e armadura no placar, mais o aviso de quase quebrar.",
-    armadura: "Durabilidade: só a armadura no placar (e o aviso de quase quebrar das peças).",
+    tudo: "Durabilidade: as linhas escolhidas no placar, mais o aviso de quase quebrar.",
     alerta: "Durabilidade: sem linhas no placar, só o aviso de quase quebrar.",
     desligado: "Durabilidade desligada: sem linhas e sem aviso.",
   })[modo] ?? "";
+
+export const TITULO_MENU = "Durabilidade no HUD";
+export const CORPO_MENU = (modo, qtd) =>
+  `Escolha o que aparece no placar. Cada item que você marcar ganha uma linha (pode marcar tudo, mesmo que fique cheio).
+
+§7Agora: ${NOME_MODO[modo] ?? modo}§7 · ${qtd} ${qtd === 1 ? "linha" : "linhas"}`;
+/** @type {Readonly<Record<string, string>>} */
+export const NOME_PECA = Object.freeze({
+  mao: "Item da mão",
+  escudo: "Escudo / mão secundária",
+  capacete: "Capacete",
+  peitoral: "Peitoral",
+  calca: "Calça",
+  botas: "Botas",
+});
+/** @param {string} id @param {boolean} ligado */
+export const BOTAO_PECA = (id, ligado) => `${NOME_PECA[id] ?? id}: ${ligado ? "§aaparece" : "§7escondido"}`;
+export const BOTAO_MODO = (modo) => `Modo: ${NOME_MODO[modo] ?? modo}`;
+export const BOTAO_TUDO = "Marcar tudo";
+export const BOTAO_NADA = "Desmarcar tudo";

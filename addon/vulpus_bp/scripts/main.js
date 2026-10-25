@@ -50,6 +50,7 @@ import "./sistemas/niveis.js";
 import "./sistemas/identidade.js";
 import "./sistemas/perfil.js";
 import "./sistemas/ajustes.js";
+import "./sistemas/chat_modo.js";
 import "./sistemas/hud.js";
 import "./sistemas/leilao.js";
 import "./sistemas/kitsune.js";
