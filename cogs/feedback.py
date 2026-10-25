@@ -19,8 +19,8 @@ from discord.ext import commands
 import config
 import textos
 from database.codigos import CARACTERES_MIN_FEEDBACK, VALIDADE_FEEDBACK_DIAS, ResultadoCodigo, normalizar_codigo
-from utils.helpers import canal_da_funcao, embed, enviar_log, formatar_moeda, publicar_ou_editar
-from utils.permissoes import checar_membro, exigir_nivel
+from utils.helpers import embed, enviar_log, formatar_moeda, publicar_ou_editar
+from utils.permissoes import checar_membro, exigir_nivel, nivel_do_membro
 
 if TYPE_CHECKING:  # pragma: no cover
     from main import Kiza
@@ -117,6 +117,40 @@ class PainelFeedbackView(discord.ui.View):
         await interaction.response.send_modal(FeedbackModal(self.cog))
 
 
+class AbrirTicketView(discord.ui.View):
+    """Botão (só na resposta efêmera) que abre o tíquete 'receber feedback saldo' pelo sistema de tíquetes."""
+
+    def __init__(self) -> None:
+        super().__init__(timeout=900)
+
+    @discord.ui.button(label=textos.FEEDBACK_BOTAO_TICKET, emoji="💰", style=discord.ButtonStyle.success)
+    async def abrir(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
+        tickets = interaction.client.get_cog("Tickets")  # type: ignore[attr-defined]
+        if tickets is None:
+            await interaction.response.send_message(textos.TICKET_SEM_PAINEL, ephemeral=True)
+            return
+        await tickets.abrir_ticket(interaction, "feedback")
+
+
+class ControlesFeedbackView(discord.ui.View):
+    """Dentro do tíquete: a staff entrega o código ou recusa."""
+
+    def __init__(self) -> None:
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label=textos.FEEDBACK_ENTREGAR, emoji="🎁", style=discord.ButtonStyle.success, custom_id="kiza:feedback:entregar")
+    async def entregar(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
+        cog = interaction.client.get_cog("Feedback")  # type: ignore[attr-defined]
+        if cog is not None:
+            await cog.acao_do_ticket(interaction, entregar=True)
+
+    @discord.ui.button(label=textos.FEEDBACK_RECUSAR, emoji="✖️", style=discord.ButtonStyle.secondary, custom_id="kiza:feedback:recusar")
+    async def recusar(self, interaction: discord.Interaction, botao: discord.ui.Button) -> None:
+        cog = interaction.client.get_cog("Feedback")  # type: ignore[attr-defined]
+        if cog is not None:
+            await cog.acao_do_ticket(interaction, entregar=False)
+
+
 class PaginaCodigosView(discord.ui.View):
     def __init__(self, cog: "Feedback", autor_id: int, guild_id: int, pagina: int, total: int) -> None:
         super().__init__(timeout=180)
@@ -146,7 +180,7 @@ class Feedback(commands.Cog):
         self._ultimo_envio: dict[int, float] = {}
 
     def views_persistentes(self) -> list[discord.ui.View]:
-        return [PainelFeedbackView(self)]
+        return [PainelFeedbackView(self), ControlesFeedbackView()]
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return await checar_membro(interaction)
@@ -158,9 +192,21 @@ class Feedback(commands.Cog):
         e.set_footer(text=textos.FEEDBACK_PAINEL_RODAPE)
         return e
 
+    async def canal_fixo(self, guild: discord.Guild, chave: str, padrao: int) -> Optional[discord.TextChannel]:
+        """Canal do /setup (`canal_<chave>`) ou, sem ele, o canal fixo do servidor."""
+        canal_id = await self.bot.banco.get_config_int(guild.id, f"canal_{chave}") or padrao
+        canal = guild.get_channel(canal_id)
+        return canal if isinstance(canal, discord.TextChannel) else None
+
+    async def canal_painel(self, guild: discord.Guild) -> Optional[discord.TextChannel]:
+        return await self.canal_fixo(guild, "feedback", config.CANAL_DAR_FEEDBACK_ID)
+
+    async def canal_feedbacks(self, guild: discord.Guild) -> Optional[discord.TextChannel]:
+        return await self.canal_fixo(guild, "feedbacks", config.CANAL_FEEDBACKS_ID)
+
     async def publicar_painel(self, guild: discord.Guild) -> tuple[bool, str]:
-        canal = await canal_da_funcao(self.bot, guild, "feedback")
-        if not isinstance(canal, discord.TextChannel):
+        canal = await self.canal_painel(guild)
+        if canal is None:
             return False, textos.SETUP_SEM_CANAL
         try:
             await publicar_ou_editar(
@@ -172,43 +218,38 @@ class Feedback(commands.Cog):
             return False, textos.SETUP_ERRO_PUBLICAR
         return True, canal.mention
 
-    @feedback.command(name="configurar", description="(Admin) Cria o canal de feedback (só leitura) e publica o painel.")
+    @staticmethod
+    def permissoes_que_faltam(guild: discord.Guild, canal: discord.TextChannel) -> list[str]:
+        perms = canal.permissions_for(guild.me)
+        exigidas = {"view_channel": "ver o canal", "send_messages": "enviar mensagens", "embed_links": "inserir links (embeds)"}
+        return [nome for chave, nome in exigidas.items() if not getattr(perms, chave)]
+
+    @feedback.command(name="configurar", description="(Admin) Publica o painel de feedback e confere minhas permissões nos canais.")
     @exigir_nivel(config.NIVEL_ADMIN)
     async def configurar(self, interaction: discord.Interaction) -> None:
         guild = interaction.guild
         assert guild is not None
         await interaction.response.defer(ephemeral=True)
-        banco = self.bot.banco
-        existente = await canal_da_funcao(self.bot, guild, "feedback")
-        reaproveitou = isinstance(existente, discord.TextChannel)
-        canal = existente
-        if not reaproveitou:
-            infos = await canal_da_funcao(self.bot, guild, "infos")
-            categoria = infos.category if isinstance(infos, discord.TextChannel) else None
-            regras = {
-                guild.default_role: discord.PermissionOverwrite(
-                    view_channel=True, read_message_history=True, send_messages=False, add_reactions=False,
-                    create_public_threads=False, create_private_threads=False,
-                ),
-                guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, embed_links=True, read_message_history=True),
-            }
-            try:
-                canal = await guild.create_text_channel(
-                    textos.FEEDBACK_CANAL_NOME, category=categoria, overwrites=regras, reason="Kiza: canal de feedback"
-                )
-            except discord.HTTPException:
-                log.warning("Não consegui criar o canal de feedback", exc_info=True)
-                await interaction.followup.send(textos.FEEDBACK_SEM_PERMISSAO, ephemeral=True)
-                return
-        await banco.set_config(guild.id, "canal_feedback", str(canal.id))  # type: ignore[union-attr]
+        painel = await self.canal_painel(guild)
+        destino = await self.canal_feedbacks(guild)
+        linhas = []
+        for canal, id_ in ((painel, config.CANAL_DAR_FEEDBACK_ID), (destino, config.CANAL_FEEDBACKS_ID)):
+            if canal is None:
+                linhas.append(textos.FEEDBACK_SEM_CANAL.format(canal=f"<#{id_}>"))
+                continue
+            faltam = self.permissoes_que_faltam(guild, canal)
+            if faltam:
+                linhas.append(textos.FEEDBACK_FALTA_PERM.format(canal=canal.mention, perms=", ".join(faltam)))
+        if linhas:
+            await interaction.followup.send("\n".join(linhas), ephemeral=True)
+            return
         ok, info = await self.publicar_painel(guild)
         if not ok:
             await interaction.followup.send(textos.SETUP_PUBLICAR_FALTA.format(o_que="Feedback", motivo=info), ephemeral=True)
             return
-        modelo = textos.FEEDBACK_REAPROVEITADO if reaproveitou else textos.FEEDBACK_CONFIGURADO
-        await interaction.followup.send(modelo.format(canal=info), ephemeral=True)
+        await interaction.followup.send(textos.FEEDBACK_CONFIGURADO.format(canal=info, destino=destino.mention), ephemeral=True)  # type: ignore[union-attr]
 
-    @feedback.command(name="enviar", description="Conte o que você achou do servidor e ganhe um código de Caudas.")
+    @feedback.command(name="enviar", description="Conte o que você achou do servidor.")
     async def enviar(self, interaction: discord.Interaction) -> None:
         await interaction.response.send_modal(FeedbackModal(self))
 
@@ -238,32 +279,112 @@ class Feedback(commands.Cog):
             return
         await interaction.response.defer(ephemeral=True)
         try:
-            com_codigo = not await banco.feedback_ja_ganhou_codigo(guild.id, membro.id)
-            fid, codigo = await banco.feedback_registrar(guild.id, membro.id, nota, texto, melhorar, com_codigo=com_codigo)
+            ja_recebeu = await banco.feedback_ja_ganhou_codigo(guild.id, membro.id)
+            fid = await banco.feedback_registrar(guild.id, membro.id, nota, texto, melhorar)
         except Exception:
             log.exception("Falha ao gravar feedback")
             await interaction.followup.send(textos.FEEDBACK_ERRO, ephemeral=True)
             return
-        await self._avisar_staff(guild, membro, fid, nota, texto, melhorar, bool(codigo))
-        if codigo:
-            validade = f"<t:{int(time.time()) + VALIDADE_FEEDBACK_DIAS * DIA}:d>"
-            resposta = textos.FEEDBACK_OBRIGADA.format(
-                link=textos.FEEDBACK_DISBOARD, moeda=config.MOEDA_NOME, validade=validade, codigo=codigo
-            )
-        else:
-            resposta = textos.FEEDBACK_SEM_CODIGO
-        await interaction.followup.send(resposta, ephemeral=True)
+        await self._avisar_staff(guild, membro, fid, nota, texto, melhorar)
+        if ja_recebeu:
+            await interaction.followup.send(textos.FEEDBACK_SEM_CODIGO, ephemeral=True)
+            return
+        resposta = textos.FEEDBACK_OBRIGADA.format(link=textos.FEEDBACK_DISBOARD, moeda=config.MOEDA_NOME)
+        await interaction.followup.send(resposta, ephemeral=True, view=AbrirTicketView())
 
-    async def _avisar_staff(self, guild: discord.Guild, membro: discord.abc.User, fid: int, nota: int, texto: str, melhorar: str, premiado: bool) -> None:
-        e = embed(textos.FEEDBACK_LOG_TITULO, texto[:1000], config.COR_INFO)
-        e.set_author(name=getattr(membro, "display_name", membro.name), icon_url=membro.display_avatar.url)
+    async def _avisar_staff(self, guild: discord.Guild, membro: discord.abc.User, fid: int, nota: int, texto: str, melhorar: str) -> None:
+        """Posta o feedback no canal 'feedbacks' (sem menções que notifiquem)."""
+        canal = await self.canal_feedbacks(guild)
+        if canal is None:
+            log.warning("Canal de feedbacks não encontrado")
+            return
+        e = embed(textos.FEEDBACK_LOG_TITULO, f"**{textos.FEEDBACK_LOG_ACHOU}**\n{texto[:1000]}", config.COR_INFO)
+        e.add_field(name="Autor", value=membro.mention, inline=True)
         e.add_field(name="Nota", value="⭐" * nota + f" ({nota}/5)", inline=True)
-        e.add_field(name="Autor", value=f"{membro.mention} (`{membro.id}`)", inline=True)
         if melhorar:
             e.add_field(name=textos.FEEDBACK_LOG_MELHORAR, value=melhorar[:500], inline=False)
-        e.set_footer(text=f"#{fid} · " + ("código de recompensa gerado" if premiado else "sem código (já ganhou antes)"))
-        if not await enviar_log(self.bot, guild, "sugestoes", embed=e):
-            await enviar_log(self.bot, guild, "logs_gerais", embed=e)
+        e.add_field(name="Data", value=f"<t:{int(time.time())}:f>", inline=True)
+        e.set_thumbnail(url=membro.display_avatar.url)
+        e.set_footer(text=f"#{fid}")
+        try:
+            await canal.send(embed=e, allowed_mentions=discord.AllowedMentions.none())
+        except discord.HTTPException:
+            log.warning("Falha ao postar o feedback no canal", exc_info=True)
+
+    # ------------------------------------------------------------------ tíquete e entrega do código
+    async def checar_ticket(self, guild: discord.Guild, membro: discord.abc.User) -> Optional[str]:
+        """Texto de recusa para o tíquete 'receber feedback saldo', ou None se pode abrir."""
+        banco = self.bot.banco
+        if await banco.feedback_ja_ganhou_codigo(guild.id, membro.id):
+            return textos.FEEDBACK_TICKET_JA_RECEBEU
+        if await banco.feedback_pendente(guild.id, membro.id) is None:
+            canal = await self.canal_painel(guild)
+            return textos.FEEDBACK_TICKET_SEM_FEEDBACK.format(canal=canal.mention if canal else "#dar-feedback")
+        return None
+
+    async def ticket_aberto(self, canal: discord.TextChannel, autor: discord.Member) -> None:
+        e = embed(textos.FEEDBACK_TICKET_TITULO, textos.FEEDBACK_TICKET_DESC.format(autor=autor.mention, moeda=config.MOEDA_NOME), config.COR_INFO)
+        try:
+            await canal.send(embed=e, view=ControlesFeedbackView(), allowed_mentions=discord.AllowedMentions.none())
+        except discord.HTTPException:
+            log.warning("Falha ao preparar o tíquete de feedback", exc_info=True)
+
+    async def entregar(self, guild: discord.Guild, alvo_id: int, staff_id: int) -> Optional[tuple[str, bool]]:
+        """Gera (ou reenvia) o código pessoal. None se a pessoa nunca mandou feedback."""
+        return await self.bot.banco.feedback_entregar(guild.id, alvo_id, staff_id)
+
+    def texto_da_entrega(self, alvo_id: int, codigo: str, novo: bool) -> str:
+        validade = f"<t:{int(time.time()) + VALIDADE_FEEDBACK_DIAS * DIA}:d>"
+        texto = textos.FEEDBACK_ENTREGUE.format(mencao=f"<@{alvo_id}>", moeda=config.MOEDA_NOME, codigo=codigo, validade=validade)
+        return texto if novo else textos.FEEDBACK_REENVIADO + "\n" + texto
+
+    async def acao_do_ticket(self, interaction: discord.Interaction, entregar: bool) -> None:
+        guild, membro = interaction.guild, interaction.user
+        if guild is None or not isinstance(membro, discord.Member) or interaction.channel_id is None:
+            return
+        if await nivel_do_membro(self.bot, membro) < config.NIVEL_STAFF:
+            await interaction.response.send_message(textos.FEEDBACK_SO_STAFF, ephemeral=True)
+            return
+        ticket = await self.bot.banco.obter_ticket_por_canal(interaction.channel_id)
+        if ticket is None or ticket["status"] != "aberto" or ticket["categoria"] != "feedback":
+            await interaction.response.send_message(textos.TICKET_NAO_ENCONTRADO, ephemeral=True)
+            return
+        alvo = int(ticket["autor_id"])
+        if not entregar:
+            await self.bot.banco.feedback_recusar(guild.id, alvo)
+            await interaction.response.send_message(
+                textos.FEEDBACK_RECUSADO.format(mencao=f"<@{alvo}>"), allowed_mentions=discord.AllowedMentions(users=[discord.Object(alvo)])
+            )
+            return
+        r = await self.entregar(guild, alvo, membro.id)
+        if r is None:
+            await interaction.response.send_message(textos.FEEDBACK_SEM_PEDIDO, ephemeral=True)
+            return
+        codigo, novo = r
+        await interaction.response.send_message(
+            self.texto_da_entrega(alvo, codigo, novo), allowed_mentions=discord.AllowedMentions(users=[discord.Object(alvo)])
+        )
+
+    @feedback.command(name="liberar", description="(Staff) Entrega o código de feedback de um membro (ou reenvia o mesmo).")
+    @exigir_nivel(config.NIVEL_STAFF)
+    async def liberar(self, interaction: discord.Interaction, membro: discord.Member) -> None:
+        guild = interaction.guild
+        assert guild is not None
+        r = await self.entregar(guild, membro.id, interaction.user.id)
+        if r is None:
+            await interaction.response.send_message(textos.FEEDBACK_LIBERAR_ALVO, ephemeral=True)
+            return
+        codigo, novo = r
+        ticket = await self.bot.banco.obter_ticket_por_canal(interaction.channel_id) if interaction.channel_id else None
+        if ticket is not None and ticket["status"] == "aberto" and int(ticket["autor_id"]) == membro.id:
+            await interaction.response.send_message(
+                self.texto_da_entrega(membro.id, codigo, novo), allowed_mentions=discord.AllowedMentions(users=[membro])
+            )
+        else:
+            await interaction.response.send_message(
+                textos.FEEDBACK_ENTREGUE_FORA.format(mencao=membro.mention, codigo=codigo), ephemeral=True,
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
 
     # ------------------------------------------------------------------ resgate (Discord)
     async def resgatar_para(self, guild: discord.Guild, user_id: int, codigo: str) -> ResultadoCodigo:

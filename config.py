@@ -194,8 +194,10 @@ CANAIS_POR_NOME = {
     "chat": "chat",
     "perolas": "perolas",
     "doacoes": "doac",
-    "feedback": "feedback",
 }
+# Feedback: canais fixos (usados quando o /setup não definir `canal_feedbacks` / `canal_feedback`).
+CANAL_FEEDBACKS_ID = 1563968537796550727  # feedbacks (onde a staff lê os feedbacks)
+CANAL_DAR_FEEDBACK_ID = 1563967949344211054  # dar-feedback (painel com o botão)
 CARGOS_BASE = {
     "visitante": "Visitante (cargo de quem acabou de entrar)",
     "membro": "Membro (após aceitar as regras)",
@@ -229,6 +231,7 @@ CATEGORIAS_TICKET = [
     ("parceria", "Parceria", "🤝", "Propostas de parceria"),
     ("outro", "Outro", "💬", "Qualquer outro assunto"),
     ("rank", "Solicitar rank", "🎖️", "Pedir para subir a Helper (com provas)"),
+    ("feedback", "Receber feedback saldo", "💰", "Pedir o código de 1.000 Caudas depois de avaliar no DISBOARD"),
 ]
 NIVEIS_XP_OPCOES = list(range(1, 21))  # 1..20: um cargo por nível (combina com um ladder tipo "LV 01".."LV 20")
 

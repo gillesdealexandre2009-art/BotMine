@@ -136,6 +136,16 @@ class Tickets(commands.Cog):
             await responder(interaction, textos.TICKET_SEM_PAINEL)
             return
 
+        feedback = self.bot.get_cog("Feedback")  # "receber feedback saldo": só com feedback registrado e sem código entregue
+        if categoria == "feedback":
+            if feedback is None:
+                await responder(interaction, textos.TICKET_ERRO_CRIAR)
+                return
+            motivo = await feedback.checar_ticket(guild, membro)  # type: ignore[attr-defined]
+            if motivo is not None:
+                await responder(interaction, motivo)
+                return
+
         async with self._locks[(guild.id, membro.id)]:
             existente = await banco.ticket_aberto_do_autor(guild.id, membro.id, categoria)
             if existente is not None:
@@ -210,6 +220,8 @@ class Tickets(commands.Cog):
             )
         except discord.HTTPException:
             log.warning("Falha ao postar a mensagem inicial do ticket", exc_info=True)
+        if categoria == "feedback" and feedback is not None:
+            await feedback.ticket_aberto(canal, membro)  # type: ignore[attr-defined]
         fidelidade = self.bot.get_cog("Fidelidade")  # denúncia e pedido de rank ganham botões próprios
         if fidelidade is not None:
             await fidelidade.ticket_aberto(canal, membro, categoria)  # type: ignore[attr-defined]

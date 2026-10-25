@@ -494,7 +494,7 @@ COMANDOS_CAMPOS = [
     ),
     (
         "💬 Feedback e códigos",
-        "`/feedback enviar`: conte o que achou do servidor e ganhe um código de {moeda}\n"
+        "`/feedback enviar`: conte o que achou do servidor (e peça {moeda} num tíquete depois de avaliar no DISBOARD)\n"
         "`/resgatar`: troque um código por {moeda} (precisa da conta do Minecraft ligada)\n"
         "Staff: `/feedback configurar` e `/codigo` (criar, listar, desativar, usos)",
     ),
@@ -1754,13 +1754,12 @@ MURAL_SAIU = "Pronto, tirei você do mural. Você continua Kitsune!"
 MURAL_VOLTOU = "Seu nome voltou para o mural dos Kitsunes 🦊"
 
 # ------------------------------------------------------------------ feedback e códigos de resgate
-FEEDBACK_CANAL_NOME = "💬・feedback"
 FEEDBACK_PAINEL_TITULO = "💬 Conte o que você achou da toca"
 FEEDBACK_PAINEL_DESC = (
     "Sua opinião ajuda a toca a melhorar. Leva um minutinho.\n\n"
-    "🎁 **Quem manda o primeiro feedback ganha um código de 1.000 {moeda} para usar no Minecraft.**"
+    "🎁 **Mandou o feedback e avaliou o servidor no DISBOARD? Ganha 1.000 {moeda} no Minecraft.** A recompensa é liberada pela staff, num tíquete."
 )
-FEEDBACK_PAINEL_RODAPE = "Precisa da conta do Minecraft ligada (/minecraft vincular) para usar o código."
+FEEDBACK_PAINEL_RODAPE = "Precisa da conta do Minecraft ligada (/minecraft vincular) para resgatar."
 FEEDBACK_BOTAO = "Dar meu feedback"
 FEEDBACK_MODAL_TITULO = "Seu feedback"
 FEEDBACK_CAMPO_NOTA = "Nota de 1 a 5"
@@ -1771,23 +1770,46 @@ FEEDBACK_CURTO = "Conte um pouquinho mais: o feedback precisa ter pelo menos **{
 FEEDBACK_ESPERA = "Calma, tente de novo em {seg} segundos."
 FEEDBACK_RECENTE = "Já recebi seu feedback há pouco tempo. Você pode mandar outro {quando}."
 FEEDBACK_ERRO = "Não consegui guardar seu feedback agora. Tente de novo daqui a pouco."
-FEEDBACK_SEM_CODIGO = "Obrigada pelo feedback, ele foi para a equipe! 🦊 Você já ganhou o seu código antes, então este não gera outro."
+FEEDBACK_SEM_CODIGO = "Obrigada pelo feedback, ele foi para a equipe! 🦊 Você já recebeu o seu código antes, então este não gera outro."
 FEEDBACK_OBRIGADA = (
     "Obrigada pelo feedback, ele foi para a equipe! 🦊\n\n"
     "Que tal avaliar o servidor no **DISBOARD**? Role até o final da página e deixe sua avaliação: ajuda mais gente a conhecer a nossa família.\n"
     "{link}\n\n"
     "# 🎁 Quem avaliar ganha 1.000 {moeda} no Minecraft!\n"
-    "Seu código pessoal (só você consegue usar, vale 1 vez até {validade}):\n"
-    "## `{codigo}`\n"
-    "Para resgatar: ligue sua conta (`/minecraft vincular`) e use `/resgatar` aqui, ou o botão **Resgatar código** na Miscelânea do jogo."
+    "A recompensa é entregue **depois** da avaliação. Para receber: abra um tíquete **receber feedback saldo** "
+    "(botão abaixo) e a staff confere e libera o seu código.\n"
+    "Precisa da conta do Minecraft ligada (`/minecraft vincular`)."
 )
+FEEDBACK_BOTAO_TICKET = "Abrir tíquete: receber feedback saldo"
 FEEDBACK_DISBOARD = "https://disboard.org/pt-br/server/1549268882416734238"
 FEEDBACK_LOG_TITULO = "💬 Novo feedback"
+FEEDBACK_LOG_ACHOU = "O que achou"
 FEEDBACK_LOG_MELHORAR = "O que melhorar"
-FEEDBACK_SEM_CANAL = "Não achei um canal de feedback. Use `/feedback configurar` para eu criar um."
-FEEDBACK_SEM_PERMISSAO = "Não consegui criar o canal. Me dê a permissão **Gerenciar canais** e tente de novo."
-FEEDBACK_CONFIGURADO = "Pronto! O painel de feedback está em {canal}."
-FEEDBACK_REAPROVEITADO = "Usei o canal {canal}, que já existia, e publiquei o painel nele."
+FEEDBACK_SEM_CANAL = "Não achei o canal {canal}. Confira se ele existe e se eu enxergo."
+FEEDBACK_FALTA_PERM = "Me falta permissão em {canal}: {perms}."
+FEEDBACK_CONFIGURADO = "Pronto! O painel de feedback está em {canal}. Os feedbacks chegam em {destino}."
+FEEDBACK_TICKET_SEM_FEEDBACK = "Você ainda não mandou um feedback. Use o botão em {canal} e depois peça o código aqui."
+FEEDBACK_TICKET_JA_RECEBEU = "Você já recebeu o seu código de feedback antes: é um por pessoa."
+FEEDBACK_TICKET_TITULO = "💰 Receber feedback saldo"
+FEEDBACK_TICKET_DESC = (
+    "{autor} mandou um feedback e pediu o código de 1.000 {moeda}.\n"
+    "**Staff:** confira a avaliação no DISBOARD (https://disboard.org/pt-br/server/1549268882416734238) e clique em **Entregar código**."
+)
+FEEDBACK_ENTREGAR = "Entregar código"
+FEEDBACK_RECUSAR = "Recusar"
+FEEDBACK_SO_STAFF = "Só a staff entrega códigos."
+FEEDBACK_SEM_PEDIDO = "Essa pessoa não tem feedback registrado."
+FEEDBACK_ENTREGUE = (
+    "{mencao}, aqui está o seu código de **1.000 {moeda}**:\n## `{codigo}`\n"
+    "Resgate em **Miscelânea > Resgatar código** no Minecraft, ou com `/resgatar` no Discord. Vale 1 vez, até {validade}."
+)
+FEEDBACK_REENVIADO = "Esse código já tinha sido gerado, reenviei o mesmo."
+FEEDBACK_ENTREGUE_FORA = "Código de {mencao}: `{codigo}` (vale 1 vez, só dessa pessoa). Passe para ela, ou peça que abra o tíquete."
+FEEDBACK_RECUSADO = (
+    "{mencao}, não consegui confirmar a sua avaliação no DISBOARD, então por enquanto não liberei o código. "
+    "Avalie o servidor (role até o final da página) e abra um novo pedido depois."
+)
+FEEDBACK_LIBERAR_ALVO = "Esse membro não pediu código (sem feedback registrado)."
 
 CODIGO_CRIADO = "Código criado: `{codigo}`\n{caudas} Caudas, {usos}, {validade}."
 CODIGO_USOS_ILIMITADOS = "usos ilimitados"

@@ -176,21 +176,59 @@ class CodigosMixin:
         )
         return linha is not None
 
-    async def feedback_registrar(
-        self, guild_id: int, user_id: int, nota: int, texto: str, melhorar: str, *, com_codigo: bool, caudas: int = CAUDAS_FEEDBACK
-    ) -> tuple[int, Optional[str]]:
-        """Grava o feedback; com `com_codigo` também cria o código pessoal (1 uso, só deste usuário, validade de 90 dias).
-        Retorna (id do feedback, código ou None). Tudo na mesma transação."""
+    async def feedback_registrar(self, guild_id: int, user_id: int, nota: int, texto: str, melhorar: str) -> int:
+        """Grava o feedback (sem código: a staff entrega depois da avaliação no DISBOARD). Retorna o id."""
         async with self._tx() as conn:  # type: ignore[attr-defined]
-            codigo = None
-            if com_codigo:
-                codigo = await self._codigo_inserir(
-                    conn, guild_id, caudas, None, 1, VALIDADE_FEEDBACK_DIAS, 0, f"Feedback de {user_id}", user_id
-                )
             cur = await conn.execute(
-                "INSERT INTO feedbacks (guild_id, user_id, nota, texto, melhorar, codigo, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (guild_id, user_id, nota, texto, melhorar, codigo, agora()),
+                "INSERT INTO feedbacks (guild_id, user_id, nota, texto, melhorar, criado_em) VALUES (?, ?, ?, ?, ?, ?)",
+                (guild_id, user_id, nota, texto, melhorar, agora()),
             )
             novo_id = cur.lastrowid
             await cur.close()
-            return int(novo_id), codigo
+            return int(novo_id)
+
+    async def feedback_pendente(self, guild_id: int, user_id: int):
+        """Feedback mais recente que ainda espera código (e não foi recusado). None se a pessoa já recebeu um código antes."""
+        if await self.feedback_ja_ganhou_codigo(guild_id, user_id):
+            return None
+        return await self._um(  # type: ignore[attr-defined]
+            "SELECT * FROM feedbacks WHERE guild_id = ? AND user_id = ? AND codigo IS NULL AND recusado_em = 0 "
+            "ORDER BY criado_em DESC, id DESC LIMIT 1",
+            (guild_id, user_id),
+        )
+
+    async def feedback_entregar(
+        self, guild_id: int, user_id: int, staff_id: int, caudas: int = CAUDAS_FEEDBACK
+    ) -> Optional[tuple[str, bool]]:
+        """Entrega o código pessoal (1 uso, só deste usuário, 90 dias). Segunda chamada devolve o MESMO código.
+        Retorna (código, novo) ou None se a pessoa nunca mandou feedback."""
+        async with self._tx() as conn:  # type: ignore[attr-defined]
+            antigo = await self._fetchone(  # type: ignore[attr-defined]
+                conn,
+                "SELECT codigo FROM feedbacks WHERE guild_id = ? AND user_id = ? AND codigo IS NOT NULL ORDER BY id LIMIT 1",
+                (guild_id, user_id),
+            )
+            if antigo is not None:
+                return antigo["codigo"], False
+            fb = await self._fetchone(  # type: ignore[attr-defined]
+                conn,
+                "SELECT id FROM feedbacks WHERE guild_id = ? AND user_id = ? ORDER BY criado_em DESC, id DESC LIMIT 1",
+                (guild_id, user_id),
+            )
+            if fb is None:
+                return None
+            codigo = await self._codigo_inserir(
+                conn, guild_id, caudas, None, 1, VALIDADE_FEEDBACK_DIAS, staff_id, f"Feedback de {user_id}", user_id
+            )
+            await conn.execute(
+                "UPDATE feedbacks SET codigo = ?, codigo_entregue_em = ?, entregue_por = ? WHERE id = ?",
+                (codigo, agora(), staff_id, fb["id"]),
+            )
+            return str(codigo), True
+
+    async def feedback_recusar(self, guild_id: int, user_id: int) -> int:
+        """Marca os feedbacks pendentes como recusados. Retorna quantos."""
+        return await self._exec(  # type: ignore[attr-defined]
+            "UPDATE feedbacks SET recusado_em = ? WHERE guild_id = ? AND user_id = ? AND codigo IS NULL AND recusado_em = 0",
+            (agora(), guild_id, user_id),
+        )

@@ -155,24 +155,49 @@ def test_listagem_ativos_primeiro(tmp_path):
     assert ordem == ["ATIVO", "VELHO-OFF"] and total == 2 and pag2 == ["VELHO-OFF"] and estados == ["🟢", "⛔"]
 
 
-def test_feedback_gera_um_codigo_pessoal(tmp_path):
+def test_feedback_so_gera_codigo_quando_a_staff_entrega(tmp_path):
     async def cenario():
         b = await novo(tmp_path)
-        fid, cod = await b.feedback_registrar(G, A, 5, "gostei muito de tudo aqui", "", com_codigo=True)
+        sem_feedback = await b.feedback_entregar(G, A, STAFF)
+        fid = await b.feedback_registrar(G, A, 5, "gostei muito de tudo aqui", "")
+        ja_antes = await b.feedback_ja_ganhou_codigo(G, A)
+        pendente = await b.feedback_pendente(G, A)
+        sem_codigo_ainda = (await b.codigo_contar(G))
+        cod, novo_ = await b.feedback_entregar(G, A, STAFF)
+        cod2, novo2 = await b.feedback_entregar(G, A, STAFF)  # segunda tentativa: o mesmo código
+        total_codigos = await b.codigo_contar(G)
         linha = await b.codigo_obter(cod)
+        fb = await b.feedback_ultimo(G, A)
         ja = await b.feedback_ja_ganhou_codigo(G, A)
-        outro_ja = await b.feedback_ja_ganhou_codigo(G, B)
+        pendente_depois = await b.feedback_pendente(G, A)
         alheio = await b.resgatar_codigo(G, B, "Lobo", cod)
         meu = await b.resgatar_codigo(G, A, "Raposa", cod)
-        _, sem = await b.feedback_registrar(G, A, 4, "outro feedback bem longo", "x", com_codigo=False)
         await b.fechar()
-        return fid, cod, dict(linha), ja, outro_ja, alheio.status, meu, sem
+        return (sem_feedback, fid, ja_antes, pendente is not None, sem_codigo_ainda, cod, novo_, cod2, novo2, total_codigos,
+                dict(linha), dict(fb), ja, pendente_depois, alheio.status, meu)
 
-    fid, cod, linha, ja, outro_ja, alheio, meu, sem = rodar(cenario)
-    assert fid == 1 and cod.startswith("VULPUS-")
+    (sem_feedback, fid, ja_antes, tem_pendente, sem_codigo_ainda, cod, novo_, cod2, novo2, total, linha, fb, ja, pendente_depois, alheio, meu) = rodar(cenario)
+    assert sem_feedback is None and fid == 1 and not ja_antes and tem_pendente and sem_codigo_ainda == 0
+    assert cod.startswith("VULPUS-") and novo_ is True and cod2 == cod and novo2 is False and total == 1
     assert linha["caudas"] == 1000 and linha["usos_max"] == 1 and linha["dono_id"] == A
     assert 89 * 86400 < linha["expira_em"] - int(time.time()) <= 90 * 86400
-    assert ja and not outro_ja and alheio == "nao_existe" and meu == ResultadoCodigo("ok", 1000, 1000) and sem is None
+    assert fb["codigo"] == cod and fb["entregue_por"] == STAFF and fb["codigo_entregue_em"] > 0
+    assert ja and pendente_depois is None
+    assert alheio == "nao_existe" and meu == ResultadoCodigo("ok", 1000, 1000)
+
+
+def test_recusar_tira_o_pedido_e_novo_feedback_volta_a_ser_pendente(tmp_path):
+    async def cenario():
+        b = await novo(tmp_path)
+        await b.feedback_registrar(G, A, 3, "feedback bem longo para passar", "")
+        n = await b.feedback_recusar(G, A)
+        pendente = await b.feedback_pendente(G, A)
+        await b.feedback_registrar(G, A, 4, "outro feedback bem longo depois", "")
+        de_novo = await b.feedback_pendente(G, A)
+        await b.fechar()
+        return n, pendente, de_novo is not None
+
+    assert rodar(cenario) == (1, None, True)
 
 
 # ------------------------------------------------------------------ formulário (cog)
@@ -201,18 +226,25 @@ def interacao(uid, nome="Ana"):
     return SimpleNamespace(guild=SimpleNamespace(id=G), user=usuario, response=resposta, followup=SimpleNamespace(send=enviar)), resposta, seguintes
 
 
-def test_formulario_valida_e_entrega_codigo(tmp_path, monkeypatch):
+class CanalFake:
+    def __init__(self):
+        self.enviadas = []
+
+    async def send(self, **kw):
+        self.enviadas.append(kw)
+
+
+def test_formulario_valida_posta_no_canal_e_nao_entrega_codigo(tmp_path):
     async def cenario():
         b = await novo(tmp_path)
+        canal = CanalFake()
         bot = SimpleNamespace(banco=b)
         cog = Feedback(bot)  # type: ignore[arg-type]
-        avisos = []
 
-        async def log(bot_, guild, chave, **kw):
-            avisos.append((chave, kw["embed"]))
-            return chave == "logs_gerais"  # "sugestoes" não existe: cai para os logs gerais
+        async def canal_feedbacks(_guild):
+            return canal
 
-        monkeypatch.setattr("cogs.feedback.enviar_log", log)
+        cog.canal_feedbacks = canal_feedbacks  # type: ignore[method-assign]
         longo = "gostei muito do servidor, a comunidade é ótima"
         i1, r1, _ = interacao(A)
         await cog.receber(i1, "9", longo, "")  # nota inválida
@@ -228,23 +260,62 @@ def test_formulario_valida_e_entrega_codigo(tmp_path, monkeypatch):
         await b._exec("UPDATE feedbacks SET criado_em = criado_em - ?", (31 * 86400,))
         cog._ultimo_envio.clear()
         i6, r6, s6 = interacao(A)
-        await cog.receber(i6, "4", longo, "")  # sem novo código
-        i7, r7, s7 = interacao(B)
+        await cog.receber(i6, "4", longo, "")  # sem código entregue ainda: mesma resposta com o botão do tíquete
+        await b.feedback_entregar(G, A, STAFF)
+        await b._exec("UPDATE feedbacks SET criado_em = criado_em - ?", (31 * 86400,))
         cog._ultimo_envio.clear()
-        await cog.receber(i7, "3", longo, "")  # outra pessoa: código novo
-        codigos = await b._todos("SELECT codigo, dono_id FROM codigos ORDER BY criado_em, rowid")
+        i7, r7, s7 = interacao(A)
+        await cog.receber(i7, "4", longo, "")  # quem já recebeu código: agradece e só
         n = (await b._um("SELECT COUNT(*) AS n FROM feedbacks"))["n"]
+        codigos = await b.codigo_contar(G)
         await b.fechar()
-        return [r.mensagens for r in (r1, r2, r4, r5)], s3, s6, s7, [(c["dono_id"]) for c in codigos], n, avisos
+        return [r.mensagens for r in (r1, r2, r4, r5)], s3, s6, s7, n, codigos, canal.enviadas
 
-    msgs, s3, s6, s7, donos, n, avisos = rodar(cenario)
+    msgs, s3, s6, s7, n, codigos, enviadas = rodar(cenario)
     assert "1 a 5" in msgs[0][0] and "20" in msgs[1][0] and "segundos" in msgs[2][0] and "outro" in msgs[3][0]
-    texto3 = s3[0][0]
-    assert "disboard.org/pt-br/server/1549268882416734238" in texto3 and "1.000" in texto3 and "VULPUS-" in texto3 and s3[0][1]["ephemeral"]
-    assert "VULPUS-" not in s6[0][0] and "VULPUS-" in s7[0][0]
-    assert donos == [A, B] and n == 3
-    assert [a[0] for a in avisos] == ["sugestoes", "logs_gerais"] * 3
-    assert all(a[1].fields[1].value.startswith("<@") for a in avisos)
+    texto3, kw3 = s3[0]
+    assert "disboard.org/pt-br/server/1549268882416734238" in texto3 and "1.000" in texto3 and "depois" in texto3
+    assert "receber feedback saldo" in texto3 and "VULPUS-" not in texto3 and kw3["ephemeral"] and kw3["view"] is not None
+    assert "VULPUS-" not in s6[0][0]
+    assert "já recebeu" in s7[0][0] and "view" not in s7[0][1]
+    assert n == 3 and codigos == 1
+    assert len(enviadas) == 3
+    e = enviadas[0]["embed"]
+    campos = {f.name: f.value for f in e.fields}
+    assert campos["Autor"] == f"<@{A}>" and "⭐⭐⭐⭐⭐" in campos["Nota"] and campos["O que melhorar"] == "mais eventos" and "Data" in campos
+    assert "gostei muito" in e.description
+    assert enviadas[0]["allowed_mentions"].everyone is False and not enviadas[0]["allowed_mentions"].users
+
+
+def test_checar_ticket_de_feedback(tmp_path):
+    async def cenario():
+        b = await novo(tmp_path)
+        cog = Feedback(SimpleNamespace(banco=b))  # type: ignore[arg-type]
+
+        async def painel(_g):
+            return None
+
+        cog.canal_painel = painel  # type: ignore[method-assign]
+        guild = SimpleNamespace(id=G)
+        pessoa = SimpleNamespace(id=A)
+        sem = await cog.checar_ticket(guild, pessoa)
+        await b.feedback_registrar(G, A, 5, "feedback longo o bastante aqui", "")
+        pode = await cog.checar_ticket(guild, pessoa)
+        await b.feedback_entregar(G, A, STAFF)
+        recebeu = await cog.checar_ticket(guild, pessoa)
+        await b.fechar()
+        return sem, pode, recebeu
+
+    sem, pode, recebeu = rodar(cenario)
+    assert "ainda não mandou" in sem and pode is None and "já recebeu" in recebeu
+
+
+def test_categoria_de_ticket_e_canais_fixos():
+    import config
+
+    assert ("feedback", "Receber feedback saldo") == next((c[0], c[1]) for c in config.CATEGORIAS_TICKET if c[0] == "feedback")
+    assert config.CANAL_FEEDBACKS_ID == 1563968537796550727 and config.CANAL_DAR_FEEDBACK_ID == 1563967949344211054
+    assert len(config.CANAIS_CONFIG) <= 25
 
 
 # ------------------------------------------------------------------ rota do jogo

@@ -570,3 +570,14 @@ CREATE TABLE codigos_tentativas (
 CREATE INDEX ix_codigos_tentativas ON codigos_tentativas (user_id, quando);
 """,
 ))
+
+
+# Feedback: o código passa a ser entregue pela staff depois da avaliação no DISBOARD (quando e por quem).
+MIGRACOES.append((
+    18,
+    """
+ALTER TABLE feedbacks ADD COLUMN codigo_entregue_em INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE feedbacks ADD COLUMN entregue_por INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE feedbacks ADD COLUMN recusado_em INTEGER NOT NULL DEFAULT 0;
+""",
+))
