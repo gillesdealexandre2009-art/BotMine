@@ -66,6 +66,7 @@ export const GRUPO_MINIGAMES = "Minigames (Skywars e Bedwars)";
 export const GRUPO_XRAY = "Detecção de xray";
 export const GRUPO_MUSICA = "Música e sons de ambiente";
 export const GRUPO_FLOR = "Flor dourada";
+export const GRUPO_DURABILIDADE = "Durabilidade no HUD";
 export const GRUPO_INAUGURACAO = "Evento de inauguração";
 export const GRUPO_TORRE = "Torre da Vulpus";
 export const GRUPO_COPOS = "Jogo do copo";
@@ -106,6 +107,9 @@ export const CAMPOS = {
   diariaBonusMax: "Diária: máximo de dias com bônus",
   linkDiscord: "Link do Discord (vazio = sem link)",
   hudPadrao: "Scoreboard lateral ligada para quem não escolheu",
+  durabilidadeHudLigado: "Durabilidade no HUD e alerta de quase quebrar (desliga para todos)",
+  durabilidadeArmaduraLimite: "Durabilidade: mostrar a armadura no HUD abaixo de (%)",
+  durabilidadeAlertaLimite: "Durabilidade: avisar no chat abaixo de (%; 0 = sem alerta)",
   erasTinta: "Tinta de cor na tela durante as Eras (precisa do placar ligado; confira o visual antes de deixar ligada)",
   xpPorMinuto: "XP por minuto ativo",
   xpDiaria: "XP da diária",

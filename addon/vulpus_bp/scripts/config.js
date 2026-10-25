@@ -42,6 +42,10 @@ export const PADROES = {
   diariaBonusMax: 7,
   linkDiscord: "",
   hudPadrao: true,
+  // Durabilidade no HUD (sistemas/durabilidade.js): linha da mão e da armadura na caixa lateral + alerta no chat. Cada jogador escolhe em Ajustes.
+  durabilidadeHudLigado: true,
+  durabilidadeArmaduraLimite: 70,
+  durabilidadeAlertaLimite: 10,
   // Tinta de cor na tela durante as Eras (precisa do placar ligado e do pacote de recursos novo). Começa desligada para conferir o visual.
   erasTinta: false,
   // XP mais difícil desde que o Discord também dá XP (o XP é um só, somado pela ponte): cada fonte rende menos

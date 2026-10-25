@@ -36,7 +36,7 @@ import { CHAVE_CONFIG, PADROES, PREFIXO_JOGADOR } from "../config.js";
  * @property {{ dia: string, sequencia: number }} diaria  dia (Brasília, "2026-10-02") da última diária e dias seguidos
  * @property {Casa[]} casas
  * @property {import("./teleporte.js").Local | null} voltar
- * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema, cla: boolean, pegadinhas: boolean, musica: boolean, abate: string }} ajustes
+ * @property {{ hud: boolean | null, tpa: boolean, sons: boolean, tema: Tema, cla: boolean, pegadinhas: boolean, musica: boolean, abate: string, durabilidade: "tudo" | "armadura" | "alerta" | "desligado" }} ajustes
  *   hud (scoreboard lateral) null = usar config().hudPadrao; cla = linha do clã no placar
  * @property {boolean} recebeuItem
  * @property {string} apelido  nome de exibição (só vale com o selo Kitsune; "" = o nome da conta)
@@ -117,7 +117,7 @@ function dadosNovos() {
     diaria: { dia: "", sequencia: 0 },
     casas: [],
     voltar: null,
-    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja", cla: true, pegadinhas: true, musica: true, abate: "auto" },
+    ajustes: { hud: null, tpa: true, sons: true, tema: "laranja", cla: true, pegadinhas: true, musica: true, abate: "auto", durabilidade: "tudo" },
     recebeuItem: false,
     apelido: "",
     apelidoDono: "",
@@ -234,6 +234,7 @@ function completar(lido) {
       cla: booleano(ajustes.cla, base.ajustes.cla),
       pegadinhas: booleano(ajustes.pegadinhas, base.ajustes.pegadinhas),
       musica: booleano(ajustes.musica, base.ajustes.musica),
+      durabilidade: ["tudo", "armadura", "alerta", "desligado"].includes(ajustes.durabilidade) ? ajustes.durabilidade : "tudo",
       abate: typeof ajustes.abate === "string" && /^[a-z]{1,12}$/.test(ajustes.abate) ? ajustes.abate : "auto",
     },
     recebeuItem: booleano(lido.recebeuItem, base.recebeuItem),

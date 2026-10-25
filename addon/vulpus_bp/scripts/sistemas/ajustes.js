@@ -8,11 +8,13 @@ import { config, dadosJogador, editarJogador, TEMAS_MENU } from "../core/db.js";
 import { Lista, podeUsarTema, temaDoPainel } from "../core/forms.js";
 import { erro, ok } from "../core/util.js";
 import * as textos from "../textos/ajustes.js";
+import * as textosDur from "../textos/durabilidade.js";
 import * as textosExtras from "../textos/kitsune_extras.js";
 import { menuAbate } from "./abate.js";
 import { menuKitsune, temSelo } from "./kitsune.js";
 import { alternarChegada, menuCorMensagem, menuLooks, nomeCorMensagem } from "./kitsune_extras.js";
 import { alternarEsconderPets, menuColecao, menuVitrine, petsEscondidos, vitrineDe } from "./pets.js";
+import { MODOS } from "./durabilidade.js";
 import { alternarMusica } from "./musica.js";
 import { alternarPegadinhas } from "./pegadinhas.js";
 
@@ -88,7 +90,7 @@ export async function menuTemas(player, voltar) {
  * @param {() => any} [voltar]
  */
 export async function menuAjustes(player, voltar) {
-  const { tpa, sons, cla, pegadinhas, musica } = dadosJogador(player).ajustes;
+  const { tpa, sons, cla, pegadinhas, musica, durabilidade } = dadosJogador(player).ajustes;
   const tema = temaDoPainel(player);
   const hud = hudLigada(player);
   /** @param {(p: Player) => void} trocar */
@@ -99,6 +101,17 @@ export async function menuAjustes(player, voltar) {
   await new Lista(textos.TITULO)
     .texto(textos.CORPO)
     .botao(textos.BOTAO_HUD(hud), icone(hud), eReabrir(alternarHud))
+    .botao(
+      textosDur.BOTAO_DURABILIDADE(durabilidade),
+      icone(durabilidade !== "desligado"),
+      eReabrir((p) => {
+        const proximo = MODOS[(MODOS.indexOf(durabilidade) + 1) % MODOS.length];
+        editarJogador(p, (d) => {
+          d.ajustes.durabilidade = proximo;
+        });
+        ok(p, textosDur.DURABILIDADE_MUDOU(proximo));
+      }),
+    )
     .botao(textos.BOTAO_TEMA(tema), ICONE_TEMA[tema], (p) => menuTemas(p, () => menuAjustes(p, voltar)))
     .botao(
       textos.BOTAO_TPA(tpa),

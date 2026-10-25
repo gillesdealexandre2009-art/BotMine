@@ -18,7 +18,9 @@ import { CARGOS, cargoDe, ehKitsune } from "./identidade.js";
 import { apelidoDe, nomeExibido, temaNomeDe } from "./kitsune.js";
 import { infoNivel } from "./niveis.js";
 import { glitchHud } from "./arg.js";
-import { glitchHudIntervalo } from "./intervalo.js";
+import { glitchHudIntervalo, regiaoAtual } from "./intervalo.js";
+import { cicloAlerta, linhasDurabilidade } from "./durabilidade.js";
+import { DIM_ID as DIM_MINIGAME } from "./mg.js";
 import { linhasEra } from "./eras_hud.js";
 import { marcaTinta } from "./eras_tinta.js";
 import { infoEcosHud } from "./ecos_hud.js";
@@ -126,6 +128,7 @@ function montar(player, caudas, mudanca, quantosOnline) {
     ctf: guerra && cla ? infoSidebar(player, cla.id, guerra) : null,
     cabeca: valorCabeca(player.id),
     minigame: linhaSpleef(player),
+    durabilidade: regiaoAtual(player) >= 0 ? [] : linhasDurabilidade(player),
     rank,
     cargo: cargo ? CARGOS[cargo] : null,
     kitsune: ehKitsune(player),
@@ -166,6 +169,8 @@ function atualizar(player, quantosOnline) {
     if (espera > agora) return;
     esperas.delete(player.id);
   }
+  // aviso de quase quebrar: no chat, vale mesmo com o placar desligado ou título na tela (menos nos minigames)
+  if (player.dimension.id !== DIM_MINIGAME) cicloAlerta(player);
   const caudas = saldo(player);
   const mudanca = mudancaRecente(player, caudas);
   if (!tituloLivre(player)) return;
