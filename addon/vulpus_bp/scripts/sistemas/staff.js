@@ -184,6 +184,7 @@ const FAIXAS = {
   ecosTetoCriaturas: [0, 60],
   ecosReaparecerSeg: [10, 3600],
   ecosDanoMin: [1, 100],
+  ecosFarolDistancia: [16, 128],
   xrayMinerios: [2, 50],
   xrayJanelaMin: [2, 60],
   xrayPct: [1, 100],

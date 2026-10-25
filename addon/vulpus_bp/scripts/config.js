@@ -308,6 +308,10 @@ export const PADROES = {
   ecosTetoCriaturas: 14,
   ecosReaparecerSeg: 90,
   ecosDanoMin: 4,
+  // Marcadores do evento: rótulos flutuantes sobre os objetivos e farol (partículas só para quem ainda não fez).
+  ecosRotulos: true,
+  ecosFarol: true,
+  ecosFarolDistancia: 64,
   // Limpeza automática (itens soltos e mobs hostis), editada em Staff > Configurações > Limpeza automática.
   limpezaLigada: true,
   limpezaIntervaloMin: 30,

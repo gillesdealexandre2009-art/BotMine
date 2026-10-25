@@ -192,4 +192,18 @@ export const JOGADOR_RESETADO = (nome) => `Progresso de ${nome} apagado.`;
 export const MAPA_NAO_CONSTRUIDO = "O mapa ainda não foi construído (use Construir mapa).";
 export const IR_ECOS_FALHOU = "Não consegui levar você até lá.";
 
+// marcadores
+/** @param {boolean} ligado */
+export const BOTAO_MARCADORES = (ligado) => `Mostrar marcadores (para mim): ${ligado ? "ligado" : "desligado"}`;
+/** @param {boolean} ligado */
+export const MARCADORES_ESTADO = (ligado) => (ligado ? "Marcadores ligados: só você os vê (portais, criaturas e o que falta marcar)." : "Marcadores desligados.");
+/** @param {string} texto */
+export const MARCADOR_PERTO = (texto) => `§6✦ §f${texto}`;
+export const BOTAO_ROTULOS = "Rótulos e farol";
+export const TITULO_ROTULOS = "Rótulos e farol dos Ecos";
+export const ROTULO_ROTULOS = "Rótulos flutuantes sobre os objetivos";
+export const ROTULO_FAROL = "Farol de partículas (só para quem ainda não fez)";
+export const ROTULO_FAROL_DIST = "Distância do farol (blocos)";
+export const ROTULOS_SALVOS = "Rótulos e farol salvos.";
+
 /** @typedef {{ d: string, x: number, y: number, z: number }} Ponto */

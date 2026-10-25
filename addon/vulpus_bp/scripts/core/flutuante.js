@@ -14,7 +14,7 @@ const PROP_TEXTO = "vulpus:texto_real";
 const PASSO_ALCANCE = 20;
 /** Ticks entre buscas completas (sobras, duplicatas, entidades de antes do reinício) para uma mesma tag. */
 const REVISAO = 1200;
-const DIMENSOES = ["minecraft:overworld", "minecraft:nether", "minecraft:the_end", "vulpus:minigames", "vulpus:intervalo"];
+const DIMENSOES = ["minecraft:overworld", "minecraft:nether", "minecraft:the_end", "vulpus:minigames", "vulpus:intervalo", "vulpus:ecos"];
 /** As dimensões que existem neste mundo (as dos minigames e do Intervalo podem faltar). */
 function dimensoes() {
   /** @type {import("@minecraft/server").Dimension[]} */

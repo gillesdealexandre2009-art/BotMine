@@ -47,6 +47,13 @@ Mostra: estado, janela, tempo que falta, mapa (construído ou fases prontas), po
 | Reconstruir mapa | **dono** | apaga e refaz, com confirmação dupla; recusa com a janela aberta |
 | Resetar progresso de uma pessoa | **dono** | zera objetivos, escolha, selos (fragmentos no inventário ficam) |
 
+## Marcadores para achar as coisas
+
+- **Rótulos flutuantes** sobre cada objetivo marcado ("✦ nome" e o tipo em cinza). Nascem ao marcar o objetivo, somem ao desmarcar ou quando a janela fecha. Segredos (E03, E07, E11) e Sentinelas aparecem com nome genérico.
+- **Farol por jogador:** coluna fina de partículas, só para quem ainda não fez aquele objetivo e já pode fazê-lo (E12 e E13 só acendem depois do E08). Distância e liga/desliga em Staff > Ecos dos Ausentes > Rótulos e farol (`ecosRotulos`, `ecosFarol`, `ecosFarolDistancia` de 16 a 128, padrão 64).
+- **Mostrar marcadores (para mim)** (staff e dono, desligado por padrão): você vê os portais (verde entrada, azul saída), os pontos de criatura (laranja) e, em coluna **vermelha**, onde ainda **falta marcar** cada objetivo (nos palcos do mapa), com o nome do ponto mais perto na actionbar. Use isto na montagem: ande pelo mapa e marque até não sobrar vermelho.
+- Só a confirmação no jogo diz se o ID de partícula escolhido (`endrod`, `villager_happy`, `blue_flame_particle`, `basic_flame_particle`, `redstone_ore_dust_particle`) aparece como esperado e se o texto flutuante fica na altura boa.
+
 ## Passo a passo para o dono montar o mundo
 
 1. **Instalar os packs** (BP e RP) no servidor da BedHosting e **reiniciar** o servidor. A dimensão `vulpus:ecos` só é registrada na partida do servidor. Confira com um `/reload` ou no log: nada de erro vermelho do Vulpus.

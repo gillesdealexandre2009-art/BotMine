@@ -72,6 +72,18 @@ let criaturas;
 /** @type {Map<string, { k: "entrada" | "saida" | "obj", id: string }> | undefined} */
 let indice;
 
+/** Quem quer saber quando portais, objetivos ou pontos de criatura mudam (rótulos e marcadores). @type {(() => void)[]} */
+export const ouvintesMarcas = [];
+function avisarMarcas() {
+  for (const f of ouvintesMarcas) {
+    try {
+      f();
+    } catch (e) {
+      registrarErro("Ecos: marcadores", e);
+    }
+  }
+}
+
 /** Esquece o que está em memória (os dados são lidos de novo do mundo). */
 export function recarregar() {
   portais = undefined;
@@ -96,6 +108,7 @@ export function lerPortais() {
 export function salvarPortais(novo) {
   const ok = salvarMundo(CHAVE_PORTAIS, novo);
   recarregar();
+  avisarMarcas();
   return ok;
 }
 
@@ -118,6 +131,7 @@ export function lerPontos() {
 export function salvarPontos(novo) {
   const ok = salvarMundo(CHAVE_PONTOS, novo);
   recarregar();
+  avisarMarcas();
   return ok;
 }
 
@@ -143,6 +157,7 @@ export function salvarCriaturas(novo) {
   const ok = salvarMundo(CHAVE_CRIATURAS, novo);
   recarregar();
   removerCriaturas();
+  avisarMarcas();
   return ok;
 }
 

@@ -14,6 +14,7 @@ import * as textos from "../textos/ecos.js";
 import { acharPessoa } from "./dono_acoes.js";
 import * as ecos from "./ecos.js";
 import { construirEcos, dimEcos, DIM_ECOS, ecosConstruido, estadoConstrucao, jogadoresNosEcos } from "./ecos_dimensao.js";
+import { alternarMarcadores, marcadoresLigados, sincronizarRotulos } from "./ecos_marcadores.js";
 import { formatarDataHora, lerDataHora } from "./hollow.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -96,6 +97,16 @@ export async function menuEcosStaff(player, voltar) {
     .botao(textos.BOTAO_PORTAIS, ICONES.spawn, (p) => menuPortais(p, aqui))
     .botao(textos.BOTAO_OBJETIVOS, ICONES.historico, (p) => menuObjetivos(p, aqui))
     .botao(textos.BOTAO_CRIATURAS, ICONES.ajustes, (p) => menuCriaturas(p, aqui))
+    .botao(textos.BOTAO_MARCADORES(marcadoresLigados(player)), ICONES.buscar, async (p) => {
+      const novo = alternarMarcadores(p);
+      if (novo === undefined) return erro(p, textos.SO_STAFF);
+      ok(p, textos.MARCADORES_ESTADO(novo));
+      await aqui();
+    })
+    .botao(textos.BOTAO_ROTULOS, ICONES.ajustes, async (p) => {
+      await editarRotulos(p);
+      await aqui();
+    })
     .botao(textos.BOTAO_ATUALIZAR, ICONES.ordenar, async () => {
       await aqui();
     });
@@ -168,6 +179,21 @@ async function editarDatas(player) {
   registrarLogDono(player.name, "ecos: datas", `${r[0]} a ${r[1]}`, true, "");
   ok(player, textos.DATAS_SALVAS);
   ecos.conferirJanela();
+}
+
+/** @param {Player} player */
+async function editarRotulos(player) {
+  if (!staffOk(player)) return;
+  const c = config();
+  const r = await perguntar(player, textos.TITULO_ROTULOS, [
+    { tipo: "alternar", rotulo: textos.ROTULO_ROTULOS, padrao: c.ecosRotulos },
+    { tipo: "alternar", rotulo: textos.ROTULO_FAROL, padrao: c.ecosFarol },
+    { tipo: "numero", rotulo: textos.ROTULO_FAROL_DIST, padrao: c.ecosFarolDistancia, min: 16, max: 128 },
+  ]);
+  if (!r || !staffOk(player)) return;
+  salvarConfig({ ecosRotulos: r[0], ecosFarol: r[1], ecosFarolDistancia: r[2] });
+  sincronizarRotulos(true);
+  ok(player, textos.ROTULOS_SALVOS);
 }
 
 // ------------------------------------------------------------------------------------ portais

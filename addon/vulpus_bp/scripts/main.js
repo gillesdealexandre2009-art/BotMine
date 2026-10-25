@@ -64,6 +64,7 @@ import "./sistemas/hollow.js";
 import "./sistemas/hollow_staff.js";
 import "./sistemas/ecos_equip.js";
 import "./sistemas/ecos.js";
+import "./sistemas/ecos_marcadores.js";
 import "./sistemas/limpeza.js";
 import "./sistemas/regras.js";
 import "./sistemas/staff.js";
