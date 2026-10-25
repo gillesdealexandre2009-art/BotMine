@@ -66,7 +66,7 @@ export async function menuEcosStaff(player, voltar) {
         restante: textoRestante(estado),
         construido: cons.construido,
         fases: `${cons.prontas}/${cons.total} fases`,
-        ocupado: cons.ocupado ? `${cons.fase} ${cons.pct}%` : "",
+        ocupado: cons.ocupado ? `${cons.fase} ${cons.pct}%` : cons.parada ? textos.OBRA_PARADA_LINHA(cons.parada) : "",
         vivas: ecos.totalVivas(),
         teto: c.ecosTetoCriaturas,
         portais: `entrada ${portais.entrada ? "ok" : "[vazio]"}, saída ${portais.saida ? "ok" : "[vazio]"}`,

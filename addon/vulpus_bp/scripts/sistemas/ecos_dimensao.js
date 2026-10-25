@@ -26,9 +26,9 @@ const AREAS_ANTIGAS = ["a", "b", "c", "d", "e"].map((x) => PREFIXO_AREA + "_" + 
 /**
  * A obra roda em JANELAS: faixas de x da CAIXA, uma de cada vez. O mundo tem um limite de chunks de ticking SOMADOS (300 no BDS,
  * contando as áreas dos outros sistemas), e a caixa inteira (mapa + floresta + céu, ~350 chunks) não cabe. Cada janela abre uma
- * só área de ticking (~84 chunks), roda TODAS as fases com o pincel recortado nela, e solta a área antes da próxima.
+ * só área de ticking (~40-56 chunks), roda TODAS as fases com o pincel recortado nela, e solta a área antes da próxima.
  */
-export const JANELAS = 6;
+export const JANELAS = 9;
 /** O jogo corta fillBlocks acima de 32768 blocos por chamada. */
 const MAX_BLOCOS_FILL = 30000;
 const ORIGEM_PADRAO = Object.freeze({ x: 10000, y: 80, z: 10000 });
@@ -39,7 +39,13 @@ const PASSO_SOM = 40;
 const PASSO_PARTICULAS = 40;
 
 /** Ajustes dos testes (orçamento da construção em ms por tick). */
-export const ajustes = { orcamentoMs: 10 };
+export const ajustes = {
+  orcamentoMs: 10,
+  /** quanto esperar a Promise de createTickingArea (que só resolve com TODOS os chunks carregados) antes de desistir: 60 s */
+  esperaAreaTicks: 1200,
+  /** sem sinal de vida da obra por este tempo (90 s), o guarda libera o botão "Continuar construção" */
+  batidaTicks: 1800,
+};
 
 // ------------------------------------------------------------------------------------ registro da dimensão
 let dimensaoRegistrada = false;
@@ -145,8 +151,10 @@ export function mandarParaSpawn(player) {
 }
 
 // ------------------------------------------------------------------------------------ construção
-/** @type {{ ocupado: boolean, fase: string, pct: number, falhas: number }} */
-const cons = { ocupado: false, fase: "", pct: 0, falhas: 0 };
+/** @type {{ ocupado: boolean, fase: string, pct: number, falhas: number, token: number, parada: string, ultimo: number }} */
+const cons = { ocupado: false, fase: "", pct: 0, falhas: 0, token: 0, parada: "", ultimo: 0 };
+/** Diagnóstico no console do servidor (console.warn aparece no console do BDS, não só no Content Log). @param {string} m */
+const logObra = (m) => console.warn("[Vulpus] Ecos obra: " + m);
 
 /** Estado para o painel e os testes. */
 export const estadoConstrucao = () => ({
@@ -157,6 +165,8 @@ export const estadoConstrucao = () => ({
   prontas: fasesProntas(),
   total: etapasTotais(),
   construido: ecosConstruido(),
+  /** motivo da última parada (vazio se está tudo bem ou construindo) */
+  parada: cons.ocupado ? "" : cons.parada,
 });
 
 /** chunks que uma caixa ocupa (o limite do mundo é em chunks somados) @param {{ x1: number, x2: number, z1: number, z2: number }} f @param {Ponto3} o */
@@ -169,9 +179,11 @@ const caixaDaArea = (f, o) => ({
 });
 
 /**
- * Abre UMA área de ticking para a faixa. Nunca lança: devolve o motivo (e se foi o limite de chunks).
+ * Abre UMA área de ticking para a faixa. Nunca lança e NUNCA fica pendurada: a Promise de createTickingArea só resolve quando todos
+ * os chunks carregam, então ela corre contra um relógio (ajustes.esperaAreaTicks). No estouro, se o jogo já diz que a área está
+ * carregada (isFullyLoaded) segue; senão remove a área e devolve tempo=true.
  * @param {Dimension} dim @param {Ponto3} o @param {{ x1: number, x2: number, z1: number, z2: number }} faixa
- * @returns {Promise<{ ok: boolean, limite: boolean, erro: string, chunks: number }>}
+ * @returns {Promise<{ ok: boolean, limite: boolean, tempo: boolean, erro: string, chunks: number }>}
  */
 async function abrirArea(dim, o, faixa) {
   const g = world.tickingAreaManager;
@@ -182,17 +194,42 @@ async function abrirArea(dim, o, faixa) {
     const temCapacidade = /** @type {any} */ (g).hasCapacity;
     if (typeof temCapacidade === "function" && !temCapacidade.call(g, { dimension: dim, ...caixa })) {
       const max = /** @type {any} */ (g).maxChunkCount;
-      return { ok: false, limite: true, erro: "sem capacidade para " + chunks + " chunks (limite de " + (max ?? "?") + " somados no mundo)", chunks };
+      return { ok: false, limite: true, tempo: false, erro: "sem capacidade para " + chunks + " chunks (limite de " + (max ?? "?") + " somados no mundo)", chunks };
     }
   } catch {
     // sem a pergunta: o pedido de verdade decide
   }
+  const nome = PREFIXO_AREA + "_" + Math.abs(faixa.x1);
+  /** @type {number | undefined} */
+  let relogio;
   try {
-    await g.createTickingArea(PREFIXO_AREA + "_" + Math.abs(faixa.x1), { dimension: dim, ...caixa });
-    return { ok: true, limite: false, erro: "", chunks };
+    const pedido = g.createTickingArea(nome, { dimension: dim, ...caixa }).then(
+      () => /** @type {const} */ ("ok"),
+      (e) => ({ erro: String(e) }),
+    );
+    const tempo = new Promise((resolve) => {
+      relogio = system.runTimeout(() => resolve("tempo"), ajustes.esperaAreaTicks);
+    });
+    const r = await Promise.race([pedido, tempo]);
+    if (relogio !== undefined) system.clearRun(relogio);
+    if (r === "ok") return { ok: true, limite: false, tempo: false, erro: "", chunks };
+    if (typeof r === "object") return { ok: false, limite: /limit|OverChunkLimit|capacity/i.test(r.erro), tempo: false, erro: r.erro, chunks };
+    // estourou: a Promise ficou pendente (ela não vaza: já tem os dois desfechos tratados). O jogo diz se a área carregou?
+    let carregada = false;
+    try {
+      carregada = g.getTickingArea(nome)?.isFullyLoaded === true;
+    } catch {
+      carregada = false;
+    }
+    if (carregada) return { ok: true, limite: false, tempo: false, erro: "", chunks };
+    try {
+      if (g.getTickingArea(nome)) g.removeTickingArea(nome);
+    } catch {
+      // some no próximo soltarAreas
+    }
+    return { ok: false, limite: false, tempo: true, erro: "a área não terminou de carregar em " + Math.round(ajustes.esperaAreaTicks / 20) + " s", chunks };
   } catch (e) {
-    const msg = String(e);
-    return { ok: false, limite: /limit|OverChunkLimit|capacity/i.test(msg), erro: msg, chunks };
+    return { ok: false, limite: false, tempo: false, erro: String(e), chunks };
   }
 }
 
@@ -308,6 +345,9 @@ export async function construirEcos(quem, opcoes = {}) {
   cons.fase = textos.FASE_PREPARANDO;
   cons.pct = 0;
   cons.falhas = 0;
+  cons.parada = "";
+  const token = ++cons.token;
+  cons.ultimo = system.currentTick;
   const o = origemEcos();
   if (opcoes.refazer) salvarMundo(CHAVE_PROGRESSO, 0);
   const desde = fasesProntas();
@@ -317,12 +357,31 @@ export async function construirEcos(quem, opcoes = {}) {
 
   /** @param {string} motivo */
   const falhou = (motivo) => {
+    if (token !== cons.token) return; // uma obra mais nova (ou o guarda) já assumiu
     soltarAreas();
     cons.ocupado = false;
     cons.fase = "";
+    cons.parada = motivo;
+    logObra("parou: " + motivo);
     registrarErro("Ecos: construção", motivo);
     if (quem?.isValid) erro(quem, textos.FALHA_CONSTRUCAO(motivo));
   };
+
+  // guarda: se a obra não dá sinal de vida por ajustes.batidaTicks, solta tudo e libera o botão (sem reiniciar o servidor)
+  const guarda = system.runInterval(() => {
+    if (token !== cons.token || !cons.ocupado) return system.clearRun(guarda);
+    if (system.currentTick - cons.ultimo < ajustes.batidaTicks) return;
+    system.clearRun(guarda);
+    cons.token++; // a obra pendurada, se acordar, não faz mais nada
+    soltarAreas();
+    cons.ocupado = false;
+    const onde = cons.fase || textos.FASE_PREPARANDO;
+    cons.fase = "";
+    cons.parada = "travada em: " + onde;
+    logObra("TRAVADA (sem sinal de vida por " + Math.round(ajustes.batidaTicks / 20) + " s) em: " + onde + ". Áreas soltas; o botão Continuar está liberado.");
+    registrarErro("Ecos: obra travada", onde);
+    if (quem?.isValid) erro(quem, textos.OBRA_TRAVADA(onde));
+  }, 100);
 
   if (quem) {
     const acompanha = system.runInterval(() => {
@@ -334,15 +393,21 @@ export async function construirEcos(quem, opcoes = {}) {
       }
     }, 20);
   }
-  executarJanelas(dim, o, desde, quem, falhou).catch((e) => falhou(String(e)));
+  executarJanelas(dim, o, desde, quem, falhou, token).catch((e) => falhou(String(e)));
   return true;
 }
 
-/** Roda o gerador respeitando o orçamento de ms por tick. @param {Generator<any, void, any>} gen @returns {Promise<void>} */
-function rodar(gen) {
+/** Roda o gerador respeitando o orçamento de ms por tick; cada tick que roda é um sinal de vida. Para sozinho se a obra foi trocada. @param {Generator<any, void, any>} gen @param {number} token @returns {Promise<void>} */
+function rodar(gen, token) {
   return new Promise((resolve, reject) => {
     const run = system.runInterval(() => {
       try {
+        if (token !== cons.token) {
+          system.clearRun(run);
+          resolve();
+          return;
+        }
+        cons.ultimo = system.currentTick;
         const ini = Date.now();
         while (Date.now() - ini < ajustes.orcamentoMs) {
           if (gen.next().done) {
@@ -375,62 +440,90 @@ function dividir(f, n) {
 /**
  * A obra por janelas: janela a janela (faixas de x), abre só a área de ticking dela, roda todas as fases recortadas nela e solta.
  * O progresso salvo é janela * fases + fase; se o servidor reiniciar, "continuar" volta de onde parou. Se o jogo recusar a área por
- * limite de chunks, avisa com precisão e repete a janela em pedaços menores (cada pedaço com a sua área, um de cada vez).
- * @param {Dimension} dim @param {Ponto3} o @param {number} desde @param {Player | undefined} quem @param {(m: string) => void} falhou
+ * limite de chunks, ou ela não terminar de carregar a tempo, avisa com precisão e repete a janela em pedaços menores (um de cada vez).
+ * Cada passo escreve no console do servidor (console.warn) para dar para ver onde parou.
+ * @param {Dimension} dim @param {Ponto3} o @param {number} desde @param {Player | undefined} quem @param {(m: string) => void} falhou @param {number} token
  */
-async function executarJanelas(dim, o, desde, quem, falhou) {
+async function executarJanelas(dim, o, desde, quem, falhou, token) {
+  const vivo = () => token === cons.token;
+  const t0 = Date.now();
+  const seg = (t) => ((Date.now() - t) / 1000).toFixed(1);
   const pincel = new PincelMundo(dim);
   const base = pincelComOrigem(pincel, o);
   const janelas = janelasDaObra();
   const NF = FASES_MAPA.length;
+  logObra("começando (" + janelas.length + " janelas, " + NF + " fases; a partir da etapa " + desde + "/" + etapasTotais() + ")");
   for (let w = Math.floor(desde / NF); w < janelas.length; w++) {
     const f0 = Math.max(0, desde - w * NF);
+    const rot = "janela " + (w + 1) + "/" + janelas.length;
+    const tJan = Date.now();
     let partes = 1;
     for (;;) {
       const pedacos = dividir(janelas[w], partes);
-      let estourou = false;
+      let recuar = false;
       for (let k = 0; k < pedacos.length; k++) {
+        if (!vivo()) return;
         soltarAreas(); // nada sobra de uma tentativa ou janela anterior
+        const chunks = chunksDa(pedacos[k], o);
+        const rotP = pedacos.length > 1 ? rot + " pedaço " + (k + 1) + "/" + pedacos.length : rot;
+        cons.fase = "carregando área da " + rotP + " (" + chunks + " chunks)";
+        cons.ultimo = system.currentTick;
+        logObra(rotP + " (" + chunks + " chunks) abrindo área");
+        const tAbrir = Date.now();
         const ab = await abrirArea(dim, o, pedacos[k]);
+        if (!vivo()) return;
         if (!ab.ok) {
           soltarAreas();
-          if (ab.limite && partes < 8) {
-            if (quem?.isValid) erro(quem, textos.LIMITE_TICKING(ab.chunks, ab.erro, partes * 2));
-            registrarErro("Ecos: limite de ticking", `${ab.erro} (janela ${w + 1}/${janelas.length}, ${ab.chunks} chunks)`);
-            estourou = true;
+          logObra(rotP + ": " + ab.erro);
+          if ((ab.limite || ab.tempo) && partes < 8) {
+            if (quem?.isValid) erro(quem, ab.tempo ? textos.AREA_DEMOROU(w + 1, janelas.length, ab.chunks, Math.round(ajustes.esperaAreaTicks / 20), partes * 2) : textos.LIMITE_TICKING(ab.chunks, ab.erro, partes * 2));
+            if (ab.limite) registrarErro("Ecos: limite de ticking", ab.erro + " (" + rotP + ", " + ab.chunks + " chunks)");
+            recuar = true;
             break;
           }
-          return falhou(ab.limite ? textos.LIMITE_TICKING_FIM(ab.chunks, ab.erro) : `${textos.AREA_NAO_CARREGOU} (${ab.erro})`);
+          return falhou(ab.limite ? textos.LIMITE_TICKING_FIM(ab.chunks, ab.erro) : ab.tempo ? textos.AREA_NAO_TERMINOU(w + 1, janelas.length, ab.chunks, Math.round(ajustes.esperaAreaTicks / 20)) : textos.AREA_NAO_CARREGOU + " (" + ab.erro + ")");
         }
         if (!(await carregar(dim, o, pedacos[k]))) {
           soltarAreas();
-          return falhou(textos.AREA_NAO_CARREGOU);
+          return falhou(textos.AREA_NAO_CARREGOU + " (" + rotP + ", " + chunks + " chunks)");
         }
+        if (!vivo()) return;
+        logObra(rotP + " carregada em " + seg(tAbrir) + " s");
         const ultimo = k === pedacos.length - 1;
+        let fasesFeitas = 0;
+        const tFases = Date.now();
         const gen = construir(
           new PincelRecortado(base, pedacos[k]),
           (f, txt) => {
             cons.pct = (w + (k + f) / pedacos.length) / janelas.length;
-            cons.fase = `${txt} (${w + 1}/${janelas.length})`;
+            cons.fase = txt + " (" + (w + 1) + "/" + janelas.length + ")";
+            cons.ultimo = system.currentTick;
           },
           f0,
           (n) => {
-            if (ultimo) salvarMundo(CHAVE_PROGRESSO, w * NF + n);
+            fasesFeitas++;
+            if (ultimo && vivo()) salvarMundo(CHAVE_PROGRESSO, w * NF + n);
           },
         );
-        await rodar(gen);
+        await rodar(gen, token);
+        if (!vivo()) return;
+        logObra(rotP + ": " + fasesFeitas + " fases em " + seg(tFases) + " s");
         soltarAreas();
       }
-      if (!estourou) break;
+      if (!recuar) break;
       partes *= 2;
     }
+    logObra(rot + " pronta em " + seg(tJan) + " s");
   }
+  if (!vivo()) return;
   cons.falhas = pincel.falhas;
   salvarMundo(CHAVE_CONSTRUIDO, true);
   salvarMundo(CHAVE_PROGRESSO, etapasTotais());
-  if (pincel.falhas > 0) registrarErro("Ecos: blocos que não puderam ser colocados", `${pincel.falhas} (primeira: ${pincel.primeiraFalha})`);
+  if (pincel.falhas > 0) registrarErro("Ecos: blocos que não puderam ser colocados", pincel.falhas + " (primeira: " + pincel.primeiraFalha + ")");
   soltarAreas();
+  logObra("concluída em " + seg(t0) + " s");
   system.runTimeout(() => {
+    if (!vivo()) return;
     cons.ocupado = false;
     cons.fase = "";
     cons.pct = 1;
