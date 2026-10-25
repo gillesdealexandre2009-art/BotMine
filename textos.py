@@ -483,6 +483,7 @@ COMANDOS_CAMPOS = [
         "`/minecraft vincular`: liga sua conta do jogo com o código da tela (também pelo botão em {login})\n"
         "`/minecraft conta`: mostra a conta ligada, seu nível e suas {moeda}\n"
         "`/online`: quem está jogando agora\n"
+        "`/apelido-discord`: seu apelido no Discord igual ao do jogo, com o clã ([CLÃ] apelido); `desligar` devolve o seu\n"
         "IP e porta em {ip}",
     ),
     (
@@ -1839,3 +1840,37 @@ CODIGO_RESPOSTAS = {
     "sem_vinculo": "Ligue sua conta do Minecraft primeiro: no Discord use /minecraft vincular com o código que aparece no jogo.",
 }
 CODIGO_RESGATAR_ERRO = "Não consegui resgatar agora. Tente de novo daqui a pouco."
+
+
+# --- Apelido do Discord igual ao do jogo ([CLÃ] Apelido) ---
+NICK_DESLIGADO_DONO = "A sincronia de apelido está desligada neste servidor."
+NICK_LIGAR_OK = "Pronto! Meu apelido vai acompanhar o do jogo. Se você já jogou hoje, ele muda em instantes."
+NICK_LIGAR_SEM_CONTA = "Ligue sua conta do Minecraft primeiro (`/minecraft vincular`)."
+NICK_DESLIGAR_OK = "Pronto, parei de mexer no seu apelido e devolvi o que você tinha antes."
+NICK_DESLIGAR_JA = "Você já tinha desligado. Para voltar: `/apelido-discord ligar`."
+NICK_VER_TITULO = "🏷️ Seu apelido no Discord"
+NICK_VER_LINHAS = (
+    "Sincronia: **{estado}**\n"
+    "No jogo: {jogo}\n"
+    "Ficaria: {ficaria}\n"
+    "Apelido de antes: {original}"
+)  # {estado} {jogo} {ficaria} {original}
+NICK_VER_ESTADO_LIGADA = "ligada"
+NICK_VER_ESTADO_DESLIGADA = "desligada por você"
+NICK_VER_ESTADO_SERVIDOR_OFF = "desligada pelo servidor"
+NICK_VER_ESTADO_SUSPENSA = "pausada (não tenho permissão ou seu cargo é alto demais)"
+NICK_VER_NADA = "nada ainda (entre no jogo para eu saber)"
+NICK_VER_SEM = "(sem apelido)"
+NICK_VER_NAO_MEXE = "eu não mexo"
+NICK_NAO_ALTERA = "Eu não consigo mudar o apelido de {motivo}."  # {motivo}
+NICK_MOTIVO_DONO = "dono do servidor"
+NICK_MOTIVO_CARGO = "quem tem cargo igual ou acima do meu"
+NICK_MOTIVO_PERMISSAO = "ninguém (me falta a permissão **Gerenciar Apelidos**)"
+NICK_MOTIVO_BOT = "bots"
+NICK_APLICAR_TODOS_BOTAO = "Aplicar a todos agora"
+NICK_APLICAR_TODOS_SO_DONO = "Só o dono do servidor aplica a todos de uma vez."
+NICK_APLICAR_TODOS_DESLIGADO = "A sincronia está desligada (nick_sinc_ligado = 0): ligue antes."
+NICK_APLICAR_TODOS_OK = "Na fila: **{n}** pessoas. Vou mudando aos poucos para não estourar o limite do Discord."  # {n}
+NICK_SETUP_TITULO = "🏷️ Apelido do Discord"
+NICK_SETUP_RODAPE = "1) escolha o ajuste  2) mude o valor. Precisa da permissão Gerenciar Apelidos."
+NICK_SETUP_SECAO_DESC = "Apelido igual ao do jogo, com o clã"

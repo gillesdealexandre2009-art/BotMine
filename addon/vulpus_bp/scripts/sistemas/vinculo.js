@@ -20,7 +20,8 @@ import * as textos from "../textos/vinculo.js";
 import { nivelDeXp } from "./niveis.js";
 import { emitir } from "../core/eventos.js";
 import { concederPorCompra, expiracaoDe } from "./kitsune_tempo.js";
-import { temSelo } from "./kitsune.js";
+import { apelidoDe, temSelo } from "./kitsune.js";
+import { claDe } from "./cla_dados.js";
 
 /**
  * @typedef {object} Estado
@@ -254,6 +255,31 @@ function lerSelo(p) {
   return estado;
 }
 
+/**
+ * Clã (tag) e apelido de quem está online, em TEXTO PURO (sem § e sem pintura), para o bot montar o apelido do Discord.
+ * Guardado por id para a última soma, de quem acabou de sair. Vai em todo sync: o que mudou chega em até vinculoSyncSeg segundos.
+ * @type {Map<string, { cla: string, apelido: string }>}
+ */
+const identidades = new Map();
+
+/** @param {string} texto */
+const semCores = (texto) => String(texto ?? "").replace(/§./g, "").trim();
+
+/** @param {Player} p */
+function lerIdentidade(p) {
+  let cla = "";
+  let apelido = "";
+  try {
+    cla = semCores(claDe(p)?.tag ?? "").toUpperCase();
+    apelido = semCores(apelidoDe(p));
+  } catch (e) {
+    registrarErro("Vínculo: clã e apelido", e);
+  }
+  const identidade = { cla: cla.slice(0, 8), apelido: apelido.slice(0, 32) };
+  identidades.set(p.id, identidade);
+  return identidade;
+}
+
 /** @type {Map<string, number[]>} compras de Kitsune que o jogo já aplicou e ainda vai confirmar ao bot no próximo sync */
 const comprasAplicadas = new Map();
 
@@ -270,7 +296,7 @@ async function somar(id, nome) {
   }
   const envio = pend;
   const confirmadas = [...(comprasAplicadas.get(id) ?? [])];
-  const r = await chamar("POST", "/mc/sync", { id, nome, chave: envio.chave, caudas: envio.c, xp: envio.x, kitsune: selos.get(id), kitsune_ok: confirmadas });
+  const r = await chamar("POST", "/mc/sync", { id, nome, chave: envio.chave, caudas: envio.c, xp: envio.x, kitsune: selos.get(id), kitsune_ok: confirmadas, ...identidades.get(id) });
   if (r.status === 200 && r.corpo?.ok && Number.isFinite(r.corpo.saldo) && Number.isFinite(r.corpo.xp)) {
     const saldo = Math.max(0, Math.floor(r.corpo.saldo));
     const xp = Math.max(0, Math.floor(r.corpo.xp));
@@ -325,6 +351,7 @@ function agendarSoma(p, e) {
   const primeira = dadosJogador(p).sync.baseC === 0 && dadosJogador(p).sync.baseX === 0 && !dadosJogador(p).sync.pend;
   const nome = p.name;
   lerSelo(p);
+  lerIdentidade(p);
   somar(p.id, nome)
     .then((deu) => {
       if (deu && primeira && p.isValid) {

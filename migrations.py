@@ -581,3 +581,25 @@ ALTER TABLE feedbacks ADD COLUMN entregue_por INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE feedbacks ADD COLUMN recusado_em INTEGER NOT NULL DEFAULT 0;
 """,
 ))
+
+
+# Apelido do Discord sincronizado com o jogo ([TAG] Apelido): o que o jogo mandou por último, o que o bot aplicou e o apelido
+# original da pessoa (para restaurar). ligado = 0 é o opt-out dela; suspenso_ate (epoch s) para depois de um erro de permissão.
+MIGRACOES.append((
+    19,
+    """
+CREATE TABLE nick_sinc (
+    guild_id     INTEGER NOT NULL,
+    user_id      INTEGER NOT NULL,
+    ligado       INTEGER NOT NULL DEFAULT 1 CHECK (ligado IN (0, 1)),
+    cla          TEXT    NOT NULL DEFAULT '',
+    apelido      TEXT    NOT NULL DEFAULT '',
+    guardou      INTEGER NOT NULL DEFAULT 0 CHECK (guardou IN (0, 1)),  -- 1 = `original` vale (pode ser NULL: sem apelido antes)
+    original     TEXT,
+    aplicado     TEXT    NOT NULL DEFAULT '',
+    suspenso_ate INTEGER NOT NULL DEFAULT 0,
+    atualizado_em INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (guild_id, user_id)
+);
+""",
+))

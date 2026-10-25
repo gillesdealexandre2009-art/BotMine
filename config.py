@@ -357,9 +357,13 @@ AJUSTES = {
     "feedback_dias_novo": (30, 0, 365, "Dias até a pessoa poder mandar outro feedback"),
     "codigo_erros_max": (5, 1, 100, "Tentativas erradas de código por pessoa antes de bloquear"),
     "codigo_erros_janela_min": (10, 1, 1440, "Minutos da janela das tentativas erradas de código"),
+    "nick_sinc_ligado": (1, 0, 1, "1 = apelido do Discord vira [CLÃ] apelido do jogo (só para quem ligou a conta do Minecraft)"),
+    "nick_sinc_sem_cla": (1, 0, 1, "1 = quem não tem clã fica só com o apelido/nome do jogo; 0 = não mexe em quem não tem clã"),
+    "nick_sinc_intervalo_seg": (30, 5, 3600, "Segundos mínimos entre duas mudanças de apelido da mesma pessoa"),
 }
 # Ajustes que têm painel próprio no /setup (> Ajustes)
 AJUSTES_NO_SETUP = [k for k in AJUSTES if k.startswith(("feedback_", "codigo_"))]
+AJUSTES_NICK_NO_SETUP = [k for k in AJUSTES if k.startswith("nick_sinc_")]
 # Quantos meses de Kitsune dá para comprar de uma vez (o preço é o do mês vezes isto).
 KITSUNE_MESES = (1, 3, 6, 12)
 
@@ -403,6 +407,7 @@ PERMISSOES_NECESSARIAS = [
     ("read_message_history", "Ler Histórico de Mensagens"),
     ("use_external_emojis", "Usar Emojis Externos"),
     ("manage_roles", "Gerenciar Cargos"),
+    ("manage_nicknames", "Gerenciar Apelidos"),
     ("manage_channels", "Gerenciar Canais"),
     ("manage_messages", "Gerenciar Mensagens"),
     ("moderate_members", "Moderar Membros"),

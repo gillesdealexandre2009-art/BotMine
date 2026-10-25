@@ -5,7 +5,8 @@ Todas as rotas exigem `Authorization: Bearer <MC_BRIDGE_TOKEN>`. Sem o token a p
 
 Rotas (JSON):
   POST /mc/vinculo  {id, nome}                    -> {vinculado, discord_id?, discord_nome?} ou {codigo, expira_em}
-  POST /mc/sync     {id, nome, chave, caudas, xp} -> {saldo, xp}  (diferenças desde a última vez; a chave evita somar duas vezes)
+  POST /mc/sync     {id, nome, chave, caudas, xp, kitsune?, cla?, apelido?} -> {saldo, xp}  (diferenças desde a última vez; a chave evita somar duas vezes;
+                    cla e apelido, em texto puro, viram o apelido do Discord `[TAG] Apelido`: veja nick_sinc.py)
   POST /mc/eventos  {eventos: [{t, nome, ...}]}   -> posta nos canais (veja embeds.TIPOS_EVENTO)
   POST /mc/status   {online: [nomes], max}        -> atualiza o painel do ip-e-porta
   GET  /mc/chat?desde=N                           -> mensagens do chat-bridge depois de N (-1 = só o marcador atual)
@@ -434,6 +435,9 @@ class Ponte(commands.Cog):
         if vinculo is not None:
             guild = self.bot.get_guild(gid)
             membro = guild.get_member(vinculo["user_id"]) if guild else None
+            nick = self.bot.get_cog("NickSinc")
+            if nick is not None:
+                nick.no_login(vinculo["user_id"])  # type: ignore[attr-defined]
             return web.json_response(
                 {
                     "ok": True,
@@ -492,6 +496,13 @@ class Ponte(commands.Cog):
         estado = self._selo_do_corpo(corpo.get("kitsune"))
         if estado is not None and not conceder:  # com compra por entregar, o selo que o jogo conta ainda está velho
             await self.receber_kitsune(gid, vinculo["user_id"], vinculo["mc_nome"], *estado)
+        # clã e apelido do jogo (texto puro): o cog NickSinc calcula e muda o apelido do Discord fora desta requisição
+        nick = self.bot.get_cog("NickSinc")
+        if nick is not None and ("cla" in corpo or "apelido" in corpo):
+            try:
+                await nick.receber(gid, vinculo["user_id"], corpo.get("cla", ""), corpo.get("apelido", ""))  # type: ignore[attr-defined]
+            except Exception:
+                log.exception("Erro ao guardar clã e apelido do jogo")
         resposta: dict[str, Any] = {"ok": True, "saldo": resultado["saldo"], "xp": resultado["xp"]}
         if conceder:
             resposta["kitsune_conceder"] = conceder
@@ -834,6 +845,9 @@ class Ponte(commands.Cog):
             await responder(interaction, textos.MC_DESVINCULO_NADA.format(alvo=membro.mention), ephemeral=True)
             return
         log.info("%s desvinculou %s (%s)", interaction.user, membro, nome)
+        nick = self.bot.get_cog("NickSinc")
+        if nick is not None:  # devolve o apelido de antes
+            await nick.ao_desvincular(guild, membro.id)  # type: ignore[attr-defined]
         ctx = await self._ctx_membro(guild.id, membro)
         await self._enviar(guild.id, "mc_log", embed=embeds.montar_desvinculado(nome, ctx, interaction.user.mention))
         await responder(

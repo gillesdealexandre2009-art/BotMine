@@ -38,6 +38,7 @@ SECOES = {
     "visibilidade": ("🔒 Visibilidade", "Quem enxerga cada categoria/canal"),
     "publicacoes": ("📸 Publicações (fidelidade)", "Canais onde posts contam para virar Helper"),
     "ajustes": ("⚙️ Ajustes de feedback e códigos", "Caudas, validade, espera e limites"),
+    "apelidos": (textos.NICK_SETUP_TITULO, textos.NICK_SETUP_SECAO_DESC),
 }
 
 # o que publicar: chave -> (nome do cog, método, rótulo)
@@ -239,9 +240,13 @@ class BotaoPadraoAjuste(discord.ui.Button):
 
 
 class SecaoAjustes(SecaoBase):
+    chaves_do_painel = config.AJUSTES_NO_SETUP
+    titulo_do_painel = "⚙️ Ajustes de feedback e códigos"
+    rodape_do_painel = "1) escolha o ajuste  2) mude o valor. Os outros ajustes: /ajustes"
+
     def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
         super().__init__(cog, dono_id, guild)
-        opcoes = [(k, f"{k} — {config.AJUSTES[k][3]}") for k in config.AJUSTES_NO_SETUP]
+        opcoes = [(k, f"{k} — {config.AJUSTES[k][3]}") for k in self.chaves_do_painel]
         self.add_item(SelecaoChave(opcoes, "1) Qual ajuste?"))
         self.add_item(BotaoMudarAjuste())
         self.add_item(BotaoPadraoAjuste())
@@ -250,14 +255,43 @@ class SecaoAjustes(SecaoBase):
     async def construir_embed(self) -> discord.Embed:
         valores = await self.cog.bot.banco.todos_ajustes(self.guild.id)
         linhas = []
-        for chave in config.AJUSTES_NO_SETUP:
+        for chave in self.chaves_do_painel:
             padrao, _minimo, _maximo, desc = config.AJUSTES[chave]
             extra = "" if valores[chave] == padrao else f" *(padrão {padrao})*"
             marca = "👉 " if chave == self.chave else ""
             linhas.append(f"{marca}`{chave}` = **{valores[chave]}**{extra}\n{desc}")
-        e = embed("⚙️ Ajustes de feedback e códigos", "\n".join(linhas))
-        e.set_footer(text="1) escolha o ajuste  2) mude o valor. Os outros ajustes: /ajustes")
+        e = embed(self.titulo_do_painel, "\n".join(linhas))
+        e.set_footer(text=self.rodape_do_painel)
         return e
+
+
+class BotaoAplicarApelidos(discord.ui.Button):
+    def __init__(self) -> None:
+        super().__init__(label=textos.NICK_APLICAR_TODOS_BOTAO, emoji="🏷️", style=discord.ButtonStyle.success, row=1)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        v: SecaoApelidos = self.view  # type: ignore[assignment]
+        if interaction.user.id != v.guild.owner_id:  # muda o apelido de todo mundo: só o dono do servidor
+            await responder(interaction, textos.NICK_APLICAR_TODOS_SO_DONO)
+            return
+        nick = v.cog.bot.get_cog("NickSinc")
+        if nick is None or not await v.cog.bot.banco.ajuste(v.guild.id, "nick_sinc_ligado"):
+            await responder(interaction, textos.NICK_APLICAR_TODOS_DESLIGADO)
+            return
+        n = await nick.aplicar_todos(v.guild.id)  # type: ignore[attr-defined]
+        await responder(interaction, textos.NICK_APLICAR_TODOS_OK.format(n=n))
+
+
+class SecaoApelidos(SecaoAjustes):
+    """Apelido do Discord igual ao do jogo ([CLÃ] apelido): ajustes nick_sinc_* e o botão de aplicar a todos (só o dono)."""
+
+    chaves_do_painel = config.AJUSTES_NICK_NO_SETUP
+    titulo_do_painel = textos.NICK_SETUP_TITULO
+    rodape_do_painel = textos.NICK_SETUP_RODAPE
+
+    def __init__(self, cog: "Configuracao", dono_id: int, guild: discord.Guild) -> None:
+        super().__init__(cog, dono_id, guild)
+        self.add_item(BotaoAplicarApelidos())
 
 
 # ---------------------------------------------------------------- cargos base
@@ -719,6 +753,7 @@ SECAO_CLASSES = {
     "visibilidade": SecaoVisibilidade,
     "publicacoes": SecaoPublicacoes,
     "ajustes": SecaoAjustes,
+    "apelidos": SecaoApelidos,
 }
 
 
