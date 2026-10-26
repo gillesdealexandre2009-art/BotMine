@@ -14,6 +14,7 @@ import { teleportar } from "../core/teleporte.js";
 import { erro, msg, ok, registrarErro } from "../core/util.js";
 import { SO_STAFF } from "../textos/geral.js";
 import * as textos from "../textos/obras.js";
+import * as textosRuas from "../textos/obras_ruas.js";
 import { apagarBackup, restaurarBackup, salvarBackup } from "./obras_backup.js";
 import { limparMasmorra, limparMontanha } from "./obras_limpeza.js";
 import { LARGURA, PADRAO_MASMORRA, PROFUNDIDADE, K_MAX, K_MIN, esquecerAndares, gerarAndares, posicoes } from "./masm_obra.js";
@@ -22,6 +23,7 @@ import { definirDimensao, iniciarAndares, portaisDosAndares } from "./masm_jogo.
 import { gerarMontanha, PADRAO_MONTANHA } from "./obras_montanha.js";
 import { construirSalaNaCaixa, problemaDaCaixa } from "./obras_sala_caixa.js";
 import { PincelMundo } from "./obras_pincel.js";
+import { menuRuas } from "./obras_ruas_menu.js";
 import { atualizarPortais, ligarViagens } from "./obras_viagem.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
@@ -992,6 +994,7 @@ export async function menuObras(player, voltar) {
     .botao(textos.BOTAO_CENTRO, ICONES.spawn, eVolta((p) => marcarCentro(p)))
     .botao(textos.BOTAO_VER_LIMITES, ICONES.buscar, eVolta((p) => verLimites(p)));
   if (ehDono(player)) lista.botao(textos.BOTAO_SALA, ICONES.nova, (p) => menuSala(p, aqui));
+  lista.botao(textosRuas.BOTAO_RUAS, ICONES.casas, (p) => menuRuas(p, aqui));
   // Gerar, desfazer, medidas e esquecer ficam fora do menu: a montanha e a masmorra estão prontas e ninguém mexe nelas por aqui.
   lista
     .botao(textos.BOTAO_TELEPORTES, ICONES.tpa, (p) => menuTeleportes(p, aqui))

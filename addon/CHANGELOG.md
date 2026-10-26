@@ -4,6 +4,12 @@ Textos prontos para colar no canal de changelog do Discord. O changelog da Kiza 
 
 ---
 
+## 25/10/2026: Ruas mais bonitas a caminho
+
+🛣️ A staff ganhou uma ferramenta nova para decorar as ruas da vila! Ela copia o estilo das ruas que já foram decoradas à mão (arbustos, grama alta, flores, lanternas e barris nas bordas) e aplica nas ruas que ainda estão peladas, sem mexer no terreno nem nas construções. Daqui para frente você vai ver as ruas ganhando vida aos poucos. E, no futuro, cada Era vai poder ter o seu próprio visual de rua. 🍂
+
+---
+
 ## 25/10/2026: Chat local e chat do time
 
 💬 Agora você escolhe com quem fala no chat! Use /chat (ou o botão Chat em Ajustes) e escolha:

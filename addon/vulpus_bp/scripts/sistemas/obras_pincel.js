@@ -15,6 +15,7 @@ export const Y_MAX = 319;
  * @property {(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, tipo: string, soAr?: boolean, estados?: Estados) => void} fill
  * @property {(x: number, y: number, z: number, tipo: string, estados?: Estados) => void} set
  * @property {(x: number, y: number, z: number) => string | undefined} id  tipo do bloco (undefined = não carregado)
+ * @property {(x: number, y: number, z: number) => Record<string, string | number | boolean> | undefined} estados  estados do bloco (undefined = não carregado ou sem estados)
  * @property {(x: number, z: number) => { y: number, id: string } | undefined} superficie  primeiro bloco sólido ou líquido de cima para baixo
  * @property {(x: number, y: number, z: number, linhas: string[]) => void} placa  escreve o texto de uma placa já posta
  * @property {(id: string) => boolean} existe  o jogo desta versão conhece esse bloco?
@@ -106,6 +107,14 @@ export class PincelMundo {
     return this.dim.getBlock({ x, y, z })?.typeId;
   }
 
+  estados(x, y, z) {
+    try {
+      return this.dim.getBlock({ x, y, z })?.permutation.getAllStates();
+    } catch {
+      return undefined;
+    }
+  }
+
   superficie(x, z) {
     let topo;
     try {
@@ -157,6 +166,8 @@ export class PincelMemoria {
     this.ops = 0;
     /** @type {Map<string, string>} */
     this.blocos = new Map();
+    /** estados dos blocos postos com set() @type {Map<string, Estados>} */
+    this.estadosMem = new Map();
     /** @type {Map<string, string[]>} */
     this.placas = new Map();
     this.chao = opcoes.chao ?? (() => ({ y: 64, id: "minecraft:grass_block" }));
@@ -179,9 +190,15 @@ export class PincelMemoria {
     }
   }
 
-  set(x, y, z, tipo) {
+  set(x, y, z, tipo, estados) {
     this.ops++;
     this.blocos.set(this.chave(x, y, z), tipo);
+    if (estados) this.estadosMem.set(this.chave(x, y, z), estados);
+    else this.estadosMem.delete(this.chave(x, y, z));
+  }
+
+  estados(x, y, z) {
+    return this.estadosMem.get(this.chave(x, y, z));
   }
 
   id(x, y, z) {
@@ -245,6 +262,10 @@ export class PincelRecortado {
 
   id(x, y, z) {
     return this.dentro(x, z) ? this.base.id(x, y, z) : undefined;
+  }
+
+  estados(x, y, z) {
+    return this.dentro(x, z) ? this.base.estados(x, y, z) : undefined;
   }
 
   superficie(x, z) {

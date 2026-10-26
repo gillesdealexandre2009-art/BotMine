@@ -810,6 +810,11 @@ CHANGELOG = [
 # (chave única, título, texto pronto). O texto NÃO passa por .format (pode ter chaves). Espelha addon/CHANGELOG.md.
 CHANGELOG_MC = [
     (
+        'mc_2026_10_25_ruas',
+        '🛣️ Minecraft · 25/10/2026: Ruas mais bonitas a caminho',
+        '🛣️ A staff ganhou uma ferramenta nova para decorar as ruas da vila! Ela copia o estilo das ruas que já foram decoradas à mão (arbustos, grama alta, flores, lanternas e barris nas bordas) e aplica nas ruas que ainda estão peladas, sem mexer no terreno nem nas construções. Daqui para frente você vai ver as ruas ganhando vida aos poucos. E, no futuro, cada Era vai poder ter o seu próprio visual de rua. 🍂',
+    ),
+    (
         'mc_2026_10_25_chat',
         "💬 Minecraft · 25/10/2026: Chat local e chat do time",
         '💬 Agora você escolhe com quem fala no chat! Use /chat (ou o botão Chat em Ajustes) e escolha:\n\n• **Global**: todo mundo lê, como sempre (é o padrão).\n• **Local**: só quem está perto de você lê (até 30 blocos, na mesma dimensão). Bom para conversar sem o servidor inteiro ouvir.\n• **Time**: só o seu clã lê.\n\n⚡ Atalhos: escreva **#mensagem** para falar só com o seu time (em qualquer modo) e **!mensagem** para falar com todos uma vez, quando estiver no modo local ou time. Se ninguém por perto ouvir, o jogo avisa.\n\nMensagens locais e do time não vão para o chat do Discord. A staff consegue ler o chat local de todo mundo, para manter o servidor seguro.',

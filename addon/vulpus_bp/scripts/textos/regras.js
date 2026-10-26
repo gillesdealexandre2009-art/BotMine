@@ -79,6 +79,7 @@ export const COMANDOS_STAFF = [
   ["/vulpus:kitsune <jogador>", "liga/desliga o selo Kitsune"],
   ["/vulpus:resetapelido <jogador>", "tira o apelido e a cor do nome de alguém"],
   ["/vulpus:clabypass", "liga/desliga o bypass da proteção dos clãs"],
+  ["/vulpus:ruas", "abre o menu das ruas decoradas (obras)"],
   ["/vulpus:spleef staff", "configura a arena do Spleef (também: centro, camadas, salvar, resetar, espera, saida, topo, placar, comecar, parar)"],
 ];
 
