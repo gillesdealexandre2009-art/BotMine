@@ -1,5 +1,5 @@
 // @ts-check
-// Menu principal (Hub): logo no meio, 5 botões de cada lado e o canto da staff.
+// Menu principal (Hub): logo no meio, slots ao redor. Reorganizado em categorias.
 import { system, world } from "@minecraft/server";
 import { ICONES, ITEM_MENU } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
@@ -10,27 +10,25 @@ import { ehStaff } from "../core/permissoes.js";
 import { formatarNumero, rodarSeguro } from "../core/util.js";
 import * as textos from "../textos/menu.js";
 import { menuAjustes } from "./ajustes.js";
-import { menuCasas } from "./casas.js";
-import { menuCaudas, saldo } from "./caudas.js";
+import { saldo } from "./caudas.js";
 import { menuCla, rotuloHub } from "./clas.js";
 import { menuDono } from "./dono.js";
 import { selo } from "./identidade.js";
-import { menuLeilao, resumoCaixa } from "./leilao.js";
 import { nomeVisivel } from "./kitsune.js";
 import { infoNivel } from "./niveis.js";
-import { menuPerfil } from "./perfil.js";
-import { menuMisc } from "./misc.js";
 import { marcarMenu, ehNovato } from "./novato.js";
-import { irSpawn } from "./spawn.js";
 import { menuStaff } from "./staff.js";
-import { contarPedidos, menuTpa } from "./tpa.js";
-import { irVoltar } from "./voltar.js";
+import { menuTeleportes } from "./menu_teleportes.js";
+import { menuMercado } from "./menu_mercado.js";
+import { menuAtividades } from "./menu_atividades.js";
+import { menuServidor } from "./menu_servidor.js";
+import { menuDuvidas } from "./duvidas.js";
+import { menuPerfil } from "./perfil.js";
 
 /** @typedef {import("@minecraft/server").Player} Player */
 
-/** Abrir pelo item: ignora cliques repetidos enquanto o menu já está abrindo. */
 const ABRINDO_TICKS = 10;
-/** @type {Map<string, number>} id → tick do último uso do item */
+/** @type {Map<string, number>} */
 const ultimoUso = new Map();
 
 /** @param {Player} player */
@@ -48,7 +46,6 @@ function corpo(player) {
 }
 
 /**
- * Botão do canto: Staff para a staff (o Painel de Dono fica dentro dela); Dono para quem é dono sem ser staff.
  * @param {Player} player
  * @param {() => any} volta
  * @returns {import("../core/forms.js").Botao | undefined}
@@ -60,26 +57,23 @@ function cantoHub(player, volta) {
 }
 
 /**
- * Abre o menu principal. Os submenus recebem um "voltar" que reabre o Hub.
+ * Abre o menu principal.
  * @param {Player} player
  */
 export async function abrirMenu(player) {
   const volta = () => abrirMenu(player);
   marcarMenu(player);
-  const pedidos = contarPedidos(player);
   await new Hub()
     .titulo(textos.TITULO)
     .texto(corpo(player))
-    .slot(0, { texto: textos.SPAWN, icone: ICONES.spawn, acao: irSpawn })
-    .slot(1, { texto: textos.CASAS, icone: ICONES.casas, acao: (p) => menuCasas(p, volta) })
-    .slot(2, { texto: textos.TPA(pedidos), icone: ICONES.tpa, acao: (p) => menuTpa(p, volta) })
-    .slot(3, { texto: textos.VOLTAR, icone: ICONES.voltar, acao: irVoltar })
-    .slot(4, { texto: textos.PERFIL, icone: ICONES.perfil, acao: (p) => menuPerfil(p, volta) })
-    .slot(5, { texto: textos.CAUDAS, icone: ICONES.caudas, acao: (p) => menuCaudas(p, volta) })
-    .slot(6, { texto: textos.LEILAO(resumoCaixa(player).itens), icone: ICONES.leilao, acao: (p) => menuLeilao(p, volta) })
-    .slot(7, { texto: rotuloHub(player), icone: ICONES.cla, acao: (p) => menuCla(p, volta) })
-    .slot(8, { texto: textos.AJUSTES, icone: ICONES.ajustes, acao: (p) => menuAjustes(p, volta) })
-    .slot(9, { texto: textos.MISC, icone: ICONES.minigames, acao: (p) => menuMisc(p, volta) })
+    .slot(0, { texto: textos.TELEPORTES, icone: ICONES.teleportes, acao: (p) => menuTeleportes(p, volta) })
+    .slot(1, { texto: textos.PERFIL, icone: ICONES.perfil, acao: (p) => menuPerfil(p, volta) })
+    .slot(2, { texto: textos.MERCADO, icone: ICONES.mercado, acao: (p) => menuMercado(p, volta) })
+    .slot(3, { texto: textos.ATIVIDADES, icone: ICONES.atividades, acao: (p) => menuAtividades(p, volta) })
+    .slot(4, { texto: rotuloHub(player), icone: ICONES.claHub, acao: (p) => menuCla(p, volta) })
+    .slot(5, { texto: textos.SERVIDOR, icone: ICONES.servidor, acao: (p) => menuServidor(p, volta) })
+    .slot(6, { texto: textos.AJUSTES, icone: ICONES.ajustes, acao: (p) => menuAjustes(p, volta) })
+    .slot(8, { texto: textos.DUVIDAS, icone: ICONES.duvidas, acao: (p) => menuDuvidas(p, volta) })
     .staff(cantoHub(player, volta))
     .abrir(player);
 }

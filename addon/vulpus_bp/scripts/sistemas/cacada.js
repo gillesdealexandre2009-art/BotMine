@@ -22,7 +22,7 @@ import { mostrarTitulo } from "../core/tela.js";
 import { erro, msg, ok, registrarErro, som } from "../core/util.js";
 import * as geral from "../textos/geral.js";
 import * as textos from "../textos/cacada.js";
-import { adicionarCaudas, adicionarSecaoCaudas, saldo } from "./caudas.js";
+import { adicionarCaudas, saldo } from "./caudas.js";
 import { claDe } from "./cla_dados.js";
 import { atualizarIdentidade, registrarMarcaNome } from "./identidade.js";
 
@@ -919,10 +919,7 @@ export async function menuCacadaStaff(player, voltar) {
 
 // ---------------------------------------------------------------- ganchos, eventos e comandos
 
-adicionarSecaoCaudas({
-  titulo: textos.SECAO,
-  botoes: [{ texto: () => textos.BOTAO_MURAL(cabecasAtivas().length), icone: ICONES.mural, abrir: menuCacada }],
-});
+// Caçada agora é acessada pelo menu Atividades (menu_atividades.js).
 
 // Caveira e valor curto numa linha em cima do nameTag de quem tem a cabeça a prêmio.
 registrarMarcaNome((player) => {

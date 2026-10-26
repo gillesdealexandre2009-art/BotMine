@@ -347,13 +347,21 @@ export const NIVEIS_CLA = Object.freeze(
 
 /** Ícones dos botões: texturas vanilla conferidas na 1.26.52. */
 export const ICONES = {
+  // Hub — ícones custom da VULPUS
+  teleportes: "textures/vulpus/ui/menu/teleportes",
+  perfil: "textures/vulpus/ui/menu/perfil",
+  mercado: "textures/vulpus/ui/menu/mercado",
+  atividades: "textures/vulpus/ui/menu/atividades",
+  claHub: "textures/vulpus/ui/menu/cla",
+  servidor: "textures/vulpus/ui/menu/servidor",
+  ajustes: "textures/vulpus/ui/menu/ajustes",
+  duvidas: "textures/vulpus/ui/menu/duvidas",
+  retornar: "textures/vulpus/ui/menu/retornar",
+  // Atalhos internos (sub-menus)
   spawn: "textures/items/compass_item",
   casas: "textures/items/bed_red",
   tpa: "textures/items/ender_pearl",
-  voltar: "textures/items/totem",
   caudas: "textures/items/gold_nugget",
-  perfil: "textures/items/name_tag",
-  ajustes: "textures/ui/gear",
   regras: "textures/items/book_writable",
   staff: "textures/ui/permissions_op_crown",
   dono: "textures/items/gold_helmet",

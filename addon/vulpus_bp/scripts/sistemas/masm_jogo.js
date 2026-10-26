@@ -582,6 +582,42 @@ world.afterEvents.playerSpawn.subscribe((ev) => {
   }
 });
 
+// ---------------------------------------------------------------- proteção de blocos
+
+/** @type {Map<string, number>} */
+const ultimoAvisoMasm = new Map();
+const TICKS_AVISO_MASM = 40;
+
+world.beforeEvents.playerBreakBlock.subscribe((ev) => {
+  try {
+    if (ehStaff(ev.player)) return;
+    if (ev.player.dimension.id !== dimId) return;
+    if (!onde(ev.block.location)) return;
+    ev.cancel = true;
+    const agora = system.currentTick;
+    if (agora - (ultimoAvisoMasm.get(ev.player.id) ?? -TICKS_AVISO_MASM) < TICKS_AVISO_MASM) return;
+    ultimoAvisoMasm.set(ev.player.id, agora);
+    system.run(() => {
+      if (!ev.player.isValid) return;
+      ev.player.onScreenDisplay.setActionBar("§c✦ §7Blocos da masmorra não podem ser quebrados.");
+      som(ev.player, "note.bass", { pitch: 0.8, volume: 0.6 });
+    });
+  } catch (e) {
+    registrarErro("Masmorra: quebrar bloco", e);
+  }
+});
+
+world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
+  try {
+    if (ehStaff(ev.player)) return;
+    if (ev.player.dimension.id !== dimId) return;
+    if (!onde(ev.block.location)) return;
+    ev.cancel = true;
+  } catch (e) {
+    registrarErro("Masmorra: colocar bloco", e);
+  }
+});
+
 /** Para o orquestrador: liga os portais e reindexa. */
 export function iniciarAndares() {
   recarregarIndice();

@@ -10,7 +10,7 @@ import { erro } from "../core/util.js";
 import { glyph } from "../glyphs.js";
 import { JOGADOR_OFFLINE } from "../textos/geral.js";
 import * as textos from "../textos/perfil.js";
-import { sequenciaAtual } from "./caudas.js";
+import { menuCaudas, sequenciaAtual } from "./caudas.js";
 import { claDe, membroDe, tagPintada } from "./cla_dados.js";
 import { conquistasDe } from "./conquistas.js";
 import { CARGOS, cargoDe, ehKitsune, selo } from "./identidade.js";
@@ -57,6 +57,7 @@ export async function menuPerfil(player, voltar, alvoId) {
     }),
   );
   lista.botao(textos.BOTAO_NIVEL, ICONES.nivel, (p) => menuNivel(p, aqui, alvoId));
+  if (proprio) lista.botao("Caudas", ICONES.caudas, (p) => menuCaudas(p, aqui));
   if (proprio) lista.botao(textos.BOTAO_OUTRO, ICONES.online, (p) => escolherJogador(p, () => menuPerfil(p, voltar)));
   await lista.voltar(voltar).abrir(player);
 }

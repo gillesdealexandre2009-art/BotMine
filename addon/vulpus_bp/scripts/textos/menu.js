@@ -1,5 +1,5 @@
 // @ts-check
-// Textos do menu principal (Hub). O corpo cabe em ~7 linhas estreitas embaixo da logo: dicas curtas.
+// Textos do menu principal (Hub).
 
 export const TITULO = "VULPUS";
 
@@ -19,12 +19,12 @@ export const LINHA_ONLINE = (quantos) => `§7${quantos} online agora`;
 /** @param {string} dica */
 export const LINHA_DICA = (dica) => `§7${dica}`;
 
-/** Sorteadas a cada abertura. Até ~34 caracteres (duas linhas na coluna de ~118px do Hub). */
+/** Sorteadas a cada abertura. Até ~34 caracteres. */
 export const DICAS = [
   "Abra cápsulas de pet no lobby!",
   "Sem se mexer, o teleporte sai.",
   "Diária todo dia = mais Caudas!",
-  "Caiu longe? O Voltar te leva lá.",
+  "Perdeu itens? Use Retornar!",
   "Briga e teleporte não combinam.",
   "Marque suas casas e viaje fácil.",
   "Muito TPA? Bloqueie em Ajustes.",
@@ -35,27 +35,26 @@ export const DICAS = [
   "Cada história vira uma Cauda!",
   "Ativo no jogo = mais XP.",
   "Troque o tema do menu em Ajustes.",
-  "Venda e compre no Leilão!",
+  "Compre e venda na Loja!",
   "Junte a turma num clã!",
   "Clã forte tem base protegida.",
   "Fale só com o clã: /vulpus:c",
+  "Dúvida? Veja o menu Dúvidas!",
 ];
 
-// Rótulos dos slots (~70px de largura)
-export const SPAWN = "Spawn";
-export const LINHA_NOVATO = "§eNovo por aqui? §7Use §f/vulpus:comecar §7e ganhe Caudas com as missões.";
-export const CASAS = "Casas";
-/** @param {number} pedidos  recebidos e pendentes */
-export const TPA = (pedidos) => (pedidos > 0 ? `TPA (${pedidos})` : "TPA");
-export const VOLTAR = "Voltar";
-export const CAUDAS = "Caudas";
-/** @param {number} itens  na caixa de retirada */
-export const LEILAO = (itens) => (itens > 0 ? `Leilão (${itens})` : "Leilão");
+// Rótulos dos slots do Hub
+export const TELEPORTES = "Teleportes";
 export const PERFIL = "Perfil";
+export const MERCADO = "Mercado";
+export const ATIVIDADES = "Atividades";
+/** @param {number} pedidos */
+export const LEILAO = (pedidos) => (pedidos > 0 ? `Mercado (${pedidos})` : "Mercado");
 export const AJUSTES = "Ajustes";
-export const REGRAS = "Regras";
-export const MISC = "Miscelânea";
+export const SERVIDOR = "Servidor";
+export const DUVIDAS = "Dúvidas";
 export const STAFF = "Staff";
 export const DONO = "Dono";
+
+export const LINHA_NOVATO = "§eNovo por aqui? §7Use §f/vulpus:comecar §7e ganhe Caudas com as missões.";
 
 export const CMD_MENU = "Abre o menu do Vulpus";
