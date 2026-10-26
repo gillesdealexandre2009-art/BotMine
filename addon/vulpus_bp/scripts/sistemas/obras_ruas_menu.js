@@ -1,7 +1,7 @@
 // @ts-check
 // Ruas decoradas: registro no mundo (ruas marcadas e perfis de estilo), menu da staff em Obras e o comando /vulpus:ruas.
 // A conta das obras (aprender, planejar, aplicar) está em obras_ruas.js; aqui só se guarda, pergunta e roda como obra.
-import { system, world } from "@minecraft/server";
+import { ItemLockMode, ItemStack, system, world } from "@minecraft/server";
 import { ICONES } from "../config.js";
 import { registrarComando } from "../core/comandos.js";
 import { lerMundo, salvarMundo } from "../core/db.js";
@@ -461,6 +461,7 @@ async function menuRua(player, id, voltar) {
   };
   const lado = ladoAtivo(player, id);
   const lista = new Lista(rua.nome).texto(textos.CORPO_RUA(rua.nome, rua.modo, rua.lados[0].length, rua.lados[1].length, lado));
+  lista.botao(textos.BOTAO_KIT, ICONES.nova, eVolta((p) => darKit(p, rua)));
   lista.botao(textos.BOTAO_PONTO, ICONES.spawn, eVolta((p) => adicionarPonto(p, id)));
   if (rua.modo === "lados") {
     lista.botao(textos.BOTAO_TROCAR_LADO(lado), ICONES.ordenar, eVolta((p) => {
@@ -526,5 +527,97 @@ async function menuPerfis(player, voltar) {
   }
   await lista.voltar(voltar).abrir(player);
 }
+
+// ---------------------------------------------------------------- itens de marcação
+
+/** Item de vanilla de cada ferramenta (o que vale é o tipo + o nome). */
+const ITEM_KIT = Object.freeze({
+  ponto: "minecraft:lime_dye",
+  ver: "minecraft:spyglass",
+  remover: "minecraft:red_dye",
+  lado: "minecraft:yellow_dye",
+  finalizar: "minecraft:emerald",
+});
+
+/** @param {import("@minecraft/server").ItemStack | undefined} item @returns {keyof typeof ITEM_KIT | null} */
+function ferramentaDe(item) {
+  if (!item) return null;
+  for (const [id, tipo] of Object.entries(ITEM_KIT)) {
+    if (item.typeId === tipo && item.nameTag === textos.KIT[id].nome) return /** @type {keyof typeof ITEM_KIT} */ (id);
+  }
+  return null;
+}
+
+/** Tira do inventário todos os itens de marcação. @param {Player} p */
+function recolherKit(p) {
+  const inv = p.getComponent("minecraft:inventory")?.container;
+  if (!inv?.isValid) return;
+  for (let i = 0; i < inv.size; i++) if (ferramentaDe(inv.getItem(i))) inv.setItem(i, undefined);
+}
+
+/**
+ * Põe os itens de marcação no inventário (trocando os que já tinha) e deixa esta rua ativa.
+ * @param {Player} p @param {Rua} rua
+ */
+export function darKit(p, rua) {
+  if (!exigirStaff(p)) return;
+  const inv = p.getComponent("minecraft:inventory")?.container;
+  if (!inv?.isValid) return;
+  recolherKit(p);
+  if (!ativo.has(p.id) || ativo.get(p.id)?.rua !== rua.id) marcarLado(p, rua.id, 1);
+  const ids = Object.keys(ITEM_KIT).filter((id) => id !== "lado" || rua.modo === "lados");
+  for (const id of ids) {
+    const item = new ItemStack(/** @type {any} */ (ITEM_KIT)[id], 1);
+    item.nameTag = textos.KIT[id].nome;
+    item.setLore([textos.KIT[id].dica]);
+    item.lockMode = ItemLockMode.inventory;
+    item.keepOnDeath = true;
+    if (inv.addItem(item)) {
+      erro(p, textos.KIT_SEM_ESPACO);
+      return;
+    }
+  }
+  ok(p, textos.KIT_DADO(rua.nome));
+}
+
+/** @type {Map<string, number>} último tick de uso por pessoa (itemUse pode chegar duas vezes) */
+const ultimoUso = new Map();
+
+world.afterEvents.itemUse.subscribe(({ itemStack, source }) => {
+  const ferramenta = ferramentaDe(itemStack);
+  if (!ferramenta) return;
+  const agora = system.currentTick;
+  if (agora - (ultimoUso.get(source.id) ?? -99) < 6) return;
+  ultimoUso.set(source.id, agora);
+  try {
+    if (!exigirStaff(source)) return;
+    const a = ativo.get(source.id);
+    const rua = a ? registroRuas().ruas.find((q) => q.id === a.rua) : undefined;
+    if (!a) return erro(source, textos.KIT_SEM_RUA);
+    if (!rua) {
+      recolherKit(source);
+      return erro(source, textos.KIT_RUA_SUMIU);
+    }
+    if (ferramenta === "ponto") adicionarPonto(source, rua.id);
+    else if (ferramenta === "remover") desfazerPonto(source, rua.id);
+    else if (ferramenta === "ver") verMarcacao(source, rua);
+    else if (ferramenta === "lado") {
+      const novo = a.lado === 1 ? 2 : 1;
+      marcarLado(source, rua.id, novo);
+      msg(source, textos.LADO_AGORA(novo));
+    } else {
+      recolherKit(source);
+      ativo.delete(source.id);
+      ok(source, textos.KIT_FINAL(rua.nome, [rua.lados[0].length, rua.lados[1].length], rua.modo));
+    }
+  } catch (e) {
+    registrarErro("Ruas: itens de marcação", e);
+  }
+});
+
+world.afterEvents.playerLeave.subscribe(({ playerId }) => {
+  ultimoUso.delete(playerId);
+  ativo.delete(playerId);
+});
 
 registrarComando({ nome: "ruas", descricao: textos.DESC_RUAS, staff: true }, (p) => menuRuas(p));

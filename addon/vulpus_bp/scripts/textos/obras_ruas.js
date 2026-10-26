@@ -109,3 +109,20 @@ export const NOME_DESFAZER = "desfazer decoração de rua";
 /** @param {string} nome @param {number} f @param {number} c @param {number} paleta @param {boolean} cortou */
 export const CORPO_PERFIL = (nome, f, c, paleta, cortou) =>
   [`§fPerfil: §7${nome}`, `§fFatias: §7${f}`, `§fBlocos: §7${c} (${paleta} tipos)`, ...(cortou ? ["§eGuardado só em trechos (a rua era longa)."] : [])].join("\n");
+
+// ---------------------------------------------------------------- itens de marcação (clique direito no ar ou no chão)
+export const BOTAO_KIT = "Pegar os itens de marcação";
+/** Id interno → nome do item e dica na descrição. @type {Readonly<Record<string, { nome: string, dica: string }>>} */
+export const KIT = Object.freeze({
+  ponto: { nome: "§aRuas: adicionar ponto", dica: "§7Clique com o botão direito para marcar um ponto da borda onde você está." },
+  ver: { nome: "§bRuas: ver pontos", dica: "§7Mostra a marcação da rua em partículas." },
+  remover: { nome: "§cRuas: remover ponto", dica: "§7Desfaz o último ponto da borda atual." },
+  lado: { nome: "§eRuas: trocar de lado", dica: "§7Alterna entre a borda 1 e a borda 2." },
+  finalizar: { nome: "§6Ruas: finalizar", dica: "§7Guarda a marcação e recolhe os itens." },
+});
+export const KIT_DADO = (rua) => `Itens de marcação da rua "${rua}" no inventário. Clique com o botão direito para usar; Finalizar recolhe tudo.`;
+export const KIT_SEM_ESPACO = "Inventário cheio: libere espaço e peça os itens de novo.";
+export const KIT_SEM_RUA = "Nenhuma rua ativa. Abra /vulpus:ruas, escolha uma rua e pegue os itens de marcação.";
+export const KIT_RUA_SUMIU = "Essa rua não existe mais. Abra /vulpus:ruas de novo.";
+export const KIT_FINAL = (rua, lados, modo) =>
+  `Marcação da rua "${rua}" guardada (${modo === "contorno" ? `${lados[0]} pontos no contorno` : `${lados[0]} pontos na borda 1 e ${lados[1]} na borda 2`}). Os itens foram recolhidos. Abra /vulpus:ruas para aprender o estilo ou decorar.`;
