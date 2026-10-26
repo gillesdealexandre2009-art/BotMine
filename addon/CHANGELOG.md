@@ -4,6 +4,43 @@ Textos prontos para colar no canal de changelog do Discord. O changelog da Kiza 
 
 ---
 
+## 25/10/2026: Chat local e chat do time
+
+💬 Agora você escolhe com quem fala no chat! Use /chat (ou o botão Chat em Ajustes) e escolha:
+
+• **Global**: todo mundo lê, como sempre (é o padrão).
+• **Local**: só quem está perto de você lê (até 30 blocos, na mesma dimensão). Bom para conversar sem o servidor inteiro ouvir.
+• **Time**: só o seu clã lê.
+
+⚡ Atalhos: escreva **#mensagem** para falar só com o seu time (em qualquer modo) e **!mensagem** para falar com todos uma vez, quando estiver no modo local ou time. Se ninguém por perto ouvir, o jogo avisa.
+
+Mensagens locais e do time não vão para o chat do Discord. A staff consegue ler o chat local de todo mundo, para manter o servidor seguro.
+
+---
+
+## 25/10/2026: Durabilidade no HUD, do seu jeito
+
+🛠️ O placar agora mostra a durabilidade dos seus itens (ex.: Picareta 82%, em verde, amarelo ou vermelho conforme o desgaste), e você decide o que aparece!
+
+• Em **Ajustes → Durabilidade no HUD**, marque quais itens ganham uma linha: **mão, escudo, capacete, peitoral, calça e botas**. Pode marcar tudo, ou só o que importa para você.
+• Três modos: **Placar e aviso**, **Só aviso** ou **Desligado**.
+• Quando algo está quase quebrando, sai um aviso curto no chat (com um som baixinho), só uma vez por item.
+• No criativo e no espectador nada aparece.
+
+---
+
+## 25/10/2026: Bandeiras certas, casas mais seguras e mais
+
+✨ Um monte de ajustes chegou:
+
+• **Bandeiras dos clãs**: a textura estava embaralhada, com faixas e figuras cortadas no meio. Agora aparece certinha, por todos os lados.
+• **Casas e bases**: mover ou apagar uma casa (pessoal ou do time) agora pede confirmação, para ninguém perder nada num clique sem querer.
+• **Apelido no Discord**: seu apelido pode acompanhar o do jogo no formato [CLÃ] Apelido (dá para desligar, e o original volta).
+• **Códigos**: o código que você ganha ao dar feedback é resgatado em Menu → Miscelânea.
+• **RTP e portais**: mais um ajuste para você chegar com o terreno já carregado.
+
+---
+
 ## 22/10/2026: RTP mais seguro
 
 🦊 O RTP agora carrega os chunks do destino antes de te teleportar — chega de morrer caindo no vazio porque o chão não existia ainda!
@@ -15,7 +52,7 @@ Textos prontos para colar no canal de changelog do Discord. O changelog da Kiza 
 
 ## 21/10/2026: O Último Outono de Hollow e limpeza automática
 
-🎃 Chegou o evento de Halloween: O Último Outono de Hollow! De 25 a 31 de outubro, uma casa, uma mata, um abrigo e uma ponte guardam uma história que alguém tentou esquecer. Comece pela casa perto do spawn, leia os registros que encontrar e junte as pistas (o seu diário de investigação fica em /vulpus:hollow). A história tem um desfecho triste (sem cenas gráficas); se não quiser acompanhar, tudo bem, o resto do servidor segue normal.
+🎃 Chegou o evento de Halloween: O Último Outono de Hollow! De 23 a 31 de outubro, uma casa, uma mata, um abrigo e uma ponte guardam uma história que alguém tentou esquecer. Comece pela casa perto do spawn, leia os registros que encontrar e junte as pistas (o seu diário de investigação fica em /vulpus:hollow). A história tem um desfecho triste (sem cenas gráficas); se não quiser acompanhar, tudo bem, o resto do servidor segue normal.
 
 • Quem terminar leva a tag Halloween 2026, o cargo exclusivo no Discord, uma conquista e o Relógio de Hollow (só enfeite).
 • As duas primeiras pessoas que terminarem ganham o selo Kitsune.

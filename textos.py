@@ -810,9 +810,24 @@ CHANGELOG = [
 # (chave única, título, texto pronto). O texto NÃO passa por .format (pode ter chaves). Espelha addon/CHANGELOG.md.
 CHANGELOG_MC = [
     (
+        'mc_2026_10_25_chat',
+        "💬 Minecraft · 25/10/2026: Chat local e chat do time",
+        '💬 Agora você escolhe com quem fala no chat! Use /chat (ou o botão Chat em Ajustes) e escolha:\n\n• **Global**: todo mundo lê, como sempre (é o padrão).\n• **Local**: só quem está perto de você lê (até 30 blocos, na mesma dimensão). Bom para conversar sem o servidor inteiro ouvir.\n• **Time**: só o seu clã lê.\n\n⚡ Atalhos: escreva **#mensagem** para falar só com o seu time (em qualquer modo) e **!mensagem** para falar com todos uma vez, quando estiver no modo local ou time. Se ninguém por perto ouvir, o jogo avisa.\n\nMensagens locais e do time não vão para o chat do Discord. A staff consegue ler o chat local de todo mundo, para manter o servidor seguro.',
+    ),
+    (
+        'mc_2026_10_25_durabilidade',
+        "🛠️ Minecraft · 25/10/2026: Durabilidade no HUD, do seu jeito",
+        '🛠️ O placar agora mostra a durabilidade dos seus itens (ex.: Picareta 82%, em verde, amarelo ou vermelho conforme o desgaste), e você decide o que aparece!\n\n• Em **Ajustes → Durabilidade no HUD**, marque quais itens ganham uma linha: **mão, escudo, capacete, peitoral, calça e botas**. Pode marcar tudo, ou só o que importa para você.\n• Três modos: **Placar e aviso**, **Só aviso** ou **Desligado**.\n• Quando algo está quase quebrando, sai um aviso curto no chat (com um som baixinho), só uma vez por item.\n• No criativo e no espectador nada aparece.',
+    ),
+    (
+        'mc_2026_10_25_ajustes',
+        "✨ Minecraft · 25/10/2026: Bandeiras certas, casas mais seguras e mais",
+        '✨ Um monte de ajustes chegou:\n\n• **Bandeiras dos clãs**: a textura estava embaralhada, com faixas e figuras cortadas no meio. Agora aparece certinha, por todos os lados.\n• **Casas e bases**: mover ou apagar uma casa (pessoal ou do time) agora pede confirmação, para ninguém perder nada num clique sem querer.\n• **Apelido no Discord**: seu apelido pode acompanhar o do jogo no formato [CLÃ] Apelido (dá para desligar, e o original volta).\n• **Códigos**: o código que você ganha ao dar feedback é resgatado em Menu → Miscelânea.\n• **RTP e portais**: mais um ajuste para você chegar com o terreno já carregado.',
+    ),
+    (
         "mc_2026_10_21_hollow",
         "🎃 Minecraft · 21/10/2026: O Último Outono de Hollow e limpeza automática",
-        "🎃 Chegou o evento de Halloween: O Último Outono de Hollow! De 25 a 31 de outubro, uma casa, uma mata, um abrigo e uma ponte guardam uma história que alguém tentou esquecer. Comece pela casa perto do spawn, leia os registros que encontrar e junte as pistas (o seu diário de investigação fica em /vulpus:hollow). A história tem um desfecho triste (sem cenas gráficas); se não quiser acompanhar, tudo bem, o resto do servidor segue normal.\n\n• Quem terminar leva a tag Halloween 2026, o cargo exclusivo no Discord, uma conquista e o Relógio de Hollow (só enfeite).\n• As duas primeiras pessoas que terminarem ganham o selo Kitsune.\n\n🧹 Também chegou a limpeza automática: a cada 30 minutos o servidor avisa e limpa os itens soltos e os monstros do chão, para o jogo ficar mais leve. E o servidor agora reinicia sozinho às 00h e às 12h, com aviso antes.",
+        "🎃 Chegou o evento de Halloween: O Último Outono de Hollow! De 23 a 31 de outubro, uma casa, uma mata, um abrigo e uma ponte guardam uma história que alguém tentou esquecer. Comece pela casa perto do spawn, leia os registros que encontrar e junte as pistas (o seu diário de investigação fica em /vulpus:hollow). A história tem um desfecho triste (sem cenas gráficas); se não quiser acompanhar, tudo bem, o resto do servidor segue normal.\n\n• Quem terminar leva a tag Halloween 2026, o cargo exclusivo no Discord, uma conquista e o Relógio de Hollow (só enfeite).\n• As duas primeiras pessoas que terminarem ganham o selo Kitsune.\n\n🧹 Também chegou a limpeza automática: a cada 30 minutos o servidor avisa e limpa os itens soltos e os monstros do chão, para o jogo ficar mais leve. E o servidor agora reinicia sozinho às 00h e às 12h, com aviso antes.",
     ),
     (
         "mc_2026_10_21_mimos_kitsune",
