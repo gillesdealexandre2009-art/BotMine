@@ -43,15 +43,15 @@ export const DICAS = [
 ];
 
 // Rótulos dos slots do Hub
+export const SPAWN = "Spawn";
 export const TELEPORTES = "Teleportes";
 export const PERFIL = "Perfil";
 export const MERCADO = "Mercado";
 export const ATIVIDADES = "Atividades";
-/** @param {number} pedidos */
-export const LEILAO = (pedidos) => (pedidos > 0 ? `Mercado (${pedidos})` : "Mercado");
 export const AJUSTES = "Ajustes";
 export const SERVIDOR = "Servidor";
 export const DUVIDAS = "Dúvidas";
+export const RETORNAR = "Retornar";
 export const STAFF = "Staff";
 export const DONO = "Dono";
 
