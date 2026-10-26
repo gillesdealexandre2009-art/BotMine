@@ -607,12 +607,12 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
   }
 });
 
-world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
+world.afterEvents.playerPlaceBlock.subscribe((ev) => {
   try {
     if (ehStaff(ev.player)) return;
     if (ev.player.dimension.id !== dimId) return;
     if (!onde(ev.block.location)) return;
-    ev.cancel = true;
+    ev.block.setType("minecraft:air");
   } catch (e) {
     registrarErro("Masmorra: colocar bloco", e);
   }
